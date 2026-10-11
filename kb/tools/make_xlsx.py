@@ -782,7 +782,9 @@ def _auto_inputs(kb, case):
         start = max(x for x in (arr, datetime.fromisoformat(t["scheduled_time"])) if x)
     else:
         start = arr or end
-    in_wait = lambda ts: (arr or start) <= datetime.fromisoformat(ts) <= end
+    assigned_at = min([datetime.fromisoformat(a["timestamp"]) for a in case["app_events"] if a["event_type"] == "driver_assigned"]
+                      or [datetime.fromisoformat(a["timestamp"]) for a in case["app_events"] if a["event_type"] == "booking_confirmed"] or [start])
+    from_assignment = lambda ts: assigned_at <= datetime.fromisoformat(ts) <= end      # CW-F06 with D30: placements before arrival count
     thr = pol["no_show_threshold_min"] * 60 if "no_show_threshold_min" in pol else kb.pval("NO_SHOW_THRESHOLD_S", "ryde_2026")
     fee = pol.get("cancellation_fee_after_wait", kb.pval("NO_SHOW_FEE_SGD", "ryde_2026"))
     return {
@@ -799,11 +801,11 @@ def _auto_inputs(kb, case):
         "pickup_name": t["pickup_location"]["name"],
         "driver_calls": sum(1 for c in case["chat_logs"] if c["sender"] == "driver" and c["type"] == "call"),
         "driver_messages": sum(1 for c in case["chat_logs"] if c["sender"] == "driver" and c["type"] == "message"),
-        "rider_contacts": sum(1 for c in case["chat_logs"] if c["sender"] == "rider" and in_wait(c["timestamp"])),
+        "rider_contacts": sum(1 for c in case["chat_logs"] if c["sender"] == "rider" and from_assignment(c["timestamp"])),
         "wait_pings": sum(1 for g in case["gps_telemetry"] if start <= datetime.fromisoformat(g["timestamp"]) <= end),
         "policy_threshold_s": thr, "policy_fee_sgd": fee,
-        "rider_side_evidence": ("system_records" if (any(in_wait(g["timestamp"]) for g in (case.get("rider_gps_telemetry") or []))
-                                                     or any(c["sender"] == "rider" and in_wait(c["timestamp"]) for c in case["chat_logs"])
+        "rider_side_evidence": ("system_records" if (any(from_assignment(g["timestamp"]) for g in (case.get("rider_gps_telemetry") or []))
+                                                     or any(c["sender"] == "rider" and from_assignment(c["timestamp"]) for c in case["chat_logs"])
                                                      or any(re.search(r"fail|not delivered|undelivered", a["details"], re.I) for a in case["app_events"] if a["event_type"] == "rider_notified"))
                                 else ("statement_only" if tk.get("description") else "none")),
         "seed_case_id": tk["dispute_id"], "varied_factor": "none (seed)", "guideline_version": "G-0.1", "rulebook_version": "KB-0.1.0",

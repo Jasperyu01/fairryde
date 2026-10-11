@@ -268,7 +268,7 @@ def noshow(kb, run: dict) -> dict:
                 if case.get("rider_gps_telemetry") else " There is no GPS trace from your phone in the trip record.")
     if rider_ev == "STRONG":
         rider_records = ""
-    elif not rider_contact_ids and not outside_ids:
+    elif not rider_contact_ids and not outside_ids and not rcd.get("before_arrival_ids") and not rcd.get("before_arrival_gps_ids"):
         rider_records = gps_line + " There is no call or message from you in the trip record."
     else:
         rider_records = gps_line
@@ -284,6 +284,23 @@ def noshow(kb, run: dict) -> dict:
             one = len(unclear_msgs) == 1
             rider_records += (f" Your {'message' if one else 'messages'} ({_ids(unclear_msgs)}) {'does' if one else 'do'} not clearly say"
                               " whether you were at the pick-up point.")
+        merits = not (t.reasons and t.reasons[0] in ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP"))
+        when = "before the driver marked arrival" if (t.arrival_detail or {}).get("t_arr") else "before the wait started"
+        clear = rcd.get("before_arrival_clear_ids") or []
+        maybe = [i for i in rcd.get("before_arrival_ids") or [] if i not in clear]
+        if clear and merits:
+            one = len(clear) == 1
+            rider_records += (f" Your {'message' if one else 'messages'} sent {when} ({_ids(clear)})"
+                              f" {'says' if one else 'say'} you were already at the pick-up point; this was counted as evidence for your side.")
+        if maybe and merits:
+            one = len(maybe) == 1
+            rider_records += (f" Your {'message' if one else 'messages'} sent {when} ({_ids(maybe)})"
+                              f" may show where you were; {'it was' if one else 'they were'} counted as evidence for your side.")
+        gw = rcd.get("before_arrival_gps_where") or {}
+        if gw and merits:
+            places = sorted({"the pick-up pin" if w == "pin" else f"{t.venue_name}" for w in gw.values()})
+            rider_records += (f" Your phone's GPS shows you at {' and '.join(places)} {when}"
+                              f" ({_ids(list(gw))}); this was counted as evidence for your side.")
         if outside_ids:
             one = len(outside_ids) == 1
             rider_records += (f" Your {'call or message' if one else 'calls or messages'} outside the wait ({_ids(outside_ids)})"
@@ -308,8 +325,10 @@ def noshow(kb, run: dict) -> dict:
             elif rid == "CW-F03B":
                 items.append("where the wait starts when GPS confirms the driver only after the arrival mark (CW-F03B)" if t.wait_start_from == "ping"
                              else "starting the wait at the confirmed arrival instead of the earlier wait start in the trip record (CW-F03B)")
-            elif "call or message" in why:
-                items.append(f"how the rider's call or message during the wait was read ({rid})")
+            elif "rider's call, message or GPS" in why:
+                what = ("calls, messages and phone GPS" if "E-RGPS" in why and "E-CHT" in why else
+                        "phone GPS" if "E-RGPS" in why else "calls or messages")
+                items.append(f"how the rider's {what} {'was' if what == 'phone GPS' else 'were'} read ({rid})")
             elif "reading" in why:
                 items.append(f"how the rider's statement was read ({rid})")
         generic = " Part of this decision rests on assumptions FairRyde made where Ryde has published nothing: " + "; ".join(dict.fromkeys(items)) + "."

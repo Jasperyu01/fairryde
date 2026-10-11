@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 import json
 import random
+import re
 from pathlib import Path
 
 import engine_noshow as E
@@ -539,6 +540,96 @@ def variants(base: dict):
       v67, {"outcome": "ESCALATE_HUMAN", "row": "R7", "profile": "ryde_2026", "findings": {"F-RIDER-EVIDENCE": "STRONG"}})
     v("V68", "V06, and the rider messages 'coming down now' at 08:51:30, after the 8-minute threshold and before the cancellation",
       rider_says(("08:51:30", "message", "coming down now")), late)
+
+    # ---------------------------------------------------------------- D30: the rider at the pick-up before the arrival indication
+    before = {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"], "findings": {"F-RIDER-EVIDENCE": "WEAK"}}
+    v("V69", "V06, and the rider messages 'I'm at the lobby already' at 08:41, after the assignment and before the arrival (D30): approval",
+      rider_says(("08:41:00", "message", "I'm at the lobby already")), before)
+    v("V70", "V06, and the rider asks 'where are you?' at 08:41, before the driver arrived: not counter-evidence",
+      rider_says(("08:41:00", "message", "where are you?")), late)
+
+    def v71(c):
+        clean(c)
+        c["rider_gps_telemetry"] = [{"timestamp": _ts("08:41:30"), "lat": VENUE[0], "lng": VENUE[1], "speed_kmh": 0, "status": "waiting"}]
+    v("V71", "V06, and rider GPS at the pick-up at 08:41:30, before the arrival indication (D30): approval", v71, before)
+
+    def v72(c):
+        v08(c)
+        c["chat_logs"].append({"timestamp": _ts("08:41:00"), "sender": "rider", "type": "message", "content": "I'm here at the pick-up point"})
+        c["chat_logs"].sort(key=lambda x: x["timestamp"])
+    v("V72", "V08 (sparse driver GPS, statement not contesting), and the rider says 'I'm here at the pick-up point' before the arrival (D30)", v72,
+      {"outcome": "ESCALATE_HUMAN", "row": "R10", "tier": "HUMAN", "findings": {"F-RIDER-EVIDENCE": "WEAK"}})
+    v("V73", "V06, and the rider says 'I'm at the lobby already' at 08:30:05, before the driver was assigned (08:30:15): not counted",
+      rider_says(("08:30:05", "message", "I'm at the lobby already")), late)
+    # A1b review round 1: D30 must fail safe (a place it cannot settle counts) and must not count questions, instructions or admissions
+    v("V74", "V06, and the rider names the venue before the arrival: 'I'm at Tiong Bahru Plaza' at 08:41 (unclear placement): approval",
+      rider_says(("08:41:00", "message", "I'm at Tiong Bahru Plaza")), before)
+    for vid, text in (("V75", "u reach already?"), ("V76", "Pick me up at the lobby"), ("V77", "我在路上")):
+        v(vid, f"V06, and the rider sends '{text}' at 08:41, before the arrival: a question, an instruction or an admission, not counted",
+          rider_says(("08:41:00", "message", text)), late)
+    v("V78", "V06, and the rider calls the driver at 08:41, before the arrival (what was said is not recorded): not counted",
+      rider_says(("08:41:00", "call", "Outgoing call to driver, answered (30 s).")), late)
+    v("V79", "V06, and the rider messages 'down liao, coming' during the wait: placement and admission, so unclear (approval)",
+      rider_says(("08:47:00", "message", "down liao, coming")), {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"]})
+
+    def v80(c):
+        rider_says(("08:47:00", "message", "\U0001F44D"))(c)
+        c["chat_logs"].append({"timestamp": _ts("08:46:30"), "sender": "driver", "type": "message", "content": "Are you at the lobby now?"})
+        c["chat_logs"].sort(key=lambda x: x["timestamp"])
+    v("V80", "V06, the driver asks 'Are you at the lobby now?' and the rider answers with a thumbs-up: unclear in context, so approval", v80,
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"]})
+
+    def v81(c):
+        rider_says(("08:42:55", "message", "Where are you? I can't see your car"))(c)
+        c["trip_data"]["driver_arrival_time"] = _ts("08:42:50")
+    v("V81", "V06, the trip record has the arrival at 08:42:50 and the event at 08:43:00; the rider contests at 08:42:55 (within the tolerance)", v81,
+      {"outcome": "ESCALATE_HUMAN", "row": "R7", "tier": "HUMAN"})
+
+    def v82(c):
+        rider_says(("08:41:00", "message", "I'm at the lobby already"))(c)
+        c["dispute_ticket"]["filed_at"] = "2026-10-23T09:20:00+08:00"
+    v("V82", "V69 filed 40 days after the trip: MAT-04 decides, so the D30 message does not change the automatic outcome", v82,
+      {"outcome": "UPHOLD", "reasons": ["CW-R-OUT-OF-WINDOW"], "tier": "AUTO"})
+
+    def v83(c):
+        clean(c)
+        c["app_events"] = [a for a in c["app_events"] if a["event_type"] != "driver_assigned"]
+    v("V83", "V06 without the driver_assigned event (booking type not recorded): no crash; records missing, so approval", v83,
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["RECORDS_MISSING"]})
+    # A1b review round 2: D30 fails safe (placements the lists do not know count), context before arrival, data errors
+    for vid, text in (("V84", "Already at lobby, where are you?"), ("V85", "I wait at lobby"), ("V86", "I'm at TBP now")):
+        v(vid, f"V06, and the rider sends '{text}' at 08:41, before the arrival: counted (D30), so approval",
+          rider_says(("08:41:00", "message", text)), before)
+
+    def v87(c):
+        rider_says(("08:41:20", "message", "yes"))(c)
+        c["chat_logs"].append({"timestamp": _ts("08:41:00"), "sender": "driver", "type": "message", "content": "Hi, 2 min away. Are you at the lobby?"})
+        c["chat_logs"].sort(key=lambda x: x["timestamp"])
+    v("V87", "V06, the driver asks 'Are you at the lobby?' at 08:41 and the rider answers 'yes' before the arrival: counted (D30), so approval",
+      v87, before)
+
+    def v88(c):
+        rider_says(("08:41:00", "message", "I'm at the lobby already"))(c)
+        for a in c["app_events"]:
+            if a["event_type"] == "driver_assigned":
+                a["timestamp"] = _ts("08:44:00")
+    v("V88", "V69 with the assignment stamped at 08:44, after the arrival (a data error): the window falls back to the booking, records missing",
+      v88, {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["RECORDS_MISSING"], "findings": {"F-RIDER-EVIDENCE": "WEAK"}})
+
+    def v89(c):
+        rider_says(("08:44:20", "message", "ok"))(c)
+        c["chat_logs"].append({"timestamp": _ts("08:44:00"), "sender": "driver", "type": "message", "content": "Are you at the lobby? I'm at the white car."})
+        c["chat_logs"].sort(key=lambda x: x["timestamp"])
+    v("V89", "V06, the driver's message asks a question mid-message and the rider answers 'ok' in the wait: unclear in context, so approval",
+      v89, {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"]})
+    v("V90", "V06, and the rider messages 'otw down liao' during the wait: an admission, automatic as before A1b",
+      rider_says(("08:45:00", "message", "otw down liao")), late)
+
+    def v91(c):
+        v08(c)
+        c["rider_gps_telemetry"] = [{"timestamp": _ts("08:41:30"), "lat": PIN[0], "lng": PIN[1], "speed_kmh": 0, "status": "waiting"}]
+    v("V91", "V08 (sparse driver GPS, statement not contesting), and only rider GPS at the pin at 08:41:30, before the arrival (D33)", v91,
+      {"outcome": "ESCALATE_HUMAN", "row": "R10", "tier": "HUMAN", "findings": {"F-RIDER-EVIDENCE": "WEAK"}})
     return out
 
 
@@ -578,6 +669,21 @@ READING_CASES = {
     "I wait 10 min already": "P", "u still coming ah": "P", "Is the driver on the way": "P", "coming down, where?": "U",
     "sampai liao, coming out now": "U", "u too early, I'm coming down at 8.45 as booked": "U", "reach soon": "L",
     "I'm at the lift": "L", "I'm almost at the lobby": "U", "I went to the wrong building": "U",
+    # A1b review round 1: down, out and there place the rider; Chinese and Malay admissions
+    "down liao, coming": "U", "I'm down, coming": "U", "I'm out already, coming": "U", "coming down liao": "L",
+    "\u5feb\u5230\u4e86": "L", "\u6211\u5728\u697c\u4e0b": "P", "belum sampai": "L", "nak sampai": "L", "dah sampai": "P",
+}
+
+
+# D30 before-arrival reading (engine proxy): C = counted (PLACES or UNCLEAR), X = not counted. Pick-up place for the check:
+# Tiong Bahru Plaza. Placements must never be dropped; questions about the driver, instructions and admissions are dropped.
+BEFORE_ARRIVAL_CASES = {
+    "Already at lobby, where are you?": "C", "At the lobby liao, u where?": "C", "Here already, which car?": "C",
+    "\u5230\u4e86\uff0c\u4f60\u5728\u54ea\uff1f": "C", "Dah sampai, mana you?": "C", "at void deck, can wait?": "C", "I wait at lobby": "C",
+    "I'm at the bus stop near the lobby": "C", "We wait at the taxi stand": "C", "I'm at TBP now": "C", "Saya di lobi": "C",
+    "Reached the pick up point. Where r u?": "C", "I'm at Tiong Bahru Plaza": "C", "I'm by the road": "C",
+    "where are you?": "X", "u reach already?": "X", "Pick me up at the lobby": "X", "pls stop at the bus stop": "X",
+    "\u6211\u5728\u8def\u4e0a": "X", "otw down liao": "X", "Hi uncle": "X", "ok": "X", "I can't see your car": "X", "coming down in 5": "X",
 }
 
 
@@ -591,7 +697,17 @@ def reading_check() -> list[dict]:
         if got != code[want]:
             out.append({"text": text, "expected": code[want], "got": got,
                         "unsafe": want == "P" and got in ("LATE", "NEUTRAL")})
+    names = ["tiong bahru plaza"]
+    for text, want in BEFORE_ARRIVAL_CASES.items():
+        got = E.before_arrival_reading({"type": "message", "content": text}, names)
+        if (got is not None) != (want == "C"):
+            out.append({"text": text, "expected": "counted before arrival" if want == "C" else "not counted before arrival",
+                        "got": str(got), "unsafe": want == "C"})
     for m in reading_corpus():
+        if m["label"] in ("P", "PU") and any(re.search(p_, E._rider_text(m["text"])) for p_ in E.RIDER_SELF_PLACE_PHRASES) \
+                and not any(re.search(p_, E._rider_text(m["text"])) for p_ in E.RIDER_QUESTION_PHRASES) \
+                and E.before_arrival_reading({"type": "message", "content": m["text"]}, names) is None:
+            out.append({"text": m["text"], "expected": "counted before arrival (a self-placement)", "got": "None", "unsafe": True})
         got = E.rider_contact_reading({"type": "message", "content": m["text"]})
         if m["label"] in ("P", "PU") and got in ("LATE", "NEUTRAL"):
             out.append({"text": m["text"], "expected": "PLACES or UNCLEAR", "got": got, "unsafe": True})
@@ -660,4 +776,5 @@ if __name__ == "__main__":
     bad = reading_check()
     for b in bad:
         print("FAIL reading", ("UNSAFE " if b["unsafe"] else "") + repr(b["text"]), "expected", b["expected"], "got", b["got"])
-    print(len(READING_CASES) + len(reading_corpus()) - len(bad), "/", len(READING_CASES) + len(reading_corpus()), "message readings")
+    n = len(READING_CASES) + len(BEFORE_ARRIVAL_CASES) + len(reading_corpus())
+    print(n - len(bad), "/", n, "message readings")
