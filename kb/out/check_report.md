@@ -2,13 +2,13 @@
 
 Generated from the YAML source files (knowledge base dated 2026-10-05).
 
-* Rules: 87; vocabularies: 22; TX-CASE leaves: 33; entities: 20; events: 35; playbooks: 11
-* Rule sources: 142; VERIFIED 113, NO_QUOTE (design assumption) 22, PARAPHRASE 7
-* Credibility: A 27, B 11, C 6, D 43; modes: HARD 73, HARD+READ 6, READ 8
+* Rules: 88; vocabularies: 22; TX-CASE leaves: 33; entities: 20; events: 35; playbooks: 11
+* Rule sources: 143; VERIFIED 113, NO_QUOTE (design assumption) 23, PARAPHRASE 7
+* Credibility: A 27, B 11, C 6, D 44; modes: HARD 74, HARD+READ 6, READ 8
 * DISP-002 fields mapped: 59 of 59 leaf paths
 * DT-CW-NOSHOW enumeration: {'combinations': 96, 'unique': 96, 'gaps': 0, 'overlaps': 0}
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
-* Engine self-test: 70/70 variants pass
+* Engine self-test: 74/74 variants pass
 * Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
 * Annotation workbook: workbooks skipped (--no-xlsx)
@@ -94,13 +94,17 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | V55 | V06 with pings every 30 s until 08:46 and none after (300 s of silence before the threshold, rider not contesting) | UPHOLD | R8 | APPROVE | 1.0 | pass |
 | V56 | V06, and the rider messages 'still getting ready, can wait another 10 min?' (round 1 case E01): an admission, not counter-evidence | UPHOLD | R8 | AUTO | 1.0 | pass |
 | V57 | V06, and the rider messages 'Coming!! 1 min, walking over from the MRT' (round 1 case E03) | UPHOLD | R8 | AUTO | 1.0 | pass |
-| V58 | V06, and the rider messages 'coming down, 2 min' (the message in round 1 case E07, a waiting fee) | UPHOLD | R8 | AUTO | 1.0 | pass |
+| V58 | V06, and the rider messages 'coming down, 2 min' (the message of round 1 case E07; E07 is a waiting fee, which this engine does not run) | UPHOLD | R8 | AUTO | 1.0 | pass |
 | V59 | V06, and the rider messages that they are at the pick-up point and cannot see the car | ESCALATE_HUMAN | R7 | HUMAN | 1.0 | pass |
 | V60 | V06, and the rider first says 'coming down, 2 min', then 'I'm here at the lobby, where are you?' before the cancellation | ESCALATE_HUMAN | R7 | HUMAN | 1.0 | pass |
 | V61 | V06, and the rider calls the driver during the wait (what was said is not recorded): the other reading decides, so approval | UPHOLD | R8 | APPROVE | 1.0 | pass |
 | V62 | V06, and the rider's message fits both readings ('I'm here, coming out now'): approval | UPHOLD | R8 | APPROVE | 1.0 | pass |
 | V63 | V06, and the rider only answers 'ok' during the wait | UPHOLD | R8 | AUTO | 1.0 | pass |
 | V64 | V06, and the rider messages 'where are you?' only after the cancellation: outside the wait | UPHOLD | R8 | AUTO | 0.964 | pass |
+| V65 | V06, and the rider asks 'uncle coming?' during the wait (asking where the driver is contests presence) | ESCALATE_HUMAN | R7 | HUMAN | 1.0 | pass |
+| V66 | V06, the driver asks 'Are you at the lobby now?' and the rider answers 'yes': unclear on its own, so approval | UPHOLD | R8 | APPROVE | 1.0 | pass |
+| V67 | Ryde advance booking for 08:45, driver at the pin from 08:38; rider GPS at the pin at 08:40, after the arrival and before the anchor | ESCALATE_HUMAN | R7 | HUMAN | 1.0 | pass |
+| V68 | V06, and the rider messages 'coming down now' at 08:51:30, after the 8-minute threshold and before the cancellation | UPHOLD | R8 | AUTO | 1.0 | pass |
 
 ## Entity coverage (ONT.6)
 
@@ -210,15 +214,16 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | FC-F03 | 2 | REGULATION | LTA-PDVL-OFFENCES | 2023-04-01 |  | VERIFIED | sources/research/09_fact_check.md | Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct  |  |
 | FC-F03 | 3 | INDUSTRY | IND-DIDI-DETOUR | undated (read 2026-10-05) |  | VERIFIED | sources/research/09_fact_check.md | 司机采用 App 导航，导致的乘客投诉绕路，视为司机履约，不承担违约责任 |  |
 | FC-F04 | 1 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | Please key in ERP based on the ERP gantry you passed during the journey. |  |
+| FC-R00 | 1 | RYDE_POLICY | RYDE-900003406966 | 2026-01-26 |  | VERIFIED | corpus body | Do note that all fees for Standard and/or Premium Taxi Services follow that of the respective taxi company. |  |
+| FC-R00 | 2 | RYDE_POLICY | RYDE-900003406966 | 2026-01-26 |  | VERIFIED | corpus body | Please do note that the payment method accepted for RydeTAXI is only via cash. |  |
+| FC-R00 | 3 | RYDE_POLICY | RYDE-900004230226 | 2026-01-26 |  | VERIFIED | corpus body | Key in the fare as indicated on your meter. |  |
+| FC-R00 | 4 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | That no platform-computed refund applies and the case escalates is FairRyde's reading (fix |
 | FC-R01 | 1 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | The trip fare is fixed based on pick-up and drop-off points, hence the driver may decide to take the most effi |  |
 | FC-R01 | 2 | RYDE_POLICY | RYDE-30741244296217 | 2025-07-17 |  | VERIFIED | corpus body | Fares quoted for our services are generally fixed, except for RydeTAXI. | [clause is one side of a META-04 known conflict: does not count toward A] |
 | FC-R02 | 1 | RYDE_POLICY | RYDE-4412122016153 | 2023-06-16 |  | VERIFIED | corpus body | So you may decide to take the fastest or most efficient route based on your GPS. |  |
 | FC-R02 | 2 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | If you have a preferred route, you may recommend this to your driver and reach a mutual agreement before you g |  |
 | FC-R03 | 1 | REGULATION | LTA-PDVL-OFFENCES | 2023-04-01 |  | VERIFIED | sources/research/09_fact_check.md | Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct  |  |
 | FC-R03 | 2 | INDUSTRY | IND-DIDI-DETOUR | undated (read 2026-10-05) |  | VERIFIED | sources/research/09_fact_check.md | 实际行驶里程÷腾讯地图里程 ≥120% 且 绕路里程≥3 公里，则判定为绕路 |  |
-| FC-R03 | 3 | RYDE_POLICY | RYDE-30741244296217 | 2025-07-17 |  | VERIFIED | corpus body | Fares quoted for our services are generally fixed, except for RydeTAXI. | Basis of the METERED exclusion (fix FX2, validation round 1 case E10). [clause is one side |
-| FC-R03 | 4 | RYDE_POLICY | RYDE-900003406966 | 2026-01-26 |  | VERIFIED | corpus body | Do note that all fees for Standard and/or Premium Taxi Services follow that of the respective taxi company. |  |
-| FC-R03 | 5 | RYDE_POLICY | RYDE-900004230226 | 2026-01-26 |  | VERIFIED | corpus body | Key in the fare as indicated on your meter. |  |
 | FC-R04 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  |  |
 | FC-R05 | 1 | INDUSTRY | IND-BENCHMARK-NOTES | 2026-10-05 |  | PARAPHRASE |  |  | DiDi charges only the estimated fare when a detour is found (research notes 02 and 08). |
 | FC-R06 | 1 | RYDE_POLICY | RYDE-115000772653 | 2024-04-19 |  | VERIFIED | corpus body | If a rider passes through an active ERP gantry, the toll charge will be applicable to the rider. |  |
@@ -324,9 +329,10 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | FC-F02 | fact | D | HARD | D | FAIRRYDE |  |
 | FC-F03 | fact | C | READ |  | INDUSTRY, REGULATION, RYDE_POLICY | Rider agreement (Ryde, older article) and "reasonable cause" (LTA) are B; the navigation-reroute exemption comes from Di |
 | FC-F04 | fact | A | HARD | A | RYDE_POLICY |  |
+| FC-R00 | eligibility | D | HARD | C | FAIRRYDE, RYDE_POLICY | The RydeTAXI facts are Ryde text (rider and driver articles edited 2026-01-26, A). Excluding metered fares from a platfo |
 | FC-R01 | outcome | B | HARD |  | RYDE_POLICY | Both rider articles were edited more than 12 months ago (2024-10-01, 2025-07-17). Ask the organizer to confirm fixed far |
 | FC-R02 | eligibility | B | READ |  | RYDE_POLICY | Both articles were edited more than 12 months ago (2023-06-16, 2024-10-01). |
-| FC-R03 | outcome | C | HARD+READ | C | INDUSTRY, REGULATION, RYDE_POLICY | The duty to take the shortest route is in Singapore regulation (B); the numeric thresholds are DiDi's published values u |
+| FC-R03 | outcome | C | HARD+READ | C | INDUSTRY, REGULATION | The duty to take the shortest route is in Singapore regulation (B); the numeric thresholds are DiDi's published values u |
 | FC-R04 | outcome | D | HARD | D | FAIRRYDE |  |
 | FC-R05 | remedy | D | HARD | D | INDUSTRY |  |
 | FC-R06 | eligibility | A | HARD |  | RYDE_POLICY |  |

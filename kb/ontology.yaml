@@ -411,7 +411,7 @@ events:
   - {code: wait_timer_started, actor: PLATFORM, target: "DRIVER, RIDER", changes: "SM-TRIP: ARRIVED -> WAITING_FREE", note: "In DISP-002 it is logged 10 s after arrival; tolerance rule DQ-01."}
   - {code: wait_timer_expired, actor: PLATFORM, target: "DRIVER, RIDER", changes: "SM-TRIP: WAITING_FREE -> WAITING_CHARGEABLE", is_update: true, note: "An UPDATE of the waiting state, not a new trip."}
   - {code: driver_called_rider, actor: DRIVER, target: RIDER, changes: "none (contact attempt)"}
-  - {code: rider_called_driver, actor: RIDER, target: DRIVER, changes: "none (contact attempt; counts as rider-side system evidence, rule CW-F06)"}
+  - {code: rider_called_driver, actor: RIDER, target: DRIVER, changes: "none (contact attempt; counter-evidence only if what was said places the rider at the pick-up or contests presence, rule CW-F06)"}
   - {code: message_sent, actor: "RIDER or DRIVER", target: "the other party", changes: "none (contact attempt or agreement)"}
   - {code: rider_cancelled, actor: RIDER, target: PLATFORM, changes: "SM-TRIP: any pre-pickup state -> CANCELLED_BY_RIDER"}
   - {code: driver_cancelled, actor: DRIVER, target: PLATFORM, changes: "SM-TRIP: WAITING_* -> CANCELLED_NO_SHOW; SM-TRIP: EN_ROUTE -> CANCELLED_BY_DRIVER; SM-TRIP: WAITING_* -> CANCELLED_BY_DRIVER", note: "CANCELLED_NO_SHOW when the reason is rider_no_show."}

@@ -69,7 +69,7 @@ playbooks:
       - {n: 8, do: COMPUTE, rule: "CW-F03, CW-F03B", note: "Elapsed wait and margin, counted from the confirmed wait start (CW-F03B moves the start to the GPS confirmation)"}
       - {n: 9, do: COMPUTE, rule: CW-F04, note: "Driver presence over the waiting the fee pays for: CONSISTENT, SPARSE, LEFT or UNKNOWN"}
       - {n: 10, do: COMPUTE, rule: CW-F05, note: "Contact attempts"}
-      - {n: 11, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement to see whether it contests presence, timing or place"}
+      - {n: 11, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the cancellation, to see whether they place the rider at the pick-up or contest presence, timing or place"}
       - {n: 12, do: COMPUTE, rule: CW-F07, note: "Pin versus venue"}
       - {n: 13, do: GET, rule: GEN-R05, note: "Both advocates' briefs (Rider Advocate, Driver Advocate), citing findings and evidence IDs only"}
       - {n: 14, do: DECIDE, table: DT-CW-NOSHOW, note: "Then the overrides: a policy gap (PB-INTAKE step 8 or step 3 here) escalates (GEN-R07); a request outside the window keeps the fee (MAT-04)"}
@@ -108,7 +108,7 @@ playbooks:
     answer_mode: RULING
     status: draft
     sources: [RYDE-23534478435353, RYDE-4408079464217, RYDE-27085468660505]
-    required_evidence: [E-TKT-01, E-TRP-01, "E-APP-* (driver_arrived, rider_picked_up, waiting_fee_tapped, trip_completed)", "E-GPS-* during the wait"]
+    required_evidence: [E-TKT-01, E-TRP-01, "E-APP-* (driver_arrived, rider_picked_up, waiting_fee_tapped, trip_completed)", "E-GPS-* during the wait", "E-CHT-* (calls and messages)"]
     steps:
       - {n: 1, do: CHECK, rule: MAT-04}
       - {n: 2, do: COMPUTE, rule: "CW-F02 or CW-F02B"}
@@ -117,9 +117,10 @@ playbooks:
       - {n: 5, do: COMPUTE, rule: CW-F04}
       - {n: 6, do: CHECK, rule: CW-R05}
       - {n: 7, do: GET, rule: GEN-R05, note: "Both advocates' briefs"}
-      - {n: 8, do: CHECK, rule: "CW-R12, DQ-06, CW-R10"}
-      - {n: 9, do: ESCALATE_IF, rule: "AUTH-05, AUTH-01 to AUTH-04, AUTH-06"}
-      - {n: 10, do: EXPLAIN, rule: "EXP-01 to EXP-03"}
+      - {n: 8, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the end of CW-F04's window (the free wait, or boarding if earlier)"}
+      - {n: 9, do: CHECK, rule: "CW-R12, DQ-06, CW-R10"}
+      - {n: 10, do: ESCALATE_IF, rule: "AUTH-05, AUTH-01 to AUTH-04, AUTH-06"}
+      - {n: 11, do: EXPLAIN, rule: "EXP-01 to EXP-03"}
 
   - id: PB-FC-ROUTE
     name: Route deviation / longer route dispute
@@ -127,14 +128,14 @@ playbooks:
     when: {taxonomy: FC-ROUTE}
     answer_mode: RULING
     status: draft
-    sources: [RYDE-30741244296217, RYDE-900003406966, RYDE-4412121982745, RYDE-4412122016153, LTA-PDVL-OFFENCES, IND-DIDI-DETOUR]
+    sources: [RYDE-30741244296217, RYDE-900003406966, RYDE-900004230226, RYDE-4412121982745, RYDE-4412122016153, LTA-PDVL-OFFENCES, IND-DIDI-DETOUR]
     required_evidence: [E-TKT-01, E-TRP-01, "fare breakdown (E-PAY-*)", "recorded trip distance", "precomputed recommended route", "E-GPS-* trip trace", "E-CHT-* (route requests or agreements)", "traffic or incident snapshot"]
     steps:
       - {n: 1, do: COMPUTE, rule: FC-F01, note: "Pricing mode first: money before geometry"}
       - {n: 2, do: CHECK, rule: FC-R01, note: "Fixed fare and charged = quoted: stop with no fare refund (still check ERP if contested)"}
       - {n: 3, do: COMPUTE, rule: "DQ-05, FC-F02", note: "Fare arithmetic; detour measurement"}
       - {n: 4, do: READ, rule: "FC-F03, FC-R02", note: "Read chat for route requests or agreements; check incidents"}
-      - {n: 5, do: CHECK, rule: "FC-R03, FC-R04, GEN-R07", note: "METERED (RydeTAXI): no ruling; escalate under GEN-R07 with the measurement attached"}
+      - {n: 5, do: CHECK, rule: "FC-R00, FC-R03, FC-R04, GEN-R07", note: "METERED (RydeTAXI): no ruling; escalate under GEN-R07 (FC-R00) with the measurement, the formula's difference and the driver's response attached"}
       - {n: 6, do: COMPUTE, rule: FC-R05, note: "Refund amount (RECALCULATED fares); for METERED fares the difference is information for the reviewer, never a refund"}
       - {n: 7, do: CHECK, rule: FC-R12, note: "Insufficient data"}
       - {n: 8, do: GET, rule: GEN-R05, note: "Both advocates' briefs"}

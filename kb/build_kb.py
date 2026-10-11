@@ -57,6 +57,10 @@ def main(argv):
     for t in tests:
         if not t["ok"]:
             rep.add("ERROR", "engine-selftest", t["id"], "; ".join(t["problems"]))
+    reading_bad = selftest.reading_check()
+    for x in reading_bad:
+        rep.add("ERROR", "reading-selftest", x["text"][:40], f"CW-F06 message reading expected {x['expected']}, got {x['got']}"
+                + (" (unsafe: a placing or contesting message read as no counter-evidence)" if x["unsafe"] else ""))
     decided = {t["got"]["row"] for t in tests if t["got"]["row"] and t["got"]["reasons"]
                and t["got"]["reasons"][0] not in ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP")}
     for row in kb.y["rules"]["decision_tables"]["DT-CW-NOSHOW"]["rows"]:
@@ -157,6 +161,7 @@ def main(argv):
         print(f"DISP-002 [{prof}]: {t.outcome} via {t.dt_row}, reasons {t.reasons}, flags {t.flags}, C={t.confidence['C']}, tier {r['tier']['tier']}")
     print(f"DT-CW-NOSHOW enumeration: {dt_enum}")
     print(f"engine self-test: {sum(t['ok'] for t in tests)}/{len(tests)} variants pass; rows decided by self-tests: {sorted(decided, key=lambda s: int(s[1:]))}")
+    print(f"CW-F06 message readings: {len(selftest.READING_CASES) - len(reading_bad)}/{len(selftest.READING_CASES)} as expected")
     if fuzz:
         print(f"GPS fuzz (seed 7): {fuzz[0]} random cases, {fuzz[1]} automatic, {fuzz[2]} crashes, {len(fuzz[3])} findings")
     print(f"privacy dry run (counts only): before {priv['before']} after {priv['after']} fragments {priv['fragments_after']} clean={priv['clean']}")

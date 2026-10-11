@@ -595,29 +595,34 @@ rules:
     applies_to: [CW-NOSHOW, CW-WAITING]
     statement: >-
       During the wait means from the driver's arrival indication (the wait anchor when there is none) to the cancellation for
-      a no-show fee, or to boarding for a waiting fee. STRONG if, during the wait, rider-side records of tier A, B or C show
+      a no-show fee; for a waiting fee it ends where CW-F04's window ends (the end of the free wait, or boarding if that
+      comes first). STRONG if, during the wait, rider-side records of tier A, B or C show
       the rider at the pin (within ARRIVAL_GEOFENCE_M) or at the named venue (within PIN_VENUE_MAX_M), or a notification
       failure is logged, or a call or message from the rider to the driver places the rider at the pin or the venue or
       contests the driver's presence, the timing or the place (for example "I'm at the pick-up point", "where are you?",
       "I can't see your car"). A rider call or message that admits being late or still on the way ("still getting ready",
-      "coming, 1 min", "coming down") is not counter-evidence, and neither is an acknowledgment ("ok"). A call whose words
-      are not recorded, or a message that fits neither reading, is read as not placing the rider at the pick-up, and the
-      reading test checks whether the other reading changes the outcome (decisive_definition clause 1). WEAK if the rider's
+      "coming, 1 min", "coming down") is not counter-evidence, and neither is an acknowledgment ("ok"). Asking where the
+      driver is ("are you coming?", "which car?") contests presence. A call whose words are not recorded, or a message that
+      fits neither reading or both ("I'm here, coming out now"; a bare "yes"), is read as not placing the rider at the
+      pick-up, and the reading test checks whether the other reading changes the outcome (decisive_definition clause 1). WEAK if the rider's
       statement contests the driver's presence, the timing or the place, without such records or messages. NONE if there are
       no such records or messages and the statement does not contest presence, timing or place (for example the rider admits
       being late or asks for a goodwill waiver). Whether a statement, a call or a message contests presence is judged by
       reading it.
-    zh: 等待期间指从司机标记到达（没有到达标记时为等待锚点）到取消（缺席取消费）或到乘客上车（等候费）。等待期间以下任一项为 STRONG：乘客侧 A、B、C 级记录显示乘客在上车点（ARRIVAL_GEOFENCE_M 内）或在所说的场馆（PIN_VENUE_MAX_M 内）；有通知失败日志；乘客打给司机的电话或发的消息说明自己在上车点或场馆，或对司机在场、时间、地点提出异议（例如"我在上车点""你在哪""看不到你的车"）。乘客承认迟到或还在路上的电话或消息（"还在准备""马上到，1 分钟""在下楼"）不算反证，只回"好"之类也不算。没有通话内容记录的电话、或两种读法都套不上的消息，先按"没有说明乘客在上车点"读，再由读法测试看另一种读法会不会改变结果（decisive_definition 第 1 条）。乘客陈述对司机在场、时间或地点提出异议但没有上述记录或消息为 WEAK；既无记录或消息、陈述也不争这些点（例如承认迟到、只求善意免除）为 NONE。陈述、电话、消息是否构成异议需读原文判断。
+    zh: 等待期间指从司机标记到达（没有到达标记时为等待锚点）起算；缺席取消费到取消为止，等候费到 CW-F04 的窗口结束为止（免费等待结束，若先上车则到上车）。等待期间以下任一项为 STRONG：乘客侧 A、B、C 级记录显示乘客在上车点（ARRIVAL_GEOFENCE_M 内）或在所说的场馆（PIN_VENUE_MAX_M 内）；有通知失败日志；乘客打给司机的电话或发的消息说明自己在上车点或场馆，或对司机在场、时间、地点提出异议（例如"我在上车点""你在哪""看不到你的车"）。乘客承认迟到或还在路上的电话或消息（"还在准备""马上到，1 分钟""在下楼"）不算反证，只回"好"之类也不算。问司机在哪（"你来了吗""哪辆车"）算对司机在场提出异议。没有通话内容记录的电话、或两种读法都套不上或都套得上的消息（"我到了，马上出来"；只回"是"），先按"没有说明乘客在上车点"读，再由读法测试看另一种读法会不会改变结果（decisive_definition 第 1 条）。乘客陈述对司机在场、时间或地点提出异议但没有上述记录或消息为 WEAK；既无记录或消息、陈述也不争这些点（例如承认迟到、只求善意免除）为 NONE。陈述、电话、消息是否构成异议需读原文判断。
     params: [ARRIVAL_GEOFENCE_M, PIN_VENUE_MAX_M]
     produces_finding: F-RIDER-EVIDENCE
     sources:
-      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "Content-based reading of rider calls and messages since KB v0.2 (fix FX1, validation round 1 cases E01, E03 and E07, confirmed by Jasper on 2026-10-11)."}
+      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "Content-based reading of rider calls and messages since KB v0.2 (fix FX1, validation round 1 cases E01, E03 and E07). Jasper confirmed the outcomes of those three cases (the fee stands) on 2026-10-11; the reading rule itself is FairRyde's design."}
     credibility: D
     credibility_note: >-
       FairRyde's design (D). Until v0.1 any rider call or message during the wait was STRONG whatever it said, which sent
       routine no-show and waiting-fee cases to a person even when the rider's own message admitted being late. The window
-      deliberately runs past the end of CW-F04's window (the threshold): a rider who reaches the pick-up before the driver
-      cancels, or before boarding, does contest the fee.
+      starts at the arrival indication, which can be earlier than CW-F04's window start (CW-F03B), so a rider at the pin
+      before GPS confirms the driver still counts. For a no-show fee it runs to the cancellation, past the threshold where
+      CW-F04's window stops: a rider who reaches the pick-up before the driver cancels does contest the no-show. For a
+      waiting fee it ends with CW-F04's window, as FX1 asked: a rider who first reaches the pick-up after the free wait is
+      the late rider the fee is for, and their "I'm downstairs" on arrival is not counter-evidence.
     mode: HARD+READ
     status: draft
 
@@ -967,6 +972,34 @@ rules:
     status: draft
 
   # ---------------------------------------------------------------- FC outcomes
+  - id: FC-R00
+    name: No platform-computed detour refund on a metered RydeTAXI fare
+    family: FC
+    type: eligibility
+    applies_to: [FC-ROUTE]
+    statement: >-
+      FC-R03 and FC-R05 do not apply to a METERED fare (RydeTAXI, FC-F01). Ryde's RydeTAXI articles say the fees follow
+      those of the respective taxi company, the driver keys in the fare shown on the meter, and payment is in cash only;
+      Ryde publishes no rule for refunding a metered fare. FairRyde measures the detour (FC-F02, FC-F03) but does not rule
+      on it: it escalates under GEN-R07 (reason GEN-R-POLICY-GAP) and attaches, for the reviewer, the detour measurement,
+      the difference FC-R05's formula would give (information only, never a proposed refund; computed with TAXI_TARIFF,
+      one operator's tariff, while the trip's taxi company may charge differently) and the driver's response (GEN-R05).
+    zh: FC-R03 和 FC-R05 不适用于计程车费（RydeTAXI，见 FC-F01）。Ryde 的 RydeTAXI 文章说费用按各出租车公司的标准、司机按计价器显示的金额录入车费、只收现金；Ryde 没有公开计程车费的退款规则。FairRyde 照样测量绕路（FC-F02、FC-F03），但不作裁决：按 GEN-R07 转人工（原因 GEN-R-POLICY-GAP），并附给审核人绕路测量、按 FC-R05 公式算出的差额（仅供参考，不作为退款建议；用的是 TAXI_TARIFF，只是一家运营商的费率，本趟出租车公司的收费可能不同）和司机的回应（GEN-R05）。
+    params: [TAXI_TARIFF]
+    produces: [GEN-R-POLICY-GAP]
+    sources:
+      - {type: RYDE_POLICY, doc: RYDE-900003406966, quote: 'Do note that all fees for Standard and/or Premium Taxi Services follow that of the respective taxi company.'}
+      - {type: RYDE_POLICY, doc: RYDE-900003406966, quote: 'Please do note that the payment method accepted for RydeTAXI is only via cash.'}
+      - {type: RYDE_POLICY, doc: RYDE-900004230226, quote: 'Key in the fare as indicated on your meter.'}
+      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "That no platform-computed refund applies and the case escalates is FairRyde's reading (fix FX2, validation round 1 case E10). Jasper confirmed E10's outcome (escalate) on 2026-10-11."}
+    credibility: D
+    credibility_note: >-
+      The RydeTAXI facts are Ryde text (rider and driver articles edited 2026-01-26, A). Excluding metered fares from a
+      platform-computed refund extends them, so the rule is D under the credibility_principle. Its only outcome is
+      escalation (tier HUMAN under AUTH-06), so it never lets a case be decided automatically.
+    mode: HARD
+    status: draft
+
   - id: FC-R01
     name: Fixed fare means the route did not change the amount
     family: FC
@@ -1001,32 +1034,22 @@ rules:
     status: draft
 
   - id: FC-R03
-    name: Unjustified detour on a metered or recalculated fare
+    name: Unjustified detour on a recalculated fare
     family: FC
     type: outcome
     applies_to: [FC-ROUTE]
     statement: >-
       For RECALCULATED fares: DR at least DETOUR_RATIO_MIN, extra distance at least DETOUR_EXTRA_KM_MIN, spatial
       confirmation, and no justification (FC-F03) means a confirmed detour; refund per FC-R05. METERED fares (RydeTAXI) are
-      excluded, as CW-R00 excludes RydeTAXI from the cancellation policy: Ryde's texts leave taxi fares to the taxi company
-      and give no basis for a refund computed by the platform. For a METERED fare FairRyde measures the detour in the same
-      way but does not rule on it: it escalates under GEN-R07 (reason GEN-R-POLICY-GAP) and attaches, for the reviewer, the
-      detour measurement, the difference FC-R05's formula would give (information only, never a proposed refund) and the
-      driver's response (GEN-R05).
-    zh: 重算车费：绕路比和多出里程都达阈值、空间确认且无正当理由，即认定绕路，按 FC-R05 退款。计程车费（RydeTAXI）除外，就像 CW-R00 把 RydeTAXI 排除在取消政策之外：Ryde 的文本把出租车车费交给出租车公司，没有给平台计算退款的依据。计程车费照样测量绕路，但 FairRyde 不作裁决，按 GEN-R07 转人工（原因 GEN-R-POLICY-GAP），并附上绕路测量、按 FC-R05 公式算出的差额（仅供参考，不作为退款建议）和司机的回应（GEN-R05），交给审核人。
+      excluded by FC-R00.
+    zh: 重算车费：绕路比和多出里程都达阈值、空间确认且无正当理由，即认定绕路，按 FC-R05 退款。计程车费（RydeTAXI）按 FC-R00 排除。
     params: [DETOUR_RATIO_MIN, DETOUR_EXTRA_KM_MIN]
-    produces: [FC-R-DETOUR-CONFIRMED, FC-R-DETOUR-JUSTIFIED, GEN-R-POLICY-GAP]
+    produces: [FC-R-DETOUR-CONFIRMED, FC-R-DETOUR-JUSTIFIED]
     sources:
       - {type: REGULATION, doc: LTA-PDVL-OFFENCES, quote: 'Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct route'}
       - {type: INDUSTRY, doc: IND-DIDI-DETOUR, quote: '实际行驶里程÷腾讯地图里程 ≥120% 且 绕路里程≥3 公里，则判定为绕路'}
-      - {type: RYDE_POLICY, doc: RYDE-30741244296217, quote: 'Fares quoted for our services are generally fixed, except for RydeTAXI.', note: "Basis of the METERED exclusion (fix FX2, validation round 1 case E10)."}
-      - {type: RYDE_POLICY, doc: RYDE-900003406966, quote: 'Do note that all fees for Standard and/or Premium Taxi Services follow that of the respective taxi company.'}
-      - {type: RYDE_POLICY, doc: RYDE-900004230226, quote: 'Key in the fare as indicated on your meter.'}
     credibility: C
-    credibility_note: >-
-      The duty to take the shortest route is in Singapore regulation (B); the numeric thresholds are DiDi's published values
-      used as a generic assumption (C). The METERED exclusion rests on Ryde's RydeTAXI articles (edited 2026-01-26) and leads
-      only to escalation under GEN-R07, so it never decides an outcome on its own.
+    credibility_note: The duty to take the shortest route is in Singapore regulation (B); the numeric thresholds are DiDi's published values used as a generic assumption (C).
     mode: HARD+READ
     status: draft
 
@@ -1052,10 +1075,10 @@ rules:
     applies_to: [FC-ROUTE]
     statement: >-
       Refund = fare charged minus the fare recomputed on the recommended route with the same tariff, fee tiers and surcharges;
-      floor 0, capped at the fare charged; paid only if at least MIN_REFUND_SGD. Not for METERED fares (RydeTAXI, FC-R03):
+      floor 0, capped at the fare charged; paid only if at least MIN_REFUND_SGD. Not for METERED fares (RydeTAXI, FC-R00):
       there the same formula gives a difference that is attached for the reviewer as information and is never proposed as a
       refund.
-    zh: 退款 = 实收车费减按推荐路线、同一费率重算的车费；不低于 0、不超过实收；低于最小金额不退。计程车费（RydeTAXI，见 FC-R03）不适用：同一公式算出的差额只作为参考附给审核人，不作为退款建议。
+    zh: 退款 = 实收车费减按推荐路线、用同一费率、费用档位和附加费重算的车费；不低于 0、不超过实收；低于最小金额不退。计程车费（RydeTAXI，见 FC-R00）不适用：同一公式算出的差额只作为参考附给审核人，不作为退款建议。
     params: [MIN_REFUND_SGD, TAXI_TARIFF, PLATFORM_FEE_TIERS, TRANSACTION_FEE_LOCAL]
     sources:
       - {type: INDUSTRY, doc: IND-BENCHMARK-NOTES, quote_kind: paraphrase, note: "DiDi charges only the estimated fare when a detour is found (research notes 02 and 08)."}
