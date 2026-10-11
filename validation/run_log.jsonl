@@ -52,3 +52,4 @@
 {"time": "2026-10-11T16:30:15+08:00", "event": "start", "step": "A1", "dep": "D", "actor": "builder", "what": "FX1 rider evidence content-based (CW-F06), FX2 metered RydeTAXI exclusion (FC-R03, FC-R05); human check of E01 E03 E07 E10 recorded"}
 {"time": "2026-10-11T16:39:00+08:00", "event": "start", "step": "A1.E1", "dep": "E", "actor": "builder", "what": "rerun the reference engine on round 1 cases E01 to E04"}
 {"time": "2026-10-11T16:39:00+08:00", "event": "end", "step": "A1.E1", "result": "4/4 outcomes match the references", "outputs": ["build_checks/A1/01_engine_rerun.json"]}
+{"time": "2026-10-11T16:40:20+08:00", "event": "start", "step": "A1.D1", "dep": "D", "actor": "fresh_agents", "what": "independent check of A1: KB appliers on E07 and E10, four reviewers (fidelity, grounding, adversarial engine test, consistency), one skeptic per dimension"}
