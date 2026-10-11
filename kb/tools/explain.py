@@ -264,12 +264,14 @@ def noshow(kb, run: dict) -> dict:
     miss_common = ("Missing evidence: " + "; ".join(missing) + "." if missing else "")
     rcd = getattr(t, "rider_contact_detail", None) or {}
     rider_contact_ids, outside_ids = list(rcd.get("readings", {})), rcd.get("outside_ids") or []
+    gps_line = (" The GPS points from your phone in the trip record do not show you at the pick-up point during the wait."
+                if case.get("rider_gps_telemetry") else " There is no GPS trace from your phone in the trip record.")
     if rider_ev == "STRONG":
         rider_records = ""
     elif not rider_contact_ids and not outside_ids:
-        rider_records = " There is no GPS trace from your phone and no call or message from you in the trip record."
+        rider_records = gps_line + " There is no call or message from you in the trip record."
     else:
-        rider_records = " There is no GPS trace from your phone in the trip record."
+        rider_records = gps_line
         if rcd.get("late_ids"):
             one = len(rcd["late_ids"]) == 1
             rider_records += (f" Your {'message' if one else 'messages'} during the wait ({_ids(rcd['late_ids'])}) said you were running late or still on"

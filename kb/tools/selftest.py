@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 import json
 import random
+from pathlib import Path
 
 import engine_noshow as E
 
@@ -569,14 +570,20 @@ READING_CASES = {
     "on the way": "L", "otw": "L", "abt to reach": "L", "almost there": "L", "I'll be down in 3": "L", "so sorry, running late": "L",
     "coming down now": "L", "coming down to the lobby now": "L", "5 min": "L",
     # acknowledgments and unclear messages
-    "ok": "N", "Thank you": "N", "yes": "U", "ya": "U", "sure": "U", "Hello?": "U", "wait ah": "U", "can wait for me?": "U",
+    "ok": "N", "Thank you": "N", "yes": "U", "ya": "U", "sure": "U", "Hello?": "P", "wait ah": "U", "can wait for me?": "L",
     "here liao, can wait 1 min? i see your car": "U", "the pin is wrong, I'm on the other side, coming over": "U",
     "Sorry I went to the wrong entrance": "U", "I'm outside the MRT, 5 min": "U", "I put the wrong location, sorry": "U",
-    "outside 7-11 waiting": "U", "I'm here, coming out now": "U",
+    "outside 7-11 waiting": "P", "I'm here, coming out now": "U",
+    # round 2 review: durations, questions without a question mark, bare "where?", other languages
+    "I wait 10 min already": "P", "u still coming ah": "P", "Is the driver on the way": "P", "coming down, where?": "U",
+    "sampai liao, coming out now": "U", "u too early, I'm coming down at 8.45 as booked": "U", "reach soon": "L",
+    "I'm at the lift": "L", "I'm almost at the lobby": "U", "I went to the wrong building": "U",
 }
 
 
 def reading_check() -> list[dict]:
+    """READING_CASES must read exactly as expected; the reviewers' corpus (cw_f06_reading_corpus.json) must have no unsafe
+    reading (a placing or contesting message read LATE or NEUTRAL) and no over-escalation (an admission read PLACES)."""
     code = {"P": "PLACES", "L": "LATE", "N": "NEUTRAL", "U": "UNCLEAR"}
     out = []
     for text, want in READING_CASES.items():
@@ -584,7 +591,17 @@ def reading_check() -> list[dict]:
         if got != code[want]:
             out.append({"text": text, "expected": code[want], "got": got,
                         "unsafe": want == "P" and got in ("LATE", "NEUTRAL")})
+    for m in reading_corpus():
+        got = E.rider_contact_reading({"type": "message", "content": m["text"]})
+        if m["label"] in ("P", "PU") and got in ("LATE", "NEUTRAL"):
+            out.append({"text": m["text"], "expected": "PLACES or UNCLEAR", "got": got, "unsafe": True})
+        elif m["label"] in ("L", "LU", "N") and got == "PLACES":
+            out.append({"text": m["text"], "expected": "not PLACES (an admission)", "got": got, "unsafe": False})
     return out
+
+
+def reading_corpus() -> list[dict]:
+    return json.loads((Path(__file__).resolve().parent / "cw_f06_reading_corpus.json").read_text(encoding="utf-8"))["messages"]
 
 
 def run(kb) -> list[dict]:
@@ -643,4 +660,4 @@ if __name__ == "__main__":
     bad = reading_check()
     for b in bad:
         print("FAIL reading", ("UNSAFE " if b["unsafe"] else "") + repr(b["text"]), "expected", b["expected"], "got", b["got"])
-    print(len(READING_CASES) - len(bad), "/", len(READING_CASES), "message readings")
+    print(len(READING_CASES) + len(reading_corpus()) - len(bad), "/", len(READING_CASES) + len(reading_corpus()), "message readings")

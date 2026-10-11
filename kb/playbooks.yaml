@@ -116,8 +116,8 @@ playbooks:
       - {n: 4, do: COMPUTE, rule: "CW-F03, CW-F03B", note: "Use boarding time instead of cancellation time, and FREE_WAIT_S as the threshold"}
       - {n: 5, do: COMPUTE, rule: CW-F04}
       - {n: 6, do: CHECK, rule: CW-R05}
-      - {n: 7, do: GET, rule: GEN-R05, note: "Both advocates' briefs"}
-      - {n: 8, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the end of CW-F04's window (the free wait, or boarding if earlier)"}
+      - {n: 7, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the end of CW-F04's window (the free wait, or boarding if earlier)"}
+      - {n: 8, do: GET, rule: GEN-R05, note: "Both advocates' briefs"}
       - {n: 9, do: CHECK, rule: "CW-R12, DQ-06, CW-R10"}
       - {n: 10, do: ESCALATE_IF, rule: "AUTH-05, AUTH-01 to AUTH-04, AUTH-06"}
       - {n: 11, do: EXPLAIN, rule: "EXP-01 to EXP-03"}

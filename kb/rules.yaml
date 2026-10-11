@@ -596,10 +596,10 @@ rules:
     statement: >-
       During the wait means from the driver's arrival indication (the wait anchor when there is none) to the cancellation for
       a no-show fee; for a waiting fee it ends where CW-F04's window ends (the end of the free wait, or boarding if that
-      comes first). STRONG if, during the wait, rider-side records of tier A, B or C show
-      the rider at the pin (within ARRIVAL_GEOFENCE_M) or at the named venue (within PIN_VENUE_MAX_M), or a notification
-      failure is logged, or a call or message from the rider to the driver places the rider at the pin or the venue or
-      contests the driver's presence, the timing or the place (for example "I'm at the pick-up point", "where are you?",
+      comes first). STRONG if a failure to notify the rider is logged for the trip (at any time, as in v0.1), or if, during
+      the wait, rider-side records of tier A, B or C show the rider at the pin (within ARRIVAL_GEOFENCE_M) or at the named
+      venue (within PIN_VENUE_MAX_M), or a call or message from the rider to the driver places the rider at the pin or the
+      venue or contests the driver's presence, the timing or the place (for example "I'm at the pick-up point", "where are you?",
       "I can't see your car"). A rider call or message that admits being late or still on the way ("still getting ready",
       "coming, 1 min", "coming down") is not counter-evidence, and neither is an acknowledgment ("ok"). Asking where the
       driver is ("are you coming?", "which car?") contests presence. A call whose words are not recorded, or a message that
@@ -609,7 +609,7 @@ rules:
       no such records or messages and the statement does not contest presence, timing or place (for example the rider admits
       being late or asks for a goodwill waiver). Whether a statement, a call or a message contests presence is judged by
       reading it.
-    zh: 等待期间指从司机标记到达（没有到达标记时为等待锚点）起算；缺席取消费到取消为止，等候费到 CW-F04 的窗口结束为止（免费等待结束，若先上车则到上车）。等待期间以下任一项为 STRONG：乘客侧 A、B、C 级记录显示乘客在上车点（ARRIVAL_GEOFENCE_M 内）或在所说的场馆（PIN_VENUE_MAX_M 内）；有通知失败日志；乘客打给司机的电话或发的消息说明自己在上车点或场馆，或对司机在场、时间、地点提出异议（例如"我在上车点""你在哪""看不到你的车"）。乘客承认迟到或还在路上的电话或消息（"还在准备""马上到，1 分钟""在下楼"）不算反证，只回"好"之类也不算。问司机在哪（"你来了吗""哪辆车"）算对司机在场提出异议。没有通话内容记录的电话、或两种读法都套不上或都套得上的消息（"我到了，马上出来"；只回"是"），先按"没有说明乘客在上车点"读，再由读法测试看另一种读法会不会改变结果（decisive_definition 第 1 条）。乘客陈述对司机在场、时间或地点提出异议但没有上述记录或消息为 WEAK；既无记录或消息、陈述也不争这些点（例如承认迟到、只求善意免除）为 NONE。陈述、电话、消息是否构成异议需读原文判断。
+    zh: 等待期间指从司机标记到达（没有到达标记时为等待锚点）起算；缺席取消费到取消为止，等候费到 CW-F04 的窗口结束为止（免费等待结束，若先上车则到上车）。本趟有通知乘客失败的日志（不论何时，同 v0.1）为 STRONG；等待期间以下任一项也为 STRONG：乘客侧 A、B、C 级记录显示乘客在上车点（ARRIVAL_GEOFENCE_M 内）或在所说的场馆（PIN_VENUE_MAX_M 内）；乘客打给司机的电话或发的消息说明自己在上车点或场馆，或对司机在场、时间、地点提出异议（例如"我在上车点""你在哪""看不到你的车"）。乘客承认迟到或还在路上的电话或消息（"还在准备""马上到，1 分钟""在下楼"）不算反证，只回"好"之类也不算。问司机在哪（"你来了吗""哪辆车"）算对司机在场提出异议。没有通话内容记录的电话、或两种读法都套不上或都套得上的消息（"我到了，马上出来"；只回"是"），先按"没有说明乘客在上车点"读，再由读法测试看另一种读法会不会改变结果（decisive_definition 第 1 条）。乘客陈述对司机在场、时间或地点提出异议但没有上述记录或消息为 WEAK；既无记录或消息、陈述也不争这些点（例如承认迟到、只求善意免除）为 NONE。陈述、电话、消息是否构成异议需读原文判断。
     params: [ARRIVAL_GEOFENCE_M, PIN_VENUE_MAX_M]
     produces_finding: F-RIDER-EVIDENCE
     sources:
@@ -978,13 +978,14 @@ rules:
     type: eligibility
     applies_to: [FC-ROUTE]
     statement: >-
-      FC-R03 and FC-R05 do not apply to a METERED fare (RydeTAXI, FC-F01). Ryde's RydeTAXI articles say the fees follow
+      FC-R03 and FC-R05 do not apply to a METERED fare (RydeTAXI, FC-F01), and FC-R00 takes precedence over FC-R04 and
+      FC-R12 for such a fare (the escalation is the same; the reason is GEN-R-POLICY-GAP). Ryde's RydeTAXI articles say the fees follow
       those of the respective taxi company, the driver keys in the fare shown on the meter, and payment is in cash only;
       Ryde publishes no rule for refunding a metered fare. FairRyde measures the detour (FC-F02, FC-F03) but does not rule
       on it: it escalates under GEN-R07 (reason GEN-R-POLICY-GAP) and attaches, for the reviewer, the detour measurement,
       the difference FC-R05's formula would give (information only, never a proposed refund; computed with TAXI_TARIFF,
       one operator's tariff, while the trip's taxi company may charge differently) and the driver's response (GEN-R05).
-    zh: FC-R03 和 FC-R05 不适用于计程车费（RydeTAXI，见 FC-F01）。Ryde 的 RydeTAXI 文章说费用按各出租车公司的标准、司机按计价器显示的金额录入车费、只收现金；Ryde 没有公开计程车费的退款规则。FairRyde 照样测量绕路（FC-F02、FC-F03），但不作裁决：按 GEN-R07 转人工（原因 GEN-R-POLICY-GAP），并附给审核人绕路测量、按 FC-R05 公式算出的差额（仅供参考，不作为退款建议；用的是 TAXI_TARIFF，只是一家运营商的费率，本趟出租车公司的收费可能不同）和司机的回应（GEN-R05）。
+    zh: FC-R03 和 FC-R05 不适用于计程车费（RydeTAXI，见 FC-F01）；对这类车费 FC-R00 优先于 FC-R04 和 FC-R12（同样转人工，原因为 GEN-R-POLICY-GAP）。Ryde 的 RydeTAXI 文章说费用按各出租车公司的标准、司机按计价器显示的金额录入车费、只收现金；Ryde 没有公开计程车费的退款规则。FairRyde 照样测量绕路（FC-F02、FC-F03），但不作裁决：按 GEN-R07 转人工（原因 GEN-R-POLICY-GAP），并附给审核人绕路测量、按 FC-R05 公式算出的差额（仅供参考，不作为退款建议；用的是 TAXI_TARIFF，只是一家运营商的费率，本趟出租车公司的收费可能不同）和司机的回应（GEN-R05）。
     params: [TAXI_TARIFF]
     produces: [GEN-R-POLICY-GAP]
     sources:

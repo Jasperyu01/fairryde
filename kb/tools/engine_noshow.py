@@ -24,46 +24,75 @@ CONTEST_PHRASES = [r"\bi was (at|there|on time|waiting|outside|at the)", r"never
                    r"couldn'?t find", r"wasn'?t there", r"was not there", r"did ?n[o']t (arrive|come|show)", r"on time",
                    r"wrong (place|location|pin)", r"not at the pick", r"driver was not"]
 # CW-F06, rider calls and messages during the wait: only content that places the rider at the pin or venue, or contests the
-# driver's presence, the timing or the place, is STRONG; an admission of lateness or "coming" is not counter-evidence. The
-# lists are deliberately lopsided: LATE needs a first-person delay and no place or presence cue at all, so a message the
-# lists cannot settle falls to UNCLEAR, where the reading test (approval) applies, never to an automatic uphold.
-_FP = r"(?:i'?\s?m|iam|i am|we'?re|we are)"                     # first person + be ("i'm", "im", "i m", "iam")
-_WHO = r"(?:you|u|ur|you'?re|youre|uncle|aunty|auntie|driver|the car|your car|ur car|anyone|anybody|someone)"
-_SPOT = (r"(?:lobby|lift lobby|void deck|carpark|car park|porch|entrance|exit|gate|door|kerb|curb|taxi stand|bus stop|"
-         r"pick-?\s?up(?: point)?|pin|drop-?off point|blk|block|main road|guardhouse|guard house|driveway|letterbox|other side|opposite)")
-RIDER_QUESTION_PHRASES = [                                      # the rider asks where the driver is: contests presence
-    rf"\b(?:are|r|is)\s+{_WHO}\s+(?:still\s+)?(?:coming|on the way|omw|here|there|near|nearby|reaching|arriving|outside|at|close|around|almost there|nearly there)\b[^.!?]*\??",
-    rf"\b{_WHO}\s+(?:still\s+)?(?:coming|on the way|omw|reaching|reach|here|there|arrive|arrived|arriving|near|nearby|almost there|nearly there)\b[^.!?]*(?:\?|\bor not\b|\banot\b)",
-    rf"\b{_WHO}\s+(?:haven'?t|have not|has not|hasn'?t|never|not yet|didn'?t|did not)\s+(?:arrive|arrived|come|came|reach|reached|show|showed|here|there)",
-    r"\bwhere\s+(?:are|r|is)\s+(?:you|u|ur|your|the)\b", r"\bwhere\s+(?:you|u)\b", r"\b(?:ur|your)\s+car\s+where\b",
-    r"\bwhere(?:'s| is)\s+(?:the|ur|your)\s+(?:car|driver)\b", r"\bhow\s+long\s+more\b", r"\b(?:when|what time)\s+(?:will|are|r|do)\s+(?:you|u)\b",
-    r"\bwhich\s+car\b"]
+# driver's presence, the timing or the place, is STRONG; an admission of lateness or "coming" is not counter-evidence.
+# Safety by construction: a message reads LATE only when it is made up entirely of known admission phrases and filler
+# words. Any other word (a place, a question, a second person, a language the lists do not know) leaves it UNCLEAR, where
+# the reading test applies (approval), never an automatic uphold.
+_FP = r"(?:i'?\s?m|iam|i am|we'?re|we are)"                      # first person + be ("i'm", "im", "i m", "iam")
+_WHO = r"(?:you|u|ur|you'?re|youre|uncle|aunty|auntie|driver|the driver|the car|your car|ur car|car|anyone|anybody|someone|somebody|nobody)"
+_SPOT = (r"(?:lobby|lift lobby|void deck|carpark|car park|porch|entrance|exit|gate|door|kerb|curb|taxi stand|taxi bay|bus stop|"
+         r"pick-?\s?up(?: point)?|pin|drop-?off point|blk|block|main road|guardhouse|guard house|driveway|letterbox|other side|"
+         r"opposite|7-?11|seven eleven|mrt exit|lift landing|side gate|main gate|basement|level \d+ lobby)")
+_NOT_YET = r"(?!\s+(?:soon|later|in\b|yet|liao\s+soon))"         # "reach soon", "here in 2 min" are admissions
+RIDER_QUESTION_PHRASES = [                                      # the rider asks about or doubts the driver: contests presence
+    rf"\b(?:are|r|is|will)\s+{_WHO}\s+(?:still\s+|already\s+|alr\s+)?(?:coming|on the way|on da way|omw|otw|here|there|near|nearby|reaching|arriving|outside|at|close|around|almost there|nearly there|be there)\b",
+    rf"\b{_WHO}\s+(?:still\s+|already\s+|alr\s+|really\s+)?(?:coming|on the way|on da way|omw|otw|reaching|reach|reached|here|there|arrive|arrived|arriving|near|nearby|almost there|nearly there|at where|at which)\b",
+    rf"\b{_WHO}\s+(?:haven'?t|have not|has not|hasn'?t|never|not yet|didn'?t|did not|not even|still not|not)\s+(?:arrive|arrived|come|came|reach|reached|show|showed|here|there)",
+    rf"\b{_WHO}\s+(?:said|say|says|told|wrote|write)\b[^.!?]*", rf"\b{_WHO}\s+(?:are\s+|r\s+|is\s+|too\s+|very\s+|so\s+)*(?:early|late)\b",
+    r"\b(?:where|wer|whr|mana)\b", r"\bwhich\s+(?:car|side|lane|entrance|exit|door|gate|block|blk|level)\b", r"\bhow\s+(?:long\s+more|far)\b",
+    r"\b(?:when|what time)\s+(?:will|are|r|do)\s+(?:you|u)\b", r"\b(?:you|u)\s+left\b", r"\bdid\s+(?:you|u)\s+leave\b",
+    r"\bplate\b"]
+_ENDS_ASKING = r"\?\s*$"                                       # a message that ends in a question, other than asking the driver to wait
 RIDER_PLACE_PHRASES = RIDER_QUESTION_PHRASES + [
-    rf"\b{_FP}\s+(?:already\s+|alr\s+|still\s+|now\s+|just\s+)?(?:here|there|outside|downstairs|down already|waiting(?=\s*(?:$|[.,!?]|for\s+(?:you|u)\b|here|outside|downstairs|at\b|already)))",
-    rf"\b{_FP}\s+(?:already\s+|alr\s+|still\s+|now\s+)?(?:here\s+)?at\b(?!\s+(?:home|work|the office|office|my office|school))",
-    r"\b(?:here|reach|reached|arrived|downstairs|outside)\s+(?:already|alr|liao|le|lah|leh|now)\b", r"\b(?:already|alr)\s+(?:here|there|downstairs|outside|at)\b",
-    r"\b(?:i|we)\s+(?:reach|reached|arrived|am here|have arrived|have reached)\b", r"^\s*(?:reach|reached|here)\b",
-    rf"\b(?:at|outside|near|in front of|beside)\s+(?:the\s+)?{_SPOT}\b",
-    r"\b(?:don'?t|do not|can'?t|cannot|cant|couldn'?t|could not|never)\s+(?:see|find|spot)\s+(?:you|u|your|ur|the car|the driver|any car)",
-    r"\b(?:can'?t|cannot|cant)\s+find\b", r"\b(?:no|not)\s+(?:car|driver)\s+(?:here|there)\b",
-    r"\b(?:you'?re|you are|u r|ur|youre)\s+not\s+(?:here|there|at)\b", r"\b(?:your|ur|the)\s+car\b[^.?!]*\b(?:is|was)\s+(?:not|nowhere)\b",
-    r"\bwrong\s+(?:place|location|pin|spot|side|entrance|address|block|blk)\b",
+    rf"\b{_FP}\s*(?:already\s+|alr\s+|still\s+|now\s+|just\s+|really\s+)?(?:here|there|downstairs|down already|at the pick|at pick|outside(?=\s*(?:$|[.,!?]|already|alr|now|liao|le|lah|leh|(?:the\s+)?{_SPOT}))){_NOT_YET}",
+    rf"\b{_FP}\s+(?:already\s+|alr\s+|still\s+|now\s+|standing\s+|waiting\s+)?(?:here\s+)?(?:at|by|near|outside|in front of|beside)\b[^.?!,]*\b{_SPOT}\b",
+    rf"(?<!almost )(?<!nearly )(?<!not )(?<!be )(?<!to )\b(?:at|outside|near|in front of|beside|by)\s+(?:the\s+|d\s+)?{_SPOT}\b(?!\s+(?:soon|later|in\b))",
+    r"\b(?:here|reach|reached|arrived|downstairs|outside|sampai|dao le)\s+(?:already|alr|liao|le|lah|leh|now|edy)\b",
+    r"\b(?:already|alr|dah|sudah)\s+(?:here|there|downstairs|outside|at|reach|reached|sampai)\b",
+    rf"\b(?:i|we)\s+(?:reach|reached|arrived|am here|have arrived|have reached|here|there|at|kat|downstairs)\b{_NOT_YET}",
+    rf"^\W*(?:reach|reached|here+|arrived|imhere|downstairs)\b{_NOT_YET}", r"\bimhere\b", r"📍",
+    r"\b(?:i|we|i'?m|im|i am)\s+(?:already\s+|been\s+|still\s+)?(?:wait|waited|waiting)\b(?!\s+for\s+(?:the\s+|my\s+)?(?:lift|elevator|bus|train|food|bill|grab|taxi))",
+    r"^\W*(?:waiting|waited)\b(?!\s+for\s+(?:the\s+|my\s+)?(?:lift|elevator|bus|train|food|bill))", r"\bwait(?:ed|ing)?\s+(?:for\s+)?(?:you|u)\b",
+    r"\bbeen\s+(?:here|there|waiting)\b", r"\bwait\s+so\s+long\b", r"^\W*\d+\s*(?:min|mins|minute|minutes)\s+(?:already|alr|liao|le)\b",
+    r"\b(?:dah|sudah|saya)\s+tunggu\b|\btunggu\s+\d+", r"\bkat\s+(?:bawah|lobby|lobi|\w+)\b", r"\b(?:dah\s+)?sampai\b", r"\bwo\s+dao\s+le\b|\bdao\s+le\b",
+    r"到了|在楼下|到楼下|我在",
+    r"\b(?:standing|waiting|sitting)\s+(?:near|at|outside|beside|by|in front of)\b",
+    r"\b(?:don'?t|dont|do not|can'?t|cannot|cant|couldn'?t|could not|never|didn'?t)\s+(?:see|find|spot)\b",
+    r"\bno\s+(?:car|driver|one|body)\b", r"\bnobody\b", r"\b(?:no|not)\s+(?:car|driver)\s+(?:here|there)\b",
+    r"\b(?:you'?re|you are|u r|ur|youre|u)\s+not\s+(?:here|there|at)\b", r"\b(?:your|ur|the)\s+car\b[^.?!]*\b(?:is|was)\s+(?:not|nowhere)\b",
+    r"\bwrong\b", r"\b(?:right|correct)\s+(?:place|location|pin|spot|address)\b",
     r"\b(?:pin|location|address|pick-?\s?up(?: point)?|map|place|side|entrance)\s+(?:is|was|r)\s+(?:wrong|incorrect|correct|right)\b",
-    r"\bnot at the pick", r"\bwaiting\s+(?:for\s+(?:you|u)|here|outside|downstairs|at)\b", r"\bbeen\s+waiting\b", r"\bstill\s+waiting\b(?!\s+for\s+(?:the\s+|my\s+)?(?:lift|elevator))",
-    r"\bi\s+was\s+(?:here|there|at|waiting)\b", r"\b(?:i|we)\s+(?:can\s+)?see\s+(?:you|u|your car|ur car|the car)\b"]
-RIDER_LATE_PHRASES = [
-    r"(?<!you )(?<!u )\bcoming\b", r"\bon\s+(?:my|the)\s+way\b", r"\bomw\b", r"\botw\b", r"getting ready", r"running late",
-    rf"\b{_FP}\s+(?:a bit\s+|a little\s+|abit\s+|so\s+|very\s+)?late\b", r"\bsorry,?\s+(?:i'?m\s+|i am\s+)?late\b",
-    r"walking\s+(?:over|to|there|down|out)", r"\b(?:almost|nearly)\s+(?:there|reach|reaching|down)\b", r"\b(?:abt|about)\s+to\s+reach\b", r"\breaching\b",
-    r"\b(?:i'?ll|i will|will)\s+be\s+(?:right\s+)?(?:down|there|out)\b", r"\bleaving\s+(?:now|the house|home|office|work)\b", r"\bjust\s+left\b",
-    r"\bstill\s+(?:at home|at work|in the|in my|upstairs|getting|inside|packing|showering|bathing)\b",
-    rf"\b{_FP}\s+(?:still\s+)?at\s+(?:home|work|the office|office|my office|school)\b",
-    r"\bwaiting\s+for\s+(?:the\s+|my\s+)?(?:lift|elevator|bus|train|food|bill)\b", r"\b(?:lift|elevator)\s+(?:very\s+|so\s+|damn\s+)?slow\b",
-    r"(?<!waiting )(?<!waited )(?<!been )\b\d+\s*(?:more\s+)?(?:min|mins|minute|minutes)\b", r"\bgive\s+me\s+(?:a\s+)?(?:\d+|few|a few|one|two|five)\b",
-    r"\b(?:i|i've|i have)\s+(?:put|set|entered|chose|selected|keyed in|pinned)\s+(?:the\s+|a\s+)?wrong\b", r"\bmy\s+(?:bad|mistake|fault)\b",
-    r"\b(?:i|we)\s+(?:went|walked|was|were)\s+(?:to|at)\s+the\s+wrong\b", r"\bsorry\b[^.?!]*\bwrong\b"]
-_PLACE_WORDS = rf"(?<!to )(?<!to the )(?<!towards )\b(?:here|reach|reached|arrived|downstairs|outside|{_SPOT[3:-1]}|location|address)\b"
-RIDER_ACK = r"\s*(?:ok(?:ay)?|k|kk|okok|noted|ok noted|thanks?(?: you)?|ok thanks|thx|ty|alright)\s*[.!]*\s*"
+    r"\b(?:you'?re|you are|u r|ur|driver|car)\s+(?:is\s+)?not\s+at\s+the\s+pick", r"\bi\s+was\s+(?:here|there|at|waiting)\b",
+    r"\b(?:i|we)\s+(?:can\s+)?see\s+(?:you|u|your car|ur car|the car)\b", r"\b(?:i'?m|im|i am|i was)\s+not\s+late\b",
+    r"\bapp\s+(?:says|say|said|shows|show)\b"]
+RIDER_FAULT_PHRASES = [r"\bmy\s+(?:bad|mistake|fault)\b", r"\b(?:i|we|i'?ve|i have)\s+(?:put|set|entered|chose|selected|keyed in|pinned|went to|walked to|was at|were at|booked)\s+(?:the\s+|a\s+)?wrong\b",
+                       r"\bsorry\b[^.?!]*\bwrong\b", r"\bwrong\b[^.?!]*\bsorry\b"]
+RIDER_LATE_CORE = [                                             # first-person admissions of lateness or of still being on the way
+    r"(?<!you )(?<!u )(?<!not )(?<!uncle )(?<!driver )\b(?:coming|comin|cming)(?:\s+(?:down|out|over|now|already|liao|soon))*\b(?!\s*\?)",
+    r"\b(?:on\s+(?:my|the|da)\s+way|omw|otw)(?:\s+(?:down|out|over|now|already|liao))*\b(?!\s*\?)", r"\bgetting\s+ready\b", r"\brunning\s+late\b",
+    r"(?<!not )(?<!you )(?<!u )(?<!driver )(?<!uncle )\b(?:a bit\s+|a little\s+|abit\s+|so\s+|very\s+)?late(?:\s+(?:a bit|abit|a little))?\b", r"\boverslept\b",
+    r"\b(?:walking|heading|going|rushing|running)(?:\s+(?:over|there|down|out|now|to))?\b", r"\b(?:almost|nearly)\s+(?:there|reach|reaching|down|at|here)\b",
+    r"\b(?:abt|about)\s+to\s+reach\b", r"\breaching\b", r"\b(?:reach|here|there|down|arrive|arriving)\s+soon\b", rf"\b{_FP}\s+there\s+soon\b",
+    r"\b(?:i'm|i)\s+(?:still\s+)?not\s+(?:yet\s+)?(?:reach|reached|there|here|down)(?:\s+yet)?\b", r"^\W*not\s+yet\s+(?:reach|reached|there|here|down)\b",
+    r"\bnot\s+coming\s+down\s+yet\b",
+    r"\b(?:i'?ll|i will|will|i'?m going to|gonna)\s+be\s+(?:right\s+)?(?:down|there|out)\b", r"^\W*be\s+(?:there|down|out)\b",
+    r"\bleaving\s+(?:now|the house|my house|home|office|work)\b", r"\bjust\s+left\b",
+    r"\bstill\s+(?:at home|at work|upstairs|getting|inside|packing|showering|bathing|eating)\b",
+    r"\b(?:still\s+)?(?:in|at)\s+(?:the\s+|my\s+)?(?:lift|elevator|toilet|shower|bathroom|office|house|room|train|bus(?!\s+stop)|mrt(?!\s+exit)|mall|market|clinic|meeting|traffic|jam|gym|kopitiam|atm)\b", rf"\b{_FP}\s+(?:still\s+)?(?:at\s+)?(?:home|work)\b(?:\s+still)?",
+    r"\b(?:waiting|wait)\s+for\s+(?:the\s+|my\s+)?(?:lift|elevator)\b", r"\b(?:lift|elevator)\s+(?:very\s+|so\s+|damn\s+)?(?:slow|spoil|broken)\b",
+    r"\b(?:in|taking|take|took)\s+(?:the\s+)?(?:lift|elevator)\b", r"\bstuck\s+in\s+(?:the\s+)?(?:jam|traffic|lift)\b", r"\bwalking\s+down\s+the\s+stairs\b",
+    r"\bgive\s+me\s+(?:a\s+)?(?:\d+|few|a few|one|two|five)\b", r"\bgimme\b", r"\bneed\s+(?:\d+|a few|few)\s+(?:more\s+)?(?:min|mins|minutes?)\b",
+    r"\b(?:\d+|one|two|few|a few)\s+more\s+(?:min|mins|minute|minutes|sec|secs)\b", r"🏃",
+    r"^\W*\d+\s*(?:min|mins|minute|minutes)\W*$",                 # a bare duration: "5 min"
+    r"(?<!i )(?<!i've )(?<!been )(?<!we )\bwait(?:\s+(?:ah|ya))?\s+(?:for\s+me|another\s+\d+|\d+\s*(?:more\s+)?(?:min|mins|minutes?))\b"]
+RIDER_WAIT_REQUEST = (r"\b(?:can|could|pls|please|plz)?\s*(?:you\s+|u\s+)?wait\b(?:\s+(?:ah|ya))?(?:\s+for\s+me)?(?:\s+(?:a\s+)?(?:bit|while|moment|min|minute|sec|"
+                      r"another\s+(?:\d+\s*(?:min|mins|minutes?)|few\s+(?:min|mins|minutes))|\d+\s*(?:more\s+)?(?:min|mins|minutes?)))?\s*(?:ah|ya|ok)?\s*\??")
+_FILLER = (r"\b(?:sorry|sry|soz|uncle|aunty|auntie|bro|boss|sir|madam|maam|pls|plz|please|ok|okay|k|kk|hi|hey|hello|lah|la|leh|ah|lor|liao|le|"
+           r"hor|meh|ya|yah|yeah|now|just|already|alr|very|so|a|bit|abit|little|the|my|me|i'm|i'll|ill|i|will|be|in|more|and|then|still|"
+           r"another|few|for|while|moment|slow|thanks|thank you|thx|sec|secs|seconds|haha+|lol|really|soon|down|out|right|be|is|it|its|it'?s|"
+           r"to|from|d|da|there|ready|can|wait|min|mins|minute|minutes|one|two|three|five|ten|first|need|again|sorrysorry|\d+)\b")
+_FROM_TO = rf"\b(?:from|to|towards)\s+(?!reach\b|come\b|be\b)(?:the\s+|my\s+|d\s+)?(?:{_SPOT}|[a-z0-9'-]+)(?:\s+[a-z0-9'-]+)?"
+RIDER_ACK = r"\s*(?:ok(?:ay|ie|ies)?|k|kk|okok|noted|ok noted|ok can|thanks?(?: you)?|ok thanks|thx|ty|alright|👍|ok 👍)\s*[.!]*\s*"
 SOFT_FLAGS = ("SPEED_INCONSISTENT", "PIN_VENUE_MISMATCH", "SPARSE_GPS", "TIMER_ANCHOR_MISMATCH", "GPS_OUTLIER")
 
 
@@ -199,27 +228,39 @@ def contests_statement(text: str) -> bool:
     return any(re.search(p, t) for p in CONTEST_PHRASES)
 
 
+def _rider_text(text: str) -> str:
+    t = re.sub(r"[\u2018\u2019\u02bc\uff07`\u00b4]", "'", (text or "").lower())
+    t = re.sub(r"\b(?:i\s?'\s?m|i\s+m|iam|im)\b", "i'm", t)            # "I m", "Im", "Iam" -> "i'm"
+    return re.sub(r"\s+", " ", t).strip()
+
+
 def rider_contact_reading(c: dict) -> str:
     """Proxy for the READ part of CW-F06 on one rider call or message during the wait: PLACES (at the pin or venue, or contests
-    presence, timing or place, including asking where the driver is), LATE (admits being late or still on the way, with no
-    place or presence cue), NEUTRAL (an acknowledgment such as 'ok') or UNCLEAR (a call, whose words are not recorded, or a
-    message that fits neither reading or both)."""
+    presence, timing or place, including asking where the driver is), LATE (admits being late or still on the way, and says
+    nothing else the lists do not know), NEUTRAL (an acknowledgment such as 'ok') or UNCLEAR (a call, whose words are not
+    recorded, or a message that fits neither reading or both)."""
     if c["type"] != "message":
         return "UNCLEAR"
-    t = re.sub(r"[\u2018\u2019\u02bc\uff07`\u00b4]", "'", (c.get("content") or "").lower())
-    t = re.sub(r"\s+", " ", t).strip()
+    t = _rider_text(c.get("content"))
     if re.fullmatch(RIDER_ACK, t):
         return "NEUTRAL"
-    places = any(re.search(p, t) for p in RIDER_PLACE_PHRASES)
-    rest = t
-    for p in RIDER_QUESTION_PHRASES:           # "are you coming?" is about the driver, not an admission by the rider
-        rest = re.sub(p, " ", rest)
-    late = any(re.search(p, rest) for p in RIDER_LATE_PHRASES)
+    places = (any(re.search(p, t) for p in RIDER_PLACE_PHRASES)
+              or bool(re.search(_ENDS_ASKING, re.sub(r"\b(?:can|could|pls|please)?\s*(?:you\s+|u\s+)?wait\b[^?]*\?\s*$", "", t))))
+    fault = any(re.search(p, t) for p in RIDER_FAULT_PHRASES)
+    asked = t
+    for p in RIDER_QUESTION_PHRASES:               # "are you coming", "u on the way ah": about the driver, not an admission
+        asked = re.sub(p, " ", asked)
+    late = any(re.search(p, asked) for p in RIDER_LATE_CORE)
     if places:
-        return "UNCLEAR" if late else "PLACES"
-    if late and not re.search(_PLACE_WORDS, rest):
-        return "LATE"
-    return "UNCLEAR"
+        return "UNCLEAR" if (late or fault) else "PLACES"
+    if not late or fault:
+        return "UNCLEAR"
+    rest = asked                                   # LATE only if nothing but admissions, requests to wait and filler is left
+    for p in [RIDER_WAIT_REQUEST, _FROM_TO] + RIDER_LATE_CORE:
+        rest = re.sub(p, " ", rest)
+    rest = re.sub(_FILLER, " ", rest)
+    rest = re.sub(r"[\s.,!~\u2026'\"()\-:;]+", "", rest)
+    return "LATE" if not rest else "UNCLEAR"
 
 
 def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | None = None,
