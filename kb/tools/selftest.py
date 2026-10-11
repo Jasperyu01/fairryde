@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 import json
 import random
+from pathlib import Path
 
 import engine_noshow as E
 
@@ -483,7 +484,124 @@ def variants(base: dict):
         _set_wait_pings(c, [p for p in _every_30s() if p[0] <= "08:46:00"])
     v("V55", "V06 with pings every 30 s until 08:46 and none after (300 s of silence before the threshold, rider not contesting)", v55,
       {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["GENERIC_ASSUMPTION_USED"], "decisive": ["CW-F04"]})
+
+    # ---------------------------------------------------------------- CW-F06: what the rider's calls and messages say (FX1)
+    def rider_says(*items):
+        """V06 plus rider calls or messages: (time, type, content)."""
+        def f(c):
+            clean(c)
+            c["chat_logs"] += [{"timestamp": _ts(hms), "sender": "rider", "type": typ, "content": text} for hms, typ, text in items]
+            c["chat_logs"].sort(key=lambda x: x["timestamp"])
+        return f
+    late = {"outcome": "UPHOLD", "row": "R8", "tier": "AUTO", "reasons": ["CW-R-NOSHOW-VALID"], "flags": ["NO_RIDER_EVIDENCE"],
+            "not_flags": ["GENERIC_ASSUMPTION_USED"]}
+    v("V56", "V06, and the rider messages 'still getting ready, can wait another 10 min?' (round 1 case E01): an admission, not counter-evidence",
+      rider_says(("08:46:00", "message", "sorry uncle still getting ready. can wait another 10 min?")), late)
+    v("V57", "V06, and the rider messages 'Coming!! 1 min, walking over from the MRT' (round 1 case E03)",
+      rider_says(("08:50:30", "message", "Coming!! 1 min, walking over from the MRT")), late)
+    v("V58", "V06, and the rider messages 'coming down, 2 min' (the message of round 1 case E07; E07 is a waiting fee, which this engine does not run)",
+      rider_says(("08:47:10", "message", "coming down, 2 min")), late)
+    v("V59", "V06, and the rider messages that they are at the pick-up point and cannot see the car",
+      rider_says(("08:47:00", "message", "I'm at the pick-up point, where are you? I can't see your car")),
+      {"outcome": "ESCALATE_HUMAN", "row": "R7", "tier": "HUMAN", "reasons": ["CW-R-RIDER-COUNTER-EVIDENCE"], "findings": {"F-RIDER-EVIDENCE": "STRONG"}})
+    v("V60", "V06, and the rider first says 'coming down, 2 min', then 'I'm here at the lobby, where are you?' before the cancellation",
+      rider_says(("08:45:00", "message", "coming down, 2 min"), ("08:51:30", "message", "I'm here at the lobby, where are you?")),
+      {"outcome": "ESCALATE_HUMAN", "row": "R7", "tier": "HUMAN", "findings": {"F-RIDER-EVIDENCE": "STRONG"}})
+    v("V61", "V06, and the rider calls the driver during the wait (what was said is not recorded): the other reading decides, so approval",
+      rider_says(("08:48:00", "call", "Outgoing call to driver, answered (40 s).")),
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"], "flags": ["GENERIC_ASSUMPTION_USED"]})
+    v("V62", "V06, and the rider's message fits both readings ('I'm here, coming out now'): approval",
+      rider_says(("08:48:00", "message", "I'm here, coming out now")),
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"]})
+    v("V63", "V06, and the rider only answers 'ok' during the wait",
+      rider_says(("08:46:00", "message", "ok")), late)
+    v("V64", "V06, and the rider messages 'where are you?' only after the cancellation: outside the wait",
+      rider_says(("08:53:00", "message", "where are you?")), late)
+    v("V65", "V06, and the rider asks 'uncle coming?' during the wait (asking where the driver is contests presence)",
+      rider_says(("08:47:00", "message", "uncle coming?")),
+      {"outcome": "ESCALATE_HUMAN", "row": "R7", "tier": "HUMAN", "findings": {"F-RIDER-EVIDENCE": "STRONG"}})
+
+    def v66(c):
+        rider_says(("08:47:00", "message", "yes"))(c)
+        c["chat_logs"].append({"timestamp": _ts("08:46:30"), "sender": "driver", "type": "message", "content": "Are you at the lobby now?"})
+        c["chat_logs"].sort(key=lambda x: x["timestamp"])
+    v("V66", "V06, the driver asks 'Are you at the lobby now?' and the rider answers 'yes': unclear on its own, so approval", v66,
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"]})
+
+    def v67(c):
+        clean(c, end="08:49:15")
+        _ryde_advance(c)
+        early = [g for g in c["gps_telemetry"] if g["timestamp"] < _ts("08:38:00")]
+        c["gps_telemetry"] = early + [{"timestamp": _ts(h), "lat": la, "lng": lo, "speed_kmh": 0, "status": st}
+                                      for h, la, lo, st in _every("08:38:00", "08:49:15", VENUE, 15)]
+        c["rider_gps_telemetry"] = [{"timestamp": _ts("08:40:00"), "lat": VENUE[0], "lng": VENUE[1], "speed_kmh": 0, "status": "waiting"}]
+    v("V67", "Ryde advance booking for 08:45, driver at the pin from 08:38; rider GPS at the pin at 08:40, after the arrival and before the anchor",
+      v67, {"outcome": "ESCALATE_HUMAN", "row": "R7", "profile": "ryde_2026", "findings": {"F-RIDER-EVIDENCE": "STRONG"}})
+    v("V68", "V06, and the rider messages 'coming down now' at 08:51:30, after the 8-minute threshold and before the cancellation",
+      rider_says(("08:51:30", "message", "coming down now")), late)
     return out
+
+
+# CW-F06 reading of single rider messages (engine proxy for the READ part). Expected values are read off the rule card by
+# hand: P = places the rider at the pick-up or contests presence (STRONG), L = admits being late or on the way, N = an
+# acknowledgment, U = unclear (fits neither reading or both; the reading test then applies). The one unsafe error is a
+# message that places or contests being read L or N, because the fee would then be upheld automatically.
+READING_CASES = {
+    # round 1 cases E01, E02, E03, E04 and E07
+    "sorry uncle still getting ready. can wait another 10 min?": "L", "Coming!! 1 min, walking over from the MRT": "L",
+    "coming down, 2 min": "L", "Sorry coming down, lift very slow, 2 min": "L",
+    "Hi, I'm at the Gateway Drive pick-up point outside Westgate. App says you've arrived but I don't see you?": "P",
+    "Your car on the map is not at Westgate, it's quite far away. Are you coming?": "P", "Hello?? I'm still here at the pick-up point.": "P",
+    # asking where the driver is (contests presence), including Singapore English
+    "driver coming?": "P", "uncle coming?": "P", "Uncle coming or not": "P", "Are you still coming?": "P", "Are you on the way?": "P",
+    "u on the way?": "P", "Is anyone coming?": "P", "Are you almost there?": "P", "ur coming?": "P", "you're coming?": "P",
+    "Your car coming?": "P", "u omw?": "P", "where u": "P", "u here?": "P", "which car r u": "P", "ur car where": "P",
+    "you haven't arrived": "P", "u never come": "P", "no car here leh": "P", "cannot find": "P",
+    # placing the rider at the pick-up, with or without a request to wait
+    "I'm at the void deck, please wait": "P", "reached, pls wait": "P", "Reached the lobby, please wait": "P",
+    "Already downstairs, please wait": "P", "downstairs already pls wait": "P", "I'm already there, can you wait?": "P",
+    "I'm at the carpark, please wait": "P", "I'm at Block 123, please wait": "P", "at void deck, can wait?": "P",
+    "I m here, pls wait": "P", "I\u2018m here, please wait": "P", "I\uff07m here, please wait": "P", "Iam here pls wait": "P",
+    "I m at the lobby, please wait": "P", "my location is correct, pls wait": "P", "reach already": "P", "i downstairs liao": "P",
+    "at lobby now": "P", "I'm at the void deck": "P", "i see u le": "P", "im here lah": "P",
+    "I\u2019m at the pick-up point, where are you? I can\u2019t see your car": "P", "I've been waiting 10 min where are you": "P",
+    # admissions of lateness
+    "I'm waiting for the lift": "L", "im waiting for lift, very slow": "L", "I'm still at home, sorry": "L", "I am at home": "L",
+    "on the way": "L", "otw": "L", "abt to reach": "L", "almost there": "L", "I'll be down in 3": "L", "so sorry, running late": "L",
+    "coming down now": "L", "coming down to the lobby now": "L", "5 min": "L",
+    # acknowledgments and unclear messages
+    "ok": "N", "Thank you": "N", "yes": "U", "ya": "U", "sure": "U", "Hello?": "P", "wait ah": "U", "can wait for me?": "L",
+    "here liao, can wait 1 min? i see your car": "U", "the pin is wrong, I'm on the other side, coming over": "U",
+    "Sorry I went to the wrong entrance": "U", "I'm outside the MRT, 5 min": "U", "I put the wrong location, sorry": "U",
+    "outside 7-11 waiting": "P", "I'm here, coming out now": "U",
+    # round 2 review: durations, questions without a question mark, bare "where?", other languages
+    "I wait 10 min already": "P", "u still coming ah": "P", "Is the driver on the way": "P", "coming down, where?": "U",
+    "sampai liao, coming out now": "U", "u too early, I'm coming down at 8.45 as booked": "U", "reach soon": "L",
+    "I'm at the lift": "L", "I'm almost at the lobby": "U", "I went to the wrong building": "U",
+}
+
+
+def reading_check() -> list[dict]:
+    """READING_CASES must read exactly as expected; the reviewers' corpus (cw_f06_reading_corpus.json) must have no unsafe
+    reading (a placing or contesting message read LATE or NEUTRAL) and no over-escalation (an admission read PLACES)."""
+    code = {"P": "PLACES", "L": "LATE", "N": "NEUTRAL", "U": "UNCLEAR"}
+    out = []
+    for text, want in READING_CASES.items():
+        got = E.rider_contact_reading({"type": "message", "content": text})
+        if got != code[want]:
+            out.append({"text": text, "expected": code[want], "got": got,
+                        "unsafe": want == "P" and got in ("LATE", "NEUTRAL")})
+    for m in reading_corpus():
+        got = E.rider_contact_reading({"type": "message", "content": m["text"]})
+        if m["label"] in ("P", "PU") and got in ("LATE", "NEUTRAL"):
+            out.append({"text": m["text"], "expected": "PLACES or UNCLEAR", "got": got, "unsafe": True})
+        elif m["label"] in ("L", "LU", "N") and got == "PLACES":
+            out.append({"text": m["text"], "expected": "not PLACES (an admission)", "got": got, "unsafe": False})
+    return out
+
+
+def reading_corpus() -> list[dict]:
+    return json.loads((Path(__file__).resolve().parent / "cw_f06_reading_corpus.json").read_text(encoding="utf-8"))["messages"]
 
 
 def run(kb) -> list[dict]:
@@ -539,3 +657,7 @@ if __name__ == "__main__":
         print(("PASS " if x["ok"] else "FAIL ") + x["id"], x["got"]["outcome"], x["got"]["row"], x["got"]["tier"], x["got"]["C"],
               "" if x["ok"] else x["problems"])
     print(sum(x["ok"] for x in res), "/", len(res))
+    bad = reading_check()
+    for b in bad:
+        print("FAIL reading", ("UNSAFE " if b["unsafe"] else "") + repr(b["text"]), "expected", b["expected"], "got", b["got"])
+    print(len(READING_CASES) + len(reading_corpus()) - len(bad), "/", len(READING_CASES) + len(reading_corpus()), "message readings")

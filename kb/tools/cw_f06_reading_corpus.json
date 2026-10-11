@@ -1,0 +1,2145 @@
+{
+"note": "Rider messages written by the independent A1 reviewers to attack the CW-F06 message reader (kb/tools/engine_noshow.py rider_contact_reading). Labels are theirs, read off the rule card: P places the rider at the pick-up or contests presence, timing or place; PU does both (UNCLEAR expected, PLACES acceptable); L admits being late or on the way; LU an admission where UNCLEAR is acceptable; N an acknowledgment; U unclear; U* either way acceptable. The build fails if a P or PU message reads LATE or NEUTRAL (unsafe: automatic uphold) or an L, LU or N message reads PLACES (over-escalation). Not ground truth: unit tests of the engine proxy.",
+"messages": [
+{
+"text": "dah sampai",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "saya dah sampai, kat lobby",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "dah sampai, 1 min",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "dah sampai bawah, 2 min",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "wo dao le",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "wo dao le, coming",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "我到了",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "我在楼下",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "我到楼下了 coming",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "sampai liao, coming out now",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "dao le dao le, coming out",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I here liao",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "uncle i reach le",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "at bus stop opposite",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "standing near the guardhouse",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm by the taxi stand",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "im at main entrance",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "i kat lobby liao, u where",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "aku dah kat bawah, mana kereta?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "uncle, i at the 7-11 already",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "sampai already. which car ah",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I reach le, waiting near the guard house",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "uncle u where ah, I coming down now",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "otw down, u where?",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "coming down. car where?",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "coming down, which side u at?",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "driver still not arrive? I'm coming down",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u where",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "uncle u where?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "WHERE ARE YOU",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "wer r u",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "whr r u??",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Where's ur car",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u reach alr?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "reach liao anot",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "uncle u reach already?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "app says arrived but no car",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "dont see u",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Can't see your car leh",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "you sure you at the right place?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u at which side",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "which entrance are you at?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "no car leh, 2 min already",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "??",
+"label": "U",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "hello where",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I wait 10 min already",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I waited for 10 mins!",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm waiting for 10 min already",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Waiting for 10 min liao",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Already 5 mins, where?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "5 min already no car",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "10 min liao still no car",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "wait u 5 min liao",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I been here 10 mins",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "waited 5 min, nobody",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u said coming, but where?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u say u coming 5 min ago",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "you said 'on the way' 10 min ago",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "you wrote 'arrived' but I'm at the lobby and no car",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u say 'reached' but where",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm not late",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm not late, u came early",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u too early, I'm coming down at 8.45 as booked",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "booking is 8.45 leh, you early. coming down at 8.45",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "you're early, my booking was for 9",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "was late but now at lobby",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "sorry late, now at lobby",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "sorry sorry running late, ok I'm here now",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "coming coming... ok reached",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "omw... ok here",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "sorry slow, reach liao",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "wow so fast arrive ah, I don't see any car leh",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "lol u 'arrived'? where",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "very funny, u not even here",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "not coming down yet",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm not there yet, coming",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "almost at the lobby",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "will be at the lobby soon",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'll be at the void deck soon",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm still at the mall",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm at the MRT now",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm at the market, can wait?",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Sorry I'm not at the pickup yet",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "not at the lobby yet",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "sorry still in the toilet, 3 mins",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "still at the office, 10 min",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "need 5 more mins",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "otw down",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "taking lift now",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "stuck in jam, 10min",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "sorry I overslept, coming",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "wait for me ah, 2 mins",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "on my way down to the lobby",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Walking to the pick up point now",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "coming to the carpark",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "heading to the main entrance",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "reaching lobby in 2 min",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "be there in 5",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "kk coming",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Coming down liao",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "OTW!!",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "🏃 coming",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "5mins",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "gimme 2 min",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "abit late sorry",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "late a bit, pls wait",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm leaving my house now",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "lift spoil, walking down the stairs",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "still upstairs",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "on da way",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "OMW 2 mins",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'll be down soon",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "COMING DOWN",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "sorry!! 1 more min",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm late, sorry",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "coming down now uncle sorry",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm nearly at the gate",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm going to the lobby now",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm on my way to the guardhouse",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm at level 12, coming down",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm in the lift",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm still in the lift, 1 min",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm at home still",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm still at the clinic",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "👍",
+"label": "N",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "ok 👍",
+"label": "N",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Okie",
+"label": "N",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "ok can",
+"label": "N",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "📍here",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "here!",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Hereee",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I AM HERE",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "IM DOWNSTAIRS ALREADY",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "imhere",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Iam at lobby",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "im at d lobby",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "i waiting at lobby",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "i wait at lobby",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "arrived",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Arrived, where r u",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Here. White shirt.",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "coming down, where?",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "coming. where?",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "omw, where?",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Coming down. Where u?",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "where?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "uncle where",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "where did you park",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "coming, where did u park",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "coming, which lane?",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "coming down, where is the car",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "waiting for 5 mins already!!",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "waiting for 5 minutes, hello?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I've been waiting for 10 minutes",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "waited 10 mins already",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "10 minutes already",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I wait 5 min liao",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I waiting 5min liao",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "you late 5 min leh",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "you said 2 min, now 10 min liao",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "your map wrong, coming",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Uncle coming ah",
+"label": "PU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "you reaching",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u reaching soon",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "you reaching already ah",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u almost there ah",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u on the way ah",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "uncle on the way ah",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u omw ah",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "driver otw ah",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u still coming ah",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Is the driver on the way",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "How far are you?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "u at where ah",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "reach soon",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "i reach soon",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm there soon",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "here soon",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm at the lift",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm at the toilet",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm at level 3",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm at the ATM",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm at the gym",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm outside my house",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm at the kopitiam, sorry",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm almost at the lobby",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "nearly at the carpark",
+"label": "LU",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm on the way, at the traffic light now",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "dah tunggu 10 min",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "saya tunggu 10 min dah, mana?",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I waiting u 10mins liao",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "wait so long liao, 15 min",
+"label": "P",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "not yet reach, 5 min",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "I'm not here yet",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Coming out now",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "Coming, I have 2 luggage",
+"label": "L",
+"source": "A1 review round 2 (adversarial reviewer)"
+},
+{
+"text": "reach already",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "i reach already",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I reached",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "i downstairs liao",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "im downstairs liao",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "downstairs already",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "where u",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "where are u",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "uncle where are you",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Where are you?",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "where r u",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "u here?",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "you here?",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "are you here?",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "at lobby now",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at the lobby",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I’m at the lobby",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at the void deck",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I’m at the void deck",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "im at void deck",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "at the taxi stand",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at the taxi stand",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "which car r u",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "which car are you",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "ur car where",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "where is your car",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "where's your car?",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "i see u le",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I see you",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "im here lah",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm here",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I’m here",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "im here",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Im here",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "here already",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "i'm outside",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I’m outside",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "cannot find",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "cannot find u",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "cant find you",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "can't find your car",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "can’t see you",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "dont see you",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "don’t see your car",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "i dont see any white honda",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "outside 7-11 waiting",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "waiting outside 7-11",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm waiting at the main entrance",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "i am at main entrance",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at the pick up point",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "im at pickup",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at the drop-off point",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "at the front of the mall",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Standing at the bus stop",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm in front of Tiong Bahru Plaza",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "i'm at tiong bahru plaza",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at Gate 2",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I am here at the entrance, where are you??",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Been here 5 min",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I've been here for 5 min",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "you not here",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "You are not at the pickup",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "your car is not here",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "there's no car here",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "no car here leh",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Hello?",
+"label": "U*",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "hello??",
+"label": "U*",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "hi",
+"label": "U*",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "uncle?",
+"label": "U*",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "?",
+"label": "U*",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Wrong side of the road",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "u at wrong side",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "you went to the wrong entrance",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at the other side, the pin is wrong",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "which exit",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "ur at which entrance",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm by the road",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at Basement 2 taxi stand",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Waiting at B1 pick up point",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "waiting liao",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm waiting",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "waited 10 min no car",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "the app says you arrived but you're not here",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "app say u reach but no car",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "why u say arrived, no one here",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "you haven't arrived",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "u never come",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm already at the location",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "i am at the location",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at the spot",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at the pin",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at the address",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm at the carpark",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "im at the car park entrance",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "im at the guardhouse",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I’m at Block 123",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "at blk 123 now",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "which colour car",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "plate number?",
+"label": "U*",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Can you come to the lobby? I'm there",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "pls come to lobby, I'm waiting there",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Can you wait at the lobby? I'm already there",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "u can come in to the drop off, i waiting there",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm here, please wait",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm here already, wait ah",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "wait ah i see u",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "pls wait i'm here",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm coming out now I can see your car",
+"label": "U*",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "where are you? coming?",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "are you coming?",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "u coming?",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "you coming or not",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "is the driver coming?",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "when are you coming",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "driver coming?",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "r u coming",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "hello uncle you coming anot",
+"label": "P",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "otw",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "OTW",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "on the way",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "abt to reach",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "about to reach",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "reaching",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "reaching soon",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "wait ah",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "wait ah 2 min",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "pls wait 5 min",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "coming",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Coming!",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "coming down now",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "comin",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "5 min",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "2 mins",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "sorry late",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "sorry i late",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "so sorry, running late",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "taking lift down",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "in the lift",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "going down now",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "walking over",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "still in shower",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "1 min",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "almost there",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "nearly reach",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "hold on",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "give me 5 mins",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "pls dont cancel",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "don't cancel, coming",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "can wait?",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "can wait for me?",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'm still at home, sorry",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "I'll be down in 3",
+"label": "L",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "ok",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Ok",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "ok.",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "okay",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "ok thanks",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "ok tks",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "k",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "noted",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "ok!",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "OK lor",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "can",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "sure",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "Thank you",
+"label": "N",
+"source": "A1 review round 1 (adversarial reviewer)"
+},
+{
+"text": "uncle coming?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "uncle coming or not",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "car coming?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "is my car coming",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Are you still coming?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "you still coming?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "u still coming or not",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "r u still coming",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "still coming?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Are you on the way?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "r u on the way",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "u on the way?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "On the way?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Is the driver on the way?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "you on the way or not",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Hello? Are you on the way?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "how long more? on the way?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Are you almost there?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "u almost there?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Are you nearly there?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "when will you be there?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "will you be there soon?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Uncle will be there?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Is anyone coming?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Is someone coming to pick me up?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "nobody coming?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "app say arrived but driver still coming?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I'm already there, can you wait?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "reached, pls wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Reached the lobby, please wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Already downstairs, please wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "downstairs already pls wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I'm at the void deck, please wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "at void deck, can wait?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I'm at Block 123, please wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I'm at the main road, please wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I'm at the carpark, please wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Im at taxi stand pls wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I’m at the lobby, please wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I m here, pls wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I m at the lobby, please wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Iam here pls wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I‘m here, please wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I＇m here, please wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "here liao, can wait 1 min? i see your car",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I see your car, coming!",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I see you, coming",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I can see your car, walking over",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I'm at the entrance, which car?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I'm at the lobby. Plate?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I'm at the pickup but no car, can you wait for me there?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Hi I'm at the lobby. I'll be right out to the kerb",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "my location is correct, pls wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I was at the pick up point, you left?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "you left?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "did you leave?",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "Don't cancel! I'm at the lobby",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "don't cancel, i'm at lobby",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "dont cancel i reach already",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "pls don't cancel I'm downstairs",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "waiting for 5 min already where are you, pls wait",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I'm standing outside the entrance, wait ah",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "I'm here, coming to your car now",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "the pin is wrong, I'm on the other side, coming over",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "wrong pin, walking over now",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "you're at the wrong entrance, I'm walking over",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+},
+{
+"text": "wrong place la, I'm walking to you now",
+"label": "PU",
+"source": "A1 review round 1 (adversarial reviewer, unsafe candidates)"
+}
+]
+}

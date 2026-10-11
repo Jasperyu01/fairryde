@@ -1,0 +1,568 @@
+[
+ {
+  "dimension": "fidelity",
+  "review": {
+   "dimension": "FIX FIDELITY AND SCOPE (A1: FX1 and FX2)",
+   "checked_ok": [
+    "(e) python3 kb/build_kb.py --no-xlsx ends 'ERROR 0 | WARN 0 | INFO 5'. Other lines: 'quotes: 113 verified, 0 not verifiable, 142 sources in total', 'engine self-test: 70/70 variants pass', 'DT-CW-NOSHOW enumeration: 96 combinations, 96 unique, 0 gaps, 0 overlaps', 'GPS fuzz (seed 7): 150 random cases, 25 automatic, 0 crashes, 0 findings', leak scan total 0. git status stayed clean after the build, so the committed kb/out files are reproducible.",
+    "(e) python3 kb/tools/selftest.py ends '70 / 70'. V56 to V58, V63 and V64 give UPHOLD R8 AUTO; V59 and V60 give ESCALATE_HUMAN R7 HUMAN; V61 and V62 give UPHOLD R8 APPROVE.",
+    "(f) rerun_engine.py: E01 UPHOLD R8 APPROVE, E02 WAIVE_FEE R1 APPROVE, E03 UPHOLD R8 APPROVE, E04 WAIVE_FEE R6 AUTO; '4/4 outcomes match'. Output is identical to the committed validation/build_checks/A1/01_engine_rerun.json. The APPROVE on E01 and E03 comes from the CW-F04 PING_MAX_GAP_S sensitivity test, not from CW-F06. Their rider messages are read LATE and F-RIDER-EVIDENCE is WEAK because the ticket statement contests.",
+    "Scope: a structured YAML diff shows only CW-F06, FC-R03, FC-R05 and the DT-CW-NOSHOW credibility_note changed in rules.yaml. No rule was added or removed, and ontology, reference_data and scope are unchanged. Running the old (b94bc63) and new engines on the 61 pre-existing variants plus E01 to E04 gives identical outcome, row and tier everywhere except E01 and E03 (intended: R7 HUMAN to R8). E04 moves from STRONG to WEAK with the same outcome. The 61 old self-test expectations were not edited (selftest.py diff is additions only).",
+    "(a) CW-F06 text matches FX1. A call or message is STRONG only if it places the rider at the pin or venue or contests presence, timing or place. An admission of lateness or 'coming' is not counter-evidence, and the statement still sets WEAK or NONE, so the result is equivalent to FX1's 'is NONE'. Treating an acknowledgment ('ok') as non-evidence follows from the same principle. The zh text matches the English.",
+    "Unclear call (words not recorded): the base reading is 'does not place the rider', which is FX1's own rule (STRONG only if its content places the rider), so the outcome follows FX1. The only departure is the tier: the reading test makes CW-F06 decisive, so the case goes to APPROVE instead of AUTO (V61). That is justified: decisive_definition clause 1 requires the test for a HARD+READ value that could be read another way, the direction is conservative, and it is recorded in D27 with organizer question O13.",
+    "Window start: the builder counts from the arrival indication, which is earlier than CW-F04's confirmed start. This only widens what the rider can rely on, and it matches the v0.1 engine's rider-contact window. For no-show fees, running the window to the cancellation is justified: Ryde's text is 'waits for > 3 minutes for the rider to arrive at the pick-up point and cancels', so a rider who reaches the pick-up before the cancellation is not a no-show. V60 tests this.",
+    "(b) FC-R03 now covers RECALCULATED only and excludes METERED (RydeTAXI) 'as CW-R00 excludes RydeTAXI'. It escalates under GEN-R07 (GEN-R-POLICY-GAP, added to produces) and attaches the detour measurement, FC-R05's difference (information only, never a refund) and the driver's response (GEN-R05). FC-R05 carries the matching exclusion. All three new quotes are verbatim in kb/sources/ryde_policy_corpus.json (build: VERIFIED). An ESCALATE_HUMAN outcome is tier HUMAN under D25.",
+    "(c) Other edits are limited to what the fix needs. The DT-CW-NOSHOW credibility_note had to change because its old premise ('a record check (no rider GPS, call, message ...)') is no longer true. It changes no row, rule list or credibility. The RydeTAXI taxonomy note now cites CW-R00 for the cancellation policy and FC-R03/FC-R05 for detour refunds; the old note wrongly cited FC-R03 for the cancellation policy. The annotation_schema note and the PB-FC-ROUTE step notes match the rule cards.",
+    "The owner's D29 decision (GPS-dependent upholds need APPROVE) was correctly not implemented in A1 and is recorded for A3. Note for A3: V56 to V58, V63 and V64 assert tier AUTO for a GPS-based uphold, so A3 will need to revisit them.",
+    "Style and privacy: the added lines contain no em dashes or en dashes. The new test data (V56 to V64) contains no names, plates, phone numbers or account IDs. 'kerb' appears only inside a regex that matches rider text."
+   ],
+   "findings": [
+    {
+     "id": "A1-FID-1",
+     "severity": "CRITICAL",
+     "file": "kb/rules.yaml",
+     "line": 597,
+     "claim": "For waiting fees, CW-F06's window runs to boarding instead of 'the same window as CW-F04' that FX1 requires. The builder's justification does not hold for waiting fees. Routine late-arrival messages after the free wait therefore become STRONG again, which brings back FX1's false escalation for CW-WAITING (in scope).",
+     "evidence": "FX1 change: \"define 'during the wait' for waiting fees (same window as CW-F04)\". CW-F06 now says: \"During the wait means from the driver's arrival indication ... to the cancellation for a no-show fee, or to boarding for a waiting fee.\" Its credibility_note says: \"The window deliberately runs past the end of CW-F04's window (the threshold): a rider who reaches the pick-up before the driver cancels, or before boarding, does contest the fee.\" CW-F04: \"until the threshold is reached, or until the cancellation (or boarding) if that comes first; leaving after the threshold is reached does not count\". PB-CW-WAITING step 4 uses FREE_WAIT_S as the threshold. CW-R05: \"the rider boarded after the free waiting period\" (flat $5). E07 app_events: \"10:17:30 wait_timer_expired ... Waiting Time Fee applicable if the trip continues.\" The round 1 applier on E07 already named exactly these two readings (\"whole wait to boarding, or the CW-F04 window ending 10:17:30\"), and FX1 chose the second. The engine classifies \"I'm downstairs, where are you?\" as PLACES (checked in /tmp/a1check/phr.py). D27 is marked 'decide: done' and does not mention this departure.",
+     "failure_scenario": "Take E07 (arrival 10:14:30, free wait ends 10:17:30, boarding 10:21:10) and add the usual message a late rider sends on reaching the lobby: \"I'm downstairs, where are you?\" at 10:20:50. Under A1's CW-F06 the message falls inside the window (it ends at boarding), places the rider at the pick-up and contests the driver's place, so it is STRONG. CW-R12 (PB-CW-WAITING step 8) then gives ESCALATE_HUMAN, tier HUMAN. Under FX1's window (CW-F04: ends 10:17:30) the message falls outside, so CW-R05 upholds the fee. Every rider who boards has reached the pick-up before boarding, so the note's reason ('reaches the pick-up ... before boarding does contest the fee') would make almost any arrival message counter-evidence. By CW-F04's own rule, nothing after the threshold can void the flat fee.",
+     "suggested_fix": "In CW-F06, end 'during the wait' for a waiting fee where CW-F04's window ends (FREE_WAIT_S reached, or boarding if earlier). Keep cancellation as the end for no-show fees. Correct the credibility_note to match, and record the no-show choice (window to the cancellation, which differs from CW-F04) as a decision in open_items for the owner."
+    },
+    {
+     "id": "A1-FID-2",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 28,
+     "claim": "The phrase-list stand-in for CW-F06's new reading step is tuned to the verbatim E01, E03 and E07 strings and misreads common nearby wording. A lateness admission ('I'm waiting for the lift') becomes PLACES/STRONG and is escalated, which is the exact error FX1 removes. Placing or contesting wording ('where r u', 'here already') becomes UNCLEAR and gets an approval-tier uphold instead of escalation.",
+     "evidence": "RIDER_PLACE_PHRASES[0] = r\"\\b(i'?m|i am|we'?re|we are)\\s+(already\\s+|still\\s+|now\\s+|just\\s+)?(here|outside|downstairs|waiting)\\b\" matches \"I'm waiting ...\" whatever follows. RIDER_ACK only fully matches a single token, so \"ok thanks\" is UNCLEAR. Scratch runs on V06 with one rider message at 08:47: \"I'm waiting for the lift, 2 min\" gives ESCALATE_HUMAN R7 HUMAN, F-RIDER-EVIDENCE=STRONG, readings {'E-CHT-03': 'PLACES'}. \"where r u\" and \"here already\" give UPHOLD R8 APPROVE (UNCLEAR). \"be there soon\", \"give me 2 min\" and \"ok thanks\" give UPHOLD R8 APPROVE instead of AUTO. Round 1 E04 already contains a lift-delay message (\"Sorry coming down, lift very slow, 2 min\").",
+     "failure_scenario": "In a round 2 held-out no-show case with the rider message \"I'm waiting for the lift, 2 min\" during the wait, the reference engine escalates (R7, HUMAN) where the owner's E01/E03/E07 ruling pattern says the fee stands. In a case with \"where r u\" from a rider who is at the pick-up, the engine upholds with approval instead of escalating. This affects the engine route only; the docstring says an LLM reads the text at run time.",
+     "suggested_fix": "Exclude 'waiting for (the )?(lift|elevator|friend|...)' and similar from PLACES, or check LATE before PLACES for that pattern. Add common shorthand ('where r u', 'here already', 'be there', 'give me N min', 'N min(s)') and multi-word acknowledgments. Add paraphrase self-tests (at least two variants per E pattern and per counterpart) so the lists are not fitted to the three verbatim strings."
+    },
+    {
+     "id": "A1-FID-3",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 652,
+     "claim": "CW-F06's new definition starts 'during the wait' at the arrival indication for every source, rider GPS included, but the engine still counts rider GPS only from the wait anchor. For a Ryde advance booking where the driver arrives early, the rule card and the reference engine therefore give different outcomes.",
+     "evidence": "rules.yaml CW-F06: \"During the wait means from the driver's arrival indication ... STRONG if, during the wait, rider-side records of tier A, B or C show the rider at the pin\". Engine: `for g in rider_gps: if anchor <= T(g[\"timestamp\"]) <= end:` versus `rider_contacts = [c for c in chat if c[\"sender\"] == \"rider\" and t_arr <= T(c[\"timestamp\"]) <= end]`. Scratch run (/tmp/a1check/adv.py, ryde_2026, advance booking 08:45, arrival 08:38, cancellation 08:52). (B) rider GPS at the pin 08:40, 08:42 and 08:44 gives UPHOLD R8 AUTO, F-RIDER-EVIDENCE WEAK. (C) the message \"I'm at the pick-up point, where are you?\" at 08:42 gives ESCALATE_HUMAN R7 HUMAN.",
+     "failure_scenario": "Advance booking, driver arrives early, and the rider's GPS shows them at the pin after the arrival indication but before the scheduled time. The KB card makes this STRONG (R7, escalate). The engine upholds the fee automatically. The same fact stated in a chat message escalates. The engine's internal mismatch predates A1, but A1's explicit definition now contradicts the engine, and FX1 asked for the engine's F-RIDER-EVIDENCE to follow the card.",
+     "suggested_fix": "Use one window for all CW-F06 sources. Either change the engine's rider-GPS check to start at t_arr (the arrival indication, or the anchor when there is none), or say in CW-F06 that rider GPS counts from the wait anchor, and justify the difference. Add a self-test for the advance-booking early-arrival case."
+    },
+    {
+     "id": "A1-FID-4",
+     "severity": "MINOR",
+     "file": "kb/tools/selftest.py",
+     "line": 497,
+     "claim": "The new self-tests copy the E01, E03 and E07 wording but not their timing or fee type. The E01 and E07 messages were sent after the threshold (free wait), and E07 is a waiting fee. So the post-threshold window segment for the LATE patterns, and the whole waiting-fee window, are untested.",
+     "evidence": "E01: threshold 07:51:20, message 07:51:58, cancellation 07:55:20. E07: free wait ends 10:17:30, message 10:18:20, boarding 10:21:10. V56 places the E01 message at 08:46:00 and V58 places the E07 message at 08:47:10, both before V06's 08:51:00 threshold. V58 runs as a no-show (\"the message in round 1 case E07, a waiting fee\"); there is no waiting-fee engine. PB-CW-WAITING still has no CW-F06 step (PB-CW-NOSHOW has 'n: 11, do: READ, rule: CW-F06'), so the new waiting-fee definition is not part of the waiting playbook either.",
+     "failure_scenario": "A regression that drops post-threshold LATE messages from the window, or the window problem in A1-FID-1, would not be caught by any self-test. An applier following PB-CW-WAITING step by step meets CW-F06 only implicitly, through CW-R12 at step 8.",
+     "suggested_fix": "Put V56 and V58 after V06's threshold (for example 08:51:20) as well as before it. Add a COMPUTE/READ CW-F06 step to PB-CW-WAITING with a note giving the waiting-fee window. Rely on the A1.D1 applier run for E07, and say so in the step record."
+    },
+    {
+     "id": "A1-FID-5",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1028,
+     "claim": "FX2 wording and labeling details: FC-R03's name still says 'metered'; the credibility_note's source date is wrong for the main source; the playbook leaves out one new source and the driver's response.",
+     "evidence": "FC-R03 name: \"Unjustified detour on a metered or recalculated fare\", but the rule now excludes METERED. The note says \"The METERED exclusion rests on Ryde's RydeTAXI articles (edited 2026-01-26)\", but the source tagged \"Basis of the METERED exclusion\" is RYDE-30741244296217 (a Fares and Charges article, edited 2025-07-17, which the build flags '[clause is one side' of a META-04 conflict). Only RYDE-900003406966 and RYDE-900004230226 are dated 2026-01-26. PB-FC-ROUTE sources add RYDE-900003406966 but not RYDE-900004230226. Step 5's note reads \"escalate under GEN-R07 with the measurement attached\" and omits the driver's response that FX2 requires (FC-R03's card does include it).",
+     "failure_scenario": "A reviewer reading only the rule name or the playbook would think FC-R03 still rules on metered fares, or that the driver's response need not be attached. The credibility note overstates how recent the main source is. No outcome changes.",
+     "suggested_fix": "Rename FC-R03 to 'Unjustified detour on a recalculated fare (metered fares escalate)'. Correct the note's dates (2025-07-17 and 2026-01-26) and say that the 'except for RydeTAXI' clause is undisputed by both sides of META-04. Add RYDE-900004230226 to PB-FC-ROUTE sources and 'and the driver's response (GEN-R05)' to the step 5 note."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "A1-FID-1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "Re-read kb/rules.yaml CW-F06 (lines 597-620), CW-F04 (536-537), CW-F03, CW-R05 and PB-CW-WAITING step 4, plus FX1 in 54_fix_list.json. FX1 says to define 'during the wait' for waiting fees as the same window as CW-F04. For a waiting fee, CW-F04's window ends at FREE_WAIT_S (or boarding if earlier); E07's ends at 10:17:30. A1 instead runs CW-F06 to boarding. The credibility_note's reason ('a rider who reaches the pick-up ... before boarding does contest the fee') fails for waiting fees: every rider who boards reached the pick-up first. CW-R05 makes 'boarded after the free waiting period' the fee condition, and CW-F04 says what happens after the threshold does not count. I confirmed that the engine's proxy reads \"I'm downstairs, where are you?\" as PLACES (/tmp/a1check/skeptic/msgs.py: ESCALATE_HUMAN R7 HUMAN on V06). The card itself lists 'where are you?' as a STRONG example. So E07 plus that message at 10:20:50 gives STRONG, then CW-R12, then ESCALATE_HUMAN under A1, versus UPHOLD under FX1's window. That is an outcome change in CW-WAITING, an in-scope type. The message pattern is common: round 1 E08 has \"I'm downstairs at the porch, don't see you?\". D27 ('done') does not flag the departure. D30 states the window but asks only about messages sent before the arrival. The no-show end at the cancellation is defensible (a rider who arrives before the cancellation contests 'no show'), matches the v0.1 engine, and FX1 does not prescribe it. One nuance for the fix: a strict send-time cut at the threshold would drop a post-threshold message that describes presence during the free wait (\"I've been here since 10:15\"). So the test should be content placing the rider at the pick-up during CW-F04's window, not send time alone."
+    },
+    {
+     "id": "A1-FID-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "Reproduced in /tmp/a1check/skeptic/msgs.py (V06 plus one rider message at 08:47). \"I'm waiting for the lift, 2 min\" gives PLACES, STRONG, ESCALATE_HUMAN R7 HUMAN, because RIDER_PLACE_PHRASES[0] matches any \"I'm waiting\". \"where r u\" and \"here already\" give UNCLEAR, UPHOLD R8 APPROVE. \"be there soon\", \"give me 2 min\" and \"ok thanks\" give UNCLEAR, APPROVE. A paraphrase battery (/tmp/a1check/skeptic/battery.py) misread 17 of 36 plausible wordings: 2 false STRONG (\"I'm waiting for the lift\", \"I'm waiting for my friend\") and 6 placing or contesting messages read as UNCLEAR (\"Where are u?\", \"I've been here for 5 minutes\", \"which side are you at?\"). I raised the severity from MAJOR. The rule card itself is right, but validation plan step V4.4 makes this engine the KB decider for no-show cases. Round 1 scored those cases by engine output (51_scorecard by_decider engine 2/4) and graded the E01/E03 engine mismatches CRITICAL, and round 2 reuses the same tools. A false STRONG (ESCALATE instead of UPHOLD) or a missed placing message (UPHOLD instead of ESCALATE) therefore changes an outcome in CW-NOSHOW, an in-scope type. If the owner counts only the rule card's behavior (LLM reading at run time), this drops to MAJOR."
+    },
+    {
+     "id": "A1-FID-3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "The engine counts rider GPS from `anchor` but rider calls and messages from `t_arr` (engine_noshow.py, the CW-F05 and CW-F06 blocks around lines 628-660). CW-F06 now defines the window from the arrival indication for all sources. Reproduced in /tmp/a1check/skeptic/adv.py (ryde_2026 advance booking, scheduled 08:45, arrival 08:38, non-contesting ticket). Rider GPS at the pin at 08:40, 08:42 and 08:44 gives UPHOLD R8 AUTO with F-RIDER-EVIDENCE NONE. Rider GPS at 08:46 and 08:48 gives STRONG, R7. The message \"I'm at the pick-up point, where are you?\" at 08:42 gives STRONG, ESCALATE_HUMAN R7. So the card and the engine disagree, and A1 made the card explicit. The engine split predates A1. MAJOR is right: no round 1 case and no organizer source (DISP-002, handbook) has rider_gps_telemetry, so this is outcome-neutral in the current scope. Which side should change is also an owner judgment (like D30): rider GPS that ends before the scheduled time is weak evidence against a no-show."
+    },
+    {
+     "id": "A1-FID-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Facts check out. V06's threshold is 08:51:00 (arrival 08:43, organizer 8 min). V56 (08:46:00), V57 (08:50:30), V58 (08:47:10) and V63 (08:46:00) are all before it. The original messages in E01 (07:51:58, after the 07:51:20 threshold) and E07 (10:18:20, after 10:17:30) came after the threshold, while E03's (19:04:52) came before. V58 runs as a no-show, and the engine has no waiting-fee path. PB-CW-WAITING has no CW-F06 step (PB-CW-NOSHOW has n: 11 READ CW-F06), so the new waiting-fee window is reachable only through CW-R12 at step 8. The timing gap is weak in effect: a LATE reading is never STRONG, so moving V56 and V58 after the threshold would not change any expected outcome, only the readings detail. A post-threshold PLACES message is already tested (V60 at 08:51:30). MINOR (missing detail) fits."
+    },
+    {
+     "id": "A1-FID-5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read the source metadata in kb/sources/ryde_policy_corpus.json and the build report. FC-R03 is still named 'Unjustified detour on a metered or recalculated fare' (rules.yaml line 1004). RYDE-30741244296217, the source tagged 'Basis of the METERED exclusion', is a Fares and Charges article edited 2025-07-17, and check_report.md line 219 marks its clause as one side of a META-04 conflict. Only RYDE-900003406966 and RYDE-900004230226 (RydeTAXI section) were edited 2026-01-26, so the note's 'RydeTAXI articles (edited 2026-01-26)' leaves out the main basis. PB-FC-ROUTE sources list 900003406966 but not 900004230226. Step 5's note says only 'with the measurement attached'. One softening: the playbook still gathers the driver's response at step 8 (GEN-R05, 'Both advocates' briefs'), and the FC-R03 card requires attaching it. No outcome or amount changes, so MINOR."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "grounding",
+  "review": {
+   "dimension": "Source grounding and credibility of the A1 rule changes (CW-F06, FC-R03, FC-R05, DT-CW-NOSHOW credibility_note), plus the zh translations",
+   "checked_ok": [
+    "CW-F06 is still rated D and carries an explicit FAIRRYDE-DECISIONS label. Under credibility_principle that is correct, because the content-based reading is FairRyde's own design.",
+    "For no-show fees, ending CW-F06's window at the cancellation has a source. RYDE-23534478435353 says 'waits for > 3 minutes for the rider to arrive at the pick-up point and cancels the trip (Rider NO SHOW and no trip completion)', so a rider who reaches the pick-up before the cancellation does contest the no-show. The engine already counted arrival to cancellation in v0.1 (the rider_contacts line did not change). A wider window only adds escalations, so R8 upholds never rest on it.",
+    "The pre-arrival message question is recorded as open decision D30 with a named decider.",
+    "I checked all three new FC-R03 quotes as exact substrings of the corpus body_text. RYDE-900003406966 (rider) and RYDE-900004230226 (driver) are RydeTAXI-section articles edited 2026-01-26, so the date in the credibility_note is right. 'Key in the fare as indicated on your meter.' does support METERED.",
+    "I searched all 125 articles and the ToU. No RydeTAXI article (sections 900000531506 and 900001672463) says who handles fare complaints. Taxi-company phone numbers appear only in the lost-item articles 25969395777305 and 900003102263. ToU A s.10 and s.20 are general, not taxi-specific. So escalating a METERED detour to a person contradicts no Ryde text, and it matches Jasper's E10 verdict (ESCALATE_HUMAN) and FX2.",
+    "CW-R00 is cited correctly: B, edited 2024-03-18, and its exclusion covers only the cancellation policy ('*All services except RydeTAXI').",
+    "FC-R05 stays at D, which is consistent. Its new METERED sentence defers to FC-R03 and claims nothing new from a source.",
+    "The DT-CW-NOSHOW credibility_note keeps CW-F06 out of R8's rules. That is consistent with decisive_definition clause 1: reading_test now adds a 'contact' reading for unclear calls and messages, and decide_tier makes CW-F06 decisive when that reading changes the outcome (V61, V62 give APPROVE). An R8 uphold after a lateness message rests on Ryde's own conditions (CW-R03), not on CW-R12.",
+    "The CW-F06 zh matches the English in meaning: the window, the STRONG sources, the late, ack and unclear handling, WEAK, NONE and the READ note. The FC-R03 zh matches the English. The new FC-R05 sentence in zh matches.",
+    "The taxonomy RYDETAXI note and the annotation_schema rider_side_evidence note agree with the changed rules.",
+    "GEN-R07 (ONT.8, D) is the escalation route FX2 named, and FC-R03 now produces GEN-R-POLICY-GAP."
+   ],
+   "findings": [
+    {
+     "id": "F1",
+     "severity": "CRITICAL",
+     "file": "kb/rules.yaml",
+     "line": 597,
+     "claim": "For waiting fees, CW-F06's window runs to boarding. Any rider GPS ping at the pin, or any message such as 'I'm here' or 'where are you?' sent after the free wait and before boarding, therefore becomes STRONG counter-evidence. That contradicts Ryde's waiting-fee condition and CW-R05 (A), departs from FX1's required window, and the credibility_note's justification is false for waiting fees. This brings the FX1 defect back for CW-WAITING.",
+     "evidence": "CW-F06: 'During the wait means from the driver's arrival indication ... to the cancellation for a no-show fee, or to boarding for a waiting fee. STRONG if, during the wait, rider-side records ... show the rider at the pin ... or a call or message from the rider to the driver places the rider at the pin'. credibility_note (line 619): 'a rider who reaches the pick-up before the driver cancels, or before boarding, does contest the fee.' Ryde RYDE-23534478435353: 'The driver presses \"I'm Here\", waits for > 3 minutes for the rider to board, and continues the trip'. CW-R05 (A): 'the rider boarded after the free waiting period'. FX1 change: 'define 'during the wait' for waiting fees (same window as CW-F04)'. CW-F04: 'from the confirmed wait start (CW-F03) until the threshold is reached'. E07: 'Free 3-min wait period expired' at 10:17:30, 'Rider boarded' at 10:21:10. Engine proxy: rider_contact_reading(\"I'm downstairs, where are you?\") returns PLACES (I ran it). Self-test V58 ('a waiting fee') runs on the no-show base V06, so the waiting-fee window is never exercised.",
+     "failure_scenario": "E07 facts, plus the rider messages \"I'm downstairs, where are you?\" at 10:20:50 (after the free wait, before boarding). CW-F06 rates it STRONG, CW-R12 escalates, and the outcome is ESCALATE_HUMAN (tier HUMAN) instead of UPHOLD, the verdict Jasper confirmed for E07's pattern. Rider GPS has the same problem: the rider boards at the pin, where CW-F04 has the driver within 50 m, so a rider ping within ARRIVAL_GEOFENCE_M (50 m) before boarding is almost certain. Every waiting-fee case that has rider GPS becomes STRONG and escalates. CW-WAITING is scope ADJUDICATE.",
+     "suggested_fix": "For waiting fees, end the window where CW-F04's window ends (the FREE_WAIT_S threshold, or boarding if that comes first), as FX1 required. Keep content that claims the rider was at the pick-up before the threshold (for example 'I've been here since 10:15') STRONG whenever it is sent. Keep the cancellation end for no-show fees, with its own Ryde reason ('Rider NO SHOW'). Correct the credibility_note, which should also say the start differs (arrival indication versus the CW-F03B start). Record the window choice as an open decision instead of folding it into D27 'done'. Add a waiting-fee test pair: a late 'I'm here' sent after the threshold gives UPHOLD, and 'I've been waiting since before 3 min' gives STRONG."
+    },
+    {
+     "id": "F2",
+     "severity": "MAJOR",
+     "file": "kb/rules.yaml",
+     "line": 1029,
+     "claim": "FC-R03 keeps credibility C, but its new METERED exclusion carries Ryde's CW-R00 scope condition over to detour refunds. Under the KB's own credibility_principle that makes it D, and it has no FAIRRYDE label. The credibility_note is wrong on two counts. The exclusion does decide the outcome (it alone turned E10's S$9.60 refund into ESCALATE_HUMAN). And the rule's own source note names as its 'basis' a non-RydeTAXI article that is older than 12 months (B) and is one side of a META-04 known conflict.",
+     "evidence": "credibility_principle: 'a Ryde condition extended by FairRyde to a new situation is D'. FC-R03: 'METERED fares (RydeTAXI) are excluded, as CW-R00 excludes RydeTAXI from the cancellation policy'. CW-R00 source: '*All services except RydeTAXI' (cancellation policy only). FC-R03 credibility_note: 'The METERED exclusion rests on Ryde's RydeTAXI articles (edited 2026-01-26) and leads only to escalation under GEN-R07, so it never decides an outcome on its own.' Source at line 1022: RYDE-30741244296217 'Fares quoted for our services are generally fixed, except for RydeTAXI.' with note 'Basis of the METERED exclusion'. That article is 'I was overcharged for ERP/toll', section Fares and Charges, edited 2025-07-17. check_report.md row FC-R03 #3: '[clause is one side ...' of META-04 'Fare basis'. FC-R03 has no FAIRRYDE source. E10 in v0.1 gave REFUND S$9.60 at tier APPROVE; the fix gives ESCALATE_HUMAN.",
+     "failure_scenario": "For any METERED detour, the exclusion alone fixes the outcome (ESCALATE_HUMAN), whatever the DR, the thresholds or the justification. In E10 it is the only element that changed a S$9.60 refund into an escalation. The rule is still labeled C, so explain.py _rule_label would present it as 'industry practice, a generic assumption', while its weakest essential element is FairRyde's inference. The tier does not change today, because ESCALATE_HUMAN is always HUMAN (D25) and C and D are both decisive under clause 3.",
+     "suggested_fix": "Rate FC-R03 D, or move the METERED exclusion into its own eligibility rule rated D with a FAIRRYDE-DECISIONS source (D28). Add a FAIRRYDE label for the reviewer packet (measurement, information-only difference, driver's response). Rewrite the credibility_note: the exclusion decides the outcome for METERED fares (escalation); its Ryde support is the two RydeTAXI articles; RYDE-30741244296217 is B and one side of META-04 'Fare basis'."
+    },
+    {
+     "id": "F3",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1011,
+     "claim": "FC-R03's stated reason goes beyond its sources and leaves out the grounds the sources do give. 'Leave taxi fares to the taxi company' stretches 'fees ... follow that of the respective taxi company' into a handling role that no Ryde text states. 'No basis for a refund computed by the platform' is equally true of RECALCULATED fares. The real distinguishing facts (cash-only fare collected by the driver, and the KB's own REFUND_DECIDER model) and ToU s.10/s.20 are not given to the reviewer.",
+     "evidence": "FC-R03: 'Ryde's texts leave taxi fares to the taxi company and give no basis for a refund computed by the platform' (zh: 'Ryde 的文本把出租车车费交给出租车公司'). RYDE-900003406966: 'all fees for Standard and/or Premium Taxi Services follow that of the respective taxi company' and 'the payment method accepted for RydeTAXI is only via cash' (the second sentence is not quoted). No RydeTAXI article names a fare-complaint handler; taxi-company phone numbers appear only in the lost-item articles. ToU A s.10: 'Any complaints between Partners and Users must be taken up with each other directly.' ontology.yaml line 376: 'FairRyde models Ryde as REFUND_DECIDER for charges Ryde collected'. FC-R05's only source is a DiDi paraphrase, so RECALCULATED refunds have no Ryde basis either.",
+     "failure_scenario": "A reviewer reads 'Ryde's texts leave taxi fares to the taxi company' and refers the E10 rider to the taxi company, which no Ryde text says for fare complaints. The ToU points to the rider and driver dealing directly, and the overcharging clause of RYDE-33362721809049 points to a Ryde investigation with the driver heard first. Outcome-neutral, because escalation is the verified E10 answer.",
+     "suggested_fix": "Reword it (both languages) along these lines: 'Ryde's RydeTAXI texts say taxi fees follow the respective taxi company's tariff, the driver keys in the meter fare and payment is cash only, so Ryde collected no fare to refund; no Ryde text provides a detour refund for them (FairRyde's reading, D).' Quote the cash-only sentence. Either drop 'as CW-R00 excludes' or add that CW-R00 rests on an explicit Ryde exclusion and this one does not. List ToU s.10 and s.20 and the overcharging clause in the reviewer packet."
+    },
+    {
+     "id": "F4",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1055,
+     "claim": "For METERED fares, FC-R05 attaches a 'difference' computed with TAXI_TARIFF, which is one operator's tariff (ComfortDelGro, C). The cited RydeTAXI source says charges vary by taxi company, and the rule gives the reviewer no warning about this.",
+     "evidence": "FC-R05: 'Not for METERED fares (RydeTAXI, FC-R03): there the same formula gives a difference that is attached for the reviewer as information'. reference_data TAXI_TARIFF: 'ComfortDelGro taxi fares page (research note 08), used for RydeTAXI metered recomputation', credibility C, 'which operator's meter applies per trip is not recorded in organizer data'. RYDE-900003406966: 'The actual charges vary among different taxi companies.'",
+     "failure_scenario": "On a trip by a different taxi company, the reviewer sees a difference based on the wrong tariff, presented as the formula's result. The figure is information only, so outcome-neutral.",
+     "suggested_fix": "State in FC-R05 (and in the reviewer packet text) that the METERED difference uses TAXI_TARIFF, one operator's tariff (C), and may not match the trip's taxi company."
+    },
+    {
+     "id": "F5",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 614,
+     "claim": "CW-F06's source note and D27 say more than Jasper actually confirmed. He confirmed three case verdicts. He did not confirm the rule design, and in particular not the window to boarding, which departs from FX1. That choice is not recorded as an open decision.",
+     "evidence": "CW-F06 source note: 'Content-based reading of rider calls and messages since KB v0.2 (fix FX1, ... E01, E03 and E07, confirmed by Jasper on 2026-10-11)'. 46_human_check.jsonl records only '\"human_verdict\": \"UPHOLD\"' for E01, E03 and E07. D27 has 'decide: done', and its text does not mention the window. credibility_scale D: 'Must be labeled and confirmed with the organizer or Ryde.'",
+     "failure_scenario": "Readers and validators take the whole design, including the window to boarding (F1), as approved by the owner, so the D choice is never put to the team or the organizer.",
+     "suggested_fix": "Write 'Jasper confirmed the outcomes of E01, E03 and E07 (UPHOLD) on 2026-10-11', and add the window choice (threshold versus cancellation or boarding) as an open decision with a decider."
+    },
+    {
+     "id": "F6",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 597,
+     "claim": "CW-F06 does not say how to treat a message that fits both readings. The engine treats such a message as UNCLEAR (reading test, then APPROVE), a rule the text does not contain. A reader of the text could instead rate it STRONG under the first clause.",
+     "evidence": "CW-F06: 'A call whose words are not recorded, or a message that fits neither reading, is read as not placing the rider at the pick-up'. engine rider_contact_reading: 'UNCLEAR (a call ... or a message that fits neither list or both)'. Self-test V62: \"I'm here, coming out now\" gives UPHOLD at tier APPROVE.",
+     "failure_scenario": "Rider message \"I'm here, coming out now\" during the wait. The engine gives UPHOLD/APPROVE. An applier following the rule text sees \"I'm here\" placing the rider and gives STRONG, so ESCALATE_HUMAN.",
+     "suggested_fix": "Change 'fits neither reading' to 'fits neither reading or both' in English and in zh ('两种读法都套不上或都套得上')."
+    },
+    {
+     "id": "F7",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1058,
+     "claim": "The FC-R05 zh leaves out 'fee tiers and surcharges' from the recomputation basis. This gap predates A1 but sits in a rule A1 changed.",
+     "evidence": "EN: 'the fare recomputed on the recommended route with the same tariff, fee tiers and surcharges'. zh: '按推荐路线、同一费率重算的车费'.",
+     "failure_scenario": "A zh reader recomputes the fare with the tariff only, leaving out the platform-fee tier and surcharges, and gets a different difference.",
+     "suggested_fix": "zh: '按推荐路线、用同一费率、费用档位和附加费重算的车费'."
+    },
+    {
+     "id": "F8",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1004,
+     "claim": "FC-R03's name still says 'metered', which contradicts the new statement that excludes METERED fares.",
+     "evidence": "name: 'Unjustified detour on a metered or recalculated fare'. statement: 'For RECALCULATED fares: ... METERED fares (RydeTAXI) are excluded'.",
+     "failure_scenario": "Explanations built by _rule_label print the rule name ('FC-R03 Unjustified detour on a metered or recalculated fare ...'), which tells the parties the rule rules on metered fares.",
+     "suggested_fix": "Rename it to 'Unjustified detour on a recalculated fare (metered fares escalate)'."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I re-read kb/rules.yaml lines 591-622. CW-F06 now reads 'During the wait means from the driver's arrival indication ... to the cancellation for a no-show fee, or to boarding for a waiting fee', and the zh says the same. FX1 in 54_fix_list.json says 'define during the wait for waiting fees (same window as CW-F04)', and CW-F04 (line 530ff) ends its window at the threshold. CW-R05 and RYDE-23534478435353 make the fee depend on boarding after more than 3 minutes. Every rider reaches the pick-up before boarding, so the credibility_note's reason ('a rider who reaches the pick-up ... before boarding, does contest the fee') is false for waiting fees. I ran the engine proxy in /tmp/a1check/proxy.py: rider_contact_reading returns PLACES for both \"I'm downstairs, where are you?\" and \"I'm here\". Under the rule text, E07 (free wait expired 10:17:30, boarded 10:21:10) plus 'I'm here' at 10:20:50 is a message inside the window that places the rider at the pin. That makes it STRONG, so CW-R12 gives ESCALATE_HUMAN (tier HUMAN). With CW-F04's window the message falls outside and the fee is upheld. Rider GPS works the same way: within 50 m before boarding gives STRONG. Two facts mean nothing tests this window. The engine cannot run waiting fees at all: line 338 sets end = T(t['cancellation_time']), which is null for E07. And V58 is built on the no-show base V06 (clean(), cancellation at 08:52). E07 itself is not affected, because its 'coming down' message reads LATE. In E08 the message falls inside CW-F04's window anyway. The defect still changes outcome and tier for a routine pattern in CW-WAITING, which taxonomy scope lists as ADJUDICATE. For no-show fees, ending at the cancellation is defensible. For waiting fees, ending at boarding is not."
+    },
+    {
+     "id": "F2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "FC-R03 (rules.yaml ~1003-1031) keeps credibility C. Its new statement excludes METERED fares 'as CW-R00 excludes RydeTAXI from the cancellation policy', which is an analogy. None of the three added Ryde quotes says detour refunds are excluded for RydeTAXI, so the exclusion is FairRyde's extension. credibility_principle (line 41) rates that D. There is no FAIRRYDE source citing D28, unlike CW-F03B, which cites D26. The source note calls RYDE-30741244296217 the 'Basis of the METERED exclusion'. The corpus shows that article is 'I was overcharged for ERP/toll', in Fares and Charges, edited 2025-07-17, which is B. check_report.md row 219 and META-04 'Fare basis' (rules.yaml ~154) show its quote is one side of a known conflict. The credibility_note's statement that the exclusion 'rests on Ryde's RydeTAXI articles (edited 2026-01-26)' contradicts that source note. The note also says the exclusion 'never decides an outcome on its own'. 44_comparison.jsonl shows E10 went from PARTIAL_REFUND S$9.60 at APPROVE in v0.1 to ESCALATE_HUMAN, and the exclusion alone made that change. The tier is unaffected (ESCALATE_HUMAN is always HUMAN, and C and D rows are both decisive), so the rating is wrong but outcome-neutral, which is MAJOR. One detail does not hold: explain.py has no FC-ROUTE explainer (only noshow), so the claimed _rule_label effect cannot happen today."
+    },
+    {
+     "id": "F3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "FC-R03 says 'Ryde's texts leave taxi fares to the taxi company and give no basis for a refund computed by the platform', and the zh says '把出租车车费交给出租车公司'. The corpus has RYDE-900003406966: fees 'follow that of the respective taxi company', 'The actual charges vary among different taxi companies', and the cash-only sentence. A corpus search shows taxi-company contacts only in the lost-item articles (900003102263, 25969395777305). No Ryde text names the taxi company as the handler of fare complaints. FC-R05's only source is a DiDi paraphrase (INDUSTRY), so 'no basis for a platform-computed refund' is equally true of RECALCULATED fares and does not distinguish METERED. The real distinguishing facts are missing from the rule: the driver collects a cash fare, and ontology line 376 models Ryde as REFUND_DECIDER 'for charges Ryde collected'. The wording comes from the FX2 problem text, but the rule text is what appliers read. This is wording and missing detail with no outcome effect, so MINOR."
+    },
+    {
+     "id": "F4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "FC-R05 (lines ~1048-1063) lists TAXI_TARIFF as a parameter and now says that for METERED fares 'the same formula gives a difference that is attached for the reviewer as information'. In reference_data.yaml, TAXI_TARIFF is the ComfortDelGro page (credibility C), with the note 'which operator's meter applies per trip is not recorded'. RYDE-900003406966 says charges vary among taxi companies. FC-R05 gives the reviewer no caveat. The parameter predates A1, and the caveat exists only in the reference_data note. The figure is information only, so this is outcome-neutral. Missing detail, so MINOR."
+    },
+    {
+     "id": "F5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "46_human_check.jsonl records only case verdicts for E01, E03 and E07 (UPHOLD). The CW-F06 source note ('... cases E01, E03 and E07, confirmed by Jasper on 2026-10-11') is grammatically ambiguous, and D27 is marked 'decide: done' without mentioning the window end. D30 treats the window 'to the cancellation or boarding' as the default and leaves only messages before the arrival open. No open item records the choice between threshold and cancellation or boarding, although it departs from FX1's 'same window as CW-F04' and CW-F06 is D, which must be confirmed. This is a labeling and traceability gap, so MINOR."
+    },
+    {
+     "id": "F6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "The CW-F06 text says only 'a message that fits neither reading', and the zh says '两种读法都套不上'. The engine docstring and code (engine_noshow.py line 176ff) return UNCLEAR for 'neither list or both'. I ran the proxy: \"I'm here, coming out now\" returns UNCLEAR. Self-test V62 expects UPHOLD/APPROVE, and check_report shows it passes. The rule text has no precedence for a message that fits both readings, so an applier could rate it STRONG under the first clause, while the rule's 'judged by reading it' leaves room for either reading. The text and the engine diverge on wording, so MINOR."
+    },
+    {
+     "id": "F7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "In FC-R05, the English is 'recomputed on the recommended route with the same tariff, fee tiers and surcharges', and the zh is '按推荐路线、同一费率重算的车费', with no fee tiers or surcharges. The v0.1 zh was the same (the git diff shows only an appended sentence), so this predates A1, but A1 edited that zh line. Translation gap, so MINOR."
+    },
+    {
+     "id": "F8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "rules.yaml line 1004 still reads 'name: Unjustified detour on a metered or recalculated fare', while the statement now says METERED fares are excluded. The contradiction is real. The stated failure path is overstated, though: explain.py builds explanations only for no-shows, so _rule_label does not print FC-R03 today. The name is still a visible label in reports and to appliers. Labeling, so MINOR."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "adversarial",
+  "review": {
+   "dimension": "ADVERSARIAL TEST OF THE ENGINE CHANGE (kb/tools/engine_noshow.py rider_contact_reading, reading_test, CW-F06 window)",
+   "checked_ok": [
+    "The new self-tests pass: selftest.py gives 70/70, and V56 to V64 all PASS with their expected outcome and tier.",
+    "The rule card's own examples are read correctly: 'I'm at the pick-up point', 'where are you?' and 'I can't see your car' are PLACES. The round 1 rider messages from E01, E03, E04 and E07 are read LATE. E02's four rider contacts read PLACES, PLACES, UNCLEAR (a call) and PLACES, so E02 stays STRONG.",
+    "The window edges match the card's inclusive window (arrival 08:43:00 to cancellation 08:52:00). 'I'm at the lobby, where are you?' at 08:43:00 or at 08:52:00 gives ESCALATE_HUMAN R7 HUMAN. The same message at 08:42:59 or 08:52:01 gives UPHOLD R8 AUTO.",
+    "Mixed sets behave as designed. LATE+PLACES gives STRONG, ESCALATE_HUMAN, HUMAN. LATE+UNCLEAR gives UPHOLD APPROVE with CW-F06 decisive. LATE+NEUTRAL gives UPHOLD AUTO. A rider call plus a LATE message gives UPHOLD APPROVE (the call is UNCLEAR and the reading test makes CW-F06 decisive). A missed rider call alone gives APPROVE. Rider contacts with type 'voice' or 'text' read UNCLEAR and give APPROVE, which is the safe direction.",
+    "The curly apostrophe U+2019 is normalized: 'I’m here', 'I’m at the lobby', 'can’t see you' and 'don’t see your car' all read PLACES.",
+    "Many Singapore English placements with no LATE token fall to UNCLEAR, and the reading test then makes CW-F06 decisive, giving APPROVE, never AUTO. This held for 'reach already', 'i downstairs liao', 'where u', 'u here?', 'at lobby now', 'I'm at the void deck', 'which car r u', 'ur car where', 'i see u le', 'cannot find', 'outside 7-11 waiting', 'Hello?', 'no car here leh', 'you haven't arrived' and 'u never come'. 'im here lah', 'I'm here', 'Im here', 'i'm outside' and 'waiting outside 7-11' read PLACES.",
+    "Real admissions read LATE: 'on the way', 'coming', 'Coming!', 'coming down now', 'so sorry, running late', 'walking over', 'still upstairs', 'almost there', 'can wait for me?', 'I'm still at home, sorry' and 'I'll be down in 3'. 'ok', 'okay', 'k', 'noted' and 'Thank you' read NEUTRAL. Weaker forms such as 'otw', 'abt to reach', 'wait ah', '5 min' and 'ok thanks' read UNCLEAR, which only costs an approval.",
+    "No new exception path. None content crashes earlier in intake (line 232, re.search on None, pre-existing). A contact without 'type' would already fail in the intake text loop. rider_contact_reading itself handles missing or None content. The worst regex case is 1.1 s on a 21,000-character message. The cid lookup by identity always resolves because rider_contacts comes from the same chat_logs list.",
+    "The literal sender == 'rider' match loses nothing: TX-ROLE's only alias for RIDER is 'rider', and every case file uses 'driver', 'rider' or 'system'.",
+    "Running the window to the cancellation instead of the CW-F04 threshold only moves no-show cases in the safe direction (V60: a placement after the threshold escalates). For CW-NOSHOW that is defensible, because a rider who reached the pick-up before the driver canceled has a real complaint.",
+    "The reading test is wired correctly. UNCLEAR ids trigger an evaluate with contact_reading='STRONG'. When that changes the outcome, decide_tier records CW-F06 as decisive (kind 'contact'), and GENERIC_ASSUMPTION_USED is set because CW-F06 is credibility D.",
+    "The repo was not modified. git status is clean apart from the ignored kb/tools/__pycache__, whose files all predate this check. Scratch scripts are in /tmp/a1check/ (harness.py, battery.py, unsafe.py, fullrun.py, edges.py, safedir.py)."
+   ],
+   "findings": [
+    {
+     "id": "ENG-1",
+     "severity": "CRITICAL",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 34,
+     "claim": "When a rider asks the driver whether they are coming or on the way, the engine reads it as the rider admitting lateness (LATE). These questions contest the driver's marked arrival, but no reading test runs on LATE, so the fee is upheld automatically. The exclusion for driver-directed 'coming' only covers the two exact forms 'you coming' and 'u coming'. 'on the way', 'omw' and 'almost/nearly there' have no exclusion at all.",
+     "evidence": "RIDER_LATE_PHRASES = [r\"(?<!you )(?<!u )\\bcoming\\b\", r\"\\bon (my|the) way\\b\", r\"\\bomw\\b\", ... r\"\\b(almost|nearly) there\\b\", ...]; line 187: return \"PLACES\" if places and not late else (\"LATE\" if late and not places else \"UNCLEAR\"); reading_test only tests unclear_ids. Run output on baseline V06 (selftest.clean on KB().disp002), message at 08:47:00: 'driver coming?' ['LATE'] -> UPHOLD R8 tier=AUTO ev=WEAK decisive=[] | if PLACES: ESCALATE_HUMAN tier=HUMAN; same for 'uncle coming?', 'Uncle coming or not', 'Are you still coming?', 'Are you on the way?', 'u on the way?', 'Hello? Are you on the way?', 'Is anyone coming?', 'Are you almost there?', 'ur coming?', \"you're coming?\", 'youre coming or not', 'you all coming?', 'Your car coming?', 'u omw?' (all LATE -> UPHOLD R8 AUTO). With a non-contesting ticket the result is the same (ev=NONE, UPHOLD R8 AUTO).",
+     "failure_scenario": "The driver marks arrival at 08:43 and cancels at 08:52. During the wait the rider's only message is 'uncle coming?' or 'Are you on the way?'. This is the common Singapore way to tell a driver 'I don't see you', and the card counts 'where are you?' as STRONG. The engine reads it LATE, so F-RIDER-EVIDENCE is WEAK or NONE, the outcome is UPHOLD R8 and the tier is AUTO. The correct STRONG reading gives ESCALATE_HUMAN with tier HUMAN. When the same question follows a placement ('I'm here. Are you on the way?', 'I'm at the pick-up point. Driver still coming?'), the message reads UNCLEAR, and the engine proposes UPHOLD under APPROVE instead of the STRONG reading's ESCALATE_HUMAN.",
+     "suggested_fix": "Read 'coming', 'on the way', 'omw' and 'almost/nearly there' as LATE only when the subject is the rider ('I'm coming', 'coming down', 'on my way') or when there is no subject and no question. Read the question forms ('?', 'or not', 'anot') or a second or third person subject (you, u, ur, you're, uncle, driver, car, anyone, someone) as PLACES, or at least UNCLEAR. Add self-tests for 'uncle coming?', 'Are you on the way?' and 'I'm here. Are you on the way?'."
+    },
+    {
+     "id": "ENG-2",
+     "severity": "CRITICAL",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 28,
+     "claim": "A rider who states their place in words outside the narrow PLACE list, and also asks the driver to wait, is read LATE, so the fee is upheld automatically. The LATE list contains polite wait requests ('pls wait', 'can wait', 'wait for me') that riders send from the pick-up. The PLACE list misses void deck, carpark, block or blk, 'reach' or 'reached', 'already there', and 'downstairs' or 'here' without 'I'm'. LATE wins whenever PLACES misses.",
+     "evidence": "RIDER_PLACE_PHRASES first pattern needs (i'?m|i am|we'?re|we are) + (here|outside|downstairs|waiting); the second needs 'i'm ... at' + (pick-?up|pin|lobby|entrance|porch|stand|gate|door|exit|kerb|curb). RIDER_LATE_PHRASES includes r\"\\bcan (you )?wait\\b\", r\"\\b(pls|please) wait\\b\", r\"\\bwait (for me|...)\". Run output (baseline V06, 08:47:00): \"I'm at the void deck, please wait\" ['LATE'] -> UPHOLD R8 tier=AUTO | if PLACES: ESCALATE_HUMAN HUMAN; same LATE -> UPHOLD R8 AUTO for 'reached, pls wait', 'Reached the lobby, please wait', 'Already downstairs, please wait', 'downstairs already pls wait', \"I'm already there, can you wait?\", \"Can you wait at the lobby? I'm already there\", \"I'm at the carpark, please wait\", \"I'm at Block 123, please wait\", \"I'm at the main road, please wait\", 'at void deck, can wait?', 'here liao, can wait 1 min? i see your car'.",
+     "failure_scenario": "The driver is about to cancel, and the rider, standing at the HDB void deck pick-up, messages 'Uncle pls wait, I'm at the void deck already' or 'reach already, pls wait'. The message places the rider at the pick-up, and the card makes that STRONG (ESCALATE_HUMAN, tier HUMAN). The engine reads it LATE and gives UPHOLD R8 with tier AUTO. A rider who contested in the chat during the wait is auto-charged.",
+     "suggested_fix": "When a message has a LATE token and also any place or arrival token (reach, reached, here, there, already, downstairs, void deck, lobby, carpark, car park, blk, block, gate, stand, bus stop, entrance, outside), return UNCLEAR, never LATE, so the reading test runs. Keep bare polite wait requests ('pls wait', 'can wait') out of LATE unless they come with a first-person delay ('still', 'getting ready', 'N min', 'coming'). Extend PLACES with the Singapore place words and with 'reach' or 'reached' forms. Add self-tests for \"I'm at the void deck, please wait\" and 'reached, pls wait'."
+    },
+    {
+     "id": "ENG-3",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 182,
+     "claim": "The engine normalizes only the U+2019 apostrophe and needs 'i'?m' with no space. Other apostrophes common on phones and Chinese IMEs (U+2018, fullwidth U+FF07, backtick), 'I m' with a space and 'Iam' all miss every first-person PLACE pattern. Alone they read UNCLEAR, which is safe. With any LATE token they read LATE, giving AUTO.",
+     "evidence": "t = (c.get(\"content\") or \"\").lower().replace(\"’\", \"'\"). Run output (baseline V06, 08:47:00): 'I m here, pls wait' ['LATE'] -> UPHOLD R8 tier=AUTO | if PLACES: ESCALATE_HUMAN HUMAN; same for 'I‘m here, please wait' (U+2018), 'I＇m here, please wait' (U+FF07), 'Iam here pls wait', 'I m at the lobby, please wait'. Compare \"I'm here\" -> PLACES.",
+     "failure_scenario": "A rider types 'I m here, pls wait' (autocorrect split) or uses a Chinese keyboard's fullwidth apostrophe: 'I＇m here, please wait'. The engine reads LATE and gives UPHOLD R8 with tier AUTO. The straight-apostrophe version escalates.",
+     "suggested_fix": "Normalize [‘’ʼ＇`´] to an apostrophe and collapse 'i m', 'iam' and 'im' to 'i'm' before matching. Add a self-test with a non-ASCII apostrophe plus 'please wait'."
+    },
+    {
+     "id": "ENG-4",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 32,
+     "claim": "The place-contest pattern needs 'wrong' before the noun, so a contest written the other way round ('the pin is wrong', 'my location is correct') is not PLACES. Combined with 'coming over' or 'pls wait', it reads LATE, giving AUTO.",
+     "evidence": "r\"wrong (place|location|pin|spot|side|entrance)\". Run output (baseline V06, 08:47:00): \"the pin is wrong, I'm on the other side, coming over\" ['LATE'] -> UPHOLD R8 tier=AUTO | if PLACES: ESCALATE_HUMAN HUMAN; 'my location is correct, pls wait' ['LATE'] -> UPHOLD R8 tier=AUTO | if PLACES: ESCALATE_HUMAN HUMAN.",
+     "failure_scenario": "The rider messages 'the pin is wrong, I'm on the other side, coming over'. That contests the place, which the card makes STRONG. The engine reads LATE and gives UPHOLD R8 with tier AUTO. CW-F07 can only catch it if the venue table happens to hold the place.",
+     "suggested_fix": "Also match (pin|location|place|address|side|entrance)\\s+(is|was)\\s+(wrong|correct|right) and 'other side'. Return UNCLEAR whenever a place-contest token appears together with a LATE token."
+    },
+    {
+     "id": "ENG-5",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 40,
+     "claim": "The acknowledgment list includes 'yes', 'yep', 'ya' and 'sure' and is read without the driver's preceding message. A 'yes' answering the driver's 'Are you at the lobby now?' places the rider, but it reads NEUTRAL. NEUTRAL contacts never get the reading test, so the fee is upheld automatically. The card only exempts an acknowledgment such as 'ok'.",
+     "evidence": "RIDER_ACK = r\"\\s*(ok(ay)?|k|thanks?( you)?|thx|noted|sure|alright|yes|yep|ya)\\s*[.!]*\\s*\". Run output (baseline V06 plus driver message 'Are you at the lobby now?' at 08:46:30, rider reply at 08:47:00): 'yes' {'E-CHT-04': 'NEUTRAL'} -> UPHOLD R8 tier=AUTO ev=WEAK decisive=[]; same for 'ya', 'yep', 'Yes.', 'sure'.",
+     "failure_scenario": "The driver messages 'I'm at the lobby, are you here?' and the rider answers 'yes'. Then the driver cancels for no-show. The engine reads NEUTRAL and gives UPHOLD R8 with tier AUTO. Reading 'yes' as a placement gives ESCALATE_HUMAN.",
+     "suggested_fix": "Keep only ok, okay, k, noted, thanks and thx as NEUTRAL. Read 'yes', 'ya', 'yep' and 'sure' as UNCLEAR, so the reading test decides, or read them against the driver's last message when that is a location question."
+    },
+    {
+     "id": "ENG-6",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 652,
+     "claim": "The rule card now defines one window for all rider-side evidence ('from the driver's arrival indication (the wait anchor when there is none) to the cancellation'). The engine counts rider messages from the arrival indication (t_arr) but rider GPS from the anchor. In an advance booking the anchor is the later scheduled time, so the same placement counts when it is a message and not when it is a tier A GPS record.",
+     "evidence": "line 634: rider_contacts = [c for c in chat if c[\"sender\"] == \"rider\" and t_arr <= T(c[\"timestamp\"]) <= end]; line 652: if anchor <= T(g[\"timestamp\"]) <= end: (rider GPS). Ryde advance booking (selftest._ryde_advance, arrival 08:38, scheduled 08:45, end 08:49:15, driver at the pin throughout): rider GPS at the pin at 08:40 -> UPHOLD R8 AUTO WEAK; rider message \"I'm at the lobby, where are you?\" at 08:40 -> ESCALATE_HUMAN R7 HUMAN STRONG.",
+     "failure_scenario": "Advance booking: the rider's phone GPS shows them at the pin at 08:40, after the driver's 08:38 arrival indication. By the card's new definition this is STRONG (ESCALATE_HUMAN). The engine ignores the ping and gives UPHOLD R8 with tier AUTO. The same fact as a chat message escalates.",
+     "suggested_fix": "Pick one window and use it for GPS, notification failures and messages alike. Either change line 652 to t_arr (as the card says), or change the card and line 634 to the anchor. Add a self-test for an advance booking with rider evidence between arrival and anchor."
+    },
+    {
+     "id": "ENG-7",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 28,
+     "claim": "Safe-direction misreading, but frequent. Two common admissions are read PLACES and escalated to a person, which brings back FX1's over-escalation of routine cases. (a) 'I'm waiting for the lift' and 'I'm outside <somewhere else>, N min' read PLACES because 'I'm' + waiting/outside/here matches whatever follows. (b) A rider's own wrong-pin admission reads PLACES because 'wrong pin/entrance/location' matches whoever is at fault.",
+     "evidence": "r\"\\b(i'?m|i am|we'?re|we are)\\s+(already\\s+|still\\s+|now\\s+|just\\s+)?(here|outside|downstairs|waiting)\\b\" and r\"wrong (place|location|pin|spot|side|entrance)\". Run output (baseline V06, 08:47:00): \"I'm waiting for the lift\" PLACES -> ESCALATE_HUMAN HUMAN; 'Sorry I went to the wrong entrance' PLACES -> ESCALATE_HUMAN HUMAN; \"I'm outside the MRT, 5 min\" PLACES -> ESCALATE_HUMAN HUMAN. Also PLACES: 'im waiting for lift, very slow', \"I'm outside my office, 10 min away\", \"I'm here at home, will take a while\", 'I put the wrong location, sorry', \"wrong pin sorry, I'm at the other block\", \"I'm at the lobby of the other tower, will take 5 min\".",
+     "failure_scenario": "Routine HDB no-show: the rider messages 'waiting for lift, very slow' (E04 had 'lift very slow') or 'sorry I put the wrong location'. The engine reads PLACES, so the evidence is STRONG and the case goes ESCALATE_HUMAN with tier HUMAN, where the reference would uphold the fee.",
+     "suggested_fix": "Exclude 'waiting for (the )?lift|grab|food|bill|my', and 'outside/here' followed by 'my|home|office|the MRT' plus a time, from PLACES. Read wrong-pin phrases preceded by I, my, sorry or 'I put/key in' as LATE or UNCLEAR. Add self-tests for 'I'm waiting for the lift' and 'Sorry I put the wrong pin'."
+    },
+    {
+     "id": "ENG-8",
+     "severity": "MINOR",
+     "file": "kb/tools/selftest.py",
+     "line": 501,
+     "claim": "V58 is labeled as the E07 pattern (a waiting fee), but it runs the no-show playbook on V06. The engine cannot run a waiting-fee case at all, and A1's rerun covered only E01 to E04. So the new 'to boarding' window that FX1 asked for has no executable check.",
+     "evidence": "v(\"V58\", \"V06, and the rider messages 'coming down, 2 min' (the message in round 1 case E07, a waiting fee)\", ...); E.run(KB(), E07.json) -> TypeError unsupported format string passed to NoneType.__format__ (line ~210, t['cancellation_fee']:.2f; pre-existing, the old engine fails the same way); validation/build_checks/A1/01_engine_rerun.json lists only E01, E02, E03, E04.",
+     "failure_scenario": "Nothing tests a waiting fee whose rider says 'coming down, 2 min' and then 'I'm downstairs' just before boarding. Under the new card that second message is STRONG and escalates the routine late-rider waiting fee FX1 meant to stop escalating, and no test would show it.",
+     "suggested_fix": "Either relabel V58 as an E07-like message in a no-show case and record in open_items that the waiting-fee window has no reference implementation, or add a waiting-fee path (or a reading-only test) that exercises the boarding window, including a placement sent on reaching the car."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "ENG-1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I read kb/tools/engine_noshow.py lines 34 and 176-187. The lookbehind (?<!you )(?<!u ) only excludes 'you coming' and 'u coming'. 'on the way', 'omw' and 'almost/nearly there' have no driver-directed exclusion. LATE short-circuits: reading_test only runs on unclear_ids, so a LATE message never gets the other reading. I reproduced this with /tmp/a1check/probe.py (V06 = selftest.clean on KB().disp002, rider message at 08:47:00). 'driver coming?', 'uncle coming?', 'Are you on the way?', 'Are you still coming?', 'u omw?' and 'Are you almost there?' all read LATE and give UPHOLD R8, tier AUTO, no decisive rule (F-RIDER-EVIDENCE WEAK with the DISP-002 ticket, NONE with the non-contesting ticket). 'I'm here. Are you on the way?' and 'I'm at the pick-up point. Driver still coming?' read UNCLEAR and give UPHOLD R8 APPROVE, although 'I'm here' alone reads PLACES and gives ESCALATE_HUMAN R7 HUMAN. A question to the driver is not the rider admitting lateness. Under the card it is at least 'fits neither' (APPROVE), or STRONG like 'where are you?' (ESCALATE_HUMAN). The engine is the KB's decider for no-show cases in validation (README step V4.4, 43_kb_engine.jsonl), and FX1 asked for new held-out rider-message variants. So this changes the tier, and possibly the outcome, in CW-NOSHOW (scope ADJUDICATE)."
+    },
+    {
+     "id": "ENG-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I read RIDER_PLACE_PHRASES and RIDER_LATE_PHRASES (lines 28-38) and the combining line 187: PLACES only when no LATE token is present, and LATE whenever PLACES misses. I reproduced these on V06 at 08:47:00. \"I'm at the void deck, please wait\", 'reached, pls wait', 'Reached the lobby, please wait', 'Already downstairs, please wait', \"I'm already there, can you wait?\", \"I'm at the carpark, please wait\", \"I'm at Block 123, please wait\", 'here liao, can wait 1 min? i see your car', \"Uncle pls wait, I'm at the void deck already\" and 'reach already, pls wait' all read LATE, giving UPHOLD R8 AUTO (also with the non-contesting ticket). Without the wait request, \"I'm at the void deck\" and 'reached' read UNCLEAR (APPROVE). \"I'm at the lobby, please wait\" also reads UNCLEAR (APPROVE). So by the builder's own design these messages should at minimum be UNCLEAR and go to approval. The engine instead auto-upholds them. That is a tier change (AUTO instead of APPROVE or HUMAN) in an in-scope type."
+    },
+    {
+     "id": "ENG-3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "Line 182 only replaces U+2019. I reproduced: 'I m here, pls wait', 'I‘m here, please wait' (U+2018), 'I＇m here, please wait' (U+FF07), 'Iam here pls wait' and 'I m at the lobby, please wait' read LATE, giving UPHOLD R8 AUTO. The straight-apostrophe equivalent \"I'm here, pls wait\" reads UNCLEAR, giving UPHOLD R8 APPROVE with CW-F06 decisive. One correction: the scenario says the straight version 'escalates'. It does not; it goes to approval. Under the definitions, an AUTO-versus-APPROVE difference for the same content is still a tier change in CW-NOSHOW, so I rate it CRITICAL, not MAJOR. The root cause is the same as ENG-2 (a LATE token wins whenever the placement is missed). A fix for ENG-2 that returns UNCLEAR when a place token appears would cover most of this."
+    },
+    {
+     "id": "ENG-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I reproduced: \"the pin is wrong, I'm on the other side, coming over\" and 'my location is correct, pls wait' read LATE, giving UPHOLD R8 AUTO. Without the LATE tail, 'the pin is wrong' and 'my location is correct' read UNCLEAR (APPROVE). The engine's own word order, \"wrong pin, I'm on the other side, coming over\", reads UNCLEAR (APPROVE). So the same content gets AUTO or APPROVE depending only on word order. Whether 'the pin is wrong' contests the place or admits the rider's own wrong pin is a judgment. But 'my location is correct, pls wait' plainly contests the place and should at least be UNCLEAR. That is a tier change in CW-NOSHOW, so CRITICAL under the definitions, not MAJOR."
+    },
+    {
+     "id": "ENG-5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "RIDER_ACK (line 40) includes yes, yep, ya and sure, and is matched with re.fullmatch on the message alone, without the driver's preceding message. I reproduced on V06 with a driver message 'Are you at the lobby now?' at 08:46:30 and the rider reply at 08:47:00. 'yes', 'ya', 'yep', 'Yes.' and 'sure' read NEUTRAL, giving UPHOLD R8 AUTO with no decisive rule (WEAK with the DISP-002 ticket, NONE with the non-contesting ticket). NEUTRAL never reaches reading_test. The card only exempts an acknowledgment such as 'ok'. A 'yes' answering a location question places the rider, so it is at least UNCLEAR. That is a tier change (and an outcome change if it is read as placing) in CW-NOSHOW, so I rate it CRITICAL rather than MAJOR."
+    },
+    {
+     "id": "ENG-6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Line 634 counts rider contacts from t_arr, and line 652 counts rider GPS from the anchor. Both lines predate A1, but A1's new CW-F06 text defines one window: 'from the driver's arrival indication (the wait anchor when there is none)'. So the engine now contradicts the card. I reproduced with /tmp/a1check/probe6.py: a Ryde advance booking (selftest._ryde_advance, arrival 08:38, scheduled 08:45, end 08:49:15, driver pinging at the venue every 15 s). Rider GPS at the pin at 08:40 gives UPHOLD R8 AUTO, WEAK. The same at 08:46 gives ESCALATE_HUMAN R7 HUMAN. The message \"I'm at the lobby, where are you?\" at 08:40 gives ESCALATE_HUMAN. Severity stays MAJOR: the organizer case format (DISP-002, round 1 cases) has no rider_gps_telemetry, and in the organizer profile the anchor is driver_wait_start, which equals arrival in DISP-002. So the path is reachable only with rider GPS under the Ryde profile, which is outside the current case scope. Which window is right (whether rider presence before an advance booking's scheduled time counts) is a choice for the owner."
+    },
+    {
+     "id": "ENG-7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I reproduced on V06 at 08:47:00. \"I'm waiting for the lift\", 'im waiting for lift, very slow', 'Sorry I went to the wrong entrance', \"I'm outside the MRT, 5 min\", \"I'm outside my office, 10 min away\", \"I'm here at home, will take a while\", 'I put the wrong location, sorry', \"wrong pin sorry, I'm at the other block\" and \"I'm at the lobby of the other tower, will take 5 min\" all read PLACES, giving ESCALATE_HUMAN R7 HUMAN. The cause is pattern 1 ('I'm' + here/outside/waiting, whatever follows) and the wrong-pin pattern (fault not considered). Two corrections: the scenario's exact text 'waiting for lift, very slow' (no 'I'm') reads UNCLEAR and gives UPHOLD APPROVE, not escalation; E04's actual 'Sorry coming down, lift very slow, 2 min' reads LATE. Still, rider admissions are escalated with outcome UPHOLD changed to ESCALATE_HUMAN and tier changed to HUMAN. That is FX1's own problem, which round 1 rated CRITICAL even though it was the 'safe' direction. The severity definitions do not distinguish direction, so CRITICAL, not MAJOR."
+    },
+    {
+     "id": "ENG-8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "The finding's literal claim is true and on its own would be MINOR. V58 runs the no-show playbook on V06 (its label says E07 was a waiting fee, so it is not mislabeled). E.run on validation/V4_e2e/cases/E07.json fails with TypeError (cancellation_fee is None, format at PB-INTAKE step 3). rerun_engine output 01_engine_rerun.json covers only E01 to E04. So the 'to boarding' window has no executable check. The failure scenario, though, shows a real defect in the rule card. I read CW-F06: 'during the wait ... to boarding for a waiting fee', and STRONG if a rider message 'places the rider at the pin'. CW-R12 escalates a waiting fee on STRONG rider counter-evidence. A rider always reaches the car before boarding, so the common pattern 'coming down, 2 min' followed by 'I'm downstairs' just before boarding is STRONG and escalates a routine late-rider waiting fee (UPHOLD changed to ESCALATE_HUMAN in CW-WAITING, scope ADJUDICATE). That brings FX1's over-escalation back for waiting fees. It contradicts FX1's required change ('same window as CW-F04'; CW-F04 ends at the threshold or at boarding, whichever comes first). The builder's credibility_note ('a rider who reaches the pick-up ... before boarding does contest the fee') does not hold for waiting fees. Under the Ryde profile the waiting fee is a flat S$5.00 (CW-R10), earned once the free wait passes, so a later arrival contests nothing unless the message disputes the driver's presence. For no-show fees, running the window to the cancellation is defensible (V60). Because the scenario changes an outcome in an in-scope type, I rate it CRITICAL."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "consistency",
+  "review": {
+   "dimension": "CONSISTENCY ACROSS FILES AND PARTY-FACING TEXT",
+   "checked_ok": [
+    "explain.noshow on the E01 and E03 reruns: every sentence matches the case facts. Rider text says 'Your message during the wait (E-CHT-03) said you were running late or still on your way'. The driver call and message counts and IDs are right (E01: E-CHT-01, 02, 04, 05). The old false 'no call or message from you' sentence is gone. EXP-03 unmatched numbers: none.",
+    "explain.noshow on V56, V57, V58, V61, V63, V59, V60, E02 and E04: the LATE sentence, the NEUTRAL case (no sentence) and the STRONG case (no sentence) are all accurate. When CW-F06 is decisive, the generic line correctly lists 'how the rider's call or message during the wait was read (CW-F06)'.",
+    "make_xlsx.py (line 637) and report_md.py (line 82) read only rule, reading, other_reading, outcome_other and changes from reading-test rows. The new contact row carries all five, so nothing breaks. Self-test rerun from /tmp: 70/70 pass. Working tree still clean.",
+    "make_xlsx.py rider_side_evidence and rider_contacts are mechanical (any rider chat inside the arrival-to-cancellation window). This matches the updated annotation_schema note, which leaves the content reading to the annotator.",
+    "ontology.yaml F-RIDER-EVIDENCE has only label, values and produced_by. Nothing in it contradicts the new CW-F06.",
+    "open_items D27, D28 and D29 match the rule text, 46_human_check.jsonl and the owner's request: E01, E03, E07 UPHOLD; E10 escalate; GPS-dependent upholds go to APPROVE, implemented in A3. O13 matches CW-F06's clause on calls whose words are not recorded.",
+    "46_human_check.jsonl agrees with 45_adjudication.jsonl (who_is_right: reference for E01, E03, E07, E10) and with 42_reference.jsonl outcomes.",
+    "PB-FC-ROUTE steps 5 and 6 match FC-R03 and FC-R05 (METERED: no ruling, GEN-R07, difference is information only). The taxonomy RYDETAXI note matches.",
+    "The DT-CW-NOSHOW credibility_note's description of the reading test (statement WEAK/NONE plus unclear contacts) matches engine reading_test and decide_tier.",
+    "No em or en dashes in any added line. No British spellings in prose ('kerb' appears only inside a regex that matches rider text). New self-test data (V56 to V64) and 01_engine_rerun.json contain no names, plates, phone numbers or account IDs.",
+    "Window end for the no-show fee (to the cancellation, not the threshold) is defensible. Ryde's no-show is the driver 'waits for > 3 minutes ... and cancels', so a rider who reaches the pick-up before the cancellation does contest the no-show, and the result is escalation (the safe direction).",
+    "Grep of kb/ (excluding sources) for 'called or messaged', 'call, message' and 'rider contacted': no CW-F06 consumer still states the old any-contact-is-STRONG rule. CW-F05's 'or the rider contacted the driver' is about contact attempts and is still correct."
+   ],
+   "findings": [
+    {
+     "id": "C1",
+     "severity": "CRITICAL",
+     "file": "kb/rules.yaml",
+     "line": 597,
+     "claim": "For waiting fees, CW-F06's window now runs to boarding. That makes the routine message a late rider sends on reaching the car ('I'm downstairs', 'where are you?') STRONG counter-evidence, which brings back FX1's over-escalation for CW-WAITING (an in-scope ADJUDICATE type). The credibility_note's justification does not hold for waiting fees. The deviation from FX1's required 'same window as CW-F04' is not recorded in open_items: D27 is silent on it and D30 covers only the window start.",
+     "evidence": "rules.yaml CW-F06: 'During the wait means from the driver's arrival indication ... to the cancellation for a no-show fee, or to boarding for a waiting fee. STRONG if, during the wait, ... a call or message from the rider to the driver places the rider at the pin or the venue ... (for example \"I'm at the pick-up point\", \"where are you?\" ...)'. credibility_note: 'The window deliberately runs past the end of CW-F04's window (the threshold): a rider who reaches the pick-up before the driver cancels, or before boarding, does contest the fee.' Fix list FX1 change: \"define 'during the wait' for waiting fees (same window as CW-F04)\". Engine proxy: rider_contact_reading(\"I'm downstairs, where are you?\") -> PLACES; ('where are you?') -> PLACES; (\"I'm here\") -> PLACES. No test covers the waiting window: V58 is a no-show variant, engine_noshow cannot run E07 (TypeError), and the rerun covers only E01 to E04.",
+     "failure_scenario": "E07 (waiting fee, free wait ends 10:17:30, boarded 10:21:10; Jasper ruled the fee stands) with one more rider message at 10:21:00, 'I'm downstairs, where are you?'. Under CW-F06 this message is inside the wait (before boarding) and places the rider at the pick-up, so it is STRONG. CW-R12 then escalates to a person instead of upholding the S$5 fee. Every boarded rider reaches the pick-up before boarding, so the message does not contest the minutes already charged. The same pattern FX1 fixed for 'coming down' returns for the message that usually follows it.",
+     "suggested_fix": "For a waiting fee, count a message that only places the rider at the pick-up when it is sent within CW-F04's window, up to the free-wait threshold, as FX1 asked. After the threshold, count only content that says the rider was there earlier ('been waiting here') or that contests the driver's presence ('I can't see your car'). Keep the cancellation end for no-show fees. Fix the credibility_note, record the window choice (and its deviation from FX1) as an open decision, and add a waiting-fee test with an end-of-wait 'I'm downstairs' message."
+    },
+    {
+     "id": "M1",
+     "severity": "MAJOR",
+     "file": "kb/tools/explain.py",
+     "line": 270,
+     "claim": "The rider explanation still tells the rider 'no call or message from you in the trip record' whenever no rider contact falls inside the wait. That is false when the rider messaged before the arrival indication (the D30 case) or after the cancellation (new self-test V64).",
+     "evidence": "explain.py: 'elif not rider_contact_ids:\\n        rider_records = \" There is no GPS trace from your phone and no call or message from you in the trip record.\"'. rider_contact_ids comes only from the in-window readings (engine: rider_contacts = [c ... if c[\"sender\"] == \"rider\" and t_arr <= T(c[\"timestamp\"]) <= end]). Run of V64 (rider message 'where are you?' at 08:53 in chat_logs): rider text contains 'There is no GPS trace from your phone and no call or message from you in the trip record.' Run of V06 plus rider message \"I'm at the pick-up point already, at the lobby\" at 08:42:30 (driver arrival 08:43): UPHOLD R8 AUTO, and the rider text again says 'no call or message from you in the trip record'.",
+     "failure_scenario": "A rider who messaged \"I'm at the pick-up point already\" 30 s before the driver marked arrival gets an automatic uphold. The explanation tells them the trip record has no message from them, which is contradicted by E-CHT records they can see.",
+     "suggested_fix": "Base the sentence on all rider chat entries. Say 'no call or message from you during the wait (from the arrival indication to the cancellation)'. When rider messages exist outside the window, name them and say they fall outside the wait counted by CW-F06 (and, for before-arrival messages, that this is open decision D30)."
+    },
+    {
+     "id": "M2",
+     "severity": "MAJOR",
+     "file": "kb/playbooks.yaml",
+     "line": 104,
+     "claim": "PB-CW-WAITING was not updated for FX1. It has no CW-F06 step and does not require chat logs, yet step 8 checks CW-R12, which depends on F-RIDER-EVIDENCE from CW-F06. FX1's new waiting-fee definition therefore has no consumer in the waiting playbook, which the kb_applier route follows for E07. PB-FC-ROUTE was updated for FX2 in the same commit.",
+     "evidence": "PB-CW-WAITING required_evidence: 'E-TKT-01, E-TRP-01, E-APP-* (driver_arrived, rider_picked_up, waiting_fee_tapped, trip_completed), E-GPS-* during the wait' (no E-CHT-*). Steps: CW-F02 or CW-F02B, CW-R06, CW-F03/CW-F03B, CW-F04, CW-R05, GEN-R05, '{n: 8, do: CHECK, rule: \"CW-R12, DQ-06, CW-R10\"}'. There is no READ CW-F06 step. Compare PB-CW-NOSHOW step 11 'do: READ, rule: CW-F06'. 44_comparison.jsonl: E07 route 'kb_applier'.",
+     "failure_scenario": "An applier following PB-CW-WAITING on an E07-type case is never told to read the rider's messages up to boarding. It either skips CW-F06, so a real 'I've been waiting at the porch, I can't see your car' message never reaches CW-R12 (wrong UPHOLD), or it improvises a window that differs from CW-F06's.",
+     "suggested_fix": "Add E-CHT-* (calls and messages) to required_evidence and a step 'READ CW-F06: rider counter-evidence; read the statement and the rider's calls and messages during the wait (arrival indication to boarding)' before step 8, mirroring PB-CW-NOSHOW step 11."
+    },
+    {
+     "id": "M3",
+     "severity": "MAJOR",
+     "file": "kb/taxonomy.yaml",
+     "line": 607,
+     "claim": "After FX2, the reason code FC-R-DETOUR-CONFIRMED and FC-R03's own name still say the rule covers metered fares with a PARTIAL_REFUND outcome. This contradicts FC-R03's new statement and invites the E10 failure again.",
+     "evidence": "taxonomy.yaml: '{code: FC-R-DETOUR-CONFIRMED, label: Unjustified detour increased a metered or recalculated fare, outcome: PARTIAL_REFUND}'. rules.yaml line 1004: 'name: Unjustified detour on a metered or recalculated fare'. FC-R03 statement now: 'For RECALCULATED fares: ... METERED fares (RydeTAXI) are excluded'. explain.py _rule_label prints r['name'] in party-facing rule lists.",
+     "failure_scenario": "A KB applier picks a reason code for a RydeTAXI detour such as E10. The only detour-confirmed code says 'metered ... fare, outcome: PARTIAL_REFUND', so it can again propose the S$9.60 refund that FX2 removed, or produce a ruling citing FC-R03 under a name that says it applies to metered fares.",
+     "suggested_fix": "Rename FC-R03 to 'Unjustified detour on a recalculated fare' and change the FC-R-DETOUR-CONFIRMED label to 'Unjustified detour increased a recalculated fare'. Optionally note there that METERED fares go to GEN-R-POLICY-GAP."
+    },
+    {
+     "id": "M4",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 652,
+     "claim": "CW-F06 now defines one window for all STRONG items, starting at the driver's arrival indication. The engine applies it to rider calls and messages (from t_arr) but still checks rider GPS from the wait anchor, so the two kinds of evidence get different windows, and the engine disagrees with the rule for rider GPS. This is outcome-changing for a constructed case. I rate it MAJOR because the engine is a verification tool and no organizer or round 1 case carries rider GPS.",
+     "evidence": "engine_noshow.py: 'for g in rider_gps:\\n        if anchor <= T(g[\"timestamp\"]) <= end:' versus 'rider_contacts = [c for c in chat if c[\"sender\"] == \"rider\" and t_arr <= T(c[\"timestamp\"]) <= end]'. rules.yaml CW-F06: 'During the wait means from the driver's arrival indication (the wait anchor when there is none)'. Scratch run (ryde_2026 advance booking, arrival 08:38, anchor 08:45, driver at the pin throughout): rider GPS at the venue 08:39 to 08:44 -> 'UPHOLD R8 AUTO F-RIDER-EVIDENCE WEAK'. Rider message \"I'm at the lobby, where are you?\" at 08:40 -> 'ESCALATE_HUMAN R7 HUMAN F-RIDER-EVIDENCE STRONG'.",
+     "failure_scenario": "Advance booking where the rider's phone GPS shows them at the venue between the driver's arrival indication and the scheduled time. CW-F06 makes this STRONG (R7, a person decides). The engine ignores it and auto-upholds, while the same fact sent as a chat message escalates.",
+     "suggested_fix": "Use the same window start (t_arr, or the anchor when there is no arrival indication) for rider GPS as for rider contacts, or change CW-F06 to state a different start for rider GPS and say why. Add a self-test for it."
+    },
+    {
+     "id": "m1",
+     "severity": "MINOR",
+     "file": "kb/taxonomy.yaml",
+     "line": 702,
+     "claim": "Several labels and notes still describe CW-F06 in the old terms ('rider-side system evidence' as the thing CW-F06 detects; reading only the statement). Under the new rule a rider message can exist and still not be counter-evidence.",
+     "evidence": "taxonomy.yaml: '{code: NO_RIDER_EVIDENCE, label: No rider-side system evidence}'. The engine sets it whenever rider_ev != 'STRONG', and selftest V56 to V58 expect the flag on cases with a rider message, while annotation_schema calls that same message 'system_records'. ontology.yaml line 414: 'rider_called_driver ... changes: \"none (contact attempt; counts as rider-side system evidence, rule CW-F06)\"'. A call alone is now UNCLEAR, not counter-evidence. scope.yaml line 55: '{q: \"Is there rider-side system evidence?\", answered_by: \"CW-F06\"}'. playbooks.yaml line 72, PB-CW-NOSHOW step 11: 'Rider counter-evidence; read the statement to see whether it contests presence, timing or place' (no mention of the rider's calls and messages). annotation_schema rider_contacts: 'Rider calls and messages between the arrival and the cancellation' (no boarding end for waiting fees).",
+     "failure_scenario": "V56 (rider messaged 'still getting ready ...') carries flag NO_RIDER_EVIDENCE, labeled 'No rider-side system evidence', while the annotation workbook marks the same case rider_side_evidence = system_records. A reviewer or applier reading the ontology treats a bare rider call as counter-evidence, which the new CW-F06 does not.",
+     "suggested_fix": "Relabel NO_RIDER_EVIDENCE as 'No rider-side evidence that places the rider at the pick-up or contests presence (CW-F06)'. Change the ontology note to 'rider-side material; counter-evidence only per CW-F06's reading'. Reword the scope.yaml question to 'Does rider-side evidence place the rider at the pick-up or contest presence?'. Have PB-CW-NOSHOW step 11 say 'read the statement and the rider's calls and messages during the wait'. Add 'or boarding (waiting fee)' to the rider_contacts note."
+    },
+    {
+     "id": "m2",
+     "severity": "MINOR",
+     "file": "kb/tools/explain.py",
+     "line": 277,
+     "claim": "The rider sentence for UNCLEAR contacts always uses the plural 'calls or messages', even for one item. It also states the contested reading as a fact of the record, although for V62 the rider's own message says 'I'm here' and the engine itself flags the reading as decisive.",
+     "evidence": "explain.py: 'The trip record does not show that your calls or messages ({_ids(rcd[\"unclear_ids\"])}) placed you at the pick-up point.' V61 output (one call): '... your calls or messages (E-CHT-04) placed you ...'. V62 output (single message \"I'm here, coming out now\"): same sentence, with decisive [('CW-F06', \"reading the rider's call or message (E-CHT-04) as placing the rider at the pick-up gives ESCALATE_HUMAN\")].",
+     "failure_scenario": "A rider who wrote \"I'm here, coming out now\" is told the record does not show the message placed them at the pick-up. That is FairRyde's provisional reading, not a property of the record, and the noun is plural for one message.",
+     "suggested_fix": "Choose 'call' or 'message' and singular or plural from the items. Word it as a reading: 'FairRyde read your message (E-CHT-04) as not showing you at the pick-up point; because another reading would change the outcome, a Ryde staff member checks this reading.'"
+    },
+    {
+     "id": "m3",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 42,
+     "claim": "D30 puts v0.2 behavior in the default_v0_1 field. The arrival-to-cancellation-or-boarding window was introduced in v0.2, so the field label is wrong for this entry.",
+     "evidence": "open_items.yaml D30: 'default_v0_1: \"CW-F06 counts rider calls and messages from the arrival indication to the cancellation or boarding. ...\", changed: \"new in v0.2 (found while fixing FX1)\"'. D27 records that in v0.1 any contact during the wait was STRONG and the window was undefined in the rule text.",
+     "failure_scenario": "A reader of open_items concludes that v0.1 already had this window definition, which contradicts D27 and the v0.1 rule text.",
+     "suggested_fix": "Describe the current default as v0.2 (or state it in 'changed') and keep default_v0_1 for what v0.1 did: rule text silent; the engine counted rider chat from arrival to cancellation."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "C1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I re-read kb/rules.yaml CW-F06 at eca01d5 (lines 591-622). It says 'During the wait means ... to boarding for a waiting fee', and it lists \"I'm at the pick-up point\" and \"where are you?\" as STRONG content. CW-R12 (line 879) applies to CW-WAITING and escalates on STRONG, and kb/scope.yaml lists CW-WAITING under adjudicate, so the type is in scope. So the reviewer's scenario follows directly from the rule text: E07 plus \"I'm downstairs, where are you?\" at 10:21:00, before boarding at 10:21:10, is STRONG, which gives R7 ESCALATE_HUMAN (tier HUMAN) instead of UPHOLD. The engine proxy also reads it that way: in /tmp/a1check, rider_contact_reading returns PLACES for \"I'm downstairs, where are you?\", for 'where are you?', for \"I'm here\" and for \"I'm downstairs\". The credibility_note's reason for the window fails for waiting fees. CW-R05 earns the fee when the rider boards more than FREE_WAIT_S after \"I'm Here\", and every rider who boards has reached the pick-up first. CW-F04 also stops counting presence at the threshold, so a message placing the rider at the pick-up after 10:17:30 contests nothing the fee depends on. The no-show half (window to the cancellation) is defensible; the waiting-fee half is not. The window also contradicts FX1's required change ('same window as CW-F04'; 54_fix_list.json). Under that window, E07's own 10:18:20 message would fall outside the wait. No open decision records the deviation: D27 does not mention it, and D30 states the end of the window only as context for a question about its start. No test covers the waiting-fee window. V58 is built on V06, a no-show case. The engine raises a TypeError on E07 because cancellation_fee is None at engine_noshow.py line 242, which I reproduced. 01_engine_rerun.json covers only E01 to E04. The outcome and tier change in an in-scope type, the same class of error FX1 was rated CRITICAL for."
+    },
+    {
+     "id": "M1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "I reproduced both cases with /tmp/a1check/m1.py. In V64 (rider \"where are you?\" at 08:53, after the cancellation), the rider text says 'There is no GPS trace from your phone and no call or message from you in the trip record.' The D30 case (V06 plus \"I'm at the pick-up point already, at the lobby\" at 08:42:30) gives UPHOLD R8 AUTO with the same sentence. In both cases the chat_logs contain that rider message, so the sentence is false. The cause is that rider_contact_ids comes from rcd['readings'], and the readings cover only the in-window contacts (engine line 634: t_arr <= ts <= end). EXP-01 says each party is told what evidence was missing, so this wrongly tells the rider a message is missing, though it does not change the outcome. The defect predates A1: with the b94bc63 tree exported to /tmp/a1check/oldrepo, v0.1 prints the identical sentence for both inputs. A1 rewrote this block and added V64 without fixing it."
+    },
+    {
+     "id": "M2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "The facts hold. In kb/playbooks.yaml, PB-CW-WAITING's required_evidence has no E-CHT-*, its steps have no CW-F06, and step 8 checks CW-R12. PB-CW-NOSHOW has 'READ CW-F06' at step 11. The gap predates A1: A1 did not touch PB-CW-WAITING. The failure scenario, however, is contradicted by round 1 evidence. In 43_kb_applier.jsonl for E07, the applier following PB-CW-WAITING step 8 listed rule_id 'CW-F06, CW-R12, DQ-06, CW-R10', read the rider message at 10:18:20, and even raised the window question. An applier therefore reaches CW-F06 through CW-R12, and CW-F06's own text now carries the waiting-fee window ('to boarding'), so it does not have to make one up. What remains is a missing playbook step and evidence entry (missing detail), not a demonstrated wrong outcome. Downgraded to MINOR."
+    },
+    {
+     "id": "M3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Both stale texts are there. kb/taxonomy.yaml line 607 reads '{code: FC-R-DETOUR-CONFIRMED, label: Unjustified detour increased a metered or recalculated fare, outcome: PARTIAL_REFUND}', and kb/rules.yaml line 1004 gives FC-R03 the name 'Unjustified detour on a metered or recalculated fare', while its statement now covers only RECALCULATED fares and excludes METERED. The claimed path back to the E10 failure is not supported, though. FC-R03's statement excludes METERED and routes it to GEN-R07, its produces list now includes GEN-R-POLICY-GAP, FC-R05 says 'Not for METERED fares', and PB-FC-ROUTE steps 5 and 6 repeat the exclusion. explain.py has only the noshow() path, so _rule_label never prints FC-R03's name today. This is a labeling inconsistency (MINOR), not a MAJOR wrong rule."
+    },
+    {
+     "id": "M4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "In engine_noshow.py at eca01d5, rider GPS counts from the anchor ('if anchor <= T(g[\"timestamp\"]) <= end', line 652), while rider contacts count from t_arr (line 634). CW-F06's new text defines one window for every STRONG item: 'from the driver's arrival indication (the wait anchor when there is none)'. I reproduced the case with /tmp/a1check/m4.py: a ryde_2026 advance booking, arrival 08:38, anchor 08:45, driver at the pin throughout, non-contesting statement. Rider GPS at the venue from 08:39 to 08:44 gives UPHOLD R8 AUTO with F-RIDER-EVIDENCE NONE. A rider message \"I'm at the lobby, where are you?\" at 08:40 gives ESCALATE_HUMAN R7 HUMAN with STRONG. The engine's GPS window was not changed by A1, but A1's new rule definition made the engine disagree with the rule. The outcome changes only in the verification engine, on a constructed input that no organizer or round 1 case resembles (none has rider GPS). The KB rule text itself is consistent, so MAJOR is right."
+    },
+    {
+     "id": "m1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Each cited text is there as quoted. kb/taxonomy.yaml line 702 reads 'NO_RIDER_EVIDENCE, label: No rider-side system evidence', and selftest V56 to V58 expect that flag on cases that do have a rider message. kb/ontology.yaml line 414 says rider_called_driver 'counts as rider-side system evidence, rule CW-F06', but a bare call now reads UNCLEAR (V61 gives UPHOLD APPROVE, not STRONG). kb/scope.yaml line 55 still asks 'Is there rider-side system evidence?'. PB-CW-NOSHOW step 11 mentions only the statement. annotation_schema's rider_contacts note still says 'between the arrival and the cancellation' with no boarding end. All of these are wording or labeling, with no effect on outcomes."
+    },
+    {
+     "id": "m2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced with /tmp/a1check/m1.py. V61 has a single call and V62 a single message (\"I'm here, coming out now\"), and both rider texts say 'The trip record does not show that your calls or messages (E-CHT-04) placed you at the pick-up point.' The plural is used for a single item, and FairRyde's provisional reading is presented as a property of the record, although the engine marks CW-F06 decisive ('reading the rider's call or message (E-CHT-04) as placing the rider at the pick-up gives ESCALATE_HUMAN'). The tier (APPROVE) and the generic-assumption sentence are correct, so this is wording only."
+    },
+    {
+     "id": "m3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "In kb/open_items.yaml, D30's default_v0_1 field reads 'CW-F06 counts rider calls and messages from the arrival indication to the cancellation or boarding', with changed: 'new in v0.2'. The 'to boarding' end and the written window definition are new in v0.2: the v0.1 rule text had no window, as D27 records. The field label is therefore misleading for this entry, though the 'changed' value partly signals it. The v0.1 engine already ignored rider messages sent before the arrival indication (t_arr start), so part of the stated default was true in v0.1 as well. Labeling only."
+    }
+   ]
+  }
+ }
+]

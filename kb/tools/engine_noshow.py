@@ -3,8 +3,9 @@
 Purpose: prove that the knowledge base is complete enough to decide a real sample, and show which rule, parameter and
 evidence item produced each step. It is a verification tool for the knowledge base, not the product engine:
 - there is no LLM, so the run-agreement (A) and rules-engine agreement (R) confidence terms are set to 1.0 and marked;
-- the READ part of CW-F06 (does the rider's statement contest presence, timing or place?) is approximated by a phrase
-  list here; at run time an LLM reads the statement, and the decisive test checks whether another reading would matter.
+- the READ parts of CW-F06 (does the rider's statement contest presence, timing or place? does a rider call or message
+  during the wait place the rider at the pick-up or contest presence?) are approximated by phrase lists here; at run time
+  an LLM reads the text, and the decisive test checks whether another reading would matter.
 """
 from __future__ import annotations
 
@@ -22,6 +23,76 @@ INJECTION_PATTERNS = [r"ignore (all |any |the )?(previous|prior|above) instructi
 CONTEST_PHRASES = [r"\bi was (at|there|on time|waiting|outside|at the)", r"never (showed|came|arrived)", r"\bwaited\b",
                    r"couldn'?t find", r"wasn'?t there", r"was not there", r"did ?n[o']t (arrive|come|show)", r"on time",
                    r"wrong (place|location|pin)", r"not at the pick", r"driver was not"]
+# CW-F06, rider calls and messages during the wait: only content that places the rider at the pin or venue, or contests the
+# driver's presence, the timing or the place, is STRONG; an admission of lateness or "coming" is not counter-evidence.
+# Safety by construction: a message reads LATE only when it is made up entirely of known admission phrases and filler
+# words. Any other word (a place, a question, a second person, a language the lists do not know) leaves it UNCLEAR, where
+# the reading test applies (approval), never an automatic uphold.
+_FP = r"(?:i'?\s?m|iam|i am|we'?re|we are)"                      # first person + be ("i'm", "im", "i m", "iam")
+_WHO = r"(?:you|u|ur|you'?re|youre|uncle|aunty|auntie|driver|the driver|the car|your car|ur car|car|anyone|anybody|someone|somebody|nobody)"
+_SPOT = (r"(?:lobby|lift lobby|void deck|carpark|car park|porch|entrance|exit|gate|door|kerb|curb|taxi stand|taxi bay|bus stop|"
+         r"pick-?\s?up(?: point)?|pin|drop-?off point|blk|block|main road|guardhouse|guard house|driveway|letterbox|other side|"
+         r"opposite|7-?11|seven eleven|mrt exit|lift landing|side gate|main gate|basement|level \d+ lobby)")
+_NOT_YET = r"(?!\s+(?:soon|later|in\b|yet|liao\s+soon))"         # "reach soon", "here in 2 min" are admissions
+RIDER_QUESTION_PHRASES = [                                      # the rider asks about or doubts the driver: contests presence
+    rf"\b(?:are|r|is|will)\s+{_WHO}\s+(?:still\s+|already\s+|alr\s+)?(?:coming|on the way|on da way|omw|otw|here|there|near|nearby|reaching|arriving|outside|at|close|around|almost there|nearly there|be there)\b",
+    rf"\b{_WHO}\s+(?:still\s+|already\s+|alr\s+|really\s+)?(?:coming|on the way|on da way|omw|otw|reaching|reach|reached|here|there|arrive|arrived|arriving|near|nearby|almost there|nearly there|at where|at which)\b",
+    rf"\b{_WHO}\s+(?:haven'?t|have not|has not|hasn'?t|never|not yet|didn'?t|did not|not even|still not|not)\s+(?:arrive|arrived|come|came|reach|reached|show|showed|here|there)",
+    rf"\b{_WHO}\s+(?:said|say|says|told|wrote|write)\b[^.!?]*", rf"\b{_WHO}\s+(?:are\s+|r\s+|is\s+|too\s+|very\s+|so\s+)*(?:early|late)\b",
+    r"\b(?:where|wer|whr|mana)\b", r"\bwhich\s+(?:car|side|lane|entrance|exit|door|gate|block|blk|level)\b", r"\bhow\s+(?:long\s+more|far)\b",
+    r"\b(?:when|what time)\s+(?:will|are|r|do)\s+(?:you|u)\b", r"\b(?:you|u)\s+left\b", r"\bdid\s+(?:you|u)\s+leave\b",
+    r"\bplate\b"]
+_ENDS_ASKING = r"\?\s*$"                                       # a message that ends in a question, other than asking the driver to wait
+RIDER_PLACE_PHRASES = RIDER_QUESTION_PHRASES + [
+    rf"\b{_FP}\s*(?:already\s+|alr\s+|still\s+|now\s+|just\s+|really\s+)?(?:here|there|downstairs|down already|at the pick|at pick|outside(?=\s*(?:$|[.,!?]|already|alr|now|liao|le|lah|leh|(?:the\s+)?{_SPOT}))){_NOT_YET}",
+    rf"\b{_FP}\s+(?:already\s+|alr\s+|still\s+|now\s+|standing\s+|waiting\s+)?(?:here\s+)?(?:at|by|near|outside|in front of|beside)\b[^.?!,]*\b{_SPOT}\b",
+    rf"(?<!almost )(?<!nearly )(?<!not )(?<!be )(?<!to )\b(?:at|outside|near|in front of|beside|by)\s+(?:the\s+|d\s+)?{_SPOT}\b(?!\s+(?:soon|later|in\b))",
+    r"\b(?:here|reach|reached|arrived|downstairs|outside|sampai|dao le)\s+(?:already|alr|liao|le|lah|leh|now|edy)\b",
+    r"\b(?:already|alr|dah|sudah)\s+(?:here|there|downstairs|outside|at|reach|reached|sampai)\b",
+    rf"\b(?:i|we)\s+(?:reach|reached|arrived|am here|have arrived|have reached|here|there|at|kat|downstairs)\b{_NOT_YET}",
+    rf"^\W*(?:reach|reached|here+|arrived|imhere|downstairs)\b{_NOT_YET}", r"\bimhere\b", r"📍",
+    r"\b(?:i|we|i'?m|im|i am)\s+(?:already\s+|been\s+|still\s+)?(?:wait|waited|waiting)\b(?!\s+for\s+(?:the\s+|my\s+)?(?:lift|elevator|bus|train|food|bill|grab|taxi))",
+    r"^\W*(?:waiting|waited)\b(?!\s+for\s+(?:the\s+|my\s+)?(?:lift|elevator|bus|train|food|bill))", r"\bwait(?:ed|ing)?\s+(?:for\s+)?(?:you|u)\b",
+    r"\bbeen\s+(?:here|there|waiting)\b", r"\bwait\s+so\s+long\b", r"^\W*\d+\s*(?:min|mins|minute|minutes)\s+(?:already|alr|liao|le)\b",
+    r"\b(?:dah|sudah|saya)\s+tunggu\b|\btunggu\s+\d+", r"\bkat\s+(?:bawah|lobby|lobi|\w+)\b", r"\b(?:dah\s+)?sampai\b", r"\bwo\s+dao\s+le\b|\bdao\s+le\b",
+    r"到了|在楼下|到楼下|我在",
+    r"\b(?:standing|waiting|sitting)\s+(?:near|at|outside|beside|by|in front of)\b",
+    r"\b(?:don'?t|dont|do not|can'?t|cannot|cant|couldn'?t|could not|never|didn'?t)\s+(?:see|find|spot)\b",
+    r"\bno\s+(?:car|driver|one|body)\b", r"\bnobody\b", r"\b(?:no|not)\s+(?:car|driver)\s+(?:here|there)\b",
+    r"\b(?:you'?re|you are|u r|ur|youre|u)\s+not\s+(?:here|there|at)\b", r"\b(?:your|ur|the)\s+car\b[^.?!]*\b(?:is|was)\s+(?:not|nowhere)\b",
+    r"\bwrong\b", r"\b(?:right|correct)\s+(?:place|location|pin|spot|address)\b",
+    r"\b(?:pin|location|address|pick-?\s?up(?: point)?|map|place|side|entrance)\s+(?:is|was|r)\s+(?:wrong|incorrect|correct|right)\b",
+    r"\b(?:you'?re|you are|u r|ur|driver|car)\s+(?:is\s+)?not\s+at\s+the\s+pick", r"\bi\s+was\s+(?:here|there|at|waiting)\b",
+    r"\b(?:i|we)\s+(?:can\s+)?see\s+(?:you|u|your car|ur car|the car)\b", r"\b(?:i'?m|im|i am|i was)\s+not\s+late\b",
+    r"\bapp\s+(?:says|say|said|shows|show)\b"]
+RIDER_FAULT_PHRASES = [r"\bmy\s+(?:bad|mistake|fault)\b", r"\b(?:i|we|i'?ve|i have)\s+(?:put|set|entered|chose|selected|keyed in|pinned|went to|walked to|was at|were at|booked)\s+(?:the\s+|a\s+)?wrong\b",
+                       r"\bsorry\b[^.?!]*\bwrong\b", r"\bwrong\b[^.?!]*\bsorry\b"]
+RIDER_LATE_CORE = [                                             # first-person admissions of lateness or of still being on the way
+    r"(?<!you )(?<!u )(?<!not )(?<!uncle )(?<!driver )\b(?:coming|comin|cming)(?:\s+(?:down|out|over|now|already|liao|soon))*\b(?!\s*\?)",
+    r"\b(?:on\s+(?:my|the|da)\s+way|omw|otw)(?:\s+(?:down|out|over|now|already|liao))*\b(?!\s*\?)", r"\bgetting\s+ready\b", r"\brunning\s+late\b",
+    r"(?<!not )(?<!you )(?<!u )(?<!driver )(?<!uncle )\b(?:a bit\s+|a little\s+|abit\s+|so\s+|very\s+)?late(?:\s+(?:a bit|abit|a little))?\b", r"\boverslept\b",
+    r"\b(?:walking|heading|going|rushing|running)(?:\s+(?:over|there|down|out|now|to))?\b", r"\b(?:almost|nearly)\s+(?:there|reach|reaching|down|at|here)\b",
+    r"\b(?:abt|about)\s+to\s+reach\b", r"\breaching\b", r"\b(?:reach|here|there|down|arrive|arriving)\s+soon\b", rf"\b{_FP}\s+there\s+soon\b",
+    r"\b(?:i'm|i)\s+(?:still\s+)?not\s+(?:yet\s+)?(?:reach|reached|there|here|down)(?:\s+yet)?\b", r"^\W*not\s+yet\s+(?:reach|reached|there|here|down)\b",
+    r"\bnot\s+coming\s+down\s+yet\b",
+    r"\b(?:i'?ll|i will|will|i'?m going to|gonna)\s+be\s+(?:right\s+)?(?:down|there|out)\b", r"^\W*be\s+(?:there|down|out)\b",
+    r"\bleaving\s+(?:now|the house|my house|home|office|work)\b", r"\bjust\s+left\b",
+    r"\bstill\s+(?:at home|at work|upstairs|getting|inside|packing|showering|bathing|eating)\b",
+    r"\b(?:still\s+)?(?:in|at)\s+(?:the\s+|my\s+)?(?:lift|elevator|toilet|shower|bathroom|office|house|room|train|bus(?!\s+stop)|mrt(?!\s+exit)|mall|market|clinic|meeting|traffic|jam|gym|kopitiam|atm)\b", rf"\b{_FP}\s+(?:still\s+)?(?:at\s+)?(?:home|work)\b(?:\s+still)?",
+    r"\b(?:waiting|wait)\s+for\s+(?:the\s+|my\s+)?(?:lift|elevator)\b", r"\b(?:lift|elevator)\s+(?:very\s+|so\s+|damn\s+)?(?:slow|spoil|broken)\b",
+    r"\b(?:in|taking|take|took)\s+(?:the\s+)?(?:lift|elevator)\b", r"\bstuck\s+in\s+(?:the\s+)?(?:jam|traffic|lift)\b", r"\bwalking\s+down\s+the\s+stairs\b",
+    r"\bgive\s+me\s+(?:a\s+)?(?:\d+|few|a few|one|two|five)\b", r"\bgimme\b", r"\bneed\s+(?:\d+|a few|few)\s+(?:more\s+)?(?:min|mins|minutes?)\b",
+    r"\b(?:\d+|one|two|few|a few)\s+more\s+(?:min|mins|minute|minutes|sec|secs)\b", r"🏃",
+    r"^\W*\d+\s*(?:min|mins|minute|minutes)\W*$",                 # a bare duration: "5 min"
+    r"(?<!i )(?<!i've )(?<!been )(?<!we )\bwait(?:\s+(?:ah|ya))?\s+(?:for\s+me|another\s+\d+|\d+\s*(?:more\s+)?(?:min|mins|minutes?))\b"]
+RIDER_WAIT_REQUEST = (r"\b(?:can|could|pls|please|plz)?\s*(?:you\s+|u\s+)?wait\b(?:\s+(?:ah|ya))?(?:\s+for\s+me)?(?:\s+(?:a\s+)?(?:bit|while|moment|min|minute|sec|"
+                      r"another\s+(?:\d+\s*(?:min|mins|minutes?)|few\s+(?:min|mins|minutes))|\d+\s*(?:more\s+)?(?:min|mins|minutes?)))?\s*(?:ah|ya|ok)?\s*\??")
+_FILLER = (r"\b(?:sorry|sry|soz|uncle|aunty|auntie|bro|boss|sir|madam|maam|pls|plz|please|ok|okay|k|kk|hi|hey|hello|lah|la|leh|ah|lor|liao|le|"
+           r"hor|meh|ya|yah|yeah|now|just|already|alr|very|so|a|bit|abit|little|the|my|me|i'm|i'll|ill|i|will|be|in|more|and|then|still|"
+           r"another|few|for|while|moment|slow|thanks|thank you|thx|sec|secs|seconds|haha+|lol|really|soon|down|out|right|be|is|it|its|it'?s|"
+           r"to|from|d|da|there|ready|can|wait|min|mins|minute|minutes|one|two|three|five|ten|first|need|again|sorrysorry|\d+)\b")
+_FROM_TO = rf"\b(?:from|to|towards)\s+(?!reach\b|come\b|be\b)(?:the\s+|my\s+|d\s+)?(?:{_SPOT}|[a-z0-9'-]+)(?:\s+[a-z0-9'-]+)?"
+RIDER_ACK = r"\s*(?:ok(?:ay|ie|ies)?|k|kk|okok|noted|ok noted|ok can|thanks?(?: you)?|ok thanks|thx|ty|alright|👍|ok 👍)\s*[.!]*\s*"
 SOFT_FLAGS = ("SPEED_INCONSISTENT", "PIN_VENUE_MISMATCH", "SPARSE_GPS", "TIMER_ANCHOR_MISMATCH", "GPS_OUTLIER")
 
 
@@ -157,10 +228,47 @@ def contests_statement(text: str) -> bool:
     return any(re.search(p, t) for p in CONTEST_PHRASES)
 
 
+def _rider_text(text: str) -> str:
+    t = re.sub(r"[\u2018\u2019\u02bc\uff07`\u00b4]", "'", (text or "").lower())
+    t = re.sub(r"\b(?:i\s?'\s?m|i\s+m|iam|im)\b", "i'm", t)            # "I m", "Im", "Iam" -> "i'm"
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def rider_contact_reading(c: dict) -> str:
+    """Proxy for the READ part of CW-F06 on one rider call or message during the wait: PLACES (at the pin or venue, or contests
+    presence, timing or place, including asking where the driver is), LATE (admits being late or still on the way, and says
+    nothing else the lists do not know), NEUTRAL (an acknowledgment such as 'ok') or UNCLEAR (a call, whose words are not
+    recorded, or a message that fits neither reading or both)."""
+    if c["type"] != "message":
+        return "UNCLEAR"
+    t = _rider_text(c.get("content"))
+    if re.fullmatch(RIDER_ACK, t):
+        return "NEUTRAL"
+    places = (any(re.search(p, t) for p in RIDER_PLACE_PHRASES)
+              or bool(re.search(_ENDS_ASKING, re.sub(r"\b(?:can|could|pls|please)?\s*(?:you\s+|u\s+)?wait\b[^?]*\?\s*$", "", t))))
+    fault = any(re.search(p, t) for p in RIDER_FAULT_PHRASES)
+    asked = t
+    for p in RIDER_QUESTION_PHRASES:               # "are you coming", "u on the way ah": about the driver, not an admission
+        asked = re.sub(p, " ", asked)
+    late = any(re.search(p, asked) for p in RIDER_LATE_CORE)
+    if places:
+        return "UNCLEAR" if (late or fault) else "PLACES"
+    if not late or fault:
+        return "UNCLEAR"
+    rest = asked                                   # LATE only if nothing but admissions, requests to wait and filler is left
+    for p in [RIDER_WAIT_REQUEST, _FROM_TO] + RIDER_LATE_CORE:
+        rest = re.sub(p, " ", rest)
+    rest = re.sub(_FILLER, " ", rest)
+    rest = re.sub(r"[\s.,!~\u2026'\"()\-:;]+", "", rest)
+    return "LATE" if not rest else "UNCLEAR"
+
+
 def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | None = None,
-             force_reading: str | None = None, alt_start: str | None = None) -> Trace:
+             force_reading: str | None = None, alt_start: str | None = None, contact_reading: str | None = None) -> Trace:
     """force_reading: NONE or WEAK to test another reading of the rider's statement (decisive test, clause 1).
-    alt_start: "anchor" counts the wait from the anchor without CW-F03B (decisive test of that FairRyde reading)."""
+    alt_start: "anchor" counts the wait from the anchor without CW-F03B (decisive test of that FairRyde reading).
+    contact_reading: "STRONG" reads the rider's unclear calls and messages during the wait as placing the rider at the
+    pick-up (decisive test of CW-F06's READ part, clause 1)."""
     tk, t = case["dispute_ticket"], case["trip_data"]
     ev, chat = case.get("app_events", []), case.get("chat_logs", [])
     gps_raw = case.get("gps_telemetry", []) or []
@@ -616,31 +724,42 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     venue = venue_for(kb, case)
     strong = []
     pvmax = P("PIN_VENUE_MAX_M")
-    for g in rider_gps:
-        if anchor <= T(g["timestamp"]) <= end:
+    for g in rider_gps:                  # the same window as the rider's calls and messages: arrival indication to cancellation
+        if t_arr <= T(g["timestamp"]) <= end:
             if hav(g["lat"], g["lng"], *pin) <= gf:
                 strong.append("rider GPS at the pin")
             if venue and hav(g["lat"], g["lng"], venue["lat"], venue["lng"]) <= pvmax:
                 strong.append("rider GPS at the named venue")
-    if rider_contacts:
-        strong.append("rider contacted the driver during the wait")
     if any(re.search(r"fail|not delivered|undelivered", a["details"], re.I) for a in ev if a["event_type"] == "rider_notified"):
         strong.append("notification failure log")
+    records_strong = bool(strong)
+    # READ part on the rider's own calls and messages during the wait (from the arrival indication to the cancellation)
+    cid = lambda c: _ev_id("E-CHT", case, "chat_logs", lambda x: x is c)[0]
+    readings = {cid(c): rider_contact_reading(c) for c in rider_contacts}
+    by = {k: [i for i, r in readings.items() if r == k] for k in ("PLACES", "LATE", "NEUTRAL", "UNCLEAR")}
+    if by["PLACES"]:
+        strong.append("a rider message during the wait places the rider at the pick-up or contests presence, timing or place")
+    if by["UNCLEAR"] and contact_reading == "STRONG":
+        strong.append("an unclear rider call or message during the wait, read as placing the rider at the pick-up (other reading)")
+    outside = _ev_id("E-CHT", case, "chat_logs", lambda c: c["sender"] == "rider" and c["type"] in ("call", "message") and c not in rider_contacts)
+    tr.rider_contact_detail = {"readings": readings, **{k.lower() + "_ids": v for k, v in by.items()}, "outside_ids": outside}
     contested = contests_statement(tk.get("description", "")) if tk.get("filed_by") == "rider" else False
     rider_ev = "STRONG" if strong else (force_reading or ("WEAK" if contested else "NONE"))
     if rider_ev != "STRONG":
         tr.flag("NO_RIDER_EVIDENCE")
     tr.rider_contests = contested if not force_reading else (force_reading == "WEAK")
     tr.rider_at_venue_claim = bool(venue and venue["name"].lower() in (tk.get("description", "") or "").lower() and tr.rider_contests)
-    tr.finding("F-RIDER-EVIDENCE", rider_ev, basis=["E-TKT-01"] + (["E-RGPS-*"] if rider_gps else []), rule="CW-F06", params=["ARRIVAL_GEOFENCE_M", "PIN_VENUE_MAX_M"],
-               status="established" if strong else "read")
+    tr.finding("F-RIDER-EVIDENCE", rider_ev, basis=["E-TKT-01"] + (["E-RGPS-*"] if rider_gps else []) + list(readings), rule="CW-F06",
+               params=["ARRIVAL_GEOFENCE_M", "PIN_VENUE_MAX_M"], status="established" if records_strong else "read")
     tr.path("CW-F06")
+    contact_words = "; ".join(f"{i} {r}" for i, r in readings.items())
     tr.step(pb, 11, "CW-F06", f"{rider_ev}: " + ("; ".join(sorted(set(strong))) if strong else
-            ("the statement contests presence or place, but there are no rider-side records (no rider GPS, call, message or notification failure)"
-             if rider_ev == "WEAK" else "no rider-side records and the statement does not contest presence, timing or place")),
+            ("the statement contests presence or place, but no rider-side record or rider message shows the rider at the pick-up"
+             if rider_ev == "WEAK" else "no rider-side record or rider message shows the rider at the pick-up, and the statement does not contest presence, timing or place"))
+            + (f" (rider calls and messages during the wait: {contact_words})" if readings else ""),
             ["E-TKT-01"] + _ev_id("E-APP", case, "app_events", lambda a: a["event_type"] == "rider_notified")
-            + _ev_id("E-CHT", case, "chat_logs", lambda c: c in rider_contacts) + (["E-RGPS-*"] if rider_gps else []),
-            note="" if strong else "READ: judged from the statement")
+            + list(readings) + (["E-RGPS-*"] if rider_gps else []),
+            note="" if records_strong else "READ: judged from the statement and the rider's calls and messages")
 
     # 12 CW-F07 pin vs venue
     if venue:
@@ -810,7 +929,15 @@ def reading_test(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
     if cur in ("NONE", "WEAK"):
         alt = "WEAK" if cur == "NONE" else "NONE"
         t2 = evaluate(kb, copy.deepcopy(case), profile, base.overrides, force_reading=alt)
-        out.append({"rule": "CW-F06", "reading": cur, "other_reading": alt, "outcome_other": t2.outcome, "changes": t2.outcome != base.outcome})
+        out.append({"rule": "CW-F06", "kind": "statement", "reading": cur, "other_reading": alt, "outcome_other": t2.outcome,
+                    "changes": t2.outcome != base.outcome})
+        unclear = (getattr(base, "rider_contact_detail", None) or {}).get("unclear_ids") or []
+        if unclear:              # a call (words not recorded) or a message that the phrase lists cannot settle
+            t3 = evaluate(kb, copy.deepcopy(case), profile, base.overrides, contact_reading="STRONG")
+            out.append({"rule": "CW-F06", "kind": "contact", "ids": unclear,
+                        "reading": f"{cur}: the rider's call or message ({', '.join(unclear)}) not read as placing the rider at the pick-up",
+                        "other_reading": "STRONG: read as placing the rider at the pick-up or contesting presence",
+                        "outcome_other": t3.outcome, "changes": t3.outcome != base.outcome})
     return out
 
 
@@ -838,6 +965,8 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
     for r in reads:
         if r["changes"] and r["rule"] == "CW-F03B":
             decisive.append((r["rule"], f"the other reading ({r['other_reading']}) gives {r['outcome_other']}"))
+        elif r["changes"] and r.get("kind") == "contact":
+            decisive.append((r["rule"], f"reading the rider's call or message ({', '.join(r['ids'])}) as placing the rider at the pick-up gives {r['outcome_other']}"))
         elif r["changes"]:
             decisive.append((r["rule"], f"reading the statement as {r['other_reading']} instead of {r['reading']} gives {r['outcome_other']}"))
     for s in sens:

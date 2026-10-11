@@ -408,7 +408,7 @@ vocabularies:
       - {code: RYDEXL, label: RydeXL}
       - {code: RYDEX_GO, label: Ryde X GO}
       - {code: RYDEPOOL, label: RydePOOL}
-      - {code: RYDETAXI, label: RydeTAXI, note: "Metered fare; excluded from the cancellation policy (rule FC-R03, CW-R00)."}
+      - {code: RYDETAXI, label: RydeTAXI, note: "Metered fare; excluded from the cancellation policy (CW-R00) and from platform-computed detour refunds (FC-R00)."}
       - {code: RYDEPET, label: RydePET}
       - {code: RYDEFLASH, label: RydeFLASH}
       - {code: RYDELUXE, label: RydeLUXE}
@@ -604,7 +604,7 @@ vocabularies:
       - {code: CW-R-DRIVER-LATE, label: "Driver was late or not approaching when the rider canceled (generic assumption)", outcome: WAIVE_FEE}
       - {code: CW-R-OUT-OF-WINDOW, label: Waiver request filed after 30 days, outcome: UPHOLD}
       - {code: FC-R-FIXED-FARE, label: Fare fixed at booking; route length did not change the amount charged, outcome: UPHOLD}
-      - {code: FC-R-DETOUR-CONFIRMED, label: Unjustified detour increased a metered or recalculated fare, outcome: PARTIAL_REFUND}
+      - {code: FC-R-DETOUR-CONFIRMED, label: Unjustified detour increased a recalculated fare, outcome: PARTIAL_REFUND}
       - {code: FC-R-DETOUR-JUSTIFIED, label: "Deviation justified (traffic, closure, rider request, app reroute)", outcome: UPHOLD}
       - {code: FC-R-DETOUR-BORDERLINE, label: Detour near the threshold, outcome: ESCALATE_HUMAN}
       - {code: FC-R-TOLL-OVERSTATED, label: ERP entered exceeds the gantries passed, outcome: TOLL_REFUND}
@@ -699,7 +699,7 @@ vocabularies:
       - {code: PIN_VENUE_MISMATCH, label: Pickup pin far from the named venue (OneMap)}
       - {code: SPARSE_GPS, label: GPS gaps exceed the coverage parameter}
       - {code: SPEED_INCONSISTENT, label: Reported speed inconsistent with distance between pings}
-      - {code: NO_RIDER_EVIDENCE, label: No rider-side system evidence}
+      - {code: NO_RIDER_EVIDENCE, label: No strong rider counter-evidence (CW-F06)}
       - {code: SOURCE_CONFLICT, label: Policy sources disagree}
       - {code: GENERIC_ASSUMPTION_USED, label: A credibility C or D rule was decisive}
       - {code: INJECTION_SUSPECTED, label: Free text contains instructions to the system}
