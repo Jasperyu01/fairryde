@@ -4,7 +4,17 @@ One cloud session per step. Each session reads `CLAUDE.md` first, logs its start
 
 Each step is developed on its own branch and merged into `main` through a pull request that Jasper merges; start the next step's session from `main` after the merge.
 
-Status: A1 done (11 Oct 2026, see `validation/build_checks/A1/` and decisions D27 to D32 in `kb/open_items.yaml`). A2 to A5 and B are open.
+Status: A1 done (11 Oct 2026, see `validation/build_checks/A1/` and decisions D27 to D32 in `kb/open_items.yaml`); A1b applied Jasper's decisions D27, D30 and D31 (`validation/build_checks/A1b/`). A2 to A5 and B are open.
+
+## How each step is checked (Jasper, 11 Oct: exactly as A1)
+
+1. E steps, run by the builder: `python3 kb/build_kb.py --no-xlsx` (ERROR 0, WARN 0), `python3 kb/tools/selftest.py`, and `python3 validation/tools/rerun_engine.py validation/build_checks/<step>/01_engine_rerun.json E01 E02 E03 E04`.
+2. D steps, run by fresh agents that did not make the change, with the workflow `.claude/workflows/kb-step-check.js` (pass the step, the commit range, what the step had to do, the round 1 cases it affects, and step-specific focus for each reviewer):
+   - fresh KB appliers re-decide the affected round 1 cases from the KB alone;
+   - four reviewers each check one dimension: fix fidelity and scope; sources and credibility; an adversarial test of the changed logic; consistency across files and party-facing text;
+   - each reviewer is followed by a skeptic that tries to refute every finding.
+3. Fix what the skeptics confirm. Run a second round only if the first had CRITICAL or MAJOR findings; never more than two rounds (CLAUDE.md stop rules). Whatever is left goes to `kb/open_items.yaml`.
+4. Save the appliers' decisions, the reviews and a per-finding disposition in `validation/build_checks/<step>/`, log every step with `validation/tools/vlog.py`, and open a pull request for Jasper.
 
 ## A. Build v0.2 (fixes from `validation/V5_scorecard/54_fix_list.json`)
 

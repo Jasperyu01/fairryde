@@ -8,7 +8,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 * DISP-002 fields mapped: 59 of 59 leaf paths
 * DT-CW-NOSHOW enumeration: {'combinations': 96, 'unique': 96, 'gaps': 0, 'overlaps': 0}
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
-* Engine self-test: 74/74 variants pass
+* Engine self-test: 79/79 variants pass
 * Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
 * Annotation workbook: workbooks skipped (--no-xlsx)
@@ -105,6 +105,11 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | V66 | V06, the driver asks 'Are you at the lobby now?' and the rider answers 'yes': unclear on its own, so approval | UPHOLD | R8 | APPROVE | 1.0 | pass |
 | V67 | Ryde advance booking for 08:45, driver at the pin from 08:38; rider GPS at the pin at 08:40, after the arrival and before the anchor | ESCALATE_HUMAN | R7 | HUMAN | 1.0 | pass |
 | V68 | V06, and the rider messages 'coming down now' at 08:51:30, after the 8-minute threshold and before the cancellation | UPHOLD | R8 | AUTO | 1.0 | pass |
+| V69 | V06, and the rider messages 'I'm at the lobby already' at 08:41, after the assignment and before the arrival (D30): approval | UPHOLD | R8 | APPROVE | 0.964 | pass |
+| V70 | V06, and the rider asks 'where are you?' at 08:41, before the driver arrived: not counter-evidence | UPHOLD | R8 | AUTO | 0.964 | pass |
+| V71 | V06, and rider GPS at the pick-up at 08:41:30, before the arrival indication (D30): approval | UPHOLD | R8 | APPROVE | 1.0 | pass |
+| V72 | V08 (sparse driver GPS, statement not contesting), and the rider says 'I'm here at the pick-up point' before the arrival (D30) | ESCALATE_HUMAN | R10 | HUMAN | 0.7 | pass |
+| V73 | V06, and the rider says 'I'm at the lobby already' at 08:30:05, before the driver was assigned (08:30:15): not counted | UPHOLD | R8 | AUTO | 0.964 | pass |
 
 ## Entity coverage (ONT.6)
 

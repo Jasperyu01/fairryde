@@ -604,16 +604,21 @@ rules:
       "coming, 1 min", "coming down") is not counter-evidence, and neither is an acknowledgment ("ok"). Asking where the
       driver is ("are you coming?", "which car?") contests presence. A call whose words are not recorded, or a message that
       fits neither reading or both ("I'm here, coming out now"; a bare "yes"), is read as not placing the rider at the
-      pick-up, and the reading test checks whether the other reading changes the outcome (decisive_definition clause 1). WEAK if the rider's
+      pick-up, and the reading test checks whether the other reading changes the outcome (decisive_definition clause 1); for
+      an upheld fee it always does, so a reading that cannot be settled goes to a person (approval), never to an automatic
+      uphold. Before the arrival indication (from the driver's assignment), a rider message that places the rider at the pin
+      or venue, or rider GPS there, also counts (decision D30): it makes the evidence at least WEAK, and the reading test
+      takes STRONG as its other reading, so an upheld fee always needs human approval. Questions about the driver sent before
+      the arrival indication ("where are you?") do not count, because the driver had not arrived. WEAK if the rider's
       statement contests the driver's presence, the timing or the place, without such records or messages. NONE if there are
       no such records or messages and the statement does not contest presence, timing or place (for example the rider admits
       being late or asks for a goodwill waiver). Whether a statement, a call or a message contests presence is judged by
       reading it.
-    zh: 等待期间指从司机标记到达（没有到达标记时为等待锚点）起算；缺席取消费到取消为止，等候费到 CW-F04 的窗口结束为止（免费等待结束，若先上车则到上车）。本趟有通知乘客失败的日志（不论何时，同 v0.1）为 STRONG；等待期间以下任一项也为 STRONG：乘客侧 A、B、C 级记录显示乘客在上车点（ARRIVAL_GEOFENCE_M 内）或在所说的场馆（PIN_VENUE_MAX_M 内）；乘客打给司机的电话或发的消息说明自己在上车点或场馆，或对司机在场、时间、地点提出异议（例如"我在上车点""你在哪""看不到你的车"）。乘客承认迟到或还在路上的电话或消息（"还在准备""马上到，1 分钟""在下楼"）不算反证，只回"好"之类也不算。问司机在哪（"你来了吗""哪辆车"）算对司机在场提出异议。没有通话内容记录的电话、或两种读法都套不上或都套得上的消息（"我到了，马上出来"；只回"是"），先按"没有说明乘客在上车点"读，再由读法测试看另一种读法会不会改变结果（decisive_definition 第 1 条）。乘客陈述对司机在场、时间或地点提出异议但没有上述记录或消息为 WEAK；既无记录或消息、陈述也不争这些点（例如承认迟到、只求善意免除）为 NONE。陈述、电话、消息是否构成异议需读原文判断。
+    zh: 等待期间指从司机标记到达（没有到达标记时为等待锚点）起算；缺席取消费到取消为止，等候费到 CW-F04 的窗口结束为止（免费等待结束，若先上车则到上车）。本趟有通知乘客失败的日志（不论何时，同 v0.1）为 STRONG；等待期间以下任一项也为 STRONG：乘客侧 A、B、C 级记录显示乘客在上车点（ARRIVAL_GEOFENCE_M 内）或在所说的场馆（PIN_VENUE_MAX_M 内）；乘客打给司机的电话或发的消息说明自己在上车点或场馆，或对司机在场、时间、地点提出异议（例如"我在上车点""你在哪""看不到你的车"）。乘客承认迟到或还在路上的电话或消息（"还在准备""马上到，1 分钟""在下楼"）不算反证，只回"好"之类也不算。问司机在哪（"你来了吗""哪辆车"）算对司机在场提出异议。没有通话内容记录的电话、或两种读法都套不上或都套得上的消息（"我到了，马上出来"；只回"是"），先按"没有说明乘客在上车点"读，再由读法测试看另一种读法会不会改变结果（decisive_definition 第 1 条）；维持收费时一定会改变，所以读不准的一律交人工批准，不会自动维持收费。司机标记到达之前（从派单起），乘客发消息说自己在上车点或场馆、或乘客 GPS 在那里，也算反证（决定 D30）：反证至少为 WEAK，读法测试以 STRONG 作为另一种读法，所以维持收费一定要人工批准。司机到达前问"你在哪"不算，因为司机当时确实还没到。乘客陈述对司机在场、时间或地点提出异议但没有上述记录或消息为 WEAK；既无记录或消息、陈述也不争这些点（例如承认迟到、只求善意免除）为 NONE。陈述、电话、消息是否构成异议需读原文判断。
     params: [ARRIVAL_GEOFENCE_M, PIN_VENUE_MAX_M]
     produces_finding: F-RIDER-EVIDENCE
     sources:
-      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "Content-based reading of rider calls and messages since KB v0.2 (fix FX1, validation round 1 cases E01, E03 and E07). Jasper confirmed the outcomes of those three cases (the fee stands) on 2026-10-11; the reading rule itself is FairRyde's design."}
+      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "Content-based reading of rider calls and messages since KB v0.2 (fix FX1, validation round 1 cases E01, E03 and E07). Jasper confirmed the outcomes of those three cases (the fee stands) on 2026-10-11, and on the same day accepted the reading rule as FairRyde design at credibility D, with readings that cannot be settled going to a person (D27) and the rider at the pick-up before the arrival indication counting (D30)."}
     credibility: D
     credibility_note: >-
       FairRyde's design (D). Until v0.1 any rider call or message during the wait was STRONG whatever it said, which sent

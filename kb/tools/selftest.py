@@ -539,6 +539,27 @@ def variants(base: dict):
       v67, {"outcome": "ESCALATE_HUMAN", "row": "R7", "profile": "ryde_2026", "findings": {"F-RIDER-EVIDENCE": "STRONG"}})
     v("V68", "V06, and the rider messages 'coming down now' at 08:51:30, after the 8-minute threshold and before the cancellation",
       rider_says(("08:51:30", "message", "coming down now")), late)
+
+    # ---------------------------------------------------------------- D30: the rider at the pick-up before the arrival indication
+    before = {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"], "findings": {"F-RIDER-EVIDENCE": "WEAK"}}
+    v("V69", "V06, and the rider messages 'I'm at the lobby already' at 08:41, after the assignment and before the arrival (D30): approval",
+      rider_says(("08:41:00", "message", "I'm at the lobby already")), before)
+    v("V70", "V06, and the rider asks 'where are you?' at 08:41, before the driver arrived: not counter-evidence",
+      rider_says(("08:41:00", "message", "where are you?")), late)
+
+    def v71(c):
+        clean(c)
+        c["rider_gps_telemetry"] = [{"timestamp": _ts("08:41:30"), "lat": VENUE[0], "lng": VENUE[1], "speed_kmh": 0, "status": "waiting"}]
+    v("V71", "V06, and rider GPS at the pick-up at 08:41:30, before the arrival indication (D30): approval", v71, before)
+
+    def v72(c):
+        v08(c)
+        c["chat_logs"].append({"timestamp": _ts("08:41:00"), "sender": "rider", "type": "message", "content": "I'm here at the pick-up point"})
+        c["chat_logs"].sort(key=lambda x: x["timestamp"])
+    v("V72", "V08 (sparse driver GPS, statement not contesting), and the rider says 'I'm here at the pick-up point' before the arrival (D30)", v72,
+      {"outcome": "ESCALATE_HUMAN", "row": "R10", "tier": "HUMAN", "findings": {"F-RIDER-EVIDENCE": "WEAK"}})
+    v("V73", "V06, and the rider says 'I'm at the lobby already' at 08:30:05, before the driver was assigned (08:30:15): not counted",
+      rider_says(("08:30:05", "message", "I'm at the lobby already")), late)
     return out
 
 
