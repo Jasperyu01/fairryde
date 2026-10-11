@@ -12,7 +12,9 @@ import random
 import re
 from pathlib import Path
 
+import engine_gates as G
 import engine_noshow as E
+import engine_toll as T
 
 VENUE = (1.286458894728254, 103.8270152561934)    # OneMap address of Tiong Bahru Plaza (reference table VENUES)
 PIN = (1.2847, 103.8382)                         # DISP-002 pick-up pin, 1,259 m from VENUE
@@ -630,6 +632,14 @@ def variants(base: dict):
         c["rider_gps_telemetry"] = [{"timestamp": _ts("08:41:30"), "lat": PIN[0], "lng": PIN[1], "speed_kmh": 0, "status": "waiting"}]
     v("V91", "V08 (sparse driver GPS, statement not contesting), and only rider GPS at the pin at 08:41:30, before the arrival (D33)", v91,
       {"outcome": "ESCALATE_HUMAN", "row": "R10", "tier": "HUMAN", "findings": {"F-RIDER-EVIDENCE": "WEAK"}})
+
+    # A2, D34 item 1 (an exception to the freeze, Jasper 2026-10-11): "I'm at the mall already" is not an admission of lateness, because
+    # the pick-up may be that mall (DISP-002's venue is one). It is unclear, so approval, never an automatic uphold.
+    v("V92", "V06 (the pick-up is a mall), and the rider messages \"I'm at the mall already\" during the wait: unclear, so approval",
+      rider_says(("08:47:00", "message", "I'm at the mall already")),
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"], "flags": ["GENERIC_ASSUMPTION_USED"]})
+    v("V93", "V06, and the rider messages \"I'm at the mall already\" at 08:41, before the arrival (D30): counted, so approval",
+      rider_says(("08:41:00", "message", "I'm at the mall already")), before)
     return out
 
 
@@ -672,6 +682,10 @@ READING_CASES = {
     # A1b review round 1: down, out and there place the rider; Chinese and Malay admissions
     "down liao, coming": "U", "I'm down, coming": "U", "I'm out already, coming": "U", "coming down liao": "L",
     "\u5feb\u5230\u4e86": "L", "\u6211\u5728\u697c\u4e0b": "P", "belum sampai": "L", "nak sampai": "L", "dah sampai": "P",
+    # A2, D34 item 1 (exception to the freeze): a place the pick-up may be is not an admission of lateness (the reader used to say L)
+    "I'm at the mall already": "U", "I'm at the market already": "U", "I'm at the MRT already": "U", "I'm at the clinic already": "U",
+    "I'm at the kopitiam already": "U", "I'm at the gym already": "U", "I'm at the ATM already": "U", "at the mall liao": "U",
+    "I'm still at the mall": "U",
 }
 
 
@@ -684,6 +698,7 @@ BEFORE_ARRIVAL_CASES = {
     "Reached the pick up point. Where r u?": "C", "I'm at Tiong Bahru Plaza": "C", "I'm by the road": "C",
     "where are you?": "X", "u reach already?": "X", "Pick me up at the lobby": "X", "pls stop at the bus stop": "X",
     "\u6211\u5728\u8def\u4e0a": "X", "otw down liao": "X", "Hi uncle": "X", "ok": "X", "I can't see your car": "X", "coming down in 5": "X",
+    "I'm at the mall already": "C", "I'm at the MRT already": "C", "I'm at the market already": "C",          # A2, D34 item 1
 }
 
 
@@ -718,6 +733,176 @@ def reading_check() -> list[dict]:
 
 def reading_corpus() -> list[dict]:
     return json.loads((Path(__file__).resolve().parent / "cw_f06_reading_corpus.json").read_text(encoding="utf-8"))["messages"]
+
+
+# ---------------------------------------------------------------- A2: ERP (FX3), gate G3 (FX5) and the rule cards they changed
+def _erp_case(service="RydeX", gantries=(("CTE (southbound)", 2.50),), charged=2.50, recommended=None, justification=None,
+              carpool=False, fare_type="fixed at booking (ERP excluded)", quoted=19.80, base_fare=None):
+    """A made-up FC-TOLL case in the shape of round 1 case E11 (no names, plates, phone numbers or account IDs). A gantry is
+    (name, rate) or (name, rate, active); recommended is the gantry list of the recommended route."""
+    c = {"trip_data": {"service_type": service, "fare_type": fare_type, "quoted_fare": quoted},
+         "fare_breakdown": {"base_fare": quoted if base_fare is None else base_fare, "erp_toll": charged},
+         "erp_charges": {"gantry_passes": [{"timestamp": _ts("08:29:50"), "gantry": g[0], "rate_sgd": g[1], "active": g[2] if len(g) > 2 else True}
+                                            for g in gantries]}}
+    if carpool:
+        c["trip_data"]["carpool"] = True
+    if recommended is not None:
+        c["route_review"] = {"recommended_gantries": [{"gantry": g[0], "rate_sgd": g[1], "active": True} for g in recommended],
+                             "justification": justification}
+    return c
+
+
+CTE, PIE = ("CTE (southbound)", 2.50), ("PIE (eastbound)", 4.00)
+
+
+def erp_cases() -> list:
+    """(id, description, case, expectation) for the ERP rules. Every expected value is read off the rule cards by hand."""
+    over = {"outcome": "TOLL_REFUND", "reasons": ["FC-R-TOLL-OVERSTATED"], "fraud": ["DRIVER"], "tier": "APPROVE"}
+    valid = {"outcome": "UPHOLD", "amount": 0.0, "reasons": ["FC-R-TOLL-VALID"], "fraud": [], "tier": "AUTO"}
+    detour = {"outcome": "TOLL_REFUND", "reasons": ["FC-R-TOLL-FROM-DETOUR"], "fraud": [], "tier": "APPROVE", "decisive": ["FC-F03"]}
+    gap = {"outcome": "ESCALATE_HUMAN", "reasons": ["GEN-R-POLICY-GAP"], "tier": "HUMAN"}
+    return [
+        ("T01", "E11 pattern: RydeX, one gantry at S$2.50, S$8.50 charged", _erp_case(charged=8.50), {**over, "amount": 6.00}),
+        ("T02", "RydeX, one gantry at S$2.50, S$2.50 charged", _erp_case(charged=2.50), valid),
+        ("T03", "carpool, gantries S$2.50 and S$4.00, the full S$6.50 charged to the rider: the rider owes half (FC-R06)",
+         _erp_case(service="CARPOOL", gantries=(CTE, PIE), charged=6.50), {**over, "amount": 3.25}),
+        ("T04", "carpool, the same gantries, the rider's half (S$3.25) charged", _erp_case(service="CARPOOL", gantries=(CTE, PIE), charged=3.25), valid),
+        ("T05", "a RydeX trip flagged as a carpool trip, the full S$6.50 charged", _erp_case(gantries=(CTE, PIE), charged=6.50, carpool=True), {**over, "amount": 3.25}),
+        ("T06", "RydeSEND (the fare includes ERP), one gantry, S$2.50 charged as ERP", _erp_case(service="RydeSEND", charged=2.50), {**over, "amount": 2.50}),
+        ("T07", "RydeSEND, no ERP charged", _erp_case(service="RydeSEND", charged=0.0), valid),
+        ("T08", "a trip that is both RydeSEND and carpool: no rule orders them (GEN-R07)", _erp_case(service="RydeSEND", charged=2.50, carpool=True), gap),
+        ("T09", "RydeX detour: the path passed the CTE and the PIE, the recommended route only the CTE; no justification",
+         _erp_case(gantries=(CTE, PIE), charged=6.50, recommended=[CTE]), {**detour, "amount": 4.00}),
+        ("T10", "T09 with a GPS navigation justification (FC-F03): the ERP stands, and approval is still needed",
+         _erp_case(gantries=(CTE, PIE), charged=6.50, recommended=[CTE], justification="GPS_NAVIGATION"),
+         {"outcome": "UPHOLD", "amount": 0.0, "reasons": ["FC-R-TOLL-VALID"], "tier": "APPROVE", "decisive": ["FC-F03"]}),
+        ("T11", "carpool detour: the rider's half of S$6.50 charged, the recommended route has the CTE only: half of S$4.00",
+         _erp_case(service="CARPOOL", gantries=(CTE, PIE), charged=3.25, recommended=[CTE]), {**detour, "amount": 2.00}),
+        ("T12", "RydeSEND detour: the fare includes ERP, so there is no ERP to refund", _erp_case(service="RydeSEND", gantries=(CTE, PIE), charged=0.0, recommended=[CTE]), valid),
+        ("T13", "RydeTAXI (metered) detour: no ruling, escalate with the ERP measurement attached (D32, as FC-R00)",
+         _erp_case(service="RydeTAXI", gantries=(CTE, PIE), charged=6.50, recommended=[CTE], fare_type="metered"),
+         {**gap, "attach": {"erp_actual": 6.50, "erp_recommended": 2.50, "difference": 4.00, "information_only": True}}),
+        ("T14", "RydeTAXI, no detour, S$8.50 charged for one S$2.50 gantry: FC-R07 still applies to a metered fare",
+         _erp_case(service="RydeTAXI", charged=8.50, fare_type="metered"), {**over, "amount": 6.00}),
+        ("T15", "overstated and a detour in one claim: S$3.50 over plus S$4.00 for the detour",
+         _erp_case(gantries=(CTE, PIE), charged=10.00, recommended=[CTE]),
+         {"outcome": "TOLL_REFUND", "amount": 7.50, "reasons": ["FC-R-TOLL-OVERSTATED", "FC-R-TOLL-FROM-DETOUR"], "fraud": ["DRIVER"], "tier": "APPROVE"}),
+        ("T16", "a gantry with no rate in the log and none in the LTA table: insufficient data (FC-R12)",
+         _erp_case(gantries=(("Unlisted gantry", None),), charged=2.50), {"outcome": "ESCALATE_HUMAN", "reasons": ["FC-R-INSUFFICIENT-DATA"], "tier": "HUMAN"}),
+        ("T17", "a gantry that was not active is not counted", _erp_case(gantries=(CTE, ("PIE (eastbound)", 4.00, False)), charged=2.50), valid),
+        ("T18", "S$0.30 over: the outcome depends on TOLL_TOLERANCE_SGD within its plausible range, so approval",
+         _erp_case(charged=2.80), {**over, "amount": 0.30, "decisive": ["TOLL_TOLERANCE_SGD"]}),
+    ]
+
+
+def erp_check(kb) -> list:
+    """Run the ERP cases and the FC-R01 split; return one record per problem."""
+    bad = []
+    for cid, desc, case, exp in erp_cases():
+        r = T.run(kb, case)
+        got = {"outcome": r["outcome"], "amount": r["amount"], "reasons": r["reasons"], "fraud": r["fraud"], "tier": r["tier"]}
+        problems = [f"{k}: expected {v}, got {got[k]}" for k, v in exp.items() if k in got and got[k] != v]
+        problems += [f"{d} not decisive (decisive: {[x for x, _ in r['decisive']]})" for d in exp.get("decisive", []) if d not in [x for x, _ in r["decisive"]]]
+        problems += [f"attach {k}: expected {v}, got {r['attach'].get(k)}" for k, v in exp.get("attach", {}).items() if r["attach"].get(k) != v]
+        if problems:
+            bad.append({"id": cid, "variant": desc, "problems": problems})
+    # FC-R01: fixed fare and charged = quoted means no fare refund, and the detour ERP goes to its own FC-TOLL claim
+    route = T.fc_r01(kb, _erp_case(gantries=(CTE, PIE), charged=6.50, recommended=[CTE]))
+    same = T.fc_r01(kb, _erp_case(gantries=(CTE, PIE), charged=6.50, recommended=[CTE, PIE]))
+    changed = T.fc_r01(kb, _erp_case(gantries=(CTE, PIE), charged=6.50, recommended=[CTE], base_fare=22.00))
+    checks = [("R1", "fixed fare, charged = quoted, a gantry only the actual path passed: no fare refund and an FC-TOLL claim of S$4.00",
+               route["applies"] and route["fare_refund"] == 0.0 and route["toll_claim"] and route["toll_claim"]["outcome"] == "TOLL_REFUND"
+               and route["toll_claim"]["amount"] == 4.00 and route["extra_gantries"] == [PIE[0]]),
+              ("R2", "the same gantries on both paths: no FC-TOLL claim", same["applies"] and same["toll_claim"] is None),
+              ("R3", "charged fare differs from the quote: FC-R01 does not apply", not changed["applies"] and changed["toll_claim"] is None)]
+    bad += [{"id": i, "variant": d, "problems": ["FC-R01 split not as the rule card says"]} for i, d, ok in checks if not ok]
+    return bad
+
+
+def erp_code_check(kb) -> list:
+    """Every outcome, reason, flag and tier the ERP engine emits must exist in the taxonomy (layer convergence)."""
+    bad = []
+    for cid, _, case, _ in erp_cases():
+        r = T.run(kb, case)
+        for kind, vocab, vals in (("outcome", "TX-OUTCOME", [r["outcome"]]), ("reason", "TX-REASON", r["reasons"]),
+                                  ("flag", "TX-FLAG", r["flags"]), ("tier", "TX-TIER-AUTONOMY", [r["tier"]])):
+            bad += [{"id": cid, "variant": "codes", "problems": [f"{kind} {v} is not in {vocab}"]} for v in vals if v not in kb.vocab[vocab]]
+    return bad
+
+
+def g3_check(kb) -> list:
+    """FX5: gate G3 keeps the history-blind ruling at tier APPROVE, for a win and a loss of a flagged rider alike."""
+    bad = []
+
+    def case(win: bool, flagged: bool):
+        c = copy.deepcopy(kb.disp002)
+        clean(c)
+        c["dispute_ticket"]["description"] = NON_CONTESTING
+        if win:
+            _set_wait_pings(c, [("08:43:00", *VENUE, "arrived"), ("08:45:00", *NORTH_400, "waiting"), ("08:48:00", *NORTH_400, "waiting"),
+                                ("08:51:00", *VENUE, "cancelled")])
+        if flagged:
+            c["rider_profile"] = copy.deepcopy(kb.disp002["rider_profile"])      # 3 of 4 disputes rejected plus a platform flag
+        return c
+
+    for win, label in ((True, "rider wins (fee waived)"), (False, "rider loses (fee upheld)")):
+        blind, aware = E.run(kb, case(win, False)), E.run(kb, case(win, True))
+        tb, ta = blind["trace"], aware["trace"]
+        if tb.outcome != ta.outcome:
+            bad.append({"id": "G3-pair", "variant": label, "problems": [f"flagged and unflagged rider got {ta.outcome} and {tb.outcome} (GEN-R03)"]})
+        if not any(who == "RIDER" for who, _ in ta.fraud) or tb.fraud:
+            bad.append({"id": "G3-pair", "variant": label, "problems": ["only the flagged rider may carry a fraud signal"]})
+        if aware["tier"]["tier"] != "APPROVE":
+            bad.append({"id": "G3-pair", "variant": label, "problems": [f"flagged rider's tier is {aware['tier']['tier']}, expected APPROVE"]})
+        # the aware pass disagrees with the blind pass: the blind ruling stays, as the provisional ruling at APPROVE
+        other = {"outcome": "UPHOLD" if win else "WAIVE_FEE", "amount": None}
+        res = G.resolve_g3(kb, {"outcome": tb.outcome, "amount": None, "tier": blind["tier"]["tier"]}, other)
+        if res["gate"] != "G3" or res["outcome"] != tb.outcome or res["tier"] != "APPROVE" or res["shown_to_reviewer"]["history_aware"] != other:
+            bad.append({"id": "G3-resolve", "variant": label, "problems": [f"G3 gave {res}, expected the history-blind outcome {tb.outcome} at tier APPROVE"]})
+    res = G.resolve_g3(kb, {"outcome": "ESCALATE_HUMAN", "amount": None, "tier": "HUMAN"}, {"outcome": "WAIVE_FEE", "amount": None})
+    if res["outcome"] != "ESCALATE_HUMAN" or res["tier"] != "HUMAN":
+        bad.append({"id": "G3-resolve", "variant": "history-blind pass has no ruling", "problems": [f"expected ESCALATE_HUMAN at HUMAN, got {res}"]})
+    res = G.resolve_g3(kb, {"outcome": "UPHOLD", "amount": None, "tier": "AUTO"}, {"outcome": "UPHOLD", "amount": None})
+    if res["gate"] is not None or res["tier"] != "AUTO":
+        bad.append({"id": "G3-resolve", "variant": "no disagreement", "problems": [f"G3 must not fire, got {res}"]})
+    res = G.resolve_g3(kb, {"outcome": "UPHOLD", "amount": None, "tier": "AUTO"}, None, fraud_check_disagrees=True)
+    if res["gate"] != "G3" or res["outcome"] != "UPHOLD" or res["tier"] != "APPROVE":
+        bad.append({"id": "G3-resolve", "variant": "the fraud check disagrees", "problems": [f"expected UPHOLD at APPROVE, got {res}"]})
+    tiers = kb.rules["AUTH-04"].get("gate_tiers", {})
+    stated = set(re.findall(r"\bG\d\b", kb.rules["AUTH-04"]["statement"]))
+    if set(tiers) != stated:
+        bad.append({"id": "G3-card", "variant": "AUTH-04", "problems": [f"gate_tiers {sorted(tiers)} differ from the gates in the statement {sorted(stated)}"]})
+    if tiers.get("G3") != "APPROVE" or any(tiers.get(g) != "HUMAN" for g in ("G2", "G4", "G8")):
+        bad.append({"id": "G3-card", "variant": "AUTH-04", "problems": [f"gate_tiers {tiers}: G3 must be APPROVE and G2, G4, G8 HUMAN"]})
+    return bad
+
+
+def rule_card_check(kb) -> list:
+    """The A2 rule-card decisions that no engine run can show: the ERP exceptions and their precedence are written into every
+    rule that computes ERP, FC-R08 is D with the PDVL-only scope, FC-F03 has the GPS justification, FC-R01 sends detour ERP
+    to FC-TOLL, and the ERP_RIDER_SHARE table matches FC-R06."""
+    bad, R = [], kb.rules
+
+    def need(rid, ok, msg):
+        if not ok:
+            bad.append({"id": rid, "variant": "rule card", "problems": [msg]})
+    share = kb.tables.get("ERP_RIDER_SHARE", {}).get("value", {})
+    need("FC-R06", share == {"default": 1.0, "RYDESEND": 0.0, "CARPOOL": 0.5}, f"ERP_RIDER_SHARE is {share}")
+    for rid in ("FC-R06", "FC-F04", "FC-R07", "FC-R08"):
+        txt = R[rid]["statement"]
+        need(rid, rid == "FC-R06" or "FC-R06" in txt, "does not apply FC-R06's exceptions")
+        need(rid, "RydeSEND" in txt, "does not name the RydeSEND exception")
+        need(rid, "carpool" in txt.lower() or "half" in txt, "does not name the carpool exception")
+    for rid in ("FC-R06", "FC-F04", "FC-R08"):
+        need(rid, "ERP_RIDER_SHARE" in R[rid].get("params", []), "ERP_RIDER_SHARE is not among its params")
+    need("FC-F04", "precedence" in R["FC-F04"]["statement"] and "FC-R08" in R["FC-F04"]["statement"], "the order of application is not recorded")
+    need("FC-R08", R["FC-R08"]["credibility"] == "D", f"credibility is {R['FC-R08']['credibility']}, expected D")
+    need("FC-R08", "PDVL" in R["FC-R08"]["statement"] and "METERED" in R["FC-R08"]["statement"] and "FC-R00" in R["FC-R08"]["statement"],
+         "the PDVL-only scope or the metered exclusion (D32) is missing")
+    need("FC-F03", "most efficient route according to GPS" in R["FC-F03"]["statement"] and any(x.get("doc") == "RYDE-4412121982745" and "GPS" in x.get("quote", "") for x in R["FC-F03"]["sources"]),
+         "the GPS most-efficient-route justification or its Ryde source is missing")
+    need("FC-R01", "its own FC-TOLL claim" in R["FC-R01"]["statement"] and "FC-R08" in R["FC-R01"]["statement"], "detour ERP is not sent to its own FC-TOLL claim")
+    return bad
 
 
 def run(kb) -> list[dict]:
@@ -778,3 +963,7 @@ if __name__ == "__main__":
         print("FAIL reading", ("UNSAFE " if b["unsafe"] else "") + repr(b["text"]), "expected", b["expected"], "got", b["got"])
     n = len(READING_CASES) + len(BEFORE_ARRIVAL_CASES) + len(reading_corpus())
     print(n - len(bad), "/", n, "message readings")
+    a2 = erp_check(KB()) + erp_code_check(KB()) + g3_check(KB()) + rule_card_check(KB())
+    for b in a2:
+        print("FAIL", b["id"], b["variant"], b["problems"])
+    print(len(erp_cases()), "ERP cases, FC-R01 split, gate G3 and rule-card checks:", "all pass" if not a2 else f"{len(a2)} problem(s)")

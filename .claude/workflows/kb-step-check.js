@@ -15,6 +15,7 @@ export const meta = {
 //   apply_cases: ['E07'],                     // round 1 cases (validation/V4_e2e/cases) a fresh KB applier re-decides
 //   focus: { fidelity: '...', grounding: '...', adversarial: '...', consistency: '...' },   // step-specific checks
 //   prior: 'validation/build_checks/<step>/...disposition.jsonl or null (round 2: what round 1 found and how it was handled)',
+//   model: 'sonnet',                           // optional: model for EVERY agent (appliers, reviewers, skeptics); omit to inherit the session model
 // }
 // The engine reruns (validation/tools/rerun_engine.py) and the build are E steps the builder runs outside this workflow.
 const A = args || {}
@@ -23,6 +24,7 @@ const STEP = A.step || 'step'
 const ROUND = A.round || 1
 const SCRATCH = `/tmp/${STEP.toLowerCase()}check${ROUND}/`
 const FOCUS = A.focus || {}
+const withModel = (o) => (A.model ? { ...o, model: A.model } : o)
 const SEVERITY = 'Severity: CRITICAL = would change an outcome, an amount or the automatic-versus-human decision (tier) in an in-scope type; MAJOR = wrong, but outcome-neutral in the current scope, or affects an out-of-scope type; MINOR = wording, labeling or missing detail.'
 const READONLY = `You did not write this change and you never edit anything: do not modify, create or delete any file under ${REPO} (no git commands that change state either). Put scratch scripts under ${SCRATCH} only. Your structured output is your only deliverable.`
 
@@ -100,15 +102,15 @@ const VERDICT_SCHEMA = {
 
 phase('Apply')
 const applied = parallel((A.apply_cases || []).map(cid => () =>
-  agent(applyPrompt(cid), { label: `apply:${cid}`, phase: 'Apply', schema: APPLY_SCHEMA })))
+  agent(applyPrompt(cid), withModel({ label: `apply:${cid}`, phase: 'Apply', schema: APPLY_SCHEMA }))))
 
 const reviewed = pipeline(
   DIMENSIONS,
-  d => agent(`${CONTEXT}\n\n${READONLY}\n\n${d.prompt}`, { label: `review:${d.key}`, phase: 'Review', schema: FINDINGS_SCHEMA }),
+  d => agent(`${CONTEXT}\n\n${READONLY}\n\n${d.prompt}`, withModel({ label: `review:${d.key}`, phase: 'Review', schema: FINDINGS_SCHEMA })),
   (rev, d) => {
     if (!rev || !rev.findings || rev.findings.length === 0) return { dimension: d.key, review: rev, verify: { verdicts: [] } }
     return agent(`${CONTEXT}\n\n${READONLY}\n\nYou are a skeptic. Another reviewer reported the findings below about step ${STEP} (dimension: ${d.key}). For EACH finding, try to refute it: re-read the cited files and lines yourself, re-run any command or scratch script needed (scratch only under ${SCRATCH}), and check whether the failure scenario really happens and whether the severity is right under the definitions above. Default to REFUTED if the evidence does not hold up; CONFIRMED only if you reproduced it or read it yourself; UNCERTAIN if it depends on a judgment the KB owner must make. Give severity_after_check (NONE if refuted).\n\nFindings:\n${JSON.stringify(rev.findings, null, 1)}`,
-      { label: `verify:${d.key}`, phase: 'Verify', schema: VERDICT_SCHEMA })
+      withModel({ label: `verify:${d.key}`, phase: 'Verify', schema: VERDICT_SCHEMA }))
       .then(v => ({ dimension: d.key, review: rev, verify: v }))
   },
 )

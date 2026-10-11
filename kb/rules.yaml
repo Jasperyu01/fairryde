@@ -959,31 +959,55 @@ rules:
     applies_to: [FC-ROUTE, FC-TOLL]
     statement: >-
       A deviation is justified if any holds: congestion, an incident or a closure on the recommended route; a route requested or
-      agreed by the rider before the deviation (read the chat); avoiding ERP at the rider's request; an in-app navigation
-      reroute (generic assumption from DiDi's terms).
-    zh: 推荐路线拥堵、事故或封路；乘客事先要求或同意的路线（需读聊天记录）；应乘客要求避开 ERP；导航重新规划（来自 DiDi 条款的通用假设），均为正当理由。
+      agreed by the rider before the deviation (read the chat); avoiding ERP at the rider's request; the driver took the route
+      that the driver's GPS navigation showed as the fastest or most efficient, shown by the trip's navigation record (Ryde:
+      the driver "may decide to take the most efficient route according to GPS"; a bare statement by the driver is tier C
+      evidence, GEN-R04); an in-app navigation reroute (generic assumption from DiDi's terms).
+    zh: 推荐路线拥堵、事故或封路；乘客事先要求或同意的路线（需读聊天记录）；应乘客要求避开 ERP；司机的 GPS 导航显示为最快或最有效的路线（需有行程的导航记录；Ryde 写明司机"可按 GPS 选最有效路线"；司机的口头说明只是 C 级证据，见 GEN-R04）；导航重新规划（来自 DiDi 条款的通用假设），均为正当理由。
     produces_finding: F-JUSTIFICATION
     sources:
       - {type: RYDE_POLICY, doc: RYDE-4412121982745, quote: 'If you have a preferred route, you may recommend this to your driver and reach a mutual agreement before you go.'}
+      - {type: RYDE_POLICY, doc: RYDE-4412121982745, quote: 'hence the driver may decide to take the most efficient route according to GPS.'}
+      - {type: RYDE_POLICY, doc: RYDE-4412122016153, quote: 'So you may decide to take the fastest or most efficient route based on your GPS.'}
       - {type: REGULATION, doc: LTA-PDVL-OFFENCES, quote: 'Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct route'}
       - {type: INDUSTRY, doc: IND-DIDI-DETOUR, quote: '司机采用 App 导航，导致的乘客投诉绕路，视为司机履约，不承担违约责任'}
     credibility: C
-    credibility_note: Rider agreement (Ryde, older article) and "reasonable cause" (LTA) are B; the navigation-reroute exemption comes from DiDi (C), so the rule as a whole is C.
+    credibility_note: >-
+      Rider agreement and the GPS most-efficient route are Ryde text, but both route articles were edited more than 12 months
+      ago (2024-10-01 and 2023-06-16), so B; "reasonable cause" (LTA) is B; the navigation-reroute exemption comes from DiDi
+      (C), so the rule as a whole is C. Ryde's "most efficient route according to GPS" is not the same as the LTA wording
+      "shortest and most direct route"; FC-F03 follows Ryde's contract wording and treats the LTA phrase "without reasonable
+      cause" as the bridge (open item D36).
     mode: READ
     status: draft
 
   - id: FC-F04
-    name: Expected ERP
+    name: Expected ERP (the rider's share)
     family: FC
     type: fact
     applies_to: [FC-TOLL]
-    statement: Expected ERP = sum of the rates of the active gantries the trip actually passed, at their time-of-day rates (LTA rate table).
-    zh: 应收 ERP = 实际经过的闸门按当时费率之和（LTA 费率表）。
-    params: [ERP_RATE_TABLE]
+    statement: >-
+      Expected ERP = the rider's share (ERP_RIDER_SHARE, set by FC-R06: 0 for RydeSEND, 0.5 for a carpool trip, 1 for every
+      other service) times the sum of the rates of the active gantries the trip actually passed, at their time-of-day rates
+      (LTA rate table). The same computation on the gantries of another path gives ERP(path), for example ERP(recommended) for
+      FC-R08. This is the one ERP computation of the knowledge base, applied in this order: FC-R06 first (it takes precedence
+      over the plain gantry sum), then FC-F04, then FC-R07 and FC-R08, which only use its results and never recompute ERP
+      without the share. FC-R00's reasoning (D32) takes precedence over FC-R08 for a METERED fare. A trip that is both
+      RydeSEND and carpool has no order in Ryde's articles: no rule covers it, so GEN-R07 applies.
+    zh: 应收 ERP = 乘客份额（ERP_RIDER_SHARE，由 FC-R06 定：RydeSEND 为 0，拼车为 0.5，其他服务为 1）乘以实际经过的有效闸门按当时费率之和（LTA 费率表）。同一算法用于其他路径的闸门，得到 ERP(该路径)，例如 FC-R08 用的 ERP(推荐路线)。这是知识库唯一的 ERP 算法，按此顺序使用：先 FC-R06（优先于直接相加闸门费率），再 FC-F04，再 FC-R07 和 FC-R08，后两者只用它的结果，不得不带份额重算 ERP。对计程车费（METERED），FC-R00 的理由优先于 FC-R08（D32）。既是 RydeSEND 又是拼车的行程，Ryde 文章没有规定先后：没有规则覆盖，按 GEN-R07 转人工。
+    params: [ERP_RATE_TABLE, ERP_RIDER_SHARE]
     produces_finding: F-ERP-EXPECTED
     sources:
       - {type: RYDE_POLICY, doc: RYDE-115001438614, quote: 'Please key in ERP based on the ERP gantry you passed during the journey.'}
+      - {type: RYDE_POLICY, doc: RYDE-115001438614, quote: 'The fares for RydeSEND include ERP.'}
+      - {type: RYDE_POLICY, doc: RYDE-115001438614, quote: 'The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%.'}
     credibility: A
+    credibility_note: >-
+      The gantry sum and both exceptions are Ryde text in a driver article edited 2026-09-02 (A). The order of application is
+      how the knowledge base uses them, not a new norm; for the one case the articles do not order (RydeSEND and carpool at
+      once) the rule rules nothing and escalates under GEN-R07. Open item D35: Ryde does not say whether the driver keys the
+      total or the passenger's half on a carpool trip, nor how the passenger half divides among several passengers (a
+      backlog item in scope.yaml).
     mode: HARD
     status: draft
 
@@ -1024,14 +1048,23 @@ rules:
     applies_to: [FC-ROUTE]
     statement: >-
       If the pricing mode is FIXED_AT_BOOKING and the fare charged equals the quoted fare, a longer route did not change what the
-      rider paid: no fare refund. The deviation is recorded as driver-conduct information only.
-    zh: 固定价且实收等于报价时，绕路没有改变乘客付的钱：不退车费；绕路只记作司机行为信息。
+      rider paid for the trip: no fare refund. The deviation is recorded as driver-conduct information only, with one
+      exception: a fixed fare does not include ERP (FC-F01), so ERP that the longer route caused is a separate charge that
+      FC-R01 never decides or closes. Whenever the actual path passed active gantries that the recommended route avoids,
+      FC-R01 sends that ERP to its own FC-TOLL claim (a secondary claim under CLS-02, opened without waiting for the rider to
+      name the ERP), decided by PB-FC-TOLL with FC-R08.
+    zh: 固定价且实收等于报价时，绕路没有改变乘客为行程付的钱：不退车费；绕路只记作司机行为信息。有一个例外：固定价不含 ERP（FC-F01），绕路造成的 ERP 是另一笔费用，FC-R01 既不裁决也不因此结案。只要实际路径经过了推荐路线避开的有效闸门，FC-R01 就把这部分 ERP 交给单独的 FC-TOLL 主张（按 CLS-02 作为次项，不必等乘客提出 ERP），按 PB-FC-TOLL 用 FC-R08 裁决。
     produces: [FC-R-FIXED-FARE]
     sources:
       - {type: RYDE_POLICY, doc: RYDE-4412121982745, quote: 'The trip fare is fixed based on pick-up and drop-off points, hence the driver may decide to take the most efficient route according to GPS.'}
       - {type: RYDE_POLICY, doc: RYDE-30741244296217, quote: 'Fares quoted for our services are generally fixed, except for RydeTAXI.'}
+      - {type: RYDE_POLICY, doc: RYDE-360004075214, quote: 'All fares are fixed at the time of booking but does not include toll charges such as ERP.'}
     credibility: B
-    credibility_note: Both rider articles were edited more than 12 months ago (2024-10-01, 2025-07-17). Ask the organizer to confirm fixed fares for RydeX.
+    credibility_note: >-
+      Both rider articles were edited more than 12 months ago (2024-10-01, 2025-07-17), and the article saying fixed fares
+      exclude ERP is from 2024-10-08, so B. Ask the organizer to confirm fixed fares for RydeX. That the ERP goes to its own
+      claim follows from the Ryde text (ERP is not in the fixed fare) and from CLS-02 (one claim per contested charge);
+      it adds no condition to the no-refund finding.
     mode: HARD
     status: draft
 
@@ -1108,13 +1141,23 @@ rules:
     family: FC
     type: eligibility
     applies_to: [FC-TOLL]
-    statement: ERP for active gantries passed is payable by the rider for all services except RydeSEND, whose fares include ERP; on carpool trips ERP is shared 50/50 between driver and passenger.
-    zh: 经过的 ERP 由乘客付（RydeSEND 车费已含 ERP 除外）；拼车 ERP 司乘各付一半。
+    statement: >-
+      ERP for active gantries passed is payable by the rider for all services except RydeSEND, whose fares include ERP; on
+      carpool trips ERP is shared 50/50 between driver and passenger. The rider's share is therefore 0 for RydeSEND (nothing is
+      added to the fare for ERP), 0.5 for a carpool trip and 1 for every other service (ERP_RIDER_SHARE). FC-R06 takes
+      precedence over the plain gantry sum: every rule that computes or compares an ERP amount (FC-F04, FC-R07, FC-R08) applies
+      it first, through FC-F04. For a trip that is both RydeSEND and carpool Ryde's articles give no order, no rule covers
+      it, and GEN-R07 applies.
+    zh: 经过的 ERP 由乘客付（RydeSEND 车费已含 ERP 除外）；拼车 ERP 司乘各付一半。因此乘客份额为：RydeSEND 为 0（车费之外不再加 ERP），拼车为 0.5，其他服务为 1（ERP_RIDER_SHARE）。FC-R06 优先于直接相加闸门费率：计算或比较 ERP 金额的规则（FC-F04、FC-R07、FC-R08）都先按它取份额，经由 FC-F04。既是 RydeSEND 又是拼车的行程，Ryde 文章没有规定先后，没有规则覆盖，按 GEN-R07 转人工。
+    params: [ERP_RIDER_SHARE]
     sources:
       - {type: RYDE_POLICY, doc: RYDE-115000772653, quote: 'If a rider passes through an active ERP gantry, the toll charge will be applicable to the rider.'}
       - {type: RYDE_POLICY, doc: RYDE-115001438614, quote: 'The fares for RydeSEND include ERP.'}
       - {type: RYDE_POLICY, doc: RYDE-115001438614, quote: 'The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%.'}
     credibility: A
+    credibility_note: >-
+      Both exceptions are Ryde text in a driver article edited 2026-09-02 (A). The order of application and the pointer to
+      GEN-R07 for a trip that is both RydeSEND and carpool state how the knowledge base uses the text; they add no norm.
     mode: HARD
     status: draft
 
@@ -1124,14 +1167,18 @@ rules:
     type: outcome
     applies_to: [FC-TOLL]
     statement: >-
-      If the ERP charged exceeds F-ERP-EXPECTED by more than TOLL_TOLERANCE_SGD, refund the difference and raise FRAUD_SIGNAL
-      against the driver; the fraud consequence is for a human to decide.
-    zh: 实收 ERP 超过应收 ERP，退差额并对司机打欺诈信号；欺诈后果由人决定。
+      If the ERP charged to the rider exceeds F-ERP-EXPECTED (the rider's share under FC-R06, computed by FC-F04) by more than
+      TOLL_TOLERANCE_SGD, refund the difference and raise FRAUD_SIGNAL against the driver; the fraud consequence is for a
+      human to decide. The ERP charged is the ERP line the rider was charged (on a carpool trip only the rider's half counts,
+      and on a RydeSEND trip any ERP line exceeds the expected 0).
+    zh: 实收乘客的 ERP 超过 F-ERP-EXPECTED（FC-R06 定的乘客份额，由 FC-F04 计算），退差额并对司机打欺诈信号；欺诈后果由人决定。实收 ERP 指乘客被收的那一行（拼车只算乘客的一半；RydeSEND 的应收为 0，任何 ERP 行都算超收）。
     params: [TOLL_TOLERANCE_SGD]
     produces: [FC-R-TOLL-OVERSTATED, FC-R-TOLL-VALID]
-    credibility_note: "The overstatement rule and its fraud consequence are Ryde's (A). The tolerance is FairRyde's (D) and is set to S$0.00; the AUTH-02 sensitivity test catches cases where a small tolerance would change the outcome."
+    credibility_note: "The overstatement rule and its fraud consequence are Ryde's (A), with the rider's share from FC-R06 (A). The tolerance is FairRyde's (D) and is set to S$0.00; the AUTH-02 sensitivity test catches cases where a small tolerance would change the outcome."
     sources:
       - {type: RYDE_POLICY, doc: RYDE-115001438614, quote: 'Please bear in mind that if an additional/excessive amount is keyed in, this will be considered fraudulent and drivers will be liable for permanent suspension.'}
+      - {type: RYDE_POLICY, doc: RYDE-115001438614, quote: 'The fares for RydeSEND include ERP.'}
+      - {type: RYDE_POLICY, doc: RYDE-115001438614, quote: 'The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%.'}
     credibility: A
     mode: HARD+READ
     status: draft
@@ -1141,13 +1188,28 @@ rules:
     family: FC
     type: outcome
     applies_to: [FC-TOLL]
-    statement: If the actual path passed gantries that the recommended route avoids and the deviation is unjustified (FC-F03), refund ERP(actual) minus ERP(recommended).
-    zh: 实际路径经过推荐路线避开的闸门且绕路无正当理由，退 ERP 差额。
-    produces: [FC-R-TOLL-FROM-DETOUR]
+    statement: >-
+      If the actual path passed gantries that the recommended route avoids and the deviation is unjustified (FC-F03), refund
+      the rider's share of the difference: ERP(actual) minus ERP(recommended), both computed as in FC-F04 (FC-R06 first: nothing
+      for RydeSEND, whose fare includes ERP; half on a carpool trip). Together with FC-R07 the refund never exceeds the ERP
+      charged to the rider. FC-R08 does not apply to a METERED fare (RydeTAXI), in line with FC-R00 (D32): FairRyde does not
+      rule on it and escalates the claim under GEN-R07 (reason GEN-R-POLICY-GAP, tier HUMAN under AUTH-06), attaching
+      ERP(actual), ERP(recommended), their difference (information only, never a proposed refund), any FC-R07 finding and the
+      driver's response (GEN-R05). The LTA duty it rests on is verified for private-hire (PDVL) drivers only: the LTA list is
+      the PDVL offence list as at 1 Apr 2023, and no taxi (TDVL) list was found.
+    zh: 实际路径经过推荐路线避开的闸门且绕路无正当理由，退乘客份额的 ERP 差额：ERP(实际) 减 ERP(推荐)，都按 FC-F04 计算（先 FC-R06：RydeSEND 车费已含 ERP，不退；拼车退一半）。与 FC-R07 合计，退款不超过乘客实际被收的 ERP。FC-R08 不适用于计程车费（METERED，RydeTAXI），与 FC-R00 一致（D32）：FairRyde 不作裁决，按 GEN-R07 转人工（原因 GEN-R-POLICY-GAP，按 AUTH-06 为 HUMAN），并附 ERP(实际)、ERP(推荐)、两者差额（仅供参考，不作为退款建议）、FC-R07 的认定（如有）和司机的回应（GEN-R05）。它所依据的 LTA 义务只核实到私召车（PDVL）司机：所用 LTA 清单是截至 2023 年 4 月 1 日的 PDVL 违规清单，没有找到出租车（TDVL）清单。
+    params: [ERP_RIDER_SHARE]
+    produces: [FC-R-TOLL-FROM-DETOUR, GEN-R-POLICY-GAP]
     sources:
-      - {type: REGULATION, doc: LTA-PDVL-OFFENCES, quote: 'Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct route'}
-    credibility: C
-    credibility_note: The route duty is regulatory (B); turning it into an ERP refund is FairRyde's generalization (C/D).
+      - {type: REGULATION, doc: LTA-PDVL-OFFENCES, quote: 'Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct route', note: "LTA's list is the PDVL (private-hire driver's vocational license) offence list as at 1 Apr 2023; the taxi (TDVL) list was not retrievable (research note 09, item 24)."}
+      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "Turning the route duty into an ERP refund, and escalating a metered fare instead (D32), are FairRyde's choices. Settled in step A2 on Jasper's instruction (11 Oct 2026)."}
+    credibility: D
+    credibility_note: >-
+      The route duty is regulatory (B) and verified for PDVL drivers only; turning it into a platform-computed ERP refund is
+      FairRyde's generalization (D), and so is the exclusion of metered fares (D32), which extends Ryde's RydeTAXI text as
+      FC-R00 does. A Ryde or regulatory condition extended by FairRyde is D under the credibility_principle. FC-R08 was C in
+      v0.1 (round 1 finding FX3). FC-F03 is a READ rule: whenever the detour ERP is above zero, reading the justification the
+      other way would change the amount, so FC-F03 is decisive and the ruling needs approval (AUTH-02, decisive_definition 1).
     mode: HARD+READ
     status: draft
 
@@ -1518,8 +1580,9 @@ rules:
       At least RIDER_ABUSE_MIN_DISPUTES past disputes, of which at least RIDER_ABUSE_REJECT_SHARE_MIN were rejected, together
       with an existing platform fraud flag of any kind (the reviewer sees the flag detail; in DISP-002 it is for frequent late
       cancellations), raise FRAUD_SIGNAL against the rider. Per GEN-R03 it never changes the outcome; like any fraud signal it
-      requires human approval whichever party the outcome favors (AUTH-02 trigger 2).
-    zh: 乘客过往申诉达到一定数量且驳回比例达标、并已有任何类型的平台欺诈标记（复核人能看到标记内容；DISP-002 的标记是频繁迟取消），打欺诈信号；按 GEN-R03 不改变结果，和任何欺诈信号一样，不论结果有利于谁都需人工批准（AUTH-02 第 2 条）。
+      requires human approval whichever party the outcome favors (AUTH-02 trigger 2). If the fraud check and the history-blind
+      pass disagree (gate G3), the history-blind ruling stays as the provisional ruling (AUTH-04).
+    zh: 乘客过往申诉达到一定数量且驳回比例达标、并已有任何类型的平台欺诈标记（复核人能看到标记内容；DISP-002 的标记是频繁迟取消），打欺诈信号；按 GEN-R03 不改变结果，和任何欺诈信号一样，不论结果有利于谁都需人工批准（AUTH-02 第 2 条）；欺诈检查与不含历史的一轮结论不同时（升级门 G3），不含历史的裁决仍作为暂定裁决（AUTH-04）。
     params: [RIDER_ABUSE_MIN_DISPUTES, RIDER_ABUSE_REJECT_SHARE_MIN]
     sources:
       - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none}
@@ -1608,12 +1671,17 @@ rules:
     applies_to: [ALL]
     statement: >-
       Any gate sends the case to a person with a one-page summary. Gates G1 data inconsistency between A/B sources (including
-      GPS data errors), G5 low confidence, G6 amount above the automatic limit and G7 citation or number verification failed
-      after one retry keep FairRyde's ruling as a provisional ruling for approval (tier APPROVE). Gates G2 rule conflict, G3
-      the history-aware Judge pass or the fraud check disagrees with the history-blind pass, and G8 the Judge passes disagree
-      with each other or with the rules engine leave no single ruling: the outcome is ESCALATE_HUMAN with reason
-      GEN-R-ESCALATED (tier HUMAN, AUTH-06). G4 safety content: a person decides (tier HUMAN, AUTH-03).
-    zh: 任一升级门触发即转人工并附一页摘要。G1 数据矛盾（含 GPS 数据错误）、G5 低置信度、G6 金额超限、G7 引用或数字校验重试仍失败：FairRyde 的裁决作为暂定裁决交人批准（APPROVE）。G2 规则冲突、G3 含历史与不含历史的结论不同、G8 Judge 各轮之间或与规则引擎不一致：没有单一裁决，结果为 ESCALATE_HUMAN、理由 GEN-R-ESCALATED（按 AUTH-06 为 HUMAN）。G4 安全内容：由人裁决（按 AUTH-03 为 HUMAN）。
+      GPS data errors), G3 the history-aware Judge pass or the fraud check disagrees with the history-blind pass, G5 low
+      confidence, G6 amount above the automatic limit and G7 citation or number verification failed after one retry keep
+      FairRyde's ruling as a provisional ruling for approval (tier APPROVE). For G3 the provisional ruling is the history-blind
+      pass's ruling: history never decides an outcome (GEN-R03, FRD-02), so the history-aware result is shown to the reviewer
+      next to it and changes neither the outcome nor the amount, whichever party the history-blind ruling favors. If the
+      history-blind pass has no ruling itself (ESCALATE_HUMAN), the outcome stays ESCALATE_HUMAN (tier HUMAN, AUTH-06).
+      Gates G2 rule conflict and G8 the Judge passes disagree with each other or with the rules engine leave no single ruling:
+      the outcome is ESCALATE_HUMAN with reason GEN-R-ESCALATED (tier HUMAN, AUTH-06). G4 safety content: a person decides
+      (tier HUMAN, AUTH-03).
+    zh: 任一升级门触发即转人工并附一页摘要。G1 数据矛盾（含 GPS 数据错误）、G3 含历史的 Judge 或欺诈检查与不含历史的结论不同、G5 低置信度、G6 金额超限、G7 引用或数字校验重试仍失败：FairRyde 的裁决作为暂定裁决交人批准（APPROVE）。G3 的暂定裁决是不含历史那一轮的裁决：历史不能决定结果（GEN-R03、FRD-02），所以含历史一轮的结论只展示给复核人，放在暂定裁决旁边，不改变结果和金额，不论该裁决对哪一方有利。若不含历史的那一轮本身没有裁决（ESCALATE_HUMAN），结果仍为 ESCALATE_HUMAN（按 AUTH-06 为 HUMAN）。G2 规则冲突、G8 Judge 各轮之间或与规则引擎不一致：没有单一裁决，结果为 ESCALATE_HUMAN、理由 GEN-R-ESCALATED（按 AUTH-06 为 HUMAN）。G4 安全内容：由人裁决（按 AUTH-03 为 HUMAN）。
+    gate_tiers: {G1: APPROVE, G2: HUMAN, G3: APPROVE, G4: HUMAN, G5: APPROVE, G6: APPROVE, G7: APPROVE, G8: HUMAN}
     params: [TAU, AUTO_LIMIT_SGD]
     produces: [GEN-R-ESCALATED]
     sources:

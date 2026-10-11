@@ -184,6 +184,14 @@ tables:
       - {gantry: "KPE southbound", window: "08:00-08:05", rate_sgd: 3.00}
       - {gantry: "Victoria Street", window: "07:30-07:35", rate_sgd: 2.00}
 
+  ERP_RIDER_SHARE:
+    source: "RYDE-115001438614 'Which trips do I need to include ERP?': 'The fares for RydeSEND include ERP.' and 'The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%.' (carpool trips); all other services exclude ERP from the fare, so the rider pays the ERP"
+    source_date: 2026-09-02
+    retrieved: 2026-10-11
+    credibility: A
+    value: {default: 1.0, RYDESEND: 0.0, CARPOOL: 0.5}
+    note: "The rider's share of the ERP of the gantries passed, by service type (rule FC-R06; applied by FC-F04, FC-R07 and FC-R08). Not stated by Ryde: a trip that is both RydeSEND and carpool (no order; GEN-R07), and how the passenger half divides among several passengers (open item D35)."
+
   VENUES:
     source: "OneMap search API (Singapore Land Authority), looked up by hand"
     source_date: 2026-10-04

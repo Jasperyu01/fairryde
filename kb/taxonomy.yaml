@@ -150,7 +150,7 @@ vocabularies:
           - code: FC-TOLL
             label: ERP / toll overcharge
             zh: ERP 或过路费多收
-            definition: The claimant contests the ERP or road-toll amount added to the trip.
+            definition: The claimant contests the ERP or road-toll amount added to the trip. This includes ERP that a longer route caused, which FC-R01 opens as its own claim from a route ticket.
             term_sources:
               - "Ryde rider article 30741244296217 'I was overcharged for ERP/toll'"
               - "Ryde rider article 115000772653 'Do I need to pay ERP charges?'"

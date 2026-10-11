@@ -61,6 +61,9 @@ def main(argv):
     for x in reading_bad:
         rep.add("ERROR", "reading-selftest", x["text"][:40], f"CW-F06 message reading expected {x['expected']}, got {x['got']}"
                 + (" (unsafe: a placing or contesting message read as no counter-evidence)" if x["unsafe"] else ""))
+    a2_bad = selftest.erp_check(kb) + selftest.erp_code_check(kb) + selftest.g3_check(kb) + selftest.rule_card_check(kb)
+    for x in a2_bad:
+        rep.add("ERROR", "erp-g3-selftest", x["id"], f"{x['variant']}: " + "; ".join(x["problems"]))
     decided = {t["got"]["row"] for t in tests if t["got"]["row"] and t["got"]["reasons"]
                and t["got"]["reasons"][0] not in ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP")}
     for row in kb.y["rules"]["decision_tables"]["DT-CW-NOSHOW"]["rows"]:
@@ -161,6 +164,8 @@ def main(argv):
         print(f"DISP-002 [{prof}]: {t.outcome} via {t.dt_row}, reasons {t.reasons}, flags {t.flags}, C={t.confidence['C']}, tier {r['tier']['tier']}")
     print(f"DT-CW-NOSHOW enumeration: {dt_enum}")
     print(f"engine self-test: {sum(t['ok'] for t in tests)}/{len(tests)} variants pass; rows decided by self-tests: {sorted(decided, key=lambda s: int(s[1:]))}")
+    print(f"ERP rules self-test: {len(selftest.erp_cases())} ERP cases, the FC-R01 split, gate G3 and the A2 rule-card checks: "
+          + ("all pass" if not a2_bad else f"{len(a2_bad)} problem(s)"))
     n_read = len(selftest.READING_CASES) + len(selftest.BEFORE_ARRIVAL_CASES) + len(selftest.reading_corpus())
     print(f"CW-F06 message readings: {n_read - len(reading_bad)}/{n_read} pass (exact cases and the reviewers' corpus)")
     if fuzz:

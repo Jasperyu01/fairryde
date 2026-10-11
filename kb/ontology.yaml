@@ -341,7 +341,7 @@ finding_types:
   - {code: F-PRICING-MODE, label: Pricing mode of the trip, produced_by: FC-F01}
   - {code: F-DETOUR, label: "Detour ratio, extra distance and corridor exits", produced_by: FC-F02}
   - {code: F-JUSTIFICATION, label: Legitimate reason for deviation present, produced_by: FC-F03}
-  - {code: F-ERP-EXPECTED, label: ERP for gantries actually passed at time-of-day rates, unit: SGD, produced_by: FC-F04}
+  - {code: F-ERP-EXPECTED, label: "ERP the rider owes for the gantries actually passed: the rider's share (FC-R06) of the time-of-day rates", unit: SGD, produced_by: FC-F04}
   - {code: F-FILING-WINDOW, label: Days from trip to filing, unit: days, produced_by: MAT-04}
 
 # =====================================================================

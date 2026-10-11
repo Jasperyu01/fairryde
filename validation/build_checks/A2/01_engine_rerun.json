@@ -1,0 +1,96 @@
+[
+ {
+  "case_id": "E01",
+  "reference_outcome": "UPHOLD",
+  "kb_outcome": "UPHOLD",
+  "dt_row": "R8",
+  "tier": "APPROVE",
+  "correct": true,
+  "route_match": true,
+  "rider_evidence": "WEAK",
+  "rider_contacts": {
+   "E-CHT-03": "LATE"
+  },
+  "decisive": [
+   "CW-F04: outcome changes when PING_MAX_GAP_S moves within [60, 420]"
+  ],
+  "triggers": [
+   "decisive: CW-F04 (outcome changes when PING_MAX_GAP_S moves within [60, 420])"
+  ]
+ },
+ {
+  "case_id": "E02",
+  "reference_outcome": "WAIVE_FEE",
+  "kb_outcome": "WAIVE_FEE",
+  "dt_row": "R1",
+  "tier": "APPROVE",
+  "correct": true,
+  "route_match": true,
+  "rider_evidence": "STRONG",
+  "rider_contacts": {
+   "E-CHT-01": "PLACES",
+   "E-CHT-02": "PLACES",
+   "E-CHT-03": "UNCLEAR",
+   "E-CHT-04": "PLACES"
+  },
+  "decisive": [],
+  "triggers": [
+   "fraud signal on DRIVER (arrival indicated, but no GPS point from then until the cancellation is inside the pick-up area) (symmetric trigger; the detail is for the reviewer, not for the parties)"
+  ]
+ },
+ {
+  "case_id": "E03",
+  "reference_outcome": "UPHOLD",
+  "kb_outcome": "UPHOLD",
+  "dt_row": "R8",
+  "tier": "APPROVE",
+  "correct": true,
+  "route_match": true,
+  "rider_evidence": "WEAK",
+  "rider_contacts": {
+   "E-CHT-03": "LATE"
+  },
+  "decisive": [
+   "CW-F04: outcome changes when PING_MAX_GAP_S moves within [60, 420]"
+  ],
+  "triggers": [
+   "decisive: CW-F04 (outcome changes when PING_MAX_GAP_S moves within [60, 420])"
+  ]
+ },
+ {
+  "case_id": "E04",
+  "reference_outcome": "WAIVE_FEE",
+  "kb_outcome": "WAIVE_FEE",
+  "dt_row": "R6",
+  "tier": "AUTO",
+  "correct": true,
+  "route_match": true,
+  "rider_evidence": "WEAK",
+  "rider_contacts": {
+   "E-CHT-03": "LATE"
+  },
+  "decisive": [],
+  "triggers": []
+ },
+ {
+  "case_id": "E11",
+  "reference_outcome": "TOLL_REFUND",
+  "reference_amount": 6.0,
+  "kb_outcome": "TOLL_REFUND",
+  "kb_amount": 6.0,
+  "dt_row": null,
+  "tier": "APPROVE",
+  "correct": true,
+  "route_match": true,
+  "reasons": [
+   "FC-R-TOLL-OVERSTATED"
+  ],
+  "fraud": [
+   "DRIVER"
+  ],
+  "decisive": [],
+  "triggers": [
+   "fraud signal on DRIVER (ERP overstated, FC-R07)"
+  ]
+ }
+]
