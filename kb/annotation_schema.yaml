@@ -64,7 +64,7 @@ groups:
       - {name: filing_delay_days, fill: FORMULA, formula: "=filed_at - cancellation_time", hide_in_blind: true, note: "Pre-computed input of MAT-04; hidden in blind mode", example: 0.02}
       - {name: wait_margin_s, fill: FORMULA, formula: "=wait_elapsed_s - policy_threshold_s", hide_in_blind: true, note: "Pre-computes the threshold comparison; hidden in blind mode", example: ""}
       - {name: rider_contacts, fill: AUTO, hide_in_blind: true, note: "Rider calls and messages between the arrival and the cancellation. Pre-computes part of CW-F06, so hidden in blind mode.", example: 0}
-      - {name: rider_side_evidence, fill: AUTO, values: [none, statement_only, system_records], hide_in_blind: true, note: "Which rider-side material exists (mechanical): system_records = rider GPS, a rider call or message, or a notification failure. Whether the statement contests presence is the annotator's call (CW-F06). Hidden in blind mode.", example: statement_only}
+      - {name: rider_side_evidence, fill: AUTO, values: [none, statement_only, system_records], hide_in_blind: true, note: "Which rider-side material exists (mechanical): system_records = rider GPS, a rider call or message, or a notification failure. Whether a rider call or message places the rider at the pick-up or contests presence (an admission of lateness does not), and whether the statement contests presence, are the annotator's call (CW-F06). Hidden in blind mode.", example: statement_only}
       - {name: chat_summary, fill: AI_OK, hide_in_blind: true, note: "Neutral summary only", example: "No messages between rider and driver."}
 
   ANSWER:

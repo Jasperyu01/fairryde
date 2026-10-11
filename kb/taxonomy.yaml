@@ -408,7 +408,7 @@ vocabularies:
       - {code: RYDEXL, label: RydeXL}
       - {code: RYDEX_GO, label: Ryde X GO}
       - {code: RYDEPOOL, label: RydePOOL}
-      - {code: RYDETAXI, label: RydeTAXI, note: "Metered fare; excluded from the cancellation policy (rule FC-R03, CW-R00)."}
+      - {code: RYDETAXI, label: RydeTAXI, note: "Metered fare; excluded from the cancellation policy (CW-R00) and from platform-computed detour refunds (FC-R03, FC-R05)."}
       - {code: RYDEPET, label: RydePET}
       - {code: RYDEFLASH, label: RydeFLASH}
       - {code: RYDELUXE, label: RydeLUXE}

@@ -3,8 +3,9 @@
 Purpose: prove that the knowledge base is complete enough to decide a real sample, and show which rule, parameter and
 evidence item produced each step. It is a verification tool for the knowledge base, not the product engine:
 - there is no LLM, so the run-agreement (A) and rules-engine agreement (R) confidence terms are set to 1.0 and marked;
-- the READ part of CW-F06 (does the rider's statement contest presence, timing or place?) is approximated by a phrase
-  list here; at run time an LLM reads the statement, and the decisive test checks whether another reading would matter.
+- the READ parts of CW-F06 (does the rider's statement contest presence, timing or place? does a rider call or message
+  during the wait place the rider at the pick-up or contest presence?) are approximated by phrase lists here; at run time
+  an LLM reads the text, and the decisive test checks whether another reading would matter.
 """
 from __future__ import annotations
 
@@ -22,6 +23,21 @@ INJECTION_PATTERNS = [r"ignore (all |any |the )?(previous|prior|above) instructi
 CONTEST_PHRASES = [r"\bi was (at|there|on time|waiting|outside|at the)", r"never (showed|came|arrived)", r"\bwaited\b",
                    r"couldn'?t find", r"wasn'?t there", r"was not there", r"did ?n[o']t (arrive|come|show)", r"on time",
                    r"wrong (place|location|pin)", r"not at the pick", r"driver was not"]
+# CW-F06, rider calls and messages during the wait: only content that places the rider at the pin or venue, or contests the
+# driver's presence, the timing or the place, is STRONG; an admission of lateness or "coming" is not counter-evidence.
+RIDER_PLACE_PHRASES = [r"\b(i'?m|i am|we'?re|we are)\s+(already\s+|still\s+|now\s+|just\s+)?(here|outside|downstairs|waiting)\b",
+                       r"\b(i'?m|i am|we'?re|we are)\s+(already\s+|still\s+|now\s+)?(here\s+)?at\b[^.?!]*\b(pick-?\s?up|pin|lobby|entrance|porch|stand|gate|door|exit|kerb|curb)",
+                       r"where are you", r"\b(don'?t|do not|can'?t|cannot|couldn'?t)\s+(see|find|spot)\s+(you|your car|the car|ur car)",
+                       r"\byou'?re not (here|there|at)", r"\byou are not (here|there|at)", r"\b(your|ur|the) car\b[^.?!]*\b(is|was) (not|nowhere)\b",
+                       r"wrong (place|location|pin|spot|side|entrance)", r"not at the pick", r"\bwaiting (for you|here|outside|at)\b",
+                       r"\bbeen waiting\b", r"\bi was (here|there|at|waiting)\b"]
+RIDER_LATE_PHRASES = [r"(?<!you )(?<!u )\bcoming\b", r"\bon (my|the) way\b", r"\bomw\b", r"getting ready", r"running late",
+                      r"\b(i'?m|i am)( a| a bit| a little| abit| so)? late\b", r"sorry,? (i'?m |i am )?late\b",
+                      r"\bwait (for me|a (bit|while|moment|min|minute|few)|another|\d)", r"\bcan (you )?wait\b", r"\b(pls|please) wait\b",
+                      r"walking (over|to|there|down)", r"\b(almost|nearly) there\b",
+                      r"\b(i'?ll|i will|will) be (right )?(down|there|out)\b", r"\bleaving (now|the house|home|office)\b", r"\bjust left\b",
+                      r"\bstill (at home|in the|in my|upstairs|getting|inside)\b"]
+RIDER_ACK = r"\s*(ok(ay)?|k|thanks?( you)?|thx|noted|sure|alright|yes|yep|ya)\s*[.!]*\s*"
 SOFT_FLAGS = ("SPEED_INCONSISTENT", "PIN_VENUE_MISMATCH", "SPARSE_GPS", "TIMER_ANCHOR_MISMATCH", "GPS_OUTLIER")
 
 
@@ -157,10 +173,26 @@ def contests_statement(text: str) -> bool:
     return any(re.search(p, t) for p in CONTEST_PHRASES)
 
 
+def rider_contact_reading(c: dict) -> str:
+    """Proxy for the READ part of CW-F06 on one rider call or message during the wait: PLACES (at the pin or venue, or contests
+    presence, timing or place), LATE (admits being late or still on the way), NEUTRAL (an acknowledgment) or UNCLEAR (a call,
+    whose words are not recorded, or a message that fits neither list or both)."""
+    if c["type"] != "message":
+        return "UNCLEAR"
+    t = (c.get("content") or "").lower().replace("’", "'")
+    if re.fullmatch(RIDER_ACK, t):
+        return "NEUTRAL"
+    places = any(re.search(p, t) for p in RIDER_PLACE_PHRASES)
+    late = any(re.search(p, t) for p in RIDER_LATE_PHRASES)
+    return "PLACES" if places and not late else ("LATE" if late and not places else "UNCLEAR")
+
+
 def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | None = None,
-             force_reading: str | None = None, alt_start: str | None = None) -> Trace:
+             force_reading: str | None = None, alt_start: str | None = None, contact_reading: str | None = None) -> Trace:
     """force_reading: NONE or WEAK to test another reading of the rider's statement (decisive test, clause 1).
-    alt_start: "anchor" counts the wait from the anchor without CW-F03B (decisive test of that FairRyde reading)."""
+    alt_start: "anchor" counts the wait from the anchor without CW-F03B (decisive test of that FairRyde reading).
+    contact_reading: "STRONG" reads the rider's unclear calls and messages during the wait as placing the rider at the
+    pick-up (decisive test of CW-F06's READ part, clause 1)."""
     tk, t = case["dispute_ticket"], case["trip_data"]
     ev, chat = case.get("app_events", []), case.get("chat_logs", [])
     gps_raw = case.get("gps_telemetry", []) or []
@@ -622,25 +654,35 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
                 strong.append("rider GPS at the pin")
             if venue and hav(g["lat"], g["lng"], venue["lat"], venue["lng"]) <= pvmax:
                 strong.append("rider GPS at the named venue")
-    if rider_contacts:
-        strong.append("rider contacted the driver during the wait")
     if any(re.search(r"fail|not delivered|undelivered", a["details"], re.I) for a in ev if a["event_type"] == "rider_notified"):
         strong.append("notification failure log")
+    records_strong = bool(strong)
+    # READ part on the rider's own calls and messages during the wait (from the arrival indication to the cancellation)
+    cid = lambda c: _ev_id("E-CHT", case, "chat_logs", lambda x: x is c)[0]
+    readings = {cid(c): rider_contact_reading(c) for c in rider_contacts}
+    by = {k: [i for i, r in readings.items() if r == k] for k in ("PLACES", "LATE", "NEUTRAL", "UNCLEAR")}
+    if by["PLACES"]:
+        strong.append("a rider message during the wait places the rider at the pick-up or contests presence, timing or place")
+    if by["UNCLEAR"] and contact_reading == "STRONG":
+        strong.append("an unclear rider call or message during the wait, read as placing the rider at the pick-up (other reading)")
+    tr.rider_contact_detail = {"readings": readings, **{k.lower() + "_ids": v for k, v in by.items()}}
     contested = contests_statement(tk.get("description", "")) if tk.get("filed_by") == "rider" else False
     rider_ev = "STRONG" if strong else (force_reading or ("WEAK" if contested else "NONE"))
     if rider_ev != "STRONG":
         tr.flag("NO_RIDER_EVIDENCE")
     tr.rider_contests = contested if not force_reading else (force_reading == "WEAK")
     tr.rider_at_venue_claim = bool(venue and venue["name"].lower() in (tk.get("description", "") or "").lower() and tr.rider_contests)
-    tr.finding("F-RIDER-EVIDENCE", rider_ev, basis=["E-TKT-01"] + (["E-RGPS-*"] if rider_gps else []), rule="CW-F06", params=["ARRIVAL_GEOFENCE_M", "PIN_VENUE_MAX_M"],
-               status="established" if strong else "read")
+    tr.finding("F-RIDER-EVIDENCE", rider_ev, basis=["E-TKT-01"] + (["E-RGPS-*"] if rider_gps else []) + list(readings), rule="CW-F06",
+               params=["ARRIVAL_GEOFENCE_M", "PIN_VENUE_MAX_M"], status="established" if records_strong else "read")
     tr.path("CW-F06")
+    contact_words = "; ".join(f"{i} {r}" for i, r in readings.items())
     tr.step(pb, 11, "CW-F06", f"{rider_ev}: " + ("; ".join(sorted(set(strong))) if strong else
-            ("the statement contests presence or place, but there are no rider-side records (no rider GPS, call, message or notification failure)"
-             if rider_ev == "WEAK" else "no rider-side records and the statement does not contest presence, timing or place")),
+            ("the statement contests presence or place, but no rider-side record or rider message shows the rider at the pick-up"
+             if rider_ev == "WEAK" else "no rider-side record or rider message shows the rider at the pick-up, and the statement does not contest presence, timing or place"))
+            + (f" (rider calls and messages during the wait: {contact_words})" if readings else ""),
             ["E-TKT-01"] + _ev_id("E-APP", case, "app_events", lambda a: a["event_type"] == "rider_notified")
-            + _ev_id("E-CHT", case, "chat_logs", lambda c: c in rider_contacts) + (["E-RGPS-*"] if rider_gps else []),
-            note="" if strong else "READ: judged from the statement")
+            + list(readings) + (["E-RGPS-*"] if rider_gps else []),
+            note="" if records_strong else "READ: judged from the statement and the rider's calls and messages")
 
     # 12 CW-F07 pin vs venue
     if venue:
@@ -810,7 +852,15 @@ def reading_test(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
     if cur in ("NONE", "WEAK"):
         alt = "WEAK" if cur == "NONE" else "NONE"
         t2 = evaluate(kb, copy.deepcopy(case), profile, base.overrides, force_reading=alt)
-        out.append({"rule": "CW-F06", "reading": cur, "other_reading": alt, "outcome_other": t2.outcome, "changes": t2.outcome != base.outcome})
+        out.append({"rule": "CW-F06", "kind": "statement", "reading": cur, "other_reading": alt, "outcome_other": t2.outcome,
+                    "changes": t2.outcome != base.outcome})
+        unclear = (getattr(base, "rider_contact_detail", None) or {}).get("unclear_ids") or []
+        if unclear:              # a call (words not recorded) or a message that the phrase lists cannot settle
+            t3 = evaluate(kb, copy.deepcopy(case), profile, base.overrides, contact_reading="STRONG")
+            out.append({"rule": "CW-F06", "kind": "contact", "ids": unclear,
+                        "reading": f"{cur}: the rider's call or message ({', '.join(unclear)}) not read as placing the rider at the pick-up",
+                        "other_reading": "STRONG: read as placing the rider at the pick-up or contesting presence",
+                        "outcome_other": t3.outcome, "changes": t3.outcome != base.outcome})
     return out
 
 
@@ -838,6 +888,8 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
     for r in reads:
         if r["changes"] and r["rule"] == "CW-F03B":
             decisive.append((r["rule"], f"the other reading ({r['other_reading']}) gives {r['outcome_other']}"))
+        elif r["changes"] and r.get("kind") == "contact":
+            decisive.append((r["rule"], f"reading the rider's call or message ({', '.join(r['ids'])}) as placing the rider at the pick-up gives {r['outcome_other']}"))
         elif r["changes"]:
             decisive.append((r["rule"], f"reading the statement as {r['other_reading']} instead of {r['reading']} gives {r['outcome_other']}"))
     for s in sens:

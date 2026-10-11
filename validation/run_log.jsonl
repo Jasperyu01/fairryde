@@ -49,3 +49,6 @@
 {"time": "2026-10-07T20:33:40+08:00", "event": "note", "note": "V5.4 re-rendered once after refreshing 53_timeline.json so the chart includes V5.4"}
 {"time": "2026-10-07T20:34:25+08:00", "event": "note", "note": "KB write permission restored after V5.2 (content unchanged, hash check still passes)"}
 {"time": "2026-10-07T20:35:47+08:00", "event": "note", "note": "fix list: FX7 (O08, CRITICAL) moved to priority 1 so priority 1 covers every CRITICAL finding; page re-rendered"}
+{"time": "2026-10-11T16:30:15+08:00", "event": "start", "step": "A1", "dep": "D", "actor": "builder", "what": "FX1 rider evidence content-based (CW-F06), FX2 metered RydeTAXI exclusion (FC-R03, FC-R05); human check of E01 E03 E07 E10 recorded"}
+{"time": "2026-10-11T16:39:00+08:00", "event": "start", "step": "A1.E1", "dep": "E", "actor": "builder", "what": "rerun the reference engine on round 1 cases E01 to E04"}
+{"time": "2026-10-11T16:39:00+08:00", "event": "end", "step": "A1.E1", "result": "4/4 outcomes match the references", "outputs": ["build_checks/A1/01_engine_rerun.json"]}

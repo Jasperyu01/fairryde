@@ -483,6 +483,39 @@ def variants(base: dict):
         _set_wait_pings(c, [p for p in _every_30s() if p[0] <= "08:46:00"])
     v("V55", "V06 with pings every 30 s until 08:46 and none after (300 s of silence before the threshold, rider not contesting)", v55,
       {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["GENERIC_ASSUMPTION_USED"], "decisive": ["CW-F04"]})
+
+    # ---------------------------------------------------------------- CW-F06: what the rider's calls and messages say (FX1)
+    def rider_says(*items):
+        """V06 plus rider calls or messages: (time, type, content)."""
+        def f(c):
+            clean(c)
+            c["chat_logs"] += [{"timestamp": _ts(hms), "sender": "rider", "type": typ, "content": text} for hms, typ, text in items]
+            c["chat_logs"].sort(key=lambda x: x["timestamp"])
+        return f
+    late = {"outcome": "UPHOLD", "row": "R8", "tier": "AUTO", "reasons": ["CW-R-NOSHOW-VALID"], "flags": ["NO_RIDER_EVIDENCE"],
+            "not_flags": ["GENERIC_ASSUMPTION_USED"]}
+    v("V56", "V06, and the rider messages 'still getting ready, can wait another 10 min?' (round 1 case E01): an admission, not counter-evidence",
+      rider_says(("08:46:00", "message", "sorry uncle still getting ready. can wait another 10 min?")), late)
+    v("V57", "V06, and the rider messages 'Coming!! 1 min, walking over from the MRT' (round 1 case E03)",
+      rider_says(("08:50:30", "message", "Coming!! 1 min, walking over from the MRT")), late)
+    v("V58", "V06, and the rider messages 'coming down, 2 min' (the message in round 1 case E07, a waiting fee)",
+      rider_says(("08:47:10", "message", "coming down, 2 min")), late)
+    v("V59", "V06, and the rider messages that they are at the pick-up point and cannot see the car",
+      rider_says(("08:47:00", "message", "I'm at the pick-up point, where are you? I can't see your car")),
+      {"outcome": "ESCALATE_HUMAN", "row": "R7", "tier": "HUMAN", "reasons": ["CW-R-RIDER-COUNTER-EVIDENCE"], "findings": {"F-RIDER-EVIDENCE": "STRONG"}})
+    v("V60", "V06, and the rider first says 'coming down, 2 min', then 'I'm here at the lobby, where are you?' before the cancellation",
+      rider_says(("08:45:00", "message", "coming down, 2 min"), ("08:51:30", "message", "I'm here at the lobby, where are you?")),
+      {"outcome": "ESCALATE_HUMAN", "row": "R7", "tier": "HUMAN", "findings": {"F-RIDER-EVIDENCE": "STRONG"}})
+    v("V61", "V06, and the rider calls the driver during the wait (what was said is not recorded): the other reading decides, so approval",
+      rider_says(("08:48:00", "call", "Outgoing call to driver, answered (40 s).")),
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"], "flags": ["GENERIC_ASSUMPTION_USED"]})
+    v("V62", "V06, and the rider's message fits both readings ('I'm here, coming out now'): approval",
+      rider_says(("08:48:00", "message", "I'm here, coming out now")),
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"]})
+    v("V63", "V06, and the rider only answers 'ok' during the wait",
+      rider_says(("08:46:00", "message", "ok")), late)
+    v("V64", "V06, and the rider messages 'where are you?' only after the cancellation: outside the wait",
+      rider_says(("08:53:00", "message", "where are you?")), late)
     return out
 
 

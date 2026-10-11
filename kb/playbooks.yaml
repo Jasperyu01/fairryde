@@ -127,15 +127,15 @@ playbooks:
     when: {taxonomy: FC-ROUTE}
     answer_mode: RULING
     status: draft
-    sources: [RYDE-30741244296217, RYDE-4412121982745, RYDE-4412122016153, LTA-PDVL-OFFENCES, IND-DIDI-DETOUR]
+    sources: [RYDE-30741244296217, RYDE-900003406966, RYDE-4412121982745, RYDE-4412122016153, LTA-PDVL-OFFENCES, IND-DIDI-DETOUR]
     required_evidence: [E-TKT-01, E-TRP-01, "fare breakdown (E-PAY-*)", "recorded trip distance", "precomputed recommended route", "E-GPS-* trip trace", "E-CHT-* (route requests or agreements)", "traffic or incident snapshot"]
     steps:
       - {n: 1, do: COMPUTE, rule: FC-F01, note: "Pricing mode first: money before geometry"}
       - {n: 2, do: CHECK, rule: FC-R01, note: "Fixed fare and charged = quoted: stop with no fare refund (still check ERP if contested)"}
       - {n: 3, do: COMPUTE, rule: "DQ-05, FC-F02", note: "Fare arithmetic; detour measurement"}
       - {n: 4, do: READ, rule: "FC-F03, FC-R02", note: "Read chat for route requests or agreements; check incidents"}
-      - {n: 5, do: CHECK, rule: "FC-R03, FC-R04"}
-      - {n: 6, do: COMPUTE, rule: FC-R05, note: "Refund amount"}
+      - {n: 5, do: CHECK, rule: "FC-R03, FC-R04, GEN-R07", note: "METERED (RydeTAXI): no ruling; escalate under GEN-R07 with the measurement attached"}
+      - {n: 6, do: COMPUTE, rule: FC-R05, note: "Refund amount (RECALCULATED fares); for METERED fares the difference is information for the reviewer, never a refund"}
       - {n: 7, do: CHECK, rule: FC-R12, note: "Insufficient data"}
       - {n: 8, do: GET, rule: GEN-R05, note: "Both advocates' briefs"}
       - {n: 9, do: ESCALATE_IF, rule: "AUTH-05, AUTH-01 to AUTH-04, AUTH-06"}
