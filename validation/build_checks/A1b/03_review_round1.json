@@ -1,0 +1,699 @@
+[
+ {
+  "dimension": "fidelity",
+  "review": {
+   "dimension": "FIX FIDELITY AND SCOPE (A1b: D27 accepted, D30 implemented, D31 known limitation, check process recorded; de711a3..1ac3362)",
+   "checked_ok": [
+    "Build: `python3 kb/build_kb.py --no-xlsx` ends `ERROR 0 | WARN 0 | INFO 5` (exit 0). The kb/out/check_report.md it regenerates is byte-identical to the committed one (git status stays clean).",
+    "Self-tests: `python3 kb/tools/selftest.py` gives `79 / 79` and `516 / 516 message readings`. V69 to V73 all PASS (V69 UPHOLD R8 APPROVE, V70 UPHOLD R8 AUTO, V71 UPHOLD R8 APPROVE, V72 ESCALATE_HUMAN R10 HUMAN, V73 UPHOLD R8 AUTO).",
+    "Engine rerun: `python3 validation/tools/rerun_engine.py /tmp/a1bcheck1/rerun.json E01 E02 E03 E04` prints `OK E01 UPHOLD -> UPHOLD R8 APPROVE`, `OK E02 WAIVE_FEE -> WAIVE_FEE R1 APPROVE`, `OK E03 UPHOLD -> UPHOLD R8 APPROVE`, `OK E04 WAIVE_FEE -> WAIVE_FEE R6 AUTO` and `4/4 outcomes match`. Ignoring time keys, the result is identical to validation/build_checks/A1/01_engine_rerun.json and to A1b/01_engine_rerun.json.",
+    "Rule scope: the kb/rules.yaml diff touches only CW-F06: the English statement (the D27 sentence and the D30 sentences), the zh text and the source note. Credibility stays D. No other rule, decision-table row or playbook changed, and kb/ is identical between 1ac3362 and HEAD f75ae58.",
+    "D31 changed no rule. Only the open_items D31 'decide' field changed (but see finding FID-4 on its D29 clause).",
+    "In-wait reading is unchanged: after the split into RIDER_SELF_PLACE_PHRASES and RIDER_CONTEST_PHRASES, RIDER_PLACE_PHRASES is the same multiset of 47 patterns as at de711a3 (only the order differs, and `any()` ignores order). RIDER_QUESTION_PHRASES, RIDER_LATE_CORE, RIDER_FAULT_PHRASES, RIDER_WAIT_REQUEST, _FILLER, _FROM_TO, RIDER_ACK and CONTEST_PHRASES are identical.",
+    "D27 holds in the wait window. A combinatorial run of 16,560 engine cases found 0 cases where a rider call or UNCLEAR message inside the wait ended UPHOLD with tier AUTO. The run covered 1 or 2 rider contacts drawn from answered and missed calls, 'I'm here, coming out now', 'yes', 'I'm at Tiong Bahru Plaza', 'hello?? ok wait', LATE, NEUTRAL and PLACES messages, placed at the arrival, early, mid, after the threshold and at the cancellation, under the organizer_case and ryde_2026 profiles, with contesting and non-contesting statements and with consistent and sparse driver GPS. Ryde advance-booking and missing-arrival-event bases behave the same way. Outcome and tier counts: UPHOLD APPROVE 6120, UPHOLD AUTO 440 (none with an UNCLEAR contact), ESCALATE_HUMAN HUMAN 10000.",
+    "The D27 wording '读不准的转人工' (unclear readings go to a person) is implemented as approval (APPROVE). That matches the D27 text Jasper accepted, which said 'anything they cannot settle is UNCLEAR (approval)'.",
+    "The D30 'at least WEAK plus reading test' design gives what the owner asked for ('counter-evidence, at least human approval'). With consistent driver GPS it gives UPHOLD R8 APPROVE (V69). With sparse driver GPS WEAK selects R10, so ESCALATE_HUMAN HUMAN (V72). In-wait evidence still reaches STRONG.",
+    "D30 leaves out questions about the driver sent before arrival. That is a faithful reading of 'messages that say the rider is at the pick-up', and V70 guards it.",
+    "D30's start at driver_assigned is the builder's addition, but it is harmless for messages because the chat with the driver opens at assignment. It is stated in the rule text and V73 guards it.",
+    "The self-tests really test the new behavior. Run against the de711a3 engine, V69 and V71 fail (tier AUTO, CW-F06 not decisive) and V72 fails (UPHOLD R9 APPROVE, F-RIDER-EVIDENCE NONE). V70 and V73 pass on both engines and guard the two exclusions. One weakness: the F-RIDER-EVIDENCE=WEAK expectation in V69 and V71 also passes on the old engine, because V06's statement already contests. The tier check is what catches the change.",
+    "No round 1 case (E01 to E15) has a rider message or rider GPS before the arrival indication, so D30 changes no round 1 outcome. This is consistent with the 4/4 rerun.",
+    "The zh text matches the English for the D27 and D30 additions. The added lines contain no em or en dashes and no British spellings. The new test data has no names, plates, phone numbers or account IDs.",
+    "The process text in CLAUDE.md, docs/NEXT_STEPS.md ('How each step is checked') and .claude/workflows/kb-step-check.js agree with each other, with the user's description, and with A1 round 1 (run_log: A1.E1 rerun; A1.D1 with KB appliers on the affected cases, four dimensions (fidelity, grounding, adversarial, consistency) and one skeptic each; the same output shapes as A1/02_applier.jsonl and A1/03_review_round1.json). A1's round 2 (A1.D2) used only two reviewers (an adversarial reader test, and rules plus consistency), while the workflow runs all four again. That is stricter and does not contradict 'a second round as needed'."
+   ],
+   "findings": [
+    {
+     "id": "FID-1",
+     "severity": "CRITICAL",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 751,
+     "claim": "The D30 filter for messages sent before arrival fails open. A message counts only if RIDER_SELF_PLACE_PHRASES matches it, and anything else is silently dropped. So a message that does place the rider at the pick-up, in words the list does not know, gives an automatic uphold. That breaks D30 ('at least human approval') and D27's safety-by-construction claim ('anything they cannot settle is UNCLEAR (approval), never an automatic uphold'). The same words sent inside the wait read UNCLEAR and go to approval.",
+     "evidence": "engine_noshow.py 751-752: `pre_msgs = [c for c in chat if c[\"sender\"] == \"rider\" and c[\"type\"] == \"message\" and before(c[\"timestamp\"]) and any(re.search(p_, _rider_text(c.get(\"content\"))) for p_ in RIDER_SELF_PLACE_PHRASES)]`. No UNCLEAR route exists here, unlike rider_contact_reading. open_items D30: 'a rider message that places the rider at the pin or venue ... so an upheld fee always needs approval'. Scratch run (/tmp/a1bcheck1/fid_f1.py, fid_f1b.py): \"I'm at Tiong Bahru Plaza\" at 08:41 on V06 with a non-contesting statement gives `UPHOLD R8 AUTO NONE pre=[]`; the same text at 08:47 (in the wait) gives `UPHOLD R8 APPROVE`. On the V08 base (sparse GPS, non-contesting), \"I'm at Tiong Bahru Plaza\" gives `UPHOLD R9 APPROVE NONE pre=[]`, while \"I'm here at the pick-up point\" gives `ESCALATE_HUMAN R10 HUMAN WEAK`. Messages in the A1 reviewers' corpus (kb/tools/cw_f06_reading_corpus.json, label P) that the filter misses include 'i am at the location', \"I'm at the spot\", \"I'm at the address\", \"I'm by the road\", \"i'm at tiong bahru plaza\", \"I'm in front of Tiong Bahru Plaza\" and 'at the front of the mall'. The rider explanation then says: 'Your call or message outside the wait (E-CHT-01) was not used to judge where you were during the wait.'",
+     "failure_scenario": "DISP-002 baseline V06, pick-up venue Tiong Bahru Plaza. At 08:41 (after the assignment at 08:30:15, before the arrival at 08:43) the rider writes \"I'm at Tiong Bahru Plaza\". The engine upholds the S$5.00 fee with tier AUTO and tells the rider the message was not used. D30 requires at least human approval. With sparse driver GPS the outcome itself is wrong: UPHOLD (R9) where D30 gives ESCALATE_HUMAN (R10).",
+     "suggested_fix": "Make the filter for messages sent before arrival fail safe, like the in-wait reader. Drop a message only when it reads LATE or NEUTRAL, or is only a question or contest about the driver (RIDER_QUESTION_PHRASES and RIDER_CONTEST_PHRASES with no self-placement). Send every other message to before_arrival_ids, which means the reading test and approval. Add self-tests for the venue name and \"I'm at the spot\", and run the P/PU corpus through the new filter as a build check."
+    },
+    {
+     "id": "FID-2",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 752,
+     "claim": "Before arrival, the filter reuses the in-wait self-place list without the in-wait LATE and UNCLEAR logic. So pick-up instructions, future statements and 'coming' messages count as messages that 'say the rider is at the pick-up', which the owner's decision does not cover. They now go to approval (AUTO at de711a3), and the rider is told something false.",
+     "evidence": "/tmp/a1bcheck1/fid_instr.py, counted=True for: 'Pick me up at the lobby', 'pls pick me up at blk 123', 'Meet at the main gate', \"I'll wait at the lobby\", 'I will be waiting at the lobby', 'Please wait at the lobby, coming down', 'Can you wait at the carpark?', 'pls park at the driveway'. fid_pre.py: 'Pick me up at the lobby' at 08:41 gives `UPHOLD R8 APPROVE WEAK ['E-CHT-01']`. The rider explanation (explain.py 289-290) reads: 'Your message sent before the driver marked arrival (E-CHT-01) says you were already at the pick-up point; this was counted as evidence for your side.'",
+     "failure_scenario": "A routine no-show in which, before the driver arrives, the rider messages 'Please wait at the lobby, coming down' (an admission that the rider is not there yet). The fee is upheld with tier APPROVE instead of AUTO, and the rider is told the message says they were already at the pick-up point. The tier moves only toward a person (safe direction), and in-wait the same messages already read PLACES or UNCLEAR. A1 rated frequent safe-direction escalations CRITICAL (ENG-7, A1R2-ADV-6), so the skeptic may want to upgrade this.",
+     "suggested_fix": "Use the same rules before arrival as inside the wait. A message that also matches RIDER_LATE_CORE or a wait or pick-up request ('pick me up at', 'wait at', 'meet at', 'will be') is UNCLEAR, which means approval with a neutral explanation sentence. Only an unambiguous self-placement gets the 'says you were already at the pick-up point' sentence. Add a self-test for 'Pick me up at the lobby' sent before arrival."
+    },
+    {
+     "id": "FID-3",
+     "severity": "MAJOR",
+     "file": "kb/rules.yaml",
+     "line": 610,
+     "claim": "The rider GPS part of the D30 implementation goes beyond what the owner decided, yet both the rule and the open item present it as decision D30. The question and the decision covered rider messages only. The GPS element therefore has no source and no open FairRyde label, against the CLAUDE.md rule that every rule element needs one. It changes tiers, and in sparse cases outcomes, that the de711a3 KB decided automatically.",
+     "evidence": "Owner (task): 'rider messages sent before the driver's arrival indication that say the rider is at the pick-up count as counter-evidence and need at least human approval'. D30 question at de711a3: 'should such messages count as counter-evidence when the rider says they were waiting before the driver arrived?'. rules.yaml 609-610: 'a rider message that places the rider at the pin or venue, or rider GPS there, also counts (decision D30)'. open_items D30: 'done: Jasper decided ... Implemented in CW-F06: ... or rider GPS there'. Scratch run fid_gps.py: rider GPS at the pin at 08:41:30, then about 1.1 km away at 08:46 and 08:50, gives `UPHOLD R8 APPROVE WEAK ['E-RGPS-01']` with trigger \"reading the rider's call, message or GPS (E-RGPS-01) as placing the rider at the pick-up gives ESCALATE_HUMAN\". The de711a3 engine (fid_gps_old.py) gives `UPHOLD R8 AUTO`.",
+     "failure_scenario": "The rider's phone shows them at the pin before the driver arrives, then 1.1 km away for the whole wait. Their own GPS shows they left, yet the uphold now needs approval. On a sparse-GPS case the same GPS moves the outcome from UPHOLD (R9) to ESCALATE_HUMAN (R10). The direction is safe and the data is rare (no round 1 case has rider GPS), but nobody decided this rule, and it is attributed to Jasper.",
+     "suggested_fix": "Either ask Jasper to extend D30 to rider GPS and record his answer, or label the GPS element in CW-F06 as a FairRyde extension with its own open item (for example D30b). Until then, keep 'decision D30' for messages only. Also consider whether GPS that later shows the rider leaving should cancel the floor."
+    },
+    {
+     "id": "FID-4",
+     "severity": "MAJOR",
+     "file": "kb/open_items.yaml",
+     "line": 43,
+     "claim": "The new D31 text, attributed to Jasper, limits his D29 decision to no-show fees ('D29 (A3) applies to no-show fees'). Neither D29 nor the owner's D31 decision says this. D29 covers any upheld fee that rests on FairRyde's GPS logic, and waiting fees use that logic (PB-CW-WAITING step 5 COMPUTE CW-F04).",
+     "evidence": "D29: 'whenever upholding a fee depends on FairRyde's own GPS logic (...), the ruling needs human approval (tier APPROVE), never AUTO'. New D31 decide: 'Known limitation of v0.2 (Jasper, 2026-10-11): not done in this version. ... the reference engine runs no-show cases only; D29 (A3) applies to no-show fees.' Owner's D31 decision (task): 'waiting-fee disputes have no decision table and no engine path; not done now, record it as a known limitation.' playbooks.yaml PB-CW-WAITING step 5: {do: COMPUTE, rule: CW-F04}. The old D31 text already said D31 was 'needed for D29 (A3) to apply to waiting fees'; A1b turned that into a scope statement attributed to the owner.",
+     "failure_scenario": "The A3 builder reads D31 and applies D29 to no-show fees only. A waiting fee (CW-WAITING, in scope) upheld on CW-F04 presence logic, like E07 (UPHOLD AUTO in round 1), stays AUTO, although D29 says 'never AUTO'. There is no effect today because A3 is not done.",
+     "suggested_fix": "Reword D31 so that only the reference engine (and its D29 check) covers no-show fees, and say that D29 applies to waiting fees through the rule text, which A3 must state in CW-F04 or AUTH. Or ask Jasper whether D29 should wait for D31."
+    },
+    {
+     "id": "FID-5",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 608,
+     "claim": "The new D27 and D30 sentences say approval is universal ('for an upheld fee it always does'; 'an upheld fee always needs human approval'). That is false when the fee stands under MAT-04 (waiver request out of window): the other reading does not change the outcome, so the uphold is AUTO. The engine behavior is right; the wording claims too much.",
+     "evidence": "rules.yaml 607-611: 'for an upheld fee it always does, so a reading that cannot be settled goes to a person (approval), never to an automatic uphold' and 'so an upheld fee always needs human approval'. Scratch run fid_mat04.py (filed_at 2026-11-30): an unclear in-wait call gives `UPHOLD ['CW-R-OUT-OF-WINDOW'] AUTO` with contact test `changes: False`, and \"I'm at the lobby already\" sent before arrival gives the same.",
+     "failure_scenario": "A KB applier (or the A3 builder) reads 'always needs human approval' and sends an out-of-window waiver request with an unclear rider call to approval. Or a reviewer flags the engine's correct AUTO as a D27 violation.",
+     "suggested_fix": "Qualify both sentences: 'for a fee upheld under DT-CW-NOSHOW R8 or R9 (not MAT-04 or a policy gap) it always does'. Make the same change in D27 and D30 in open_items.yaml."
+    },
+    {
+     "id": "FID-6",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 609,
+     "claim": "CW-F06 does not say how a rider call made before the arrival indication is treated. The engine ignores it (an automatic uphold is possible), while the same unrecorded call inside the wait is the standard unsettled reading that D27 sends to a person. The owner's D30 named messages only, so this is a gap to decide, not a clear error.",
+     "evidence": "rules.yaml 609-611 names only 'a rider message ... or rider GPS' before arrival. engine 751 keeps only type == 'message'. fid_pre.py: 'Outgoing call to driver, answered (40 s).' at 08:41 gives `UPHOLD R8 AUTO`, and the rider is told 'Your call or message outside the wait (E-CHT-01) was not used'. The same call at 08:48 (V61) gives APPROVE.",
+     "failure_scenario": "Before the driver arrives, the rider calls them, and the call's words are not recorded (they may have said 'I'm at the lobby'). An LLM applying CW-F06 could treat the call as a D30 placement it cannot settle (approval) or ignore it (AUTO). The engine picks AUTO.",
+     "suggested_fix": "State in CW-F06 that calls before the arrival indication do not count (calls carry no words), or that they get the reading test. Record the choice as a D30 detail for Jasper and add a self-test."
+    },
+    {
+     "id": "FID-7",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 773,
+     "claim": "When the WEAK comes only from D30, the CW-F06 trace step that the approver reads says the statement contests presence and that no rider message shows the rider at the pick-up, and then that the rider is at the pick-up. Both are false or contradictory for a non-contesting statement. The F-RIDER-EVIDENCE basis also leaves out the D30 evidence IDs.",
+     "evidence": "fid_explain.py, 'Pick me up at the lobby' before arrival with NON_CONTESTING: 'WEAK: the statement contests presence or place, but no rider-side record or rider message shows the rider at the pick-up; the rider is at the pick-up before the arrival indication (E-CHT-01), which counts as counter-evidence (D30), so at least WEAK'. engine 768: `basis=[\"E-TKT-01\"] + ([\"E-RGPS-*\"] if rider_gps else []) + list(readings)` (no pre_ids or pre_gps).",
+     "failure_scenario": "V72 (statement 'Please refund the $5.00 cancellation fee charged on this trip.'): the reviewer is told the statement contests presence, which it does not.",
+     "suggested_fix": "When rider_ev is WEAK only because of pre_ids or pre_gps, use a separate sentence, for example 'WEAK: the rider is placed at the pick-up before the arrival indication (D30)'. Add pre_ids and pre_gps to the finding's basis."
+    },
+    {
+     "id": "FID-8",
+     "severity": "MINOR",
+     "file": "docs/NEXT_STEPS.md",
+     "line": 40,
+     "claim": "NEXT_STEPS still lists D27, D30 and D31 as open team decisions, which contradicts its own status line 7 and open_items.yaml (all three decided by Jasper on 2026-10-11).",
+     "evidence": "Line 40: '- Team decisions opened by A1: D27 (confirm the rider-message reading rule and its windows), D30 (rider messages before the driver marks arrival), D31 (waiting-fee decision table).' Line 7: 'A1b applied Jasper's decisions D27, D30 and D31'.",
+     "failure_scenario": "A person or a later session reads 'For people, not sessions' and asks the team to decide D27, D30 and D31 again.",
+     "suggested_fix": "Replace the line with 'Decided by Jasper (11 Oct): D27 accepted (D), D30 counts (at least approval), D31 known limitation', and keep the open organizer questions O13 and O14."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "FID-1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I exported 1ac3362 and de711a3 to /tmp/a1bcheck1/sk_new and sk_old and ran my own script (/tmp/a1bcheck1/skf/run.py). On V06 (clean DISP-002, non-contesting statement), these messages at 08:41 (after the assignment, before the 08:43 arrival) all give UPHOLD R8 AUTO, F-RIDER-EVIDENCE NONE, before_arrival_ids=[] and outside_ids=['E-CHT-01']: \"I'm at Tiong Bahru Plaza\" (the pick-up venue), 'i am at the location', \"I'm at the spot\", \"I'm at the address\", \"I'm by the road\", 'at the front of the mall', \"I'm in front of Tiong Bahru Plaza\". Sent at 08:47, inside the wait, the same words read UNCLEAR and give UPHOLD R8 APPROVE. \"I'm at the lobby already\" at 08:41 gives APPROVE WEAK. The cause is engine_noshow.py 751-752: pre_msgs keeps a message only if RIDER_SELF_PLACE_PHRASES matches it, and nothing routes an unmatched message to the reading test. That is unlike rider_contact_reading, whose design comment promises 'never an automatic uphold'. The rider is told 'Your call or message outside the wait (E-CHT-01) was not used to judge where you were during the wait' (skf/expl.py). Running the P/PU corpus through the filter (skf/corpus.py) misses exactly the self-placements the reviewer lists, plus 'coming coming... ok reached' and 'omw... ok here'. The other misses are questions and contests, which D30 excludes by design. On the sparse V08 base (skf/v08.py), \"I'm at Tiong Bahru Plaza\" gives UPHOLD R9 APPROVE, while \"I'm here at the pick-up point\" gives ESCALATE_HUMAN R10 HUMAN, which is exactly what self-test V72 expects for a D30 placement. Jasper's D30 says such a message needs at least human approval, so AUTO changes the tier in an in-scope type (CW-NOSHOW), and with sparse GPS it also changes the outcome. That is CRITICAL under the given definition. The self-tests (79/79) cover none of these phrasings."
+    },
+    {
+     "id": "FID-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Reproduced with skf/fid2.py and skf/pre_common.py. Before arrival, these count as self-placement (counted=True): 'Pick me up at the lobby', 'pls pick me up at blk 123', 'Meet at the main gate', \"I'll wait at the lobby\", 'Please wait at the lobby, coming down', 'please wait at lobby', 'pls stop at the bus stop', 'coming down, wait at the lobby', 'coming, at the lift lobby now'. On V06 they give UPHOLD R8 APPROVE WEAK (AUTO at de711a3). The rider is told 'Your message sent before the driver marked arrival (E-CHT-01) says you were already at the pick-up point' (skf/expl.py), which is false for a pick-up instruction and plainly false for 'Please wait at the lobby, coming down'. Two points argue against CRITICAL. (1) Inside the wait, the D27-accepted reader already reads the pure instructions as PLACES (STRONG, ESCALATE_HUMAN), so treating them as placement is the KB's own reading. (2) For a mixed message ('…, coming down'), APPROVE on V06 matches the in-wait UNCLEAR tier. The real logic defect is narrower. A mixed late-plus-place message becomes WEAK before arrival but NONE plus the reading test inside the wait. So on sparse V08, 'Please wait at the lobby, coming down' gives ESCALATE_HUMAN R10 before arrival but UPHOLD R9 APPROVE inside the wait. That outcome change is rare (it needs sparse GPS too) and goes the safe direction. A1 rated safe-direction AUTO-to-APPROVE drift MINOR (A1R2-ADV-8), and false party-facing statements MAJOR (M1, R2-RSC-2). The finding is real, and MAJOR fits."
+    },
+    {
+     "id": "FID-3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Behavior reproduced (skf/gps.py). Rider GPS at the pin at 08:41:30, then about 1.1 km away at 08:46 and 08:50, gives UPHOLD R8 APPROVE WEAK on V06 (AUTO at de711a3) and ESCALATE_HUMAN R10 HUMAN on sparse V08 (UPHOLD R9 APPROVE at de711a3). The attribution claim holds. At de711a3, D30's topic was 'Rider messages sent before the driver's arrival indication' and its question asked about 'such messages'; the user's decision says only 'D30 counts as counter-evidence'. Yet rules.yaml 609-611 says 'a rider message ... or rider GPS there, also counts (decision D30)', and the source note and open item D30 present the GPS element as the implemented decision. Two parts of the reviewer's case do not hold up. 'No source and no open FairRyde label' is overstated: the element sits in a credibility D card with a FAIRRYDE-DECISIONS source. And the extension goes the safe direction and is not shown to be wrong. A1 round 2 (R2-RSC-2) itself called pre-arrival rider GPS 'the D30 case for GPS', and no round 1 case is affected. What remains is an overclaimed owner decision, which A1 rated MINOR (F5, R2-RSC-4). Whether GPS should count is for Jasper to confirm."
+    },
+    {
+     "id": "FID-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Confirmed from the files. The new D31 decide field reads 'Known limitation of v0.2 (Jasper, 2026-10-11): ... the reference engine runs no-show cases only; D29 (A3) applies to no-show fees.' D29 says 'whenever upholding a fee depends on FairRyde's own GPS logic ... never AUTO', and PB-CW-WAITING step 5 is {do: COMPUTE, rule: CW-F04}, so waiting fees do rest on that logic. The user's D31 decision ('not done this time, record as a known limitation') says nothing about D29. The new sentence therefore narrows D29 under Jasper's name. Severity is lower than claimed, though. The pre-A1b D31 text already said D31 was 'needed for D29 (A3) to apply to waiting fees', so an A3 builder following the A3 prompt ('Note D31', NEXT_STEPS line 25) would have drawn the same conclusion before A1b. A1b only restated an existing dependency as a flat statement and put it under the owner's name. No rule or engine behavior changes, and A3 is not done. This is a wording and attribution fix, in line with A1's MINOR rating for open items that overclaim decisions (R2-RSC-4)."
+    },
+    {
+     "id": "FID-5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "rules.yaml 607-611 says 'for an upheld fee it always does' and 'so an upheld fee always needs human approval'; open_items D30 says 'so an upheld fee always needs approval'. My run (skf/mat04.py) used V06 with filed_at 2026-11-30. An in-wait rider call gives UPHOLD ['CW-R-OUT-OF-WINDOW'] AUTO, with reading-test entries statement changes=False and contact changes=False. \"I'm at the lobby already\" at 08:41 gives UPHOLD CW-R-OUT-OF-WINDOW AUTO with WEAK evidence. When MAT-04 decides, the reading cannot change the outcome, so 'always' is false. The engine is right and only the wording overclaims, so MINOR."
+    },
+    {
+     "id": "FID-6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "rules.yaml 609-612 names only 'a rider message ... or rider GPS' before the arrival indication and says nothing about calls. engine_noshow.py 751 keeps only type == 'message'. My run (skf/expl.py) of 'Outgoing call to driver, answered (40 s).' at 08:41 on V06 gives UPHOLD R8 AUTO NONE, and the rider is told 'Your call or message outside the wait (E-CHT-01) was not used to judge where you were during the wait.' The same call inside the wait reads UNCLEAR and goes to APPROVE. An LLM applier could reasonably carry the card's in-wait treatment of unrecorded calls over to a pre-arrival call, or could ignore it. The card is silent on this, which is missing detail. Which choice is right is for Jasper (D30 named messages only), so MINOR."
+    },
+    {
+     "id": "FID-7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced (skf/expl.py). For 'Pick me up at the lobby' at 08:41 with the non-contesting statement, the CW-F06 step result is 'WEAK: the statement contests presence or place, but no rider-side record or rider message shows the rider at the pick-up; the rider is at the pick-up before the arrival indication (E-CHT-01), which counts as counter-evidence (D30), so at least WEAK'. The first clause is false: the statement does not contest anything. The step then contradicts itself about a rider message showing the rider at the pick-up. The F-RIDER-EVIDENCE basis printed as ['E-TKT-01'] only. The code builds it at line 768 as E-TKT-01 + E-RGPS-* + readings, without pre_ids or pre_gps. The step evidence list adds pre_ids but not the pre_gps IDs. These are approver-facing wording and basis defects with no outcome effect, so MINOR."
+    },
+    {
+     "id": "FID-8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "At 1ac3362, docs/NEXT_STEPS.md line 40, under 'For people, not sessions', still reads 'Team decisions opened by A1: D27 (confirm the rider-message reading rule and its windows), D30 (rider messages before the driver marks arrival), D31 (waiting-fee decision table).' Line 7 says 'A1b applied Jasper's decisions D27, D30 and D31', and open_items marks D27 and D30 done and D31 a known limitation. The to-do list is stale and contradicts the status line. This is a documentation inconsistency only, so MINOR."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "grounding",
+  "review": {
+   "dimension": "SOURCE GROUNDING AND CREDIBILITY of the new or changed rule elements in A1b (CW-F06 statement, zh and source note; open items D27, D30, D31; the D30 engine path and self-tests V69 to V73)",
+   "checked_ok": [
+    "CW-F06 credibility D is still right. Every essential element of the card (the content reading, the windows, the D30 pre-arrival counting) is FairRyde design labeled FAIRRYDE-DECISIONS, and D is the lowest grade, so under credibility_principle the weakest element is D. The card has no Ryde or organizer quote that it stretches.",
+    "The source note's claim that 'Jasper confirmed the outcomes of those three cases (the fee stands) on 2026-10-11' matches validation/V4_e2e/46_human_check.jsonl: E01, E03 and E07 are human_verdict UPHOLD, checked_by Jasper, date 2026-10-11.",
+    "D27 as recorded matches the relayed owner words (D27 accepted, credibility D, unclear readings go to a person): open_items D27 decide is 'done ... FairRyde design (credibility D); readings that cannot be settled go to a person (approval), never to an automatic uphold'. The card's statement and source note say the same.",
+    "The card's new claim that the reading test 'for an upheld fee ... always does' change the outcome holds for no-show fees. DT-CW-NOSHOW upholds only in R8 and R9 (rider_evidence NONE or WEAK), and STRONG always hits R7 ESCALATE_HUMAN. The engine's reading_test runs whenever F-RIDER-EVIDENCE is NONE or WEAK, and decide_tier turns any decisive entry into APPROVE. For waiting fees, CW-R12 (applies_to CW-WAITING) escalates STRONG, so the claim also holds when the fee is decided by reading.",
+    "The D30 core matches the owner decision (rider messages before the arrival indication that place the rider at the pick-up count as counter-evidence and need at least human approval). V69 gives UPHOLD R8 APPROVE, V72 (sparse GPS) gives ESCALATE_HUMAN R10 HUMAN, and V70 ('where are you?' before arrival) and V73 (before assignment) stay AUTO.",
+    "D31 is recorded as a known limitation of v0.2 with Jasper's name and date, as decided ('not done this time, record as a known limitation').",
+    "The zh text says the same as the English for the D27 sentence ('维持收费时一定会改变，所以读不准的一律交人工批准，不会自动维持收费') and for the D30 counting sentence (message or GPS before the arrival from assignment, at least WEAK, STRONG as the other reading, approval).",
+    "New test data V69 to V73 contain no names, plates, phone numbers or account IDs.",
+    "No em or en dashes on any added line of the diff, and no British spellings found.",
+    "Build checked on a scratch clone at 1ac3362 (/tmp/a1bcheck1/repo): python3 kb/build_kb.py --no-xlsx ends 'ERROR 0 | WARN 0 | INFO 5'. 113 quotes verified, 79/79 variants and 516/516 message readings pass. The working repo was left unmodified (git status clean)."
+   ],
+   "findings": [
+    {
+     "id": "SRC-1",
+     "severity": "CRITICAL",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 751,
+     "claim": "The reference engine's D30 path goes further than the decision and the card. Both count only pre-arrival messages that 'place the rider at the pin or venue'. The engine instead counts any pre-arrival message that matches a RIDER_SELF_PLACE_PHRASES pattern, and it applies none of the LATE or RIDER_FAULT checks that the during-wait reader uses. As a result, messages saying the rider is at home or on the way, pick-up instructions, and wrong-place admissions count as the rider being at the pick-up. This changes the tier in the consistent-GPS case and the outcome in the sparse-GPS case.",
+     "evidence": "engine_noshow.py:751-752: `pre_msgs = [c for c in chat if c[\"sender\"] == \"rider\" and c[\"type\"] == \"message\" and before(c[\"timestamp\"]) and any(re.search(p_, _rider_text(c.get(\"content\"))) for p_ in RIDER_SELF_PLACE_PHRASES)]`; line 58 in RIDER_SELF_PLACE_PHRASES: `r\"到了|在楼下|到楼下|我在\"` (\"我在\" matches any \"I am at/in X\"); line 61: `\\b(?:at|outside|near|...)\\s+(?:the\\s+|d\\s+)?{_SPOT}` matches 'pick me up at the lobby'. The card (rules.yaml:609) says only 'a rider message that places the rider at the pin or venue'. Scratch run (/tmp/a1bcheck1/pre2.py), messages at 08:41 before the 08:43 arrival: V08 shape (sparse GPS, non-contesting statement) with no message -> 'UPHOLD R9 APPROVE RE=NONE'; with '我在家，等一下' (I'm at home, wait a moment) -> 'ESCALATE_HUMAN R10 HUMAN RE=WEAK'; same for '我在路上' (I'm on the way), 'Pls pick me up at the lobby', 'wait for me at the lobby', \"I'm at the wrong entrance, sorry\", 'pick me up at the void deck pls'. V06 shape with a non-contesting statement: no message -> 'UPHOLD R8 AUTO'; with '我在家，等一下' or 'Pls pick me up at the lobby' -> 'UPHOLD R8 APPROVE'. 'i see your car on the map' and 'meet at lobby' also count (pre=['E-CHT-01']).",
+     "failure_scenario": "Sparse-GPS no-show (CW-NOSHOW, in scope). The rider's statement does not contest, and before the driver marks arrival the rider writes '我在路上' or 'pick me up at the lobby'. The engine moves the case from R9 UPHOLD (approval) to R10 ESCALATE_HUMAN. With consistent GPS, a routine uphold moves from AUTO to APPROVE. The rider explanation (explain.py:289) then tells the rider the message 'says you were already at the pick-up point'. This is the over-escalation FX1 was meant to remove, and the self-tests (V69 to V73) contain no negative case that would catch it.",
+     "suggested_fix": "Classify pre-arrival messages with rider_contact_reading and count only a PLACES reading that comes from a self-place cue, never a question or contest cue. Treat UNCLEAR as the D30 reading-test case, or skip it. Narrow '我在' to place words (for example 我在楼下 or 我在门口) as A1 did for the English \"I'm at <X>\". Add negative self-tests such as '我在路上', 'pick me up at the lobby' and \"I'm at the wrong entrance, sorry\" before arrival, expecting R9 or R8 AUTO."
+    },
+    {
+     "id": "SRC-2",
+     "severity": "MAJOR",
+     "file": "kb/rules.yaml",
+     "line": 609,
+     "claim": "The card attributes the counting of pre-arrival rider GPS to 'decision D30', but D30 as decided covers rider messages only. The GPS element is the builder's extension and has no owner decision or open FairRyde label of its own. The source note and open_items D30 also record it as part of Jasper's decision.",
+     "evidence": "rules.yaml:608-610: 'Before the arrival indication (from the driver's assignment), a rider message that places the rider at the pin or venue, or rider GPS there, also counts (decision D30)'. Source note: 'the rider at the pick-up before the arrival indication counting (D30)'. open_items D30 topic: \"Rider messages sent before the driver's arrival indication\"; original question: 'should such messages count as counter-evidence when the rider says they were waiting before the driver arrived?'. The relayed owner decision is only 'D30 算反证，至少要人工批准' (D30 counts as counter-evidence, at least human approval). run_log A1b start: 'D30 rider self-placement before the arrival indication counts'. Engine line 754 adds pre_gps, and V71 (GPS only) gives UPHOLD R8 APPROVE where V06 is AUTO.",
+     "failure_scenario": "A case whose only new fact is rider GPS within ARRIVAL_GEOFENCE_M of the pin, or within PIN_VENUE_MAX_M of the venue, before the arrival indication. With consistent driver GPS the uphold moves from AUTO to APPROVE (V71). With sparse driver GPS and a non-contesting statement, R9 UPHOLD moves to R10 ESCALATE_HUMAN. Both changes rest on an element that the record says Jasper decided, which he did not. The card also drops the 'tier A, B or C' qualifier that the during-wait GPS clause carries.",
+     "suggested_fix": "Label the GPS part as a FairRyde extension of D30 (credibility D) in the card and in open_items. Either add a short open item asking Jasper to confirm that pre-arrival rider GPS counts like a pre-arrival message, or have him confirm it before merge. Keep the source note's attribution to the message part only."
+    },
+    {
+     "id": "SRC-3",
+     "severity": "MAJOR",
+     "file": "kb/open_items.yaml",
+     "line": 43,
+     "claim": "The D31 record narrows owner decision D29 to no-show fees. Jasper decided D29 for every upheld fee that rests on FairRyde's GPS logic, and for D31 only that the waiting-fee table and engine path are a known limitation. CW-F04 and CW-WAITING are in scope for waiting fees, so the narrowing changes which waiting-fee upholds need approval once A3 implements D29.",
+     "evidence": "D31 decide: 'Known limitation of v0.2 (Jasper, 2026-10-11): not done in this version. Waiting-fee disputes are decided by reading CW-R05 and CW-F06 without a decision table, and the reference engine runs no-show cases only; D29 (A3) applies to no-show fees.' D29 (open_items.yaml:41): 'whenever upholding a fee depends on FairRyde's own GPS logic (...), the ruling needs human approval (tier APPROVE), never AUTO.' CW-F04 applies_to: [CW-NOSHOW, CW-WAITING]; taxonomy CW-WAITING scope: ADJUDICATE. Relayed owner words: 'D31 这次不做，记为已知限制' (not done this time; record it as a known limitation).",
+     "failure_scenario": "In A3, or for a KB applier deciding a waiting-fee case by reading, the waiting fee is upheld because CW-F04's FairRyde presence logic sets a SPARSE gap aside or keeps a ping inside the radius. Reading D31 as 'D29 applies to no-show fees', the applier or A3 builder lets it go AUTO, against D29. The D31 list ('CW-R05 and CW-F06') also leaves out CW-F04 and CW-R12, which apply to waiting fees.",
+     "suggested_fix": "Reword the last clause, for example: 'D29 still applies to waiting fees; A3 implements it in the engine and decision table for no-show fees only, so for waiting fees it is applied by reading CW-F04 and CW-R12.' Name CW-F04 and CW-R12 among the cards that waiting-fee disputes are read from."
+    },
+    {
+     "id": "SRC-4",
+     "severity": "MAJOR",
+     "file": "kb/playbooks.yaml",
+     "line": 72,
+     "claim": "Both playbooks still tell the reader to read rider messages only from the arrival indication onward, so they contradict D30 as written in CW-F06. The annotation_schema rider_contacts note and the DT-CW-NOSHOW credibility_note were not updated either. A KB applier who follows the playbook step misses pre-arrival messages and GPS.",
+     "evidence": "playbooks.yaml:72 (PB-CW-NOSHOW step 11): \"read the statement, and the rider's calls and messages from the arrival indication to the cancellation\"; playbooks.yaml:119 (PB-CW-WAITING step 7): \"... from the arrival indication to the end of CW-F04's window\"; annotation_schema.yaml:66: \"Rider calls and messages in CW-F06's window: from the arrival indication to the cancellation\"; rules.yaml:1708-1710 DT note lists CW-F06's READ parts as only 'WEAK versus NONE for the statement; whether an unclear rider call or message places the rider at the pick-up'.",
+     "failure_scenario": "A fresh KB applier decides a no-show (or a waiting fee, which D31 says is decided by reading) and follows PB-CW-NOSHOW step 11. The rider wrote 'I'm at the lobby already' at 08:41 and the driver marked arrival at 08:43. The applier ignores the message and upholds AUTO, while CW-F06 and D30 require approval (V69).",
+     "suggested_fix": "Extend both playbook notes, the annotation_schema note and the DT credibility_note: 'and, from the driver's assignment to the arrival indication, rider messages that place the rider at the pick-up (and rider GPS there) (D30)'."
+    },
+    {
+     "id": "SRC-5",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 611,
+     "claim": "The reason given for not counting pre-arrival questions goes beyond what the records show. Before the arrival indication the driver may already be at the pin, because the indication can lag physical arrival. The zh text also translates 'before the arrival indication' as 'before the driver arrives' and adds 'truly'.",
+     "evidence": "EN: 'Questions about the driver sent before the arrival indication (\"where are you?\") do not count, because the driver had not arrived.' ZH: '司机到达前问\"你在哪\"不算，因为司机当时确实还没到。' (before the driver arrives ... because the driver truly had not yet arrived). The engine tests `T(ts) < t_arr` (the arrival indication), not physical arrival.",
+     "failure_scenario": "The driver parks at the pin at 08:41 but marks arrival at 08:43. The card's stated reason ('the driver had not arrived') is then false, though the rule (do not count) is still defensible because the wait had not started. No outcome changes.",
+     "suggested_fix": "EN: 'because the wait had not started (the driver had not indicated arrival)'. ZH: '司机标记到达前问\"你在哪\"不算，因为等待尚未开始。'"
+    },
+    {
+     "id": "SRC-6",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 613,
+     "claim": "The card's NONE and WEAK definitions were not updated for D30. A case with only a pre-arrival placing message and a non-contesting statement literally meets the NONE definition, which contradicts the earlier 'at least WEAK' sentence.",
+     "evidence": "rules.yaml:612-614: 'WEAK if the rider's statement contests the driver's presence, the timing or the place, without such records or messages. NONE if there are no such records or messages and the statement does not contest presence, timing or place'. Here 'such records or messages' refers to the during-wait ones; the D30 sentence just before says 'it makes the evidence at least WEAK'.",
+     "failure_scenario": "A reader who reads the definitions instead of the D30 sentence assigns NONE in the V72 shape. That gives R9 UPHOLD (approval) instead of R10 ESCALATE_HUMAN.",
+     "suggested_fix": "Add 'or a pre-arrival placing message or rider GPS (D30)' to the WEAK definition and exclude it from NONE, in both EN and zh."
+    },
+    {
+     "id": "SRC-7",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 768,
+     "claim": "When D30 evidence is what makes F-RIDER-EVIDENCE WEAK, the finding's evidence basis leaves out the pre-arrival message IDs. The finding then cites only the ticket statement, which in V72 does not contest.",
+     "evidence": "engine_noshow.py:768: `tr.finding(\"F-RIDER-EVIDENCE\", rider_ev, basis=[\"E-TKT-01\"] + ([\"E-RGPS-*\"] if rider_gps else []) + list(readings), ...)` (pre_ids are added only to the step at line 779). Scratch run: 'V72 WEAK basis= ['E-TKT-01'] ... pre= ['E-CHT-01']'; 'V69 WEAK basis= ['E-TKT-01']'.",
+     "failure_scenario": "In V72 the finding WEAK cites only E-TKT-01, whose text is the non-contesting 'Please refund the $5.00 cancellation fee charged on this trip.' The finding is not grounded in the evidence that produced it, and any citation check reading finding bases sees no support.",
+     "suggested_fix": "Add pre_ids to the F-RIDER-EVIDENCE basis (and pre_gps IDs in place of the 'E-RGPS-*' wildcard)."
+    },
+    {
+     "id": "SRC-8",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 42,
+     "claim": "The D30 'changed' field still describes the behavior that A1b reversed, and docs/NEXT_STEPS.md still lists D27, D30 and D31 as open team decisions.",
+     "evidence": "open_items D30 changed: \"A message such as 'I'm at the pick-up point' sent before the driver marked arrival is not counted (found while fixing FX1).\" (decide now says it counts). NEXT_STEPS.md:40: 'Team decisions opened by A1: D27 (confirm the rider-message reading rule and its windows), D30 (rider messages before the driver marks arrival), D31 (waiting-fee decision table).'",
+     "failure_scenario": "A reader of the 'changed' field or of the 'For people, not sessions' list concludes that pre-arrival messages are not counted, or that D27, D30 and D31 still wait for Jasper.",
+     "suggested_fix": "Append to D30 changed: 'A1b: counted since Jasper's decision of 2026-10-11 (see decide)'. Move D27, D30 and D31 in NEXT_STEPS.md to a 'Decided by Jasper (11 Oct)' line, with D31 named as a known limitation."
+    },
+    {
+     "id": "SRC-9",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 39,
+     "claim": "D27's record turns the owner's words '读不准的转人工' (readings that cannot be settled are handed to a person) into a specific tier, approval (APPROVE: a person confirms FairRyde's uphold). For D30 the owner explicitly said '人工批准' (human approval), but for D27 did not. Handing to a person could also mean HUMAN (D25: a person decides, with no AI ruling).",
+     "evidence": "Relayed owner decision: 'D27 接受，标 D 级，读不准的转人工；D30 算反证，至少要人工批准'. D27 decide: 'readings that cannot be settled go to a person (approval), never to an automatic uphold'; card: 'goes to a person (approval)'. D25: 'APPROVE is used only when FairRyde has a ruling for a person to confirm or change.'",
+     "failure_scenario": "If Jasper meant HUMAN, every unclear-reading uphold (V61, V62, V66: UPHOLD R8 APPROVE) should have tier HUMAN and no AI ruling. Either way the automatic-versus-human split is the same, so this concerns which human tier applies.",
+     "suggested_fix": "Quote the owner's words in D27 decide and confirm with Jasper that approval (APPROVE) is what he meant, or note it as the builder's reading."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "SRC-1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I re-read engine_noshow.py:751-752. pre_msgs keeps any rider message between driver_assigned and t_arr that matches any RIDER_SELF_PLACE_PHRASES pattern. Unlike rider_contact_reading, it has no LATE, FAULT or ACK step, and line 58 includes the bare '我在'. I reran it with my own script, /tmp/a1bcheck1/sk/sk_src1.py, using a message at 08:41 (assignment 08:30:15, arrival 08:43). V06 shape, with or without a contesting statement: no message gives UPHOLD R8 AUTO. Each of '我在家，等一下', '我在路上', 'Pls pick me up at the lobby', 'wait for me at the lobby', \"I'm at the wrong entrance, sorry\", 'pick me up at the void deck pls', 'i see your car on the map' and 'meet at lobby' gives UPHOLD R8 APPROVE with RE=WEAK and pre=['E-CHT-01']. V08 shape (sparse GPS, non-contesting statement): no message gives UPHOLD R9 APPROVE; every message above gives ESCALATE_HUMAN R10 HUMAN. So the tier changes AUTO to APPROVE and the outcome changes UPHOLD to ESCALATE_HUMAN in CW-NOSHOW (in scope), for messages that do not say the rider is at the pick-up, which is what D30 and the card require. The rider explanation is also false. /tmp/a1bcheck1/sk/sk_src7.py shows that for '我在路上' (I'm on the way) explain.py:289 tells the rider 'Your message sent before the driver marked arrival (E-CHT-01) says you were already at the pick-up point'. V69 to V73 have no negative case of this kind (V70 is a question, which this list does not cover). One mitigating point: the during-wait reader already reads '我在家', '我在路上', 'pick me up at the lobby' and 'meet at lobby' as PLACES, so the phrase-list over-match dates from A1 (the reading corpus has 0 of 120 L/LU/N items matching). A1b is still what applies it to a new window, where pick-up instructions are common, so the tier and outcome changes are new in this step."
+    },
+    {
+     "id": "SRC-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Re-read open_items.yaml D30. Topic: 'Rider messages sent before the driver's arrival indication'. The question put to Jasper was 'should such messages count as counter-evidence...'. The relayed owner words are 'D30 算反证，至少要人工批准'. Nothing in the record covers pre-arrival rider GPS, and the run_log start entry broadens D30 to 'rider self-placement'. Yet rules.yaml:609-610 says 'a rider message ... or rider GPS there, also counts (decision D30)', and the source note says 'the rider at the pick-up before the arrival indication counting (D30)'. The engine (lines 753-754, pre_gps) and V71 (GPS only, UPHOLD R8 APPROVE where V06 is AUTO) implement it. In v0.1 rider GPS counted from the anchor and in A1 from t_arr, so counting it before arrival is new in A1b. The GPS element is therefore the builder's extension, recorded as an owner decision, with no open FairRyde label of its own; D30 is marked done. Fixing the label changes no outcome, and whether pre-arrival GPS should count is Jasper's call. The misattribution itself is a real grounding error on an element that drives the tier, so MAJOR stands."
+    },
+    {
+     "id": "SRC-3",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "The D31 decide text does end '...; D29 (A3) applies to no-show fees', and CW-WAITING is ADJUDICATE scope (taxonomy.yaml), with CW-F04 and CW-R12 applying to it. But the pre-A1b D31 text that Jasper decided on already said a waiting-fee table and engine path were 'needed for D29 (A3) to apply to waiting fees'. When he chose 'D31 这次不做，记为已知限制', the stated consequence came with it, so the new sentence records that limitation rather than newly narrowing D29. D29 is not in any rule card yet (it waits for A3), so no current outcome or tier depends on this wording. Whether D29's principle should still reach waiting fees decided by reading is a judgment for Jasper. What clearly remains is a wording and missing-detail issue (MINOR): the clause can be over-read as 'D29 does not apply to waiting fees', and the list of cards waiting fees are read from names CW-R05 and CW-F06 but leaves out CW-F04 and CW-R12."
+    },
+    {
+     "id": "SRC-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Read playbooks.yaml:72. PB-CW-NOSHOW step 11 says 'the rider's calls and messages from the arrival indication to the cancellation'. playbooks.yaml:119, PB-CW-WAITING step 7, says '... from the arrival indication to the end of CW-F04's window'. The annotation_schema.yaml rider_contacts note gives the same window. The DT-CW-NOSHOW credibility_note (rules.yaml:1704-1709) describes CW-F06's READ part only as the statement plus 'an unclear rider call or message', read 'during the wait'. None of these mentions the pre-arrival messages or GPS that CW-F06 now counts (D30). An applier who follows the playbook's explicit window misses a pre-arrival 'I'm at the lobby already' and returns AUTO where the card and engine give APPROVE (V69). The engine and the card itself are correct, so the error lies in applier-facing guidance across files, and MAJOR is appropriate."
+    },
+    {
+     "id": "SRC-5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "rules.yaml:611 (EN) says 'because the driver had not arrived'. The zh says '司机到达前问\"你在哪\"不算，因为司机当时确实还没到', where the previous zh sentence correctly uses '司机标记到达之前'. The engine's test is T(ts) < t_arr, the arrival indication, not physical arrival, so the stated reason is stronger than the records show, and the zh drops '标记' and adds '确实'. The rule itself is unaffected; this is wording only."
+    },
+    {
+     "id": "SRC-6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "rules.yaml:612-614. The WEAK and NONE definitions still read 'without such records or messages' and 'NONE if there are no such records or messages and the statement does not contest'. 'Such' refers back to the during-wait STRONG items, so a pre-arrival placing message with a non-contesting statement literally meets NONE, while the D30 sentence just before says 'at least WEAK'. The explicit D30 sentence is the more specific one and comes first, so a careful reader applies it. This is a definitional gap (wording), not a behavior change: MINOR."
+    },
+    {
+     "id": "SRC-7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "engine_noshow.py:768 builds the F-RIDER-EVIDENCE basis as ['E-TKT-01'] + E-RGPS-* (only when rider GPS exists) + readings, which omits pre_ids. pre_ids are added only to the step at line 779. My scratch run (/tmp/a1bcheck1/sk/sk_src7.py) on the V72 shape gives F-RIDER-EVIDENCE WEAK with basis ['E-TKT-01'] and before_arrival_ids ['E-CHT-01']; the ticket text is the non-contesting 'Please refund the $5.00 cancellation fee charged on this trip.' The finding therefore does not cite the evidence that made it WEAK. Outcome-neutral, a citation detail: MINOR."
+    },
+    {
+     "id": "SRC-8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "open_items.yaml D30 'changed' still reads \"A message such as 'I'm at the pick-up point' sent before the driver marked arrival is not counted\", while decide now says such messages count. docs/NEXT_STEPS.md:40, under 'For people, not sessions', still lists 'Team decisions opened by A1: D27 (...), D30 (...), D31 (...)' as pending, which contradicts the status line at :7 ('A1b applied Jasper's decisions D27, D30 and D31'). These are stale records with no behavioral effect: MINOR."
+    },
+    {
+     "id": "SRC-9",
+     "verdict": "REFUTED",
+     "severity_after_check": "NONE",
+     "reason": "The tier did not come from the builder's reading of '转人工'. The D27 text Jasper accepted ('D27 接受') already specified it. The pre-A1b D27 'changed' says unclear calls and messages get 'the reading test (approval when the other reading changes the outcome)' and are read so that 'anything they cannot settle is UNCLEAR (approval), never an automatic uphold'. Accepting D27 accepted approval (APPROVE), and the new wording only spells out that for an upheld fee the other reading always changes the outcome, which matches the engine (STRONG gives R7 ESCALATE). D25 also fits: FairRyde has an UPHOLD ruling for a person to confirm. The finding itself grants that the automatic-versus-human split is unaffected."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "adversarial",
+  "review": {
+   "dimension": "ADVERSARIAL TEST OF THE CHANGED LOGIC (D30 pre-arrival path and D27 guarantee in kb/tools/engine_noshow.py, CW-F06 text)",
+   "checked_ok": [
+    "Repo state: HEAD f75ae58 only adds validation files after 1ac3362; kb/tools/engine_noshow.py on disk equals the step commit. selftest.py passes 79/79 variants and 516/516 message readings. git status stays clean (scratch scripts are only in /tmp/a1bcheck1/).",
+    "Window edges on V06 (assigned 08:30:15, arrival 08:43:00, cancel 08:52:00): a placement at 08:30:15, 08:30:16 or 08:42:59 counts (WEAK, APPROVE, CW-F06 decisive). At 08:43:00 and at 08:52:00 it reads in the wait (STRONG, R7 HUMAN). At 08:30:14 and 08:52:01 it is not counted, as designed (V73, V64). There is no gap or overlap between the before() and rider_contacts windows.",
+    "Rider GPS before arrival (V71 path): at the venue at 08:30:15 or 08:42:59 gives WEAK/APPROVE. At 08:43:00 it gives STRONG/R7. 120 m from the venue (inside PIN_VENUE_MAX_M) counts. At the DISP-002 pin, 1.26 km from the venue, it counts through the pin geofence. A pre-arrival ping at the venue followed by an in-wait ping 400 m away still gives APPROVE.",
+    "Advance bookings where the anchor is later than the arrival: Ryde profile (scheduled 08:45, arrival 08:38) and organizer profile (driver_wait_start 08:45, arrival 08:38). A placement at 08:37 gives WEAK/APPROVE. A placement at 08:40 (after arrival, before the anchor) reads in the wait (STRONG, R7). The ADVANCE anchor does not shift the D30 window.",
+    "Placement before arrival followed by an admission in the wait ('I'm at the lobby' 08:41 + 'sorry coming down now' 08:46): UPHOLD R8 APPROVE with CW-F06 decisive, as D30 requires.",
+    "Plain questions before arrival ('where are you?', 'how long more', 'ETA?', 'Driver are you near?', 'which entrance?') are not counted (V70 behavior). 'where are you? I'm here' style messages are counted.",
+    "SPARSE driver GPS (V08 on DISP-002): a counted pre-arrival placement or rider GPS gives R10 ESCALATE_HUMAN (HUMAN), matching V72.",
+    "D27 guarantee for messages the engine itself reads UNCLEAR: I put all 86 corpus/READING_CASES messages that read UNCLEAR into the wait on V06, the Ryde on-demand profile, a non-contesting V06 at 08:51:30, and a Ryde advance booking (346 full E.run calls). None gave UPHOLD with tier AUTO. The contact reading test always moves R8/R9 to R7 or R10. The only exception is the MAT-04 out-of-window override (see the MINOR finding).",
+    "reading_test and decide_tier: the pre-arrival IDs and GPS IDs feed the contact test. The statement test cannot undo D30's WEAK floor. The decisive text is correct. The duplicate CW-F06 decisive entry I saw comes from the PIN_VENUE_MAX_M sensitivity test, not a bug.",
+    "No em or en dashes in the added lines. CW-F06 stays credibility D with an updated FAIRRYDE source note."
+   ],
+   "findings": [
+    {
+     "id": "ADV-1",
+     "severity": "CRITICAL",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 751,
+     "claim": "The D30 path counts a pre-arrival rider message only when it matches the positive list RIDER_SELF_PLACE_PHRASES. Common placements that the list misses, above all naming the pick-up venue, are silently dropped as 'outside', and the fee is upheld automatically. The same messages sent in the wait read UNCLEAR and go to approval. So the D27 'safe by construction' property does not carry over to D30, and D30's 'at least human approval' fails for these cases.",
+     "evidence": "engine_noshow.py:751-753: `pre_msgs = [c for c in chat if c[\"sender\"] == \"rider\" and c[\"type\"] == \"message\" and before(c[\"timestamp\"]) and any(re.search(p_, _rider_text(c.get(\"content\"))) for p_ in RIDER_SELF_PLACE_PHRASES)]`. Runs (/tmp/a1bcheck1/t1_pre_msgs.py, t2, t4, t9, t12). V06 + rider message at 08:41:00: \"I'm at Tiong Bahru Plaza\" -> UPHOLD R8 tier=AUTO pre=[] outside=['E-CHT-01']. In the wait at 08:46 the same text reads UNCLEAR -> UPHOLD R8 APPROVE. The same AUTO result for \"I'm in the lobby\", \"In the lobby now\", \"I'm outside the mall\", \"Outside McDonald's\", \"I'm at TBP\", \"At Tiong Bahru Plaza lobby\", \"At TBP main lobby liao\", \"I'm by the road\", \"Saya di lobi\", \"Saya sudah di sini\", \"我已经在门口等了\", \"已经在等了\". t12 finds 36 corpus messages labeled P/PU by the A1 reviewers that the D30 list misses, among them \"i'm at tiong bahru plaza\", \"I'm in front of Tiong Bahru Plaza\", \"i am at the location\", \"I'm at the spot\", \"I'm at the address\", \"coming coming... ok reached\", \"omw... ok here\". open_items D27 still claims \"phrase lists built so that anything they cannot settle is UNCLEAR (approval), never an automatic uphold\".",
+     "failure_scenario": "Baseline selftest.clean (V06). Add chat_logs {timestamp 2026-09-13T08:41:00+08:00, sender rider, type message, content \"I'm at Tiong Bahru Plaza\"}: UPHOLD R8, tier AUTO, F-RIDER-EVIDENCE WEAK only from the statement. Expected under D30: WEAK floor plus a STRONG other reading, so APPROVE. The same AUTO result on the Ryde on-demand profile, on a Ryde advance booking (message at 08:37, arrival 08:38) and on an organizer advance booking with \"I'm in the lobby\". With SPARSE GPS (V08) the miss gives R9 UPHOLD/APPROVE instead of R10 ESCALATE_HUMAN.",
+     "suggested_fix": "Classify pre-arrival rider messages with the same fail-safe logic as the wait. Count every pre-arrival rider message unless it reads LATE or NEUTRAL, or its only match is a question about the driver (RIDER_QUESTION_PHRASES, or it ends in '?' with a second-person subject). Messages that read UNCLEAR, or that place the rider, go to the D30 contact reading test. Also treat the trip's pickup_location name (and the VENUES name) as a place term. Add self-tests with the venue-name and 'in the lobby' placements before arrival."
+    },
+    {
+     "id": "ADV-2",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 92,
+     "claim": "Breaks the D27 guarantee in the wait: a message that places the rider and also says 'coming' reads LATE, not UNCLEAR, when the placement word is 'down', 'out' or 'there'. _FILLER strips those words, together with 'i'm', 'already' and 'now', as filler. The fee is then upheld automatically. These messages have the same shape as the rule's own both-readings example \"I'm here, coming out now\" and as the corpus PU item 'sampai liao, coming out now'. This predates A1b, but A1b records it as accepted ('never to an automatic uphold').",
+     "evidence": "_FILLER (line 92-95) includes `down|out|there|already|now|i'm|ready`. /tmp/a1bcheck1/t5_d27.py, each message at 08:47 on V06: \"I'm down, coming\" reading=LATE -> UPHOLD R8 tier=AUTO. The same LATE/AUTO result for \"I'm down now, coming over\", \"down liao, coming\", \"already down, coming\", \"coming, down already\", \"otw, down already\", \"I'm out already, coming\", \"I'm out, coming\", \"out already. coming\", \"there already, coming\". By contrast \"im down already, coming\", \"here, coming\" and \"I'm there, coming\" read UNCLEAR -> APPROVE. Corpus: ('PU', 'sampai liao, coming out now'). CW-F06: \"a message that fits neither reading or both (\\\"I'm here, coming out now\\\" ...) ... never to an automatic uphold\".",
+     "failure_scenario": "V06 + rider message at 08:47:00 \"down liao, coming\" (Singapore English for 'I'm downstairs, walking over'). Result: UPHOLD R8 tier AUTO. Expected: UNCLEAR, contact reading test, APPROVE.",
+     "suggested_fix": "Remove the place-bearing words down, out and there from _FILLER, or add a RIDER_SELF_PLACE pattern for a bare '(i'm )?(down|out|there)( already| liao| now)?' that is not part of a LATE_CORE match. A message with both a placement and an admission then reads UNCLEAR. Add these messages to READING_CASES as U."
+    },
+    {
+     "id": "ADV-3",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 97,
+     "claim": "The reader ignores context. A rider's acknowledgment ('👍', 'ok', 'k', 'alright') that answers the driver's yes/no question about the rider's place reads NEUTRAL, so the fee is upheld automatically. 'yes', 'ya' and 'yup' in the same spot read UNCLEAR (V66). In that context a thumbs-up means 'yes', which is the 'bare yes' case CW-F06 sends to the reading test. This predates A1b.",
+     "evidence": "RIDER_ACK (line 97) fully matches `ok|k|kk|alright|👍|...`, and rider_contact_reading returns NEUTRAL before any context check. /tmp/a1bcheck1/t5_d27.py: driver 'Are you at the lobby now?' at 08:46:30, rider '👍' at 08:47 -> readings NEUTRAL -> UPHOLD R8 tier=AUTO. The same for 'ok', 'alright', and 'k' after 'Are you downstairs?'. With 'yes', 'ya' or 'yup' -> UNCLEAR -> APPROVE.",
+     "failure_scenario": "V66 with the rider's 'yes' replaced by '👍': UPHOLD R8, tier AUTO instead of APPROVE.",
+     "suggested_fix": "When the driver's last message before a rider acknowledgment is a question (ends in '?', or asks 'are you at/in/here/downstairs'), read the acknowledgment as UNCLEAR. Add V66 variants with '👍' and 'ok'."
+    },
+    {
+     "id": "ADV-4",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 50,
+     "claim": "Safe direction, but frequent. RIDER_SELF_PLACE_PHRASES contains patterns with no subject and patterns blind to negation. Pre-arrival questions about the driver, pick-up instructions, and Chinese or Malay admissions are therefore counted as D30 self-placements and sent to approval. That contradicts CW-F06 ('Questions about the driver sent before the arrival indication ... do not count'). The rider-facing explanation then tells the rider something false: their message 'says you were already at the pick-up point'. The same patterns read Chinese and Malay admissions in the wait as PLACES (R7, HUMAN).",
+     "evidence": "line 50 `\\b(?:here|reach|reached|arrived|downstairs|outside|sampai|dao le)\\s+(?:already|alr|liao|le|...)`, line 57 `\\bkat\\s+(?:bawah|lobby|lobi|\\w+)\\b`, `\\b(?:dah\\s+)?sampai\\b`, line 58 `到了|在楼下|到楼下|我在`, and the subject-free `(?:at|outside|...)\\s+(?:the\\s+)?{_SPOT}` and `wait(?:ed|ing)?\\s+(?:for\\s+)?(?:you|u)`. /tmp/a1bcheck1/t7_pre_questions.py and t1, message at 08:41 on V06, each -> UPHOLD R8 APPROVE (pre=['E-CHT-01']): 'u reach already?', 'you here already?', 'reach liao?', 'you arrived already?', 'sampai dah?', '到了吗？', '你到了吗', '司机到了没有', 'you at the lobby?', 'Are you waiting at the lobby?', 'Waiting for you?', 'Please pick me up at the lobby', 'see you at the lobby', 'I will wait at the lobby', 'Reach lobby in 5 min', '我在路上', '我在家', '快到了', '马上到了', 'belum sampai', 'Saya masih kat rumah'. t8: the explanation for 'u reach already?' reads \"Your message sent before the driver marked arrival (E-CHT-01) says you were already at the pick-up point; this was counted as evidence for your side.\" t10: in the wait, '快到了', '我在路上' and 'belum sampai' read PLACES -> ESCALATE_HUMAN R7, HUMAN.",
+     "failure_scenario": "V06 + rider 'u reach already?' at 08:41 (a routine question before arrival): UPHOLD R8, tier APPROVE instead of AUTO, with a false rider-facing explanation. On V08 (SPARSE) the same message turns R9 UPHOLD/APPROVE into R10 ESCALATE_HUMAN/HUMAN. A Chinese-speaking rider who writes '快到了' (almost there) in the wait gets R7 ESCALATE_HUMAN instead of the R8 AUTO uphold.",
+     "suggested_fix": "Before arrival, drop a message whose self-place match is inside a RIDER_QUESTION_PHRASES match, or that has a second-person subject and ends in '?'. Add negation and future guards for Malay (belum, nak, masih ... rumah) and Chinese (快到了, 马上到, 我在路上, 我在家, 还没) to both the pre-arrival list and RIDER_LATE_CORE. Word the explanation for a pre-arrival message as 'was counted as possibly placing you at the pick-up point'."
+    },
+    {
+     "id": "ADV-5",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 750,
+     "claim": "Rare unsafe cases at the edges of the D30 window. (a) The window ends at the driver_arrived event even when trip_data.driver_arrival_time is earlier. A rider contest sent between the two records, within TS_TOLERANCE_S, therefore falls 'before arrival', where contests and questions do not count, and is dropped. (b) The start uses the first driver_assigned event in list order, not the earliest by time. A reassignment listed out of order, or a driver_assigned timestamp after the arrival (data error), empties the window, and real placements are dropped.",
+     "evidence": "line 412 `arrived_ev = next((a for a in ev if a[\"event_type\"] == \"driver_arrived\"), None)`. line 749 `assigned = next((T(a[\"timestamp\"]) for a in ev if a[\"event_type\"] == \"driver_assigned\"), None)`. line 750 `before = lambda ts: (assigned is None or assigned <= T(ts)) and T(ts) < t_arr`. /tmp/a1bcheck1/t9_edges.py: trip_data arrival 08:42:50, event 08:43:00, rider \"Where are you? I can't see your car\" at 08:42:55 -> UPHOLD R8 tier=AUTO. With the records swapped (event 08:42:50) -> R7 HUMAN. t3: second driver_assigned at 08:35 inserted first in app_events, placement at 08:33 -> AUTO. With the events sorted -> APPROVE. driver_assigned moved to 08:43:30 -> placement at 08:41 dropped -> AUTO, and the unordered timeline (DQ-04 False) raises no trigger.",
+     "failure_scenario": "V06 with trip_data.driver_arrival_time 08:42:50 (the event stays 08:43:00), rider message 08:42:55 \"Where are you? I can't see your car\": UPHOLD R8, tier AUTO. The rider contests presence 5 s after the trip record's arrival.",
+     "suggested_fix": "Start the in-wait window at the earliest arrival record, or treat messages within TS_TOLERANCE_S before t_arr with the in-wait reading. Use min() over all driver_assigned timestamps. Send the case to approval when the D30 window is empty because of event order."
+    },
+    {
+     "id": "ADV-6",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 607,
+     "claim": "CW-F06 says 'for an upheld fee it always does' and 'so an upheld fee always needs human approval'. The engine upholds out-of-window cases (MAT-04) automatically even when there is an unclear contact or a D30 placement, because the override makes the STRONG reading give the same outcome. The engine is consistent with MAT-04, a Ryde rule. The 'always' in the text, and in D30's 'need at least human approval', is too broad, and an LLM applying the text literally would send these cases to approval.",
+     "evidence": "/tmp/a1bcheck1/t5_d27.py, filed_at 2026-10-20: 'OOW + rider call during wait' -> UPHOLD tier=AUTO; 'OOW + I'm here, coming out now' -> AUTO; 'OOW + pre-arrival placement' -> UPHOLD tier=AUTO pre=['E-CHT-01'].",
+     "failure_scenario": "A waiver filed 37 days after the trip, with the rider's pre-arrival 'I'm at the lobby already': UPHOLD, AUTO. The rule text says approval is always needed.",
+     "suggested_fix": "Add 'unless MAT-04 (out of the filing window) or another override decides the outcome' to both sentences in CW-F06 (en and zh), or state the exception in D30."
+    },
+    {
+     "id": "ADV-7",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 608,
+     "claim": "The CW-F06 text gives an LLM no guidance for pre-arrival messages that fit both readings (\"I'm here, coming out\" sent before arrival) or that contest without placing (\"I can't see your car\" a few seconds before the arrival mark). It covers only clear placements and questions. In the wait the same messages have explicit handling (reading test). Different appliers will diverge.",
+     "evidence": "rules.yaml 608-612: \"Before the arrival indication (from the driver's assignment), a rider message that places the rider at the pin or venue, or rider GPS there, also counts (decision D30) ... Questions about the driver sent before the arrival indication (\\\"where are you?\\\") do not count\". Nothing covers unclear messages or contests before arrival. The engine drops both (t5: pre 'Where are you? I can't see your car' -> AUTO).",
+     "failure_scenario": "Pre-arrival \"I'm at TBP, coming out\" or \"can't see your car\": one LLM applier counts it (approval), another ignores it (AUTO uphold).",
+     "suggested_fix": "Add one sentence: a pre-arrival message that may place the rider (fits both readings, or names a place) gets the reading test like an unclear message in the wait; say explicitly whether contests sent before the arrival indication count."
+    },
+    {
+     "id": "ADV-8",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 768,
+     "claim": "When D30 alone makes F-RIDER-EVIDENCE WEAK, the finding's basis omits the message or GPS IDs that caused it (only the step lists them). The finding then looks unsupported, for example WEAK with basis ['E-TKT-01'] on a non-contesting statement.",
+     "evidence": "line 768 `basis=[\"E-TKT-01\"] + ([\"E-RGPS-*\"] if rider_gps else []) + list(readings)` (no pre_ids). /tmp/a1bcheck1/t13_basis.py: non-contesting statement + pre 'I'm at the lobby already' -> F-RIDER-EVIDENCE {'value': 'WEAK', 'basis': ['E-TKT-01']}, step evidence ['E-TKT-01', 'E-APP-05', 'E-CHT-01'].",
+     "failure_scenario": "An evidence-trace check or an explanation built from finding bases cannot see why the rider evidence is WEAK.",
+     "suggested_fix": "Add pre_ids (and pre_gps) to the F-RIDER-EVIDENCE basis."
+    },
+    {
+     "id": "ADV-9",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 393,
+     "claim": "The new `assigned is None` branch of the D30 window is dead code. A case with no driver_assigned event crashes in step 4 (StopIteration) before CW-F06 runs. CW-F06 does not define the D30 window when the assignment is not recorded.",
+     "evidence": "line 393 `assigned = next(a for a in ev if a[\"event_type\"] == \"driver_assigned\")` (no default). /tmp/a1bcheck1/t3_windows.py: 'no driver_assigned, placement 08:41: CRASH StopIteration'.",
+     "failure_scenario": "A case file without a driver_assigned event: the engine raises StopIteration instead of producing a ruling or a HUMAN tier.",
+     "suggested_fix": "Give step 4 a default (None) and send the case to a person (records missing). State in CW-F06 that the window starts at the earliest recorded assignment, or at booking when none is recorded."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "ADV-1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I read engine_noshow.py:749-753. pre_msgs counts a pre-arrival rider message only on a positive RIDER_SELF_PLACE_PHRASES match, with no UNCLEAR fallback, and the in-wait reader does have one. I reproduced it in /tmp/a1bcheck1/skadv/adv1.py on V06 with the message at 08:41:00. These all give UPHOLD R8 tier AUTO with pre=[] and outside=['E-CHT-01']: \"I'm at Tiong Bahru Plaza\" (the trip's own pickup_location name), \"I'm in front of Tiong Bahru Plaza\", \"I'm in the lobby\", \"In the lobby now\", \"I'm at TBP\", \"At Tiong Bahru Plaza lobby\", \"i am at the location\", \"I'm at the spot\", \"I'm at the address\", \"coming coming... ok reached\", \"omw... ok here\", \"Saya di lobi\", \"我已经在门口等了\". The same texts at 08:46, during the wait, read UNCLEAR and give APPROVE. Two more runs (adv1c.py): the Ryde profile gives the same AUTO result. On V08 (sparse driver GPS), \"I'm at Tiong Bahru Plaza\" before arrival gives UPHOLD R9 APPROVE, while a matched placement (\"I'm here at the pick-up point\") gives ESCALATE_HUMAN R10 HUMAN. So a miss changes the outcome as well as the tier. CW-F06 and D30 say a pre-arrival message that places the rider at the pin or venue makes the evidence at least WEAK, so an upheld fee always needs approval. Naming the venue is the plainest placement, and the engine upholds it automatically. A1 rated the same kind of reader miss (an AUTO uphold where the card requires approval) CRITICAL (ENG-2, A1R2-ADV-1 to -5)."
+    },
+    {
+     "id": "ADV-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "_FILLER (engine_noshow.py:90-93) includes down, out, there, already, now and i'm. I reproduced it in /tmp/a1bcheck1/skadv/adv2.py on V06 at 08:47. These read LATE and give UPHOLD R8 AUTO: \"I'm down, coming\", \"I'm down now, coming over\", \"down liao, coming\", \"already down, coming\", \"coming, down already\", \"otw, down already\", \"I'm out already, coming\", \"I'm out, coming\", \"out already. coming\", \"there already, coming\". The engine contradicts itself here: \"I'm down\", \"down liao\", \"already down\" and \"out already\" alone read UNCLEAR, and \"im down already, coming\" and \"I'm there, coming\" read UNCLEAR. The placement word only counts as filler when 'coming' is also present. The KB's own READING_CASES label 'i downstairs liao' as P and 'sampai liao, coming out now' as U. The card's both-readings example (\"I'm here, coming out now\") requires UNCLEAR, which means the reading test and approval. A1b now states in CW-F06 and D27 that such readings go to a person and never to an automatic uphold. The defect predates A1b: _FILLER is identical in de711a3. The severity definitions do not depend on which step introduced a defect, though. This flips the automatic-versus-human decision in an in-scope type, and A1 rated the same failure (an extra LATE token turns an unclear message into AUTO) CRITICAL (ENG-3, A1R2-ADV-4). One reading is defensible: 'I'm out, coming' could mean the rider has left home. The 'down' and 'there' forms have no such reading."
+    },
+    {
+     "id": "ADV-3",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MAJOR",
+     "reason": "I reproduced it in /tmp/a1bcheck1/skadv/adv3.py: after the driver's 'Are you at the lobby now?' at 08:46:30, a rider reply of 👍, 'ok' or 'alright' (and 'k' after 'Are you downstairs?') reads NEUTRAL and gives UPHOLD R8 AUTO. 'yes', 'yup' and 'ya' read UNCLEAR and give APPROVE. RIDER_ACK and its fullmatch check before any context are unchanged since de711a3, so this predates A1b. The card says plainly that an acknowledgment ('ok') is not counter-evidence, and it does not make that depend on the message the ack answers. A1 kept the reader context-free on purpose (R2-RSC-5, not changed). For 'ok' the engine therefore follows the card literally. Whether 👍 or 'ok' answering a yes/no question about the rider's place is an acknowledgment or a 'yes' is a rule-design question about the D27 reading rule. The KB owner has to decide it; I cannot settle it from the card. If Jasper decides it means 'yes', the tier changes (CRITICAL). Otherwise it is not a defect."
+    },
+    {
+     "id": "ADV-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I reproduced it in /tmp/a1bcheck1/skadv/adv4.py on V06 with the message at 08:41. These each count as D30 self-placements (pre=['E-CHT-01']) and give UPHOLD R8 APPROVE instead of AUTO: 'u reach already?', 'you here already?', 'reach liao?', 'you arrived already?', 'sampai dah?', '到了吗？', '你到了吗', '司机到了没有', 'you at the lobby?', 'Waiting for you?', 'Please pick me up at the lobby', 'see you at the lobby', 'I will wait at the lobby', 'Reach lobby in 5 min', '我在路上', '我在家', '快到了', '马上到了', 'belum sampai', 'Saya masih kat rumah'. The patterns that match are the subject-free ones at engine_noshow.py:50-58: 'reach already', bare sampai, 到了|我在, 'at the lobby', 'kat \\w+', 'waiting for you'. CW-F06 says explicitly that questions about the driver sent before the arrival indication do not count, and several of these are admissions. On V08 (adv4.py), 'u reach already?' and 'Please pick me up at the lobby' before arrival change UPHOLD R9 APPROVE into ESCALATE_HUMAN R10 HUMAN, so the outcome changes too. I confirmed the false rider-facing sentence (adv4b.py): for 'u reach already?' the rider is told the message 'says you were already at the pick-up point; this was counted as evidence for your side.' In the wait, '快到了', '我在路上' and 'belum sampai' read PLACES and give ESCALATE_HUMAN R7. That part predates A1b; the pre-arrival over-counting is new in A1b. It is the safe direction, but it changes the tier and on sparse GPS the outcome, in an in-scope type. A1 rated safe-direction over-escalation CRITICAL (ENG-7)."
+    },
+    {
+     "id": "ADV-5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "The code reads as claimed. t_arr prefers the driver_arrived event (line 412-413), and line 749 takes the first driver_assigned event in list order, not the minimum. Reproduced in /tmp/a1bcheck1/skadv/adv5.py. (a) With trip_data.driver_arrival_time at 08:42:50 and the event at 08:43:00, the rider's 'Where are you? I can't see your car' at 08:42:55 is dropped (outside=['E-CHT-01']) and the result is UPHOLD R8 AUTO. With the records swapped it gives ESCALATE_HUMAN R7. The pre-A1b engine (de711a3, adv5_old.py) gives exactly the same AUTO result, so (a) predates A1b. Which of two records within tolerance counts as 'the arrival indication' is also not settled anywhere. (b) A second driver_assigned at 08:35 listed first, with a placement at 08:33, gives AUTO; with the events sorted it gives APPROVE. A driver_assigned moved to 08:43:30 (after arrival) empties the window and gives AUTO. DQ-04 only logs 'ordered: False' and raises no flag (line 354-355, pre-existing). Part (b) is new in A1b, but it needs an app-event log out of time order or impossible, which DQ-04 already treats as bad data. For well-formed data in the current scope it changes nothing, so MAJOR rather than CRITICAL."
+    },
+    {
+     "id": "ADV-6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced in /tmp/a1bcheck1/skadv/adv6.py with filed_at 2026-10-20 (37 days). A rider call in the wait, \"I'm here, coming out now\", and a pre-arrival \"I'm at the lobby already\" all give UPHOLD tier AUTO. The contact reading test runs, but outcome_other is UPHOLD (changes False) because MAT-04 (credibility A) overrides the decision. In-wait STRONG evidence is also overridden to an AUTO uphold, so the engine is consistent. The CW-F06 sentences 'for an upheld fee it always does' and 'so an upheld fee always needs human approval' (rules.yaml 607-610, en and zh) and D30's 'need at least human approval' overstate this. It is wording only: the reading test the card defines already gives the right answer."
+    },
+    {
+     "id": "ADV-7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I read rules.yaml 604-611 (en and zh). The D30 sentences cover only a message 'that places the rider' and 'questions about the driver'. Nothing covers a pre-arrival message that fits both readings, or a pre-arrival contest that does not place the rider. In the engine (/tmp/a1bcheck1/skadv/adv7.py), pre-arrival \"I'm here, coming out now\" counts and gives APPROVE. \"I'm at TBP, coming out\", \"I can't see your car\" and \"Where are you? I can't see your car\" are dropped and give AUTO. The card's reason ('because the driver had not arrived') arguably covers contests as well, but it does not say so. This is a missing detail in the text, so MINOR as claimed."
+    },
+    {
+     "id": "ADV-8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "engine_noshow.py:768 builds the F-RIDER-EVIDENCE basis as ['E-TKT-01'] + E-RGPS-* + readings, with no pre_ids. Reproduced: with the non-contesting statement plus a pre-arrival \"I'm at the lobby already\", F-RIDER-EVIDENCE is WEAK with basis ['E-TKT-01'] only, tier APPROVE. The CW-F06 step evidence is ['E-TKT-01', 'E-APP-05', 'E-CHT-01']. When the pre-arrival evidence is GPS, 'E-RGPS-*' does appear. The traceability gap is real and does not affect any outcome, so MINOR."
+    },
+    {
+     "id": "ADV-9",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Line 393 is next(...) with no default. I ran a case with the driver_assigned event removed: it crashes with StopIteration on both the current engine and de711a3. So the crash predates A1b, and the new 'assigned is None' branch at line 750 can never run. CW-F06 does not say where the D30 window starts when no assignment is recorded. The dead branch and the gap in the card are minor. The crash itself is pre-existing robustness and changes no outcome in a well-formed case."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "consistency",
+  "review": {
+   "dimension": "CONSISTENCY ACROSS FILES AND PARTY-FACING TEXT (step A1b, commits de711a3..1ac3362, review round 1)",
+   "checked_ok": [
+    "Build, run in a scratch copy of 1ac3362 (git archive to /tmp/a1bcheck1/repo): python3 kb/build_kb.py --no-xlsx ends 'ERROR 0 | WARN 0 | INFO 5', with 79/79 variants and 516/516 message readings. The regenerated kb/out/check_report.md and kb/out/disp002_trace.md are byte-identical to the committed files. A full build with xlsx also ends ERROR 0 | WARN 0.",
+    "E01 to E04: I ran E.run and explain.noshow at de711a3 and at 1ac3362 and diffed the output. The rider and driver texts, outcomes and tiers are identical (E01 UPHOLD R8 APPROVE, E02 WAIVE_FEE R1 APPROVE, E03 UPHOLD R8 APPROVE, E04 WAIVE_FEE R6 AUTO). The only difference is the empty before_arrival_ids and before_arrival_gps_ids keys. No round 1 case has rider evidence before the arrival indication, so D30 changes none of them.",
+    "E01 and E03 explanations, read sentence by sentence against the case files: the driver contact counts (E01: 1 call and 3 messages, E-CHT-01, 02, 04, 05; E03: 1 call and 1 message), the times, the 420 s and 195 s waits, the 180 s threshold, and 'Your message during the wait (E-CHT-03) said you were running late or still on your way' all match the chat logs and app events. exp03_unmatched is empty.",
+    "V70 and V73: the sentence 'Your call or message outside the wait (E-CHT-01) was not used to judge where you were during the wait' is accurate. V69 and V71 (pin at the venue, statement contests): the rider and driver texts are accurate for those facts, and exp03_unmatched is empty for all five new variants.",
+    "explain.py's generic-assumption branch matches \"rider's call, message or GPS\", which is exactly the decisive string engine decide_tier now emits (engine_noshow.py line 988). The two are in sync.",
+    "taxonomy.yaml NO_RIDER_EVIDENCE ('No strong rider counter-evidence (CW-F06)') is still correct when D30 makes the evidence WEAK. The CW-F06 rows in ontology.yaml (F-RIDER-EVIDENCE, rider_called_driver) and the scope.yaml competency question set no window, so they do not contradict D30.",
+    "open_items D27 decide and the CW-F06 source note record Jasper's D27 decision accurately: FairRyde design at credibility D, readings that cannot be settled go to a person.",
+    "The D30 decide text matches the CW-F06 statement and the engine on window, evidence and effect: from driver_assigned to the arrival indication, a message or GPS at the pin or venue, at least WEAK, STRONG as the other reading, questions about the driver excluded. The one exception is the 'always' overclaim, reported as A1B-C-07.",
+    "The zh and en texts of the new CW-F06 sentences (D27 'never to an automatic uphold' and the D30 paragraph) say the same thing.",
+    "Added lines in the diff, checked with a Unicode-aware script: no U+2014 or U+2013 dashes and no British spellings. The new self-test data (V69 to V73) contain no names, plates, phone numbers or account IDs.",
+    "CLAUDE.md, the docs/NEXT_STEPS.md section 'How each step is checked' and .claude/workflows/kb-step-check.js agree with each other and with the user's instruction: re-decide the affected cases, four reviewers each followed by a skeptic, and a second round only after CRITICAL or MAJOR findings, never more than two rounds.",
+    "report_md.py and make_xlsx.py contain no code that depends on the changed decisive wording. DISP-002, the only case they render, is unaffected by D30.",
+    "The committed kb/out/*.xlsx files are stale since b94bc63. This predates A1b: the plan builds with --no-xlsx until A5. Not counted as an A1b finding.",
+    "The engine's `assigned is None` fallback cannot be reached: evaluate() already requires a driver_assigned event at line 393. No inconsistency with 'from the driver's assignment'."
+   ],
+   "findings": [
+    {
+     "id": "A1B-C-01",
+     "severity": "CRITICAL",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 751,
+     "claim": "The D30 check before the arrival indication matches RIDER_SELF_PLACE_PHRASES alone. It has no check for lateness or fault and no UNCLEAR reading. So messages that admit the rider is elsewhere or still on the way count as the rider being at the pick-up. This contradicts CW-F06 and D30 ('a rider message that places the rider at the pin or venue') and D27 ('admitting lateness or coming is not counter-evidence'). It changes tier and outcome in the safe direction, toward a person. The rider is then told something false.",
+     "evidence": "engine_noshow.py 751: `pre_msgs = [c for c in chat if c[\"sender\"] == \"rider\" and c[\"type\"] == \"message\" and before(c[\"timestamp\"]) and any(re.search(p_, _rider_text(c.get(\"content\"))) for p_ in RIDER_SELF_PLACE_PHRASES)]`. Scratch test /tmp/a1bcheck1/scripts/pre_match.py and pre_match2.py print 'pre-arrival counted=True' for: '我在路上' (I'm on my way), '我在家' (I'm at home), 'belum sampai' (not arrived yet), 'kat rumah lagi' (still at home), 'I was at home, sorry, coming', 'sorry I was at the gym, coming', \"I'm waiting for my friend\", \"I'm at the MRT exit, 10 min away\", \"I'm at the bus stop near my house, reaching in 10\", \"I'm at the wrong block, walking over\". rules.yaml 609: 'a rider message that places the rider at the pin or venue, or rider GPS there, also counts (decision D30)'. explain.py 290 tells the rider: 'Your message sent before the driver marked arrival (E-CHT-01) says you were already at the pick-up point; this was counted as evidence for your side.'",
+     "failure_scenario": "Two runs from /tmp/a1bcheck1/scripts/scen.py, each adding one rider message at 08:41 (after the assignment, before the arrival). (1) V06 plus 'I was at home, sorry, coming': UPHOLD R8 APPROVE, decisive CW-F06. Under the rule text the message places no one at the pick-up, so it does not count and the case is AUTO, like V73. (2) V08-type (sparse GPS, non-contesting statement) plus 'belum sampai': ESCALATE_HUMAN R10 HUMAN instead of UPHOLD R9 APPROVE. In both runs the rider explanation says the message 'says you were already at the pick-up point'. Both parties are told 'the rider disputes presence'.",
+     "suggested_fix": "Read pre-arrival messages with the same safety-by-construction reader as messages during the wait. Count a message only if rider_contact_reading() returns PLACES from a self-placement phrase. Route UNCLEAR through the reading test, and do not count LATE or NEUTRAL. Change the explain.py sentence to name what the message says, for example 'says you were at the pick-up or the venue', and quote or paraphrase only messages the reader settled. Add self-tests for one admission and one Chinese or Malay admission sent before the arrival."
+    },
+    {
+     "id": "A1B-C-02",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 773,
+     "claim": "WEAK is still described everywhere as 'the rider's statement contests presence'. Under D30, WEAK can also come from a pre-arrival message or GPS when the statement contests nothing. Three places say something false in that case: the CW-F06 trace step that the human approver reads, CW-R12's statement, and the DT-CW-NOSHOW R10 'plain' text shown to both parties. The trace step also contradicts itself.",
+     "evidence": "engine_noshow.py 773: `(\"the statement contests presence or place, but no rider-side record or rider message shows the rider at the pick-up\" if rider_ev == \"WEAK\" else ...)`. V72 (statement NON_CONTESTING = 'Please refund the $5.00 cancellation fee charged on this trip.') prints the step 'WEAK: the statement contests presence or place, but no rider-side record or rider message shows the rider at the pick-up; the rider is at the pick-up before the arrival indication (E-CHT-01), which counts as counter-evidence (D30), so at least WEAK'. rules.yaml 896 (CW-R12): 'The same applies when the rider's statement contests presence and the driver's presence is only sparsely evidenced (DT-CW-NOSHOW row R10)'. rules.yaml 1733 (R10 plain): 'the driver's GPS covers the wait only in part and the rider disputes presence, so a person decides'. V72 rider and driver texts: 'Outcome: a Ryde staff member will decide this case, because the driver's GPS covers the wait only in part and the rider disputes presence.'",
+     "failure_scenario": "Self-test V72, and any SPARSE case whose statement does not contest but which has a self-placing message before arrival: the trace that the human reviewer reads (make_xlsx steps, trace_report) states that the statement contests presence, which is false. The same sentence says no rider message shows the rider at the pick-up and then asserts that 'the rider is at the pick-up' as fact. Both parties are told the rider disputes presence, although the rider's statement only asks for a refund.",
+     "suggested_fix": "Build the WEAK step text from its source: 'the statement contests presence or place' only when `contested` is true, and otherwise 'the rider's message or GPS before the arrival indication (ids) places the rider at the pick-up (D30)'. Write it as 'the rider's message says' or 'the rider's GPS shows', not 'the rider is at the pick-up'. Update CW-R12 and the R10 'plain' text to cover both sources, for example 'the rider contests presence or placed themselves at the pick-up before the driver's arrival indication'."
+    },
+    {
+     "id": "A1B-C-03",
+     "severity": "MAJOR",
+     "file": "kb/playbooks.yaml",
+     "line": 72,
+     "claim": "The playbook steps that tell the reader where to look for CW-F06 evidence were not updated for D30. Both still limit the reading to the period after the arrival indication and do not mention rider messages or GPS from the driver's assignment on. KB appliers follow playbook steps (the kb-step-check applier prompt says 'Follow the playbook's steps') and are not allowed to open open_items.yaml.",
+     "evidence": "playbooks.yaml 72 (PB-CW-NOSHOW step 11): \"Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the cancellation, to see whether they place the rider at the pick-up or contest presence, timing or place\". playbooks.yaml 119 (PB-CW-WAITING step 7): \"... the rider's calls and messages from the arrival indication to the end of CW-F04's window ...\". rules.yaml 609-611 (CW-F06): 'Before the arrival indication (from the driver's assignment), a rider message that places the rider at the pin or venue, or rider GPS there, also counts (decision D30)'.",
+     "failure_scenario": "An LLM applier decides a V69-like case (rider writes 'I'm at the lobby already' at 08:41, the driver arrives at 08:43) and follows step 11's window literally. It never reads the pre-arrival message, sets F-RIDER-EVIDENCE from the statement alone, and returns UPHOLD AUTO. The engine and CW-F06 require APPROVE. The rule card that step 11 names does carry D30, so this is a conflicting instruction rather than a certain misdecision.",
+     "suggested_fix": "Extend both step notes. Add, for example: 'also the rider's messages and phone GPS from the driver's assignment to the arrival indication: a message or GPS that places the rider at the pin or venue counts (D30, at least WEAK; questions about the driver do not)'. Add rider GPS to the evidence read in that step."
+    },
+    {
+     "id": "A1B-C-04",
+     "severity": "MAJOR",
+     "file": "kb/open_items.yaml",
+     "line": 43,
+     "claim": "D31 narrows Jasper's D29 to no-show fees. D29's own text and the A3 prompt apply it to every upheld fee. Jasper's D31 decision was only 'not done now, record it as a known limitation'; he did not exempt waiting fees from D29. CW-WAITING is an in-scope type, and round 1 waiting-fee case E07 is a CW-F04-dependent uphold that D29 as written would send to approval. D31 also lists the rules used for waiting fees incompletely.",
+     "evidence": "open_items.yaml 41 (D29): 'whenever upholding a fee depends on FairRyde's own GPS logic (outliers, window edges, LEFT, SPARSE, UNKNOWN, GPS_AMBIGUOUS, the ping-gap and radius parameters), the ruling needs human approval (tier APPROVE), never AUTO'. open_items.yaml 43 (D31 decide): 'Waiting-fee disputes are decided by reading CW-R05 and CW-F06 without a decision table, and the reference engine runs no-show cases only; D29 (A3) applies to no-show fees.' docs/NEXT_STEPS.md A3 prompt: 'apply decision D29 (Jasper, 11 Oct): an uphold that depends on FairRyde's own GPS presence logic always needs approval (tier APPROVE), never AUTO. Note D31 (waiting fees have no decision table).' NEXT_STEPS 'For people': 'every uphold that rests on FairRyde's own GPS presence logic needs human approval'. scope.yaml 68: 'adjudicate: [CW-NOSHOW, CW-RIDERCANCEL, CW-WAITING, FC-ROUTE, FC-TOLL]'. A1 applier on E07 (validation/build_checks/A1/05_applier_round2.jsonl): tier 'AUTO', CW-F04 step '... The longest gap in the window is 90 s, within PING_MAX_GAP_S'.",
+     "failure_scenario": "After A3, a builder who follows D31 implements D29 only for no-show fees. A waiting-fee uphold that rests on PING_MAX_GAP_S and the arrival radius, such as E07, stays AUTO, although D29 as Jasper worded it requires APPROVE. Today nothing changes, because D29 is not implemented yet.",
+     "suggested_fix": "Reword D31 so that it records only the limitation, for example: 'the reference engine and DT rows implement D29 for no-show fees only; for waiting fees decided by reading, D29 still applies: an uphold that rests on CW-F04's GPS logic is tier APPROVE'. Or ask Jasper to decide explicitly whether waiting fees are exempt. Name CW-R06 and CW-F04 among the rules waiting-fee disputes are decided with, as PB-CW-WAITING does."
+    },
+    {
+     "id": "A1B-C-05",
+     "severity": "MAJOR",
+     "file": "kb/tools/explain.py",
+     "line": 292,
+     "claim": "The rider explanation for pre-arrival GPS always says 'at the pick-up point', even when the GPS point matched only the named venue (D30 counts the venue within PIN_VENUE_MAX_M). In a pin-mismatch case, the same explanation then tells the rider they may not have been at the pin. The message sentence at line 290 has the same problem.",
+     "evidence": "explain.py 292: `rider_records += (f\" Your phone's GPS shows you at the pick-up point before the driver marked arrival\" ...`. Scratch run (/tmp/a1bcheck1/scripts/scen.py, pin at DISP-002's PIN 1,259 m from the venue, rider GPS at the venue at 08:41:30): \"Your phone's GPS shows you at the pick-up point before the driver marked arrival (E-RGPS-01); this was counted as evidence for your side. The pick-up pin is about 1,259 m from the address of Tiong Bahru Plaza; if you waited at the venue entrance you may not have been at the pin.\"",
+     "failure_scenario": "Pin-mismatch case (the DISP-002 pin) with one rider GPS point at the named venue before the arrival: the rider is told their GPS shows them at the pick-up point, which is 1,259 m away, and in the same paragraph that they may not have been at the pin.",
+     "suggested_fix": "Have the engine record whether each pre-arrival GPS point or message matched the pin or the venue (for example a before_arrival_where field), and say 'at the pick-up pin' or 'at <venue name>' to match."
+    },
+    {
+     "id": "A1B-C-06",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 42,
+     "claim": "D30's 'changed' field still says that v0.2 does not count pre-arrival messages. That contradicts its own 'decide' field and CW-F06.",
+     "evidence": "open_items.yaml 42, D30 changed: \"v0.2 counts rider calls, messages and GPS from the arrival indication (CW-F06). A message such as 'I'm at the pick-up point' sent before the driver marked arrival is not counted (found while fixing FX1).\" The decide field of the same entry: 'done: Jasper decided on 2026-10-11 that they count as counter-evidence ... Implemented in CW-F06: from the driver's assignment to the arrival indication ...'",
+     "failure_scenario": "A reader of open_items.yaml, or of sheet 18 of the KB workbook, finds two contradictory statements about v0.2 in one entry.",
+     "suggested_fix": "Mark the old text as history, for example 'A1 (before D30): ... was not counted; A1b: counted, see decide'. Or update 'changed' to describe the current v0.2 behavior."
+    },
+    {
+     "id": "A1B-C-07",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 611,
+     "claim": "CW-F06 and D30 say an upheld fee 'always' needs approval when a reading is unsettled or a D30 message or GPS point exists. Upholds through the MAT-04 out-of-window override stay AUTO. In those cases the rider is still told the message 'was counted as evidence for your side'.",
+     "evidence": "rules.yaml 608-611: 'for an upheld fee it always does, so a reading that cannot be settled goes to a person (approval), never to an automatic uphold' and 'so an upheld fee always needs human approval'. open_items D30: 'so an upheld fee always needs approval'. Scratch /tmp/a1bcheck1/scripts/scen3.py, filed_at 2026-11-20: 'V62 out of window: UPHOLD ['CW-R-OUT-OF-WINDOW'] AUTO', 'V69 out of window: UPHOLD ['CW-R-OUT-OF-WINDOW'] AUTO', 'V71 out of window: UPHOLD ['CW-R-OUT-OF-WINDOW'] AUTO'. V69 out-of-window rider text: 'Outcome: the S$5.00 fee stands, because the request was filed 68 days after the trip ... Your message sent before the driver marked arrival (E-CHT-01) says you were already at the pick-up point; this was counted as evidence for your side.'",
+     "failure_scenario": "A late waiver request with a D30 message is upheld automatically, although the rule text and D30 say 'always approval'. The rider is told their message counted for them, but it had no effect.",
+     "suggested_fix": "Qualify the text: 'an uphold on the merits (DT-CW-NOSHOW) always needs approval; MAT-04's out-of-window rule is unaffected'. Or confirm with Jasper that late requests are exempt. Leave out the 'counted as evidence for your side' sentence when the reason is CW-R-OUT-OF-WINDOW."
+    },
+    {
+     "id": "A1B-C-08",
+     "severity": "MINOR",
+     "file": "docs/NEXT_STEPS.md",
+     "line": 40,
+     "claim": "The 'For people' list still presents D27, D30 and D31 as open team decisions, although the status line above it and open_items record them as decided.",
+     "evidence": "NEXT_STEPS.md 40: \"- Team decisions opened by A1: D27 (confirm the rider-message reading rule and its windows), D30 (rider messages before the driver marks arrival), D31 (waiting-fee decision table).\" Line 7: 'A1b applied Jasper's decisions D27, D30 and D31'.",
+     "failure_scenario": "A team member reading the people checklist would re-open decisions Jasper already made on 11 Oct.",
+     "suggested_fix": "Replace the line with 'Decided by Jasper (11 Oct): D27 accepted (D, unsettled readings to a person), D30 counts (at least approval), D31 known limitation of v0.2', and keep O13 and O14 as open organizer questions."
+    },
+    {
+     "id": "A1B-C-09",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1709,
+     "claim": "Two descriptive notes still describe CW-F06 as acting only during the wait. The DT-CW-NOSHOW credibility_note's list of READ parts does not mention D30's pre-arrival evidence, and the CW-F06 credibility_note still says 'The window starts at the arrival indication'.",
+     "evidence": "rules.yaml 1707-1710: 'that part of CW-F06 is a record check (no rider GPS or notification failure) plus a reading of the rider's calls and messages during the wait. Its READ parts (WEAK versus NONE for the statement; whether an unclear rider call or message places the rider at the pick-up) are tested case by case'. rules.yaml 625-626 (CW-F06 credibility_note): 'The window starts at the arrival indication, which can be earlier than CW-F04's window start'.",
+     "failure_scenario": "A reader who relies on these notes misses that pre-arrival messages and GPS (D30) also make CW-F06 decisive for R8.",
+     "suggested_fix": "Add D30 to both notes: the window for self-placement starts at the driver's assignment; the pre-arrival message or GPS is at least WEAK with STRONG as the other reading."
+    },
+    {
+     "id": "A1B-C-10",
+     "severity": "MINOR",
+     "file": "kb/tools/make_xlsx.py",
+     "line": 805,
+     "claim": "The annotation workbook's rider-side fields ignore pre-arrival rider messages and GPS that CW-F06 now counts. The annotation_schema note still defines CW-F06's window as starting at the arrival indication.",
+     "evidence": "make_xlsx.py 785: `in_wait = lambda ts: (arr or start) <= datetime.fromisoformat(ts) <= end`. Line 805: 'rider_side_evidence': (\"system_records\" if (any(in_wait(g[\"timestamp\"]) for g in ...) or any(c[\"sender\"] == \"rider\" and in_wait(c[\"timestamp\"]) ...)) else (\"statement_only\" ...)). annotation_schema.yaml 66: \"Rider calls and messages in CW-F06's window: from the arrival indication to the cancellation (no-show fee)...\"",
+     "failure_scenario": "A V69- or V71-type case in the annotation workbook shows rider_side_evidence = statement_only, although CW-F06 counts the rider's pre-arrival message or GPS. Today this has no effect, because only DISP-002 is rendered and it has no such evidence.",
+     "suggested_fix": "Count pre-arrival rider messages and GPS (from driver_assigned) in rider_side_evidence. Update the rider_contacts and rider_side_evidence notes to name D30's pre-arrival window."
+    },
+    {
+     "id": "A1B-C-11",
+     "severity": "MINOR",
+     "file": "kb/tools/explain.py",
+     "line": 319,
+     "claim": "The party-facing generic-assumption item now says 'phone GPS' for every decisive contact reading, including cases with no rider GPS at all. The same text says there is no GPS trace from the rider's phone.",
+     "evidence": "explain.py 319: `items.append(f\"how the rider's calls, messages or phone GPS were read ({rid})\")`. V62 and V66 rider text: 'There is no GPS trace from your phone in the trip record. Your message (E-CHT-04) does not clearly say whether you were at the pick-up point. ... Part of this decision rests on assumptions FairRyde made where Ryde has published nothing: how the rider's calls, messages or phone GPS were read (CW-F06).'",
+     "failure_scenario": "In every case that goes to approval only because of an unclear message or a call with unrecorded words (V62, V66), both parties are told that phone GPS was read, although there is none.",
+     "suggested_fix": "Build the wording from the ids in the decisive reading: E-RGPS ids mean 'phone GPS', E-CHT ids mean 'calls or messages'. Or keep the old message-only wording when no E-RGPS id is involved."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "A1B-C-01",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "I read engine_noshow.py lines 746-757. pre_msgs counts any rider message from driver_assigned up to the arrival that matches RIDER_SELF_PLACE_PHRASES. It does not run the LATE or fault check that rider_contact_reading uses during the wait. I re-ran /tmp/a1bcheck1/scripts/pre_match.py, pre_match2.py and scen.py, plus my own /tmp/a1bcheck1/skC/c01.py, which sends the same message at 08:41 (before the arrival) and at 08:44 (during the wait). The defect A1b adds: with V08's shape (sparse GPS, statement that does not contest), 'I was at home, sorry, coming' and 'I'm at the wrong block, walking over' sent before the arrival give WEAK, R10, ESCALATE_HUMAN, HUMAN. Sent during the wait, the same words read UNCLEAR and give R9, UPHOLD, APPROVE. A message sent before the driver arrived therefore weighs more than the same message sent during the wait, and it moves the outcome and tier of an in-scope no-show case. A1 skeptics rated this kind of safe-direction escalation CRITICAL (ENG-7). In every one of these runs the rider is told the message 'says you were already at the pick-up point', and both parties are told 'the rider disputes presence'. Two qualifications. (a) Scenario (1), V06 going from AUTO to APPROVE, is not a defect against the engine's accepted design: during the wait the same mixed message reads UNCLEAR and costs an approval too, and D27 sends unsettled readings to a person. (b) 'belum sampai', 'kat rumah lagi', '我在路上' and \"I'm waiting for my friend\" are phrase-list false positives inherited from A1. rider_contact_reading also reads them PLACES, and during the wait they give STRONG and R7, so the suggested fix (count only PLACES) would not catch them. The fix should route a pre-arrival UNCLEAR message the way an UNCLEAR one during the wait is routed, not count it as WEAK."
+    },
+    {
+     "id": "A1B-C-02",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Ran V72 (/tmp/a1bcheck1/skC/c02.py). rider_contests=False (statement 'Please refund the $5.00 cancellation fee charged on this trip.'), yet the CW-F06 step reads 'WEAK: the statement contests presence or place, but no rider-side record or rider message shows the rider at the pick-up; the rider is at the pick-up before the arrival indication (E-CHT-01)...'. That is false and contradicts itself. It comes from engine_noshow.py lines 773-777, written when WEAK could only come from the statement. CW-R12 (rules.yaml 896-897) still says R10 applies when 'the rider's statement contests presence'. Both parties get R10's plain text ('the rider disputes presence'). For a rider who placed themselves at the pick-up this is arguable, but the trace a human decider reads is plainly wrong. Outcome-neutral, so MAJOR, not CRITICAL."
+    },
+    {
+     "id": "A1B-C-03",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "playbooks.yaml line 72 (PB-CW-NOSHOW step 11) and line 119 (PB-CW-WAITING step 7) still limit the reading to the period from the arrival indication on. A1b did not touch playbooks.yaml (git diff --stat). CW-F06 (rules.yaml 608-611) now also counts messages and GPS from the driver's assignment (D30), and it applies to both CW-NOSHOW and CW-WAITING. The kb-step-check.js applier prompt says 'Follow the playbook's steps' and forbids opening open_items.yaml. The named rule card does carry D30, so a misdecision is possible but not certain. None of E01 to E15 has a rider message or rider GPS before the arrival (/tmp/a1bcheck1/skC/c03.py), so this is outcome-neutral today. MAJOR is right."
+    },
+    {
+     "id": "A1B-C-04",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MAJOR",
+     "reason": "Confirmed: open_items D31's decide field now ends 'D29 (A3) applies to no-show fees.' D29's own text and NEXT_STEPS line 39 say 'whenever upholding a fee' or 'every uphold'. The A1 applier gave waiting-fee case E07 tier AUTO, resting on CW-F04's ping-gap check (05_applier_round2.jsonl). However, A1's D31 text, which Jasper decided on, already said a DT-CW-WAITING was 'needed for D29 (A3) to apply to waiting fees'. So the builder's sentence can be read as the stated consequence of the limitation Jasper accepted. D29 could also be applied to waiting fees without a decision table, through an AUTH-level rule. Whether waiting fees are exempt from D29 in v0.2 is Jasper's call. It is outcome-neutral until A3, so MAJOR if the sentence is wrong. The incomplete list of rules (CW-R05 and CW-F06, with CW-R06 and CW-F04 missing) is MINOR on its own."
+    },
+    {
+     "id": "A1B-C-05",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced with scen.py (pin mismatch, rider GPS at the venue at 08:41:30). The rider reads 'Your phone's GPS shows you at the pick-up point before the driver marked arrival (E-RGPS-01)...' and then 'The pick-up pin is about 1,259 m ... you may not have been at the pin.' The explanation already used 'pick-up point' loosely for pin or venue before A1b (the gps_line sentence 'do not show you at the pick-up point during the wait' covers both), and it keeps 'pin' as a separate term. CW-F06 also counts the named venue as the pick-up. The sentence is confusing rather than false, and it changes nothing, so this is a wording issue: MINOR, not MAJOR."
+    },
+    {
+     "id": "A1B-C-06",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "open_items.yaml line 42. D30's 'changed' field still says a pre-arrival 'I'm at the pick-up point' message 'is not counted'. The decide field of the same entry, and CW-F06, say it is counted. The two statements contradict each other."
+    },
+    {
+     "id": "A1B-C-07",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Re-ran scen3.py: V62, V69 and V71 with filed_at 2026-11-20 each give UPHOLD CW-R-OUT-OF-WINDOW AUTO. scen.py shows the late-filed V69 rider text still says the pre-arrival message 'was counted as evidence for your side'. CW-F06 and D30 say an upheld fee 'always' needs approval. MAT-04's out-of-window rule is the obvious override, so AUTO is defensible and the defect lies in the wording. Part of the 'always' (for unclear readings) dates from A1. MINOR."
+    },
+    {
+     "id": "A1B-C-08",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "docs/NEXT_STEPS.md line 40 is unchanged from de711a3. It still says 'Team decisions opened by A1: D27 (confirm...), D30 (...), D31 (...)', while line 7 (changed by A1b) and open_items record all three as decided by Jasper. Stale checklist line."
+    },
+    {
+     "id": "A1B-C-09",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "rules.yaml 1707-1710: the DT-CW-NOSHOW credibility_note describes R8's CW-F06 part as a record check plus a reading 'during the wait', and its READ parts do not include D30's pre-arrival message or GPS (WEAK with STRONG as the other reading). The CW-F06 credibility_note (around line 625) explains only the window that starts at the arrival indication. The statement itself is correct, so this is missing detail."
+    },
+    {
+     "id": "A1B-C-10",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "make_xlsx.py 785: in_wait starts at the arrival (or the anchor). rider_contacts and rider_side_evidence (lines 801-808) count only rider GPS and contacts inside that window. annotation_schema.yaml line 66 defines CW-F06's window from the arrival indication. A pre-arrival message or GPS point that CW-F06 now counts would be labeled statement_only. Only DISP-002 is rendered, and it has none, so there is no effect today."
+    },
+    {
+     "id": "A1B-C-11",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "explain.py line 319 changed to 'how the rider's calls, messages or phone GPS were read'. Running V62 and V66 (/tmp/a1bcheck1/skC/c02.py), the rider text says 'There is no GPS trace from your phone in the trip record' and then lists that generic assumption. The 'or' list is not strictly false, but it is misleading wording."
+    }
+   ]
+  }
+ }
+]

@@ -25,7 +25,7 @@ Reference evaluation without an LLM: the run-agreement (A) and rules-engine agre
 | PB-CW-NOSHOW | 8 | CW-F03, CW-F03B | done | wait counted from 08:43:00; elapsed 480 s; threshold 480 s (at_least); margin +0 s: met; the records of the start or end differ by up to 10 s, more than the margin | E-TRP-01.driver_wait_start, E-TRP-01.cancellation_time |
 | PB-CW-NOSHOW | 9 | CW-F04 | done | CONSISTENT: window 08:43:00 to 08:51:00, 4 ping(s), max distance 0.0 m (area 50 m); longest stretch without presence evidence 180 s (limit 300 s) | E-GPS-05, E-GPS-06, E-GPS-07, E-GPS-08 |
 | PB-CW-NOSHOW | 10 | CW-F05 | done | ADEQUATE: driver 1 call(s) and 4 message(s), rider 0 contact(s) | E-CHT-01, E-CHT-02, E-CHT-03, E-CHT-04, E-CHT-05 |
-| PB-CW-NOSHOW | 11 | CW-F06 | done | WEAK: the statement contests presence or place, but no rider-side record or rider message shows the rider at the pick-up | E-TKT-01, E-APP-05 |
+| PB-CW-NOSHOW | 11 | CW-F06 | done | WEAK: the statement contests presence or place, but no rider-side record or rider message during the wait shows the rider at the pick-up | E-TKT-01, E-APP-05 |
 | PB-CW-NOSHOW | 12 | CW-F07 | done | pin is 1,259 m from the OneMap address of Tiong Bahru Plaza (limit 200 m): mismatch = True | E-TRP-01.pickup_location, E-GEO-01 |
 | PB-CW-NOSHOW | 13 | GEN-R05 | missing | advocate briefs are produced at run time by the Rider and Driver Advocates; not simulated in this offline check |  |
 | PB-CW-NOSHOW | 14 | DT-CW-NOSHOW | done | row R8 (credibility B): UPHOLD (CW-R-NOSHOW-VALID) | F-ARRIVAL-VALID, F-PRESENCE, F-WAIT-MARGIN, F-RIDER-EVIDENCE |
@@ -62,7 +62,7 @@ Sensitivity test (decisive definition, clause 2):
 |---|---|---|---|---|---|---|---|
 | BOOKING_INFER_MATCH_S | 60 | [30, 120] | D | 30 -> UPHOLD (R8) | 120 -> UPHOLD (R8) | no |  |
 | BOOKING_INFER_ETA_S | 120 | [60, 300] | D | 60 -> UPHOLD (R8) | 300 -> UPHOLD (R8) | no |  |
-| TS_TOLERANCE_S | 30 | [5, 60] | D | 5 -> UPHOLD (R8) | 60 -> UPHOLD (R8) | no | CW-R06, CW-F04 |
+| TS_TOLERANCE_S | 30 | [5, 60] | D | 5 -> UPHOLD (R8) | 60 -> UPHOLD (R8) | no | CW-R06, CW-F04, CW-F06 |
 | ARRIVAL_GEOFENCE_M | 50 | [10, 100] | D | 10 -> UPHOLD (R8) | 100 -> UPHOLD (R8) | no | CW-R06, CW-F04, CW-F06 |
 | PING_MAX_GAP_S | 300 | [60, 420] | D | 60 -> ESCALATE_HUMAN (R10) | 420 -> UPHOLD (R8) | yes (outcome changes) | CW-F04 |
 | LEFT_MIN_OUTSIDE_S | 60 | [30, 120] | D | 30 -> UPHOLD (R8) | 120 -> UPHOLD (R8) | no | CW-R06, CW-F04 |
@@ -113,7 +113,7 @@ Explanation drafts (EXP-01 to EXP-03):
 | PB-CW-NOSHOW | 8 | CW-F03, CW-F03B | done | wait counted from 08:43:00; elapsed 480 s; threshold 180 s (more_than); margin +300 s: met | E-APP-04, E-TRP-01.cancellation_time |
 | PB-CW-NOSHOW | 9 | CW-F04 | done | CONSISTENT: window 08:43:00 to 08:46:00, 2 ping(s), max distance 0.0 m (area 50 m); longest stretch without presence evidence 120 s (limit 300 s) | E-GPS-05, E-GPS-06 |
 | PB-CW-NOSHOW | 10 | CW-F05 | done | ADEQUATE: driver 1 call(s) and 4 message(s), rider 0 contact(s) | E-CHT-01, E-CHT-02, E-CHT-03, E-CHT-04, E-CHT-05 |
-| PB-CW-NOSHOW | 11 | CW-F06 | done | WEAK: the statement contests presence or place, but no rider-side record or rider message shows the rider at the pick-up | E-TKT-01, E-APP-05 |
+| PB-CW-NOSHOW | 11 | CW-F06 | done | WEAK: the statement contests presence or place, but no rider-side record or rider message during the wait shows the rider at the pick-up | E-TKT-01, E-APP-05 |
 | PB-CW-NOSHOW | 12 | CW-F07 | done | pin is 1,259 m from the OneMap address of Tiong Bahru Plaza (limit 200 m): mismatch = True | E-TRP-01.pickup_location, E-GEO-01 |
 | PB-CW-NOSHOW | 13 | GEN-R05 | missing | advocate briefs are produced at run time by the Rider and Driver Advocates; not simulated in this offline check |  |
 | PB-CW-NOSHOW | 14 | DT-CW-NOSHOW | done | row R8 (credibility B): UPHOLD (CW-R-NOSHOW-VALID) | F-ARRIVAL-VALID, F-PRESENCE, F-WAIT-MARGIN, F-RIDER-EVIDENCE |
@@ -150,7 +150,7 @@ Sensitivity test (decisive definition, clause 2):
 |---|---|---|---|---|---|---|---|
 | BOOKING_INFER_MATCH_S | 60 | [30, 120] | D | 30 -> UPHOLD (R8) | 120 -> UPHOLD (R8) | no | CW-F01 |
 | BOOKING_INFER_ETA_S | 120 | [60, 300] | D | 60 -> UPHOLD (R8) | 300 -> UPHOLD (R8) | no | CW-F01 |
-| TS_TOLERANCE_S | 30 | [5, 60] | D | 5 -> UPHOLD (R8) | 60 -> UPHOLD (R8) | no | CW-R06, CW-F04 |
+| TS_TOLERANCE_S | 30 | [5, 60] | D | 5 -> UPHOLD (R8) | 60 -> UPHOLD (R8) | no | CW-R06, CW-F04, CW-F06 |
 | ARRIVAL_GEOFENCE_M | 50 | [10, 100] | D | 10 -> UPHOLD (R8) | 100 -> UPHOLD (R8) | no | CW-R06, CW-F04, CW-F06 |
 | PING_MAX_GAP_S | 300 | [60, 420] | D | 60 -> ESCALATE_HUMAN (R10) | 420 -> UPHOLD (R8) | yes (outcome changes) | CW-F04 |
 | LEFT_MIN_OUTSIDE_S | 60 | [30, 120] | D | 30 -> UPHOLD (R8) | 120 -> UPHOLD (R8) | no | CW-R06, CW-F04 |

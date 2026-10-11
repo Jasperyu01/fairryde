@@ -8,10 +8,10 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 * DISP-002 fields mapped: 59 of 59 leaf paths
 * DT-CW-NOSHOW enumeration: {'combinations': 96, 'unique': 96, 'gaps': 0, 'overlaps': 0}
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
-* Engine self-test: 79/79 variants pass
+* Engine self-test: 89/89 variants pass
 * Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
-* Annotation workbook: workbooks skipped (--no-xlsx)
+* Annotation workbook: FairRyde_Annotation_v0.1.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.1.20261011T122749.xlsx
 * Issues: ERROR 0, WARN 0, INFO 5
 
 * DISP-002 under organizer_case: **UPHOLD** (row R8), reasons CW-R-NOSHOW-VALID, CW-R-PIN-AMBIGUOUS, flags BOOKING_TYPE_INFERRED, BOUNDARY_MARGIN, MARGIN_WITHIN_SPREAD, NO_RIDER_EVIDENCE, PIN_VENUE_MISMATCH, FRAUD_SIGNAL, GENERIC_ASSUMPTION_USED, confidence 0.689, tier **APPROVE**
@@ -110,6 +110,16 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | V71 | V06, and rider GPS at the pick-up at 08:41:30, before the arrival indication (D30): approval | UPHOLD | R8 | APPROVE | 1.0 | pass |
 | V72 | V08 (sparse driver GPS, statement not contesting), and the rider says 'I'm here at the pick-up point' before the arrival (D30) | ESCALATE_HUMAN | R10 | HUMAN | 0.7 | pass |
 | V73 | V06, and the rider says 'I'm at the lobby already' at 08:30:05, before the driver was assigned (08:30:15): not counted | UPHOLD | R8 | AUTO | 0.964 | pass |
+| V74 | V06, and the rider names the venue before the arrival: 'I'm at Tiong Bahru Plaza' at 08:41 (unclear placement): approval | UPHOLD | R8 | APPROVE | 0.964 | pass |
+| V75 | V06, and the rider sends 'u reach already?' at 08:41, before the arrival: a question, an instruction or an admission, not counted | UPHOLD | R8 | AUTO | 0.964 | pass |
+| V76 | V06, and the rider sends 'Pick me up at the lobby' at 08:41, before the arrival: a question, an instruction or an admission, not counted | UPHOLD | R8 | AUTO | 0.964 | pass |
+| V77 | V06, and the rider sends '我在路上' at 08:41, before the arrival: a question, an instruction or an admission, not counted | UPHOLD | R8 | AUTO | 0.964 | pass |
+| V78 | V06, and the rider calls the driver at 08:41, before the arrival (what was said is not recorded): not counted | UPHOLD | R8 | AUTO | 0.964 | pass |
+| V79 | V06, and the rider messages 'down liao, coming' during the wait: placement and admission, so unclear (approval) | UPHOLD | R8 | APPROVE | 1.0 | pass |
+| V80 | V06, the driver asks 'Are you at the lobby now?' and the rider answers with a thumbs-up: unclear in context, so approval | UPHOLD | R8 | APPROVE | 1.0 | pass |
+| V81 | V06, the trip record has the arrival at 08:42:50 and the event at 08:43:00; the rider contests at 08:42:55 (within the tolerance) | ESCALATE_HUMAN | R7 | HUMAN | 0.964 | pass |
+| V82 | V69 filed 40 days after the trip: MAT-04 decides, so the D30 message does not change the automatic outcome | UPHOLD | R8 | AUTO | 0.964 | pass |
+| V83 | V06 without the driver_assigned event (booking type not recorded): no crash; records missing, so approval | UPHOLD | R8 | APPROVE | 0.929 | pass |
 
 ## Entity coverage (ONT.6)
 
