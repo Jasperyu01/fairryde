@@ -11,7 +11,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 * Engine self-test: 89/89 variants pass
 * Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
-* Annotation workbook: FairRyde_Annotation_v0.1.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.1.20261011T122749.xlsx
+* Annotation workbook: workbooks skipped (--no-xlsx)
 * Issues: ERROR 0, WARN 0, INFO 5
 
 * DISP-002 under organizer_case: **UPHOLD** (row R8), reasons CW-R-NOSHOW-VALID, CW-R-PIN-AMBIGUOUS, flags BOOKING_TYPE_INFERRED, BOUNDARY_MARGIN, MARGIN_WITHIN_SPREAD, NO_RIDER_EVIDENCE, PIN_VENUE_MISMATCH, FRAUD_SIGNAL, GENERIC_ASSUMPTION_USED, confidence 0.689, tier **APPROVE**
