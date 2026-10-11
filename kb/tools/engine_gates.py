@@ -25,6 +25,9 @@ def resolve_g3(kb: KB, blind: dict, aware: dict | None = None, fraud_check_disag
     fired = differs or fraud_check_disagrees
     tier = blind["tier"]
     if fired:
-        tier = "HUMAN" if blind["outcome"] == "ESCALATE_HUMAN" else max(tier, gate_tier(kb, "G3"), key=_ORDER.__getitem__)
+        if blind["outcome"] == "ESCALATE_HUMAN" or blind["outcome"] is None:
+            tier = "HUMAN"
+        else:                                           # a tier the engine did not set (for example a reclassified case) counts as the lowest
+            tier = max(tier, gate_tier(kb, "G3"), key=lambda t: _ORDER.get(t, -1))
     return {"gate": "G3" if fired else None, "outcome": blind["outcome"], "amount": blind.get("amount"), "tier": tier,
             "shown_to_reviewer": {"history_aware": aware, "fraud_check_disagrees": fraud_check_disagrees} if fired else None}

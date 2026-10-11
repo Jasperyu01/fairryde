@@ -129,7 +129,7 @@ playbooks:
     answer_mode: RULING
     status: draft
     sources: [RYDE-30741244296217, RYDE-900003406966, RYDE-900004230226, RYDE-4412121982745, RYDE-4412122016153, LTA-PDVL-OFFENCES, IND-DIDI-DETOUR]
-    required_evidence: [E-TKT-01, E-TRP-01, "fare breakdown (E-PAY-*)", "recorded trip distance", "precomputed recommended route", "E-GPS-* trip trace", "E-CHT-* (route requests or agreements)", "traffic or incident snapshot"]
+    required_evidence: [E-TKT-01, E-TRP-01, "fare breakdown (E-PAY-*)", "recorded trip distance", "precomputed recommended route (with its ERP gantries)", "E-GPS-* trip trace", "ERP gantry log of the trip", "E-CHT-* (route requests or agreements)", "traffic or incident snapshot", "navigation record, if the driver relies on GPS"]
     steps:
       - {n: 1, do: COMPUTE, rule: FC-F01, note: "Pricing mode first: money before geometry"}
       - {n: 2, do: CHECK, rule: FC-R01, note: "Fixed fare and charged = quoted: no fare refund, but do not stop at the ERP: ERP the longer route caused goes to its own FC-TOLL claim (PB-FC-TOLL, FC-R08)"}
@@ -148,14 +148,14 @@ playbooks:
     when: {taxonomy: FC-TOLL}
     answer_mode: RULING
     status: draft
-    sources: [RYDE-115001438614, RYDE-115000772653, LTA-ERP-RATES]
-    required_evidence: [E-TKT-01, E-TRP-01, "toll_entered event and amount", "E-GPS-* trace with timestamps", "ERP rate table for the trip date"]
+    sources: [RYDE-115001438614, RYDE-115000772653, RYDE-33363192453785, RYDE-4412121982745, RYDE-4412122016153, LTA-ERP-RATES, LTA-PDVL-OFFENCES]
+    required_evidence: [E-TKT-01, E-TRP-01, "service type, and whether the trip is a carpool trip (is_carpool)", "toll_entered event and amount (the ERP line the rider was charged)", "E-GPS-* trace with timestamps", "ERP rate table for the trip date", "for a detour: the gantries of the recommended route and, if the driver relies on GPS, the trip's navigation record (an app event or other system record)"]
     steps:
-      - {n: 1, do: CHECK, rule: FC-R06, note: "The rider's share first (RydeSEND 0, carpool 0.5, otherwise 1); it takes precedence over the plain gantry sum in every ERP computation below"}
+      - {n: 1, do: CHECK, rule: FC-R06, note: "The rider's share first (RydeSEND 0, carpool 0.5, the six services Ryde names 1); it takes precedence over the plain gantry sum in every ERP computation below. Another service, RydeSEND and carpool at once: GEN-R07. No service type recorded: FC-R12"}
       - {n: 2, do: COMPUTE, rule: FC-F04, note: "Expected ERP = the rider's share times the gantry rates; the same computation gives ERP(recommended) for step 5"}
       - {n: 3, do: CHECK, rule: FC-R07, note: "Compare the ERP line the rider was charged with the rider's share, not with the plain gantry sum"}
       - {n: 4, do: READ, rule: FC-F03, note: "Only when the actual path passed gantries the recommended route avoids (a claim FC-R01 sent here, or one the rider raised)"}
-      - {n: 5, do: CHECK, rule: "FC-R08, FC-R12", note: "FC-R08 refunds the rider's share of ERP(actual) minus ERP(recommended); METERED (RydeTAXI): no ruling, escalate under GEN-R07 (FC-R00's reasoning, D32)"}
+      - {n: 5, do: CHECK, rule: "FC-R08, FC-R12", note: "FC-R08 refunds what the rider paid above ERP(recommended), up to the extra ERP the detour caused (rider's share, FC-F04); METERED (RydeTAXI): no ruling, escalate under GEN-R07 (FC-R00's reasoning, D32)"}
       - {n: 6, do: CHECK, rule: "FRD-01, GEN-R06", note: "ERP overstatement is a fraud signal; consequences are a human decision"}
       - {n: 7, do: GET, rule: GEN-R05, note: "Both advocates' briefs"}
       - {n: 8, do: ESCALATE_IF, rule: "AUTH-05, AUTH-01 to AUTH-04, AUTH-06"}

@@ -408,7 +408,7 @@ vocabularies:
       - {code: RYDEXL, label: RydeXL}
       - {code: RYDEX_GO, label: Ryde X GO}
       - {code: RYDEPOOL, label: RydePOOL}
-      - {code: RYDETAXI, label: RydeTAXI, note: "Metered fare; excluded from the cancellation policy (CW-R00) and from platform-computed detour refunds (FC-R00)."}
+      - {code: RYDETAXI, label: RydeTAXI, note: "Metered fare; excluded from the cancellation policy (CW-R00) and from platform-computed detour refunds (FC-R00, and FC-R08 for the ERP a detour caused, D32)."}
       - {code: RYDEPET, label: RydePET}
       - {code: RYDEFLASH, label: RydeFLASH}
       - {code: RYDELUXE, label: RydeLUXE}
@@ -607,9 +607,9 @@ vocabularies:
       - {code: FC-R-DETOUR-CONFIRMED, label: Unjustified detour increased a recalculated fare, outcome: PARTIAL_REFUND}
       - {code: FC-R-DETOUR-JUSTIFIED, label: "Deviation justified (traffic, closure, rider request, app reroute)", outcome: UPHOLD}
       - {code: FC-R-DETOUR-BORDERLINE, label: Detour near the threshold, outcome: ESCALATE_HUMAN}
-      - {code: FC-R-TOLL-OVERSTATED, label: ERP entered exceeds the gantries passed, outcome: TOLL_REFUND}
+      - {code: FC-R-TOLL-OVERSTATED, label: "ERP charged to the rider exceeds the rider's share of the gantries passed (FC-R06)", outcome: TOLL_REFUND}
       - {code: FC-R-TOLL-FROM-DETOUR, label: ERP incurred only because of an unjustified detour, outcome: TOLL_REFUND}
-      - {code: FC-R-TOLL-VALID, label: ERP matches the gantries passed, outcome: UPHOLD}
+      - {code: FC-R-TOLL-VALID, label: "ERP charged to the rider matches the rider's share of the gantries passed (FC-R06), and no refund is due for a detour", outcome: UPHOLD}
       - {code: FC-R-DEST-FEE-VALID, label: Destination edit was accepted by the driver; fee and recalculated fare stand, outcome: UPHOLD}
       - {code: FC-R-DEST-FEE-INVALID, label: Destination fee charged without an accepted edit or on a service that cannot edit, outcome: PARTIAL_REFUND}
       - {code: FC-R-NOPICKUP-CONFIRMED, label: Trip completed without the rider onboard, outcome: FULL_REFUND}

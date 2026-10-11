@@ -64,6 +64,8 @@ def main(argv):
     a2_bad = selftest.erp_check(kb) + selftest.erp_code_check(kb) + selftest.g3_check(kb) + selftest.rule_card_check(kb)
     for x in a2_bad:
         rep.add("ERROR", "erp-g3-selftest", x["id"], f"{x['variant']}: " + "; ".join(x["problems"]))
+    erp_line = (f"ERP rules self-test: {len(selftest.erp_cases())} ERP cases, the FC-R01 split, gate G3 and the A2 rule-card checks: "
+                + ("all pass" if not a2_bad else f"{len(a2_bad)} problem(s)"))
     decided = {t["got"]["row"] for t in tests if t["got"]["row"] and t["got"]["reasons"]
                and t["got"]["reasons"][0] not in ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP")}
     for row in kb.y["rules"]["decision_tables"]["DT-CW-NOSHOW"]["rows"]:
@@ -133,7 +135,7 @@ def main(argv):
         files = [kb_path, ann_path]
 
     (out / "disp002_trace.md").write_text(report_md.trace_report(kb, runs), encoding="utf-8")
-    (out / "check_report.md").write_text(report_md.check_report(kb, rep, runs, dt_enum, priv, tests, None, ann_status), encoding="utf-8")
+    (out / "check_report.md").write_text(report_md.check_report(kb, rep, runs, dt_enum, priv, tests, None, ann_status, erp_line), encoding="utf-8")
 
     # leak scan of everything generated (ONT.11.4): dictionary terms, identifier patterns and name fragments, counts only
     allow = {a for a in kb.articles} | set(re.findall(r"\d{9,}", json.dumps(kb.corpus.get("section_listings", {}))))
@@ -154,7 +156,7 @@ def main(argv):
         rescan = privacy_scan.output_scan(privacy_scan.xlsx_strings(kb_path), terms, allow)
         if rescan["total"] and not out_scan["total"]:
             rep.add("ERROR", "privacy-outputs", kb_path.name, f"the regenerated workbook contains identifiers (counts only): {rescan}")
-    (out / "check_report.md").write_text(report_md.check_report(kb, rep, runs, dt_enum, priv, tests, out_scan, ann_status), encoding="utf-8")
+    (out / "check_report.md").write_text(report_md.check_report(kb, rep, runs, dt_enum, priv, tests, out_scan, ann_status, erp_line), encoding="utf-8")
 
     st = stats.compute(kb, rep, priv)
     print(f"rules {len(kb.rules)} | vocabularies {len(kb.vocab)} | entities {len(kb.entities)} | events {st['n_events']} | playbooks {len(kb.playbooks)}")
@@ -164,8 +166,7 @@ def main(argv):
         print(f"DISP-002 [{prof}]: {t.outcome} via {t.dt_row}, reasons {t.reasons}, flags {t.flags}, C={t.confidence['C']}, tier {r['tier']['tier']}")
     print(f"DT-CW-NOSHOW enumeration: {dt_enum}")
     print(f"engine self-test: {sum(t['ok'] for t in tests)}/{len(tests)} variants pass; rows decided by self-tests: {sorted(decided, key=lambda s: int(s[1:]))}")
-    print(f"ERP rules self-test: {len(selftest.erp_cases())} ERP cases, the FC-R01 split, gate G3 and the A2 rule-card checks: "
-          + ("all pass" if not a2_bad else f"{len(a2_bad)} problem(s)"))
+    print(erp_line)
     n_read = len(selftest.READING_CASES) + len(selftest.BEFORE_ARRIVAL_CASES) + len(selftest.reading_corpus())
     print(f"CW-F06 message readings: {n_read - len(reading_bad)}/{n_read} pass (exact cases and the reviewers' corpus)")
     if fuzz:

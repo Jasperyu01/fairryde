@@ -745,7 +745,7 @@ def _erp_case(service="RydeX", gantries=(("CTE (southbound)", 2.50),), charged=2
          "erp_charges": {"gantry_passes": [{"timestamp": _ts("08:29:50"), "gantry": g[0], "rate_sgd": g[1], "active": g[2] if len(g) > 2 else True}
                                             for g in gantries]}}
     if carpool:
-        c["trip_data"]["carpool"] = True
+        c["trip_data"]["is_carpool"] = True
     if recommended is not None:
         c["route_review"] = {"recommended_gantries": [{"gantry": g[0], "rate_sgd": g[1], "active": True} for g in recommended],
                              "justification": justification}
@@ -792,6 +792,23 @@ def erp_cases() -> list:
         ("T17", "a gantry that was not active is not counted", _erp_case(gantries=(CTE, ("PIE (eastbound)", 4.00, False)), charged=2.50), valid),
         ("T18", "S$0.30 over: the outcome depends on TOLL_TOLERANCE_SGD within its plausible range, so approval",
          _erp_case(charged=2.80), {**over, "amount": 0.30, "decisive": ["TOLL_TOLERANCE_SGD"]}),
+        # round 1 check findings (A2): services Ryde sets no share for, an unrecorded service, a charge below ERP(actual)
+        ("T19", "RydePOOL: its 2026 and 2023 driver pages disagree, so no share and no automatic uphold (GEN-R07)",
+         _erp_case(service="RydePOOL", gantries=(CTE, PIE), charged=6.50), gap),
+        ("T20", "RydeHIRE: Ryde sets no share (GEN-R07)", _erp_case(service="RydeHIRE", gantries=(CTE, PIE), charged=6.50), gap),
+        ("T21", "service type not recorded: insufficient data (FC-R12), records missing",
+         _erp_case(service=None, charged=2.50), {"outcome": "ESCALATE_HUMAN", "reasons": ["FC-R-INSUFFICIENT-DATA"], "tier": "HUMAN", "flags": ["RECORDS_MISSING"]}),
+        ("T22", "RydeSEND spelled 'Ryde Send' is still RydeSEND", _erp_case(service="Ryde Send", charged=2.50), {**over, "amount": 2.50}),
+        ("T23", "detour, but the rider was charged only the ERP of the recommended route (S$2.50): nothing to refund",
+         _erp_case(gantries=(CTE, PIE), charged=2.50, recommended=[CTE]), valid),
+        ("T24", "detour, the rider was charged S$4.00: refund the S$1.50 above the recommended route's S$2.50, not S$4.00",
+         _erp_case(gantries=(CTE, PIE), charged=4.00, recommended=[CTE]), {**detour, "amount": 1.50}),
+        ("T25", "detour, no ERP charged at all: UPHOLD with the valid reason only, no detour reason",
+         _erp_case(gantries=(CTE, PIE), charged=0.0, recommended=[CTE]), valid),
+        ("T26", "a negative ERP line is unusable data (FC-R12)", _erp_case(charged=-1.0), {"outcome": "ESCALATE_HUMAN", "reasons": ["FC-R-INSUFFICIENT-DATA"], "tier": "HUMAN"}),
+        ("T27", "RydeTAXI with an overstated line and a detour: the whole claim escalates, the FC-R07 finding is attached and the fraud signal stays",
+         _erp_case(service="RydeTAXI", gantries=(CTE, PIE), charged=10.00, recommended=[CTE], fare_type="metered"),
+         {**gap, "fraud": ["DRIVER"], "attach": {"fc_r07_overstatement": 3.50, "difference": 4.00}}),
     ]
 
 
@@ -802,6 +819,7 @@ def erp_check(kb) -> list:
         r = T.run(kb, case)
         got = {"outcome": r["outcome"], "amount": r["amount"], "reasons": r["reasons"], "fraud": r["fraud"], "tier": r["tier"]}
         problems = [f"{k}: expected {v}, got {got[k]}" for k, v in exp.items() if k in got and got[k] != v]
+        problems += [f"missing flag {f} (flags {r['flags']})" for f in exp.get("flags", []) if f not in r["flags"]]
         problems += [f"{d} not decisive (decisive: {[x for x, _ in r['decisive']]})" for d in exp.get("decisive", []) if d not in [x for x, _ in r["decisive"]]]
         problems += [f"attach {k}: expected {v}, got {r['attach'].get(k)}" for k, v in exp.get("attach", {}).items() if r["attach"].get(k) != v]
         if problems:
@@ -810,11 +828,18 @@ def erp_check(kb) -> list:
     route = T.fc_r01(kb, _erp_case(gantries=(CTE, PIE), charged=6.50, recommended=[CTE]))
     same = T.fc_r01(kb, _erp_case(gantries=(CTE, PIE), charged=6.50, recommended=[CTE, PIE]))
     changed = T.fc_r01(kb, _erp_case(gantries=(CTE, PIE), charged=6.50, recommended=[CTE], base_fare=22.00))
+    taxi = T.fc_r01(kb, _erp_case(service="RydeTAXI", gantries=(CTE, PIE), charged=6.50, recommended=[CTE], fare_type="fixed at booking"))
+    norec = T.fc_r01(kb, _erp_case(gantries=(CTE, PIE), charged=6.50))
+    loop = T.fc_r01(kb, _erp_case(gantries=(CTE, CTE), charged=5.00, recommended=[CTE]))
     checks = [("R1", "fixed fare, charged = quoted, a gantry only the actual path passed: no fare refund and an FC-TOLL claim of S$4.00",
                route["applies"] and route["fare_refund"] == 0.0 and route["toll_claim"] and route["toll_claim"]["outcome"] == "TOLL_REFUND"
                and route["toll_claim"]["amount"] == 4.00 and route["extra_gantries"] == [PIE[0]]),
               ("R2", "the same gantries on both paths: no FC-TOLL claim", same["applies"] and same["toll_claim"] is None),
-              ("R3", "charged fare differs from the quote: FC-R01 does not apply", not changed["applies"] and changed["toll_claim"] is None)]
+              ("R3", "charged fare differs from the quote: FC-R01 does not apply", not changed["applies"] and changed["toll_claim"] is None),
+              ("R4", "RydeTAXI is METERED (FC-F01) whatever fare_type says: FC-R01 does not apply", not taxi["applies"] and taxi["toll_claim"] is None),
+              ("R5", "the recommended route's gantries are missing: no claim can be opened, FC-R12", norec["applies"] and norec["toll_claim"] is None and norec["escalate"] == "FC-R12"),
+              ("R6", "the longer route passes the same gantry again: the extra pass opens the claim",
+               loop["extra_gantries"] == [CTE[0]] and loop["toll_claim"] is not None and loop["toll_claim"]["amount"] == 2.50)]
     bad += [{"id": i, "variant": d, "problems": ["FC-R01 split not as the rule card says"]} for i, d, ok in checks if not ok]
     return bad
 
@@ -827,6 +852,10 @@ def erp_code_check(kb) -> list:
         for kind, vocab, vals in (("outcome", "TX-OUTCOME", [r["outcome"]]), ("reason", "TX-REASON", r["reasons"]),
                                   ("flag", "TX-FLAG", r["flags"]), ("tier", "TX-TIER-AUTONOMY", [r["tier"]])):
             bad += [{"id": cid, "variant": "codes", "problems": [f"{kind} {v} is not in {vocab}"]} for v in vals if v not in kb.vocab[vocab]]
+        for rc in r["reasons"]:         # a reason code carries its own outcome in the taxonomy; it must match the ruling
+            want = kb.vocab["TX-REASON"].get(rc, {}).get("outcome")
+            if want and want != r["outcome"]:
+                bad.append({"id": cid, "variant": "codes", "problems": [f"reason {rc} belongs to outcome {want}, but the ruling is {r['outcome']}"]})
     return bad
 
 
@@ -868,6 +897,11 @@ def g3_check(kb) -> list:
     res = G.resolve_g3(kb, {"outcome": "UPHOLD", "amount": None, "tier": "AUTO"}, None, fraud_check_disagrees=True)
     if res["gate"] != "G3" or res["outcome"] != "UPHOLD" or res["tier"] != "APPROVE":
         bad.append({"id": "G3-resolve", "variant": "the fraud check disagrees", "problems": [f"expected UPHOLD at APPROVE, got {res}"]})
+    text = " ".join(kb.rules["AUTH-04"]["statement"].split())
+    approve = [x for x in text.split(". ") if "provisional ruling for approval" in x]
+    nosingle = [x for x in text.split(". ") if "leave no single ruling" in x]
+    if not approve or "G3" not in approve[0] or not nosingle or "G3" in nosingle[0] or "history-blind pass's ruling" not in text:
+        bad.append({"id": "G3-card", "variant": "AUTH-04 prose", "problems": ["G3 must be in the sentence that keeps a provisional ruling for approval, not in the one that leaves no single ruling, and the provisional ruling must be the history-blind pass's"]})
     tiers = kb.rules["AUTH-04"].get("gate_tiers", {})
     stated = set(re.findall(r"\bG\d\b", kb.rules["AUTH-04"]["statement"]))
     if set(tiers) != stated:
@@ -887,7 +921,9 @@ def rule_card_check(kb) -> list:
         if not ok:
             bad.append({"id": rid, "variant": "rule card", "problems": [msg]})
     share = kb.tables.get("ERP_RIDER_SHARE", {}).get("value", {})
-    need("FC-R06", share == {"default": 1.0, "RYDESEND": 0.0, "CARPOOL": 0.5}, f"ERP_RIDER_SHARE is {share}")
+    named = {c: 1.0 for c in ("RYDEFLASH", "RYDEPET", "RYDEX", "RYDEXL", "RYDELUXE", "RYDETAXI")}
+    need("FC-R06", share == {**named, "RYDESEND": 0.0, "CARPOOL": 0.5}, f"ERP_RIDER_SHARE is {share}: only the services Ryde's 2026 driver article names have a share")
+    need("FC-R06", "RydePOOL" in R["FC-R06"]["statement"] and "GEN-R07" in R["FC-R06"]["statement"], "the services with no share (RydePOOL) are not sent to GEN-R07")
     for rid in ("FC-R06", "FC-F04", "FC-R07", "FC-R08"):
         txt = R[rid]["statement"]
         need(rid, rid == "FC-R06" or "FC-R06" in txt, "does not apply FC-R06's exceptions")

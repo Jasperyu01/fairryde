@@ -3,12 +3,13 @@
 Generated from the YAML source files (knowledge base dated 2026-10-05).
 
 * Rules: 88; vocabularies: 22; TX-CASE leaves: 33; entities: 20; events: 35; playbooks: 11
-* Rule sources: 151; VERIFIED 120, NO_QUOTE (design assumption) 24, PARAPHRASE 7
+* Rule sources: 154; VERIFIED 120, NO_QUOTE (design assumption) 27, PARAPHRASE 7
 * Credibility: A 27, B 11, C 5, D 45; modes: HARD 74, HARD+READ 6, READ 8
 * DISP-002 fields mapped: 59 of 59 leaf paths
 * DT-CW-NOSHOW enumeration: {'combinations': 96, 'unique': 96, 'gaps': 0, 'overlaps': 0}
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
 * Engine self-test: 99/99 variants pass
+* ERP rules self-test: 27 ERP cases, the FC-R01 split, gate G3 and the A2 rule-card checks: all pass
 * Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
 * Annotation workbook: workbooks skipped (--no-xlsx)
@@ -239,7 +240,8 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | FC-F03 | 2 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | hence the driver may decide to take the most efficient route according to GPS. |  |
 | FC-F03 | 3 | RYDE_POLICY | RYDE-4412122016153 | 2023-06-16 |  | VERIFIED | corpus body | So you may decide to take the fastest or most efficient route based on your GPS. |  |
 | FC-F03 | 4 | REGULATION | LTA-PDVL-OFFENCES | 2023-04-01 |  | VERIFIED | sources/research/09_fact_check.md | Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct  |  |
-| FC-F03 | 5 | INDUSTRY | IND-DIDI-DETOUR | undated (read 2026-10-05) |  | VERIFIED | sources/research/09_fact_check.md | 司机采用 App 导航，导致的乘客投诉绕路，视为司机履约，不承担违约责任 |  |
+| FC-F03 | 5 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Requiring the trip's navigation record for the GPS justification, and not accepting the dr |
+| FC-F03 | 6 | INDUSTRY | IND-DIDI-DETOUR | undated (read 2026-10-05) |  | VERIFIED | sources/research/09_fact_check.md | 司机采用 App 导航，导致的乘客投诉绕路，视为司机履约，不承担违约责任 |  |
 | FC-F04 | 1 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | Please key in ERP based on the ERP gantry you passed during the journey. |  |
 | FC-F04 | 2 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The fares for RydeSEND include ERP. |  |
 | FC-F04 | 3 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%. |  |
@@ -250,6 +252,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | FC-R01 | 1 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | The trip fare is fixed based on pick-up and drop-off points, hence the driver may decide to take the most effi |  |
 | FC-R01 | 2 | RYDE_POLICY | RYDE-30741244296217 | 2025-07-17 |  | VERIFIED | corpus body | Fares quoted for our services are generally fixed, except for RydeTAXI. | [clause is one side of a META-04 known conflict: does not count toward A] |
 | FC-R01 | 3 | RYDE_POLICY | RYDE-360004075214 | 2024-10-08 |  | VERIFIED | corpus body | All fares are fixed at the time of booking but does not include toll charges such as ERP. |  |
+| FC-R01 | 4 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Opening the FC-TOLL claim without the rider naming the ERP is FairRyde's design (open item |
 | FC-R02 | 1 | RYDE_POLICY | RYDE-4412122016153 | 2023-06-16 |  | VERIFIED | corpus body | So you may decide to take the fastest or most efficient route based on your GPS. |  |
 | FC-R02 | 2 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | If you have a preferred route, you may recommend this to your driver and reach a mutual agreement before you g |  |
 | FC-R03 | 1 | REGULATION | LTA-PDVL-OFFENCES | 2023-04-01 |  | VERIFIED | sources/research/09_fact_check.md | Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct  |  |
@@ -262,7 +265,8 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | FC-R07 | 1 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | Please bear in mind that if an additional/excessive amount is keyed in, this will be considered fraudulent and |  |
 | FC-R07 | 2 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The fares for RydeSEND include ERP. |  |
 | FC-R07 | 3 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%. |  |
-| FC-R08 | 1 | REGULATION | LTA-PDVL-OFFENCES | 2023-04-01 |  | VERIFIED | sources/research/09_fact_check.md | Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct  | LTA's list is the PDVL (private-hire driver's vocational license) offence list as at 1 Apr |
+| FC-R07 | 4 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | The refund of the difference is FairRyde's remedy (a recommendation under Ryde's discretio |
+| FC-R08 | 1 | REGULATION | LTA-PDVL-OFFENCES | 2023-04-01 |  | VERIFIED | sources/research/09_fact_check.md | Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct  | LTA's list is the PDVL (private-hire driver's vocational license) offense list as at 1 Apr |
 | FC-R08 | 2 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Turning the route duty into an ERP refund, and escalating a metered fare instead (D32), ar |
 | FC-R09 | 1 | RYDE_POLICY | RYDE-51399796192921 | 2025-10-10 |  | VERIFIED | corpus body | If the driver accepts your edit destination request, a $3.00 add/edit destination fee will apply. |  |
 | FC-R09 | 2 | RYDE_POLICY | RYDE-50798691815449 | 2025-10-09 |  | VERIFIED | corpus body | *RydePOOL, RydeTAXI & Multiple stop bookings are not allowed to make any changes in destination. |  |
@@ -360,16 +364,16 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | CW-R12 | outcome | D | HARD |  | FAIRRYDE |  |
 | FC-F01 | fact | B | HARD |  | RYDE_POLICY | 'Fares are fixed' comes from rider articles edited more than 12 months ago, and a driver FAQ describes earnings from dri |
 | FC-F02 | fact | D | HARD | D | FAIRRYDE |  |
-| FC-F03 | fact | C | READ |  | INDUSTRY, REGULATION, RYDE_POLICY | Rider agreement and the GPS most-efficient route are Ryde text, but both route articles were edited more than 12 months  |
+| FC-F03 | fact | C | READ |  | FAIRRYDE, INDUSTRY, REGULATION, RYDE_POLICY | Rider agreement and the GPS most-efficient route are Ryde text, but both route articles were edited more than 12 months  |
 | FC-F04 | fact | A | HARD | A | RYDE_POLICY | The gantry sum and both exceptions are Ryde text in a driver article edited 2026-09-02 (A). The order of application is  |
 | FC-R00 | eligibility | D | HARD | C | FAIRRYDE, RYDE_POLICY | The RydeTAXI facts are Ryde text (rider and driver articles edited 2026-01-26, A). Excluding metered fares from a platfo |
-| FC-R01 | outcome | B | HARD |  | RYDE_POLICY | Both rider articles were edited more than 12 months ago (2024-10-01, 2025-07-17), and the article saying fixed fares exc |
+| FC-R01 | outcome | B | HARD |  | FAIRRYDE, RYDE_POLICY | Both rider articles were edited more than 12 months ago (2024-10-01, 2025-07-17), and the article saying fixed fares exc |
 | FC-R02 | eligibility | B | READ |  | RYDE_POLICY | Both articles were edited more than 12 months ago (2023-06-16, 2024-10-01). |
 | FC-R03 | outcome | C | HARD+READ | C | INDUSTRY, REGULATION | The duty to take the shortest route is in Singapore regulation (B); the numeric thresholds are DiDi's published values u |
 | FC-R04 | outcome | D | HARD | D | FAIRRYDE |  |
 | FC-R05 | remedy | D | HARD | D | INDUSTRY |  |
-| FC-R06 | eligibility | A | HARD | A | RYDE_POLICY | Both exceptions are Ryde text in a driver article edited 2026-09-02 (A). The order of application and the pointer to GEN |
-| FC-R07 | outcome | A | HARD+READ | D | RYDE_POLICY | The overstatement rule and its fraud consequence are Ryde's (A), with the rider's share from FC-R06 (A). The tolerance i |
+| FC-R06 | eligibility | A | HARD | A | RYDE_POLICY | Every share is Ryde text in a driver article edited 2026-09-02 (A). The order of application and the pointers to GEN-R07 |
+| FC-R07 | outcome | A | HARD+READ | D | FAIRRYDE, RYDE_POLICY | The overstatement rule and its fraud consequence are Ryde's (A), with the rider's share from FC-R06 (A). Refunding the d |
 | FC-R08 | outcome | D | HARD+READ | A | FAIRRYDE, REGULATION | The route duty is regulatory (B) and verified for PDVL drivers only; turning it into a platform-computed ERP refund is F |
 | FC-R09 | eligibility | A | HARD | A | RYDE_POLICY |  |
 | FC-R10 | outcome | D | HARD+READ |  | RYDE_POLICY | Investigation and sanctions are Ryde's (A); the full-refund remedy is FairRyde's inference (D). |

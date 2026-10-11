@@ -538,7 +538,9 @@ def s_auth(wb, kb):
              ("G5", "置信度低于 τ", "离线参考引擎检查（A、R 两项按 1.0 计）"), ("G6", "金额超过自动上限", "离线参考引擎检查"),
              ("G7", "引用或数字校验重试一次仍失败", "运行时（离线解释草稿已做数字核对 EXP-03）"), ("G8", "Judge 多次运行之间或与规则引擎不一致", "运行时")]
     r = heading(ws, r, "升级门（AUTH-04，任一触发即转人工并附暂定裁决）")
-    r = table(ws, r, ["门", "条件", "在哪里检查"], gates)
+    gt = kb.rules["AUTH-04"].get("gate_tiers", {})
+    gates = [(g, c, w, gt.get(g, "")) for g, c, w in gates]
+    r = table(ws, r, ["门", "条件", "在哪里检查", "等级（AUTH-04 gate_tiers）"], gates)
     r = heading(ws, r, "FairRyde 永远不做的事")
     table(ws, r, ["#", "内容"], [(i + 1, x) for i, x in enumerate(kb.y["scope"]["decision_goal"]["never_decided_by_fairryde"])])
     finish(ws, freeze=None)

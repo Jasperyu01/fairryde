@@ -99,6 +99,7 @@ entities:
       - {name: cancellation_reason, type: "enum TX-CANCELREASON", source_field: trip_data.cancellation_reason}
       - {name: booking_type, type: "enum TX-BOOKING", data_gap: true, note: "Not in DISP-002; inferred by rule CW-F01."}
       - {name: service_type, type: "enum TX-SERVICE", data_gap: true}
+      - {name: is_carpool, type: boolean, data_gap: true, note: "True for a carpool trip when the service type does not say so (rule FC-R06: the rider pays half of the ERP). With service_type CARPOOL it is implied. Together with RYDESEND the share is undefined (GEN-R07)."}
       - {name: pricing_mode, type: "enum TX-PRICING", data_gap: true}
       - {name: matched_at, type: datetime, data_gap: true, note: "DISP-002 gives it only as the driver_assigned event time."}
       - {name: picked_up_at, type: datetime, data_gap: true}
