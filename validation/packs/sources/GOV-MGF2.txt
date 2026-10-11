@@ -1,0 +1,7 @@
+DOCUMENT GOV-MGF2
+TITLE: Model AI Governance Framework, Second Edition (2020)
+TYPE: GOV_GUIDANCE
+URL: https://www.pdpc.gov.sg/-/media/Files/PDPC/PDF-Files/Resource-for-Organisation/AI/SGModelAIGovFramework2.pdf
+DATE: 2020-01-21
+
+(no local copy of this document)

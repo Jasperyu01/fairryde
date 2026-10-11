@@ -1,0 +1,23 @@
+{
+ "rule_id": "EXP-01",
+ "name": "What each party is told",
+ "family": "EXP",
+ "type": "explanation",
+ "applies_to": [
+  "ALL"
+ ],
+ "mode": "HARD",
+ "statement": "Each party receives: the outcome; every rule used, each with its source and credibility label, marking which ones decided the outcome; two to four decisive evidence items; what evidence was missing; whether history was used; and how to ask for a human review of the decision (AUTH-01). Ryde's 30-day limit applies to waiver requests, not to reviews of a FairRyde ruling, so it is not presented as an appeal deadline.",
+ "params": [],
+ "produces": null,
+ "produces_finding": null,
+ "sources": [
+  {
+   "type": "GOV_GUIDANCE",
+   "doc": "GOV-MGF2",
+   "quote_kind": "paraphrase",
+   "source_file": "packs/sources/GOV-MGF2.txt"
+  }
+ ],
+ "set": "random"
+}

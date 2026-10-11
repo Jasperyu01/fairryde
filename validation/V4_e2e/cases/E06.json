@@ -1,0 +1,100 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E06",
+    "trip_id": "TRIP-2026-36610",
+    "filed_by": "rider",
+    "dispute_type": "cancellation_fee",
+    "description": "I had a 6:30am advance booking to the airport. My airline moved my flight, so I cancelled at 6:12, more than 15 minutes before pickup, and I even messaged the driver to apologise. The app still charged me $6.61. Your own policy says cancellations more than 15 minutes before the scheduled time are free. Please refund it.",
+    "filed_at": "2026-09-21T08:10:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-9152",
+    "name": "Arjun Mehta",
+    "account_age_days": 1460,
+    "total_trips": 312,
+    "avg_rating": 4.9,
+    "dispute_history": {
+      "total_disputes": 2,
+      "upheld": 2,
+      "rejected": 0
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "card"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-2845",
+    "name": "Low Siew Ling",
+    "account_age_days": 980,
+    "total_trips": 3150,
+    "avg_rating": 4.95,
+    "dispute_history": {
+      "total_disputes": 0,
+      "upheld_against": 0,
+      "rejected": 0
+    },
+    "fraud_flags": 0,
+    "vehicle": "Kia Niro (SNE 6051 Z)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-36610",
+    "rider_id": "R-9152",
+    "driver_id": "D-2845",
+    "service_type": "RydeX",
+    "booking_type": "advance",
+    "pickup_location": {
+      "name": "Blk 618 Punggol Drive",
+      "lat": 1.4022,
+      "lng": 103.9065
+    },
+    "dropoff_location": {
+      "name": "Changi Airport Terminal 1 (Departure)",
+      "lat": 1.3615,
+      "lng": 103.9893
+    },
+    "booked_time": "2026-09-20T21:15:00+08:00",
+    "matched_time": "2026-09-20T22:02:00+08:00",
+    "scheduled_time": "2026-09-21T06:30:00+08:00",
+    "driver_arrival_time": null,
+    "driver_wait_start": null,
+    "cancelled_by": "rider",
+    "cancellation_time": "2026-09-21T06:12:30+08:00",
+    "cancellation_fee": 6.61,
+    "cancellation_reason": "rider_cancelled_change_of_plans",
+    "quoted_fare": 24.60
+  },
+
+  "fare_breakdown": {
+    "trip_fare": 0.00,
+    "cancellation_fee": 6.61,
+    "total_charged": 6.61,
+    "payment_method": "card",
+    "note": "Advance trip cancelled before pickup; only the cancellation fee was charged."
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-21T06:05:30+08:00", "lat": 1.3830, "lng": 103.8930, "speed_kmh": 48, "status": "en_route"},
+    {"timestamp": "2026-09-21T06:09:00+08:00", "lat": 1.3905, "lng": 103.8985, "speed_kmh": 52, "status": "en_route"},
+    {"timestamp": "2026-09-21T06:12:30+08:00", "lat": 1.3968, "lng": 103.9031, "speed_kmh": 35, "status": "cancelled"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-21T06:05:20+08:00", "sender": "driver", "type": "message", "content": "Good morning, I'm on the way, will reach about 6:25."},
+    {"timestamp": "2026-09-21T06:11:50+08:00", "sender": "rider", "type": "message", "content": "Sorry, my flight got rescheduled, I'll have to cancel. Thank you and sorry for the trouble."},
+    {"timestamp": "2026-09-21T06:12:30+08:00", "sender": "system", "type": "system", "content": "Trip cancelled by rider. Cancellation fee of $6.61 applied."}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-20T21:15:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-9152 booked advance RydeX trip TRIP-2026-36610 from Blk 618 Punggol Drive to Changi Airport Terminal 1. Scheduled pickup 2026-09-21 06:30. Fixed fare quoted $24.60. Payment: card."},
+    {"timestamp": "2026-09-20T22:02:00+08:00", "event_type": "driver_assigned", "details": "Driver D-2845 (Low Siew Ling, Kia Niro SNE 6051 Z) accepted the advance booking."},
+    {"timestamp": "2026-09-21T05:45:00+08:00", "event_type": "reminder_sent", "details": "Reminder push sent to rider and driver: pickup at 06:30."},
+    {"timestamp": "2026-09-21T06:05:00+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-21T06:12:30+08:00", "event_type": "rider_cancelled", "details": "Rider cancelled advance trip. Reason selected: 'Change of plans'. Time to scheduled pickup: 17 min 30 s."},
+    {"timestamp": "2026-09-21T06:12:30+08:00", "event_type": "cancellation_fee_applied", "details": "Rule applied: driver already en route. $6.61 cancellation fee charged to rider payment method (card)."},
+    {"timestamp": "2026-09-21T06:12:35+08:00", "event_type": "driver_released", "details": "Driver D-2845 released from trip. Trip status: cancelled (rider)."}
+  ]
+}

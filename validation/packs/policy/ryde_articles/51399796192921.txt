@@ -1,0 +1,8 @@
+RYDE HELP CENTRE ARTICLE 51399796192921
+TITLE: Will I be charged a fee if I add or change my destination after booking a trip?
+AUDIENCE: Rider
+SECTION: Add/Edit Destination Fee
+URL: https://help.rydesharing.com/hc/en-us/articles/51399796192921-Will-I-be-charged-a-fee-if-I-add-or-change-my-destination-after-booking-a-trip
+EDITED: 2025-10-10
+
+Yes. If the driver accepts your edit destination request, a $3.00 add/edit destination fee will apply. This fee will be reflected in your receipt once the trip is completed.

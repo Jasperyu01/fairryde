@@ -1,0 +1,13 @@
+RYDE HELP CENTRE ARTICLE 49158925783961
+TITLE: How to top up via voucher code?
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/49158925783961-How-to-top-up-via-voucher-code
+EDITED: 2025-07-24
+
+1. Tap on the Wallet on the top right corner.
+2. Choose Top-Up via voucher code.
+3. Enter the 10 digit code.
+4. Tap Top-Up when completed.
+5. Your available coins will be displayed.
+6. You can now choose to pay with RydeCoins!

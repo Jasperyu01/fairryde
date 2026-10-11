@@ -1,0 +1,18 @@
+DOCUMENT RYDE-27085468660505
+TITLE: Waiting Fee Waiver Request
+TYPE: RYDE_POLICY
+URL: https://help.rydesharing.com/hc/en-us/articles/27085468660505-Waiting-Fee-Waiver-Request
+DATE: 2026-09-25
+AUDIENCE: Rider
+SECTION: Fares and Charges
+EDITED: 2026-09-25
+
+Waiting Fee Waiver Request
+
+If you feel that you have been unfairly charged for a Waiting Fee, you may submit a fee waiver request via RydeHELP in our app within 30 days of the trip* and we will review your eligibility for a refund.
+
+If you are eligible, we will issue you a voucher** with a unique code worth $5.00 as a refund for the incurred Waiting Charges. Please be mindful to top up your Ryde wallet using the voucher code given to you within the expiry period.
+
+*Requests submitted after 30 days of the trip will not be considered for waivers.
+
+**This voucher is non-refundable and cannot be exchanged for cash in part or in full. There is strictly no extension of the expiry date from the date of issue.

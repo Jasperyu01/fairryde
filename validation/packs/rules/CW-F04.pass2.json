@@ -1,0 +1,12 @@
+{
+ "rule_id": "CW-F04",
+ "credibility": "B",
+ "credibility_note": "The GPS condition is in a Ryde rider article whose wording about the fee name conflicts with the main policy page (META-04), so the norm is B. Radius, maximum gap and the outlier run length are FairRyde parameters (D), tested case by case by the sensitivity test (decisive_definition clause 2).",
+ "status": "draft",
+ "fairryde_sources_and_source_notes": [
+  {
+   "doc": "ORG-DISP002",
+   "note": "The organizer's system uses 10 m for auto-arrival; FairRyde uses a wider radius for presence."
+  }
+ ]
+}

@@ -1,0 +1,14 @@
+RYDE HELP CENTRE ARTICLE 18230787646361
+TITLE: Issue with tracking the driver
+AUDIENCE: Rider
+SECTION: Ryde Experience
+URL: https://help.rydesharing.com/hc/en-us/articles/18230787646361-Issue-with-tracking-the-driver
+EDITED: 2026-09-25
+
+My live tracking is not working
+
+Please ensure to always open your app to receive the live tracking. If you failed to get the live tracking, it might be because your driver/recipient did not turn on his/her app thus you may advise them to open the app. If the issue persists, do let us know by providing more details with a screenshot or screen recording.
+
+My driver is moving further away or not moving
+
+My app displays the arrival time of my driver. But the map shows that the driver is not moving or moving further. Do let us know by providing more details with a screenshot or screen recording.

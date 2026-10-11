@@ -1,0 +1,16 @@
+RYDE HELP CENTRE ARTICLE 360004108473
+TITLE: How do I make a RydeX booking?
+AUDIENCE: Rider
+SECTION: RydeX & XL
+URL: https://help.rydesharing.com/hc/en-us/articles/360004108473-How-do-I-make-a-RydeX-booking
+EDITED: 2024-10-08
+
+To make a RydeX booking, simply follow the below 6 steps.
+
+1. Tap on RydeX icon
+2. Enter Pick-up / Drop-off location along with pickup date or time.
+3. You can book advance trips up to 7 days in advance.
+4. Choose to pay with cash or go cashless with RydePay.
+5. Tap Book
+6. Wait for a driver to accept.
+7. You can track a driver on the way, and yourself during the trip.

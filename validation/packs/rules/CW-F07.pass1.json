@@ -1,0 +1,30 @@
+{
+ "rule_id": "CW-F07",
+ "name": "Pick-up pin versus named venue",
+ "family": "CW",
+ "type": "fact",
+ "applies_to": [
+  "CW-NOSHOW"
+ ],
+ "mode": "HARD",
+ "statement": "Distance between the pick-up pin and the OneMap coordinates of the named venue; TRUE (mismatch) if above PIN_VENUE_MAX_M.",
+ "params": [
+  {
+   "name": "PIN_VENUE_MAX_M",
+   "value": 200,
+   "unit": "m"
+  }
+ ],
+ "produces": null,
+ "produces_finding": "F-PIN-VENUE",
+ "sources": [
+  {
+   "type": "RYDE_TOU",
+   "doc": "RYDE-TOU",
+   "clause": "Section A s.7.2",
+   "quote": "If you decide to cancel your ride booking or do not show up at the designated location, you may be charged a Cancellation Fee",
+   "source_file": "packs/sources/RYDE-TOU.txt"
+  }
+ ],
+ "set": "random"
+}

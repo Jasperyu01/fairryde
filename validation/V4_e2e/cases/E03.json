@@ -1,0 +1,95 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E03",
+    "trip_id": "TRIP-2026-35517",
+    "filed_by": "rider",
+    "dispute_type": "no_show_charge",
+    "description": "I messaged the driver that I was 1 minute away and he cancelled about 30 seconds later, right when I was walking up to the taxi stand. I literally saw his Prius drive off. He waited barely 3 minutes and I still got charged $6.61 as a no-show. That's not fair, I told him I was coming. Please waive it.",
+    "filed_at": "2026-09-19T19:40:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-7741",
+    "name": "Lim Jia Hui",
+    "account_age_days": 300,
+    "total_trips": 52,
+    "avg_rating": 4.7,
+    "dispute_history": {
+      "total_disputes": 1,
+      "upheld": 0,
+      "rejected": 1
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "RydeCoins"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-3360",
+    "name": "Rajesh Kumar s/o Subramaniam",
+    "account_age_days": 1650,
+    "total_trips": 6120,
+    "avg_rating": 4.93,
+    "dispute_history": {
+      "total_disputes": 2,
+      "upheld_against": 0,
+      "rejected": 2
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Prius (SLE 4492 R)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-35517",
+    "rider_id": "R-7741",
+    "driver_id": "D-3360",
+    "pickup_location": {
+      "name": "Junction 8 (Bishan Place taxi stand)",
+      "lat": 1.3504,
+      "lng": 103.8487
+    },
+    "dropoff_location": {
+      "name": "Novena Square",
+      "lat": 1.3203,
+      "lng": 103.8438
+    },
+    "scheduled_time": "2026-09-19T19:01:00+08:00",
+    "driver_arrival_time": "2026-09-19T19:02:10+08:00",
+    "driver_wait_start": "2026-09-19T19:02:10+08:00",
+    "cancellation_time": "2026-09-19T19:05:25+08:00",
+    "cancellation_fee": 6.61,
+    "cancellation_reason": "rider_no_show"
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-19T18:55:00+08:00", "lat": 1.3601, "lng": 103.8562, "speed_kmh": 44, "status": "en_route"},
+    {"timestamp": "2026-09-19T18:58:00+08:00", "lat": 1.3556, "lng": 103.8521, "speed_kmh": 37, "status": "en_route"},
+    {"timestamp": "2026-09-19T19:00:30+08:00", "lat": 1.3519, "lng": 103.8496, "speed_kmh": 19, "status": "en_route"},
+    {"timestamp": "2026-09-19T19:01:50+08:00", "lat": 1.3504, "lng": 103.8487, "speed_kmh": 0, "status": "en_route"},
+    {"timestamp": "2026-09-19T19:02:10+08:00", "lat": 1.3504, "lng": 103.8487, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-19T19:03:30+08:00", "lat": 1.3504, "lng": 103.8487, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-19T19:04:45+08:00", "lat": 1.3504, "lng": 103.8487, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-19T19:05:25+08:00", "lat": 1.3504, "lng": 103.8487, "speed_kmh": 0, "status": "cancelled"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-19T19:02:30+08:00", "sender": "driver", "type": "message", "content": "I'm at the taxi stand at Bishan Place, black Prius SLE 4492 R."},
+    {"timestamp": "2026-09-19T19:03:40+08:00", "sender": "driver", "type": "call", "content": "Outgoing call to rider — not answered (rang 18s, no response)."},
+    {"timestamp": "2026-09-19T19:04:52+08:00", "sender": "rider", "type": "message", "content": "Coming!! 1 min, walking over from the MRT"},
+    {"timestamp": "2026-09-19T19:05:25+08:00", "sender": "system", "type": "system", "content": "Trip cancelled by driver. Reason: rider_no_show. Cancellation fee of $6.61 applied."}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-19T18:53:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-7741 booked on-demand RydeX trip TRIP-2026-35517 from Junction 8 (Bishan Place taxi stand) to Novena Square. Estimated pickup 19:01. Payment: RydeCoins."},
+    {"timestamp": "2026-09-19T18:53:15+08:00", "event_type": "driver_assigned", "details": "Driver D-3360 (Rajesh Kumar s/o Subramaniam, Toyota Prius SLE 4492 R) assigned. ETA 8 min."},
+    {"timestamp": "2026-09-19T18:53:20+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-19T19:02:10+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS within 12m of pickup point. Speed 0 km/h. Arrival confirmed."},
+    {"timestamp": "2026-09-19T19:02:10+08:00", "event_type": "wait_timer_started", "details": "Free wait timer started. 3 min free wait period ends at 19:05:10."},
+    {"timestamp": "2026-09-19T19:02:15+08:00", "event_type": "rider_notified", "details": "Push notification + in-app alert sent to rider: 'Your driver has arrived.'"},
+    {"timestamp": "2026-09-19T19:03:40+08:00", "event_type": "driver_called_rider", "details": "Driver initiated in-app call to rider. Call rang 18s, no answer."},
+    {"timestamp": "2026-09-19T19:05:10+08:00", "event_type": "wait_timer_expired", "details": "Free 3-min wait period expired. Rider had not boarded. Cancellation fee now applicable per policy."},
+    {"timestamp": "2026-09-19T19:05:25+08:00", "event_type": "cancellation_fee_applied", "details": "Driver cancelled 3 min 15 s after tapping 'I'm Here' (rider_no_show). $6.61 cancellation fee charged to rider payment method (RydeCoins)."},
+    {"timestamp": "2026-09-19T19:05:30+08:00", "event_type": "driver_released", "details": "Driver D-3360 released from trip. Trip status: cancelled (rider_no_show)."}
+  ]
+}

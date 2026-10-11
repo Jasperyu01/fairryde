@@ -1,0 +1,32 @@
+RYDE HELP CENTRE ARTICLE 23534478435353
+TITLE: Cancellation and Waiting Fee
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/23534478435353-Cancellation-and-Waiting-Fee
+EDITED: 2026-02-26
+
+On-demand Trip - Rider Cancellation & Waiting Time Policy Statement
+
+All cancellations made within 3 minutes of matching are not chargeable.
+
+Rider will be charged a Cancellation Fee of $6.61* if:
+- Rider cancels after 3 minutes of matching OR
+- The driver presses "I'm Here", waits for > 3 minutes for the rider to arrive at the pick-up point and cancels the trip (Rider NO SHOW and no trip completion)
+
+Riders may be charged a Waiting Time Fee of $5 at the end of the trip if:
+- The driver presses "I'm Here", waits for > 3 minutes for the rider to board, and continues the trip (Rider boards and driver completes trip).
+
+Advanced Trip - Rider Cancellation & Waiting Time Policy Statement
+
+All cancellations made > 15 minutes before the scheduled trip time are not chargeable.
+(eg: Scheduled trip: 6 PM, any cancellation made before 5:45 PM is not chargeable.
+If the advanced trip request is accepted only after 5:45 PM, riders will have a 3 minute grace period)
+
+Rider will be charged a Cancellation Fee of $6.61* if:
+- Rider cancels after the cancellation window (< Scheduled - 15mins OR Matched) OR
+- The driver cancels the trip after waiting for > 3 minutes for the Rider to arrive at the pick-up point (Rider NO SHOW and no trip completion)
+
+Riders may be charged a Waiting Time Fee of $5 at the end of the trip if:
+- The driver waits for > 3 minutes for the Rider to board and continues to complete the trip (Rider boards and driver completes trip)
+
+* For fares up to $18, a flat fee of $1.15 (exclusive of GST) & for fares exceeding $18, a flat fee of $1.35 (exclusive of GST) will be included in the base fare. Cashless transactions will incur a payment transaction fee of 1.96%+ $0.24 (inclusive of GST) will apply for cashless transactions.

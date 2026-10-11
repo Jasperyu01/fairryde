@@ -1,0 +1,19 @@
+{
+ "rule_id": "CLS-03",
+ "name": "Not a dispute",
+ "family": "CLS",
+ "type": "classification",
+ "applies_to": [
+  "EX",
+  "OT-OTHER"
+ ],
+ "mode": "HARD",
+ "statement": "A claim with no contested charge and no remedy beyond an explanation is routed to normal support, unless CLS-01 applies.",
+ "params": [],
+ "produces": [
+  "GEN-R-NOT-A-DISPUTE"
+ ],
+ "produces_finding": null,
+ "sources": [],
+ "set": "random"
+}

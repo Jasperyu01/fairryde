@@ -1,0 +1,522 @@
+# FairRyde Knowledge Base - Layer 2: ONTOLOGY (entities, roles, relations, events)
+# Question this layer answers: "What exists, how is it connected, and what happened?"
+# Lightweight ontology (ChordX ONT.2, ONT.4 Steps 2-3): enough to support the dispute decision, no OWL/RDF.
+
+meta:
+  kb: FairRyde Knowledge Base
+  layer: Ontology
+  version: 0.1.0
+  status: draft
+  updated: 2026-10-05
+  owner: Jasper
+  reviewers: [Cao]
+  authority: >-
+    Master data and documents: the organizer's sample dataset schema (DISP-002 JSON is the de facto master-data
+    model: trip_data, app_events, gps_telemetry, chat_logs, profiles, cancellation_policy) and Ryde's Terms of Use
+    (last modified 6 Apr 2022), which define the parties and Ryde's role. Attributes not present in DISP-002 are
+    marked data_gap: true and must not be assumed to exist in organizer cases.
+  placement_test: >-
+    Put something in the Ontology when it has identity (an ID) and attributes, or is a typed link between such
+    things, or is an event that changes a state. Its NAME as a class value belongs to the Taxonomy; any IF/THEN
+    about it belongs to the Rules.
+  encoding: Pydantic models exported to JSON Schema (Draft 2020-12). Not RDF/OWL.
+  kinds:
+    business: Exists in Ryde's world whether or not a dispute happens.
+    value_object: A group of attributes without its own identity, always part of an entity (kept separate only for readability).
+    case: Exists because a dispute is being processed (ticket, claim, evidence, finding, ruling, review, precedent).
+    system_artifact: Produced by FairRyde agents at run time (arguments). Logged, never treated as evidence.
+
+# =====================================================================
+entities:
+
+  - id: ENT-ACCOUNT
+    name: Account
+    zh: 账户
+    kind: business
+    definition: A registered Ryde account of a person. Rider and Driver are ROLES an account plays in a trip, not entity types.
+    identity: "rider_id (R-xxxx) or driver_id (D-xxxx) in organizer data"
+    source: "DISP-002 rider_profile, driver_profile"
+    attributes:
+      - {name: account_id, type: string, source_field: "rider_profile.rider_id | driver_profile.driver_id", required: true}
+      - {name: display_name, type: string, source_field: "*.name", pii: true, note: "Pseudonymize before any cloud LLM call (ONT.11). Never shown to the Judge in pass A."}
+      - {name: account_age_days, type: integer, source_field: "*.account_age_days"}
+      - {name: total_trips, type: integer, source_field: "*.total_trips"}
+      - {name: avg_rating, type: number, source_field: "*.avg_rating"}
+      - {name: dispute_history, type: DisputeHistory, source_field: "*.dispute_history", note: "Semantics differ by role (see DisputeHistory)."}
+      - {name: fraud_flags, type: integer, source_field: "*.fraud_flags"}
+      - {name: fraud_flag_details, type: string, source_field: "rider_profile.fraud_flag_details", note: "Present for the rider only in DISP-002."}
+      - {name: payment_method, type: "enum TX-PAYMETHOD", source_field: "rider_profile.payment_method"}
+    rules_use: "History fields are NEVER decisive for an outcome (rule GEN-R03); they feed the fraud check only."
+
+  - id: ENT-DISPUTEHISTORY
+    name: DisputeHistory
+    zh: 争议历史
+    kind: value_object
+    definition: Counts of past disputes attached to an account profile.
+    attributes:
+      - {name: total_disputes, type: integer}
+      - {name: upheld, type: integer, applies_to_role: RIDER, note: "Inference from field names: disputes the rider FILED that were upheld. To confirm with the organizer."}
+      - {name: upheld_against, type: integer, applies_to_role: DRIVER, note: "Inference: disputes filed AGAINST the driver that were upheld."}
+      - {name: rejected, type: integer}
+    caution: "Rider history counts disputes filed BY the rider; driver history counts disputes AGAINST the driver. Do not compare the two numbers as if they meant the same thing."
+
+  - id: ENT-VEHICLE
+    name: Vehicle
+    zh: 车辆
+    kind: business
+    identity: plate
+    source: "DISP-002 driver_profile.vehicle (model, then the plate in brackets)"
+    attributes:
+      - {name: model, type: string, source_field: "driver_profile.vehicle (text before the bracket)"}
+      - {name: plate, type: string, source_field: "driver_profile.vehicle (text inside the bracket)", pii: true}
+
+  - id: ENT-PLATFORM
+    name: Platform (Ryde)
+    zh: 平台（Ryde）
+    kind: business
+    identity: "Ryde Technologies Pte Ltd (ToU s.2 'Ryde')"
+    definition: The operator of the Platform. Its roles are defined by the Terms of Use (see roles).
+    source: "Ryde Terms of Use, Section A s.1, s.2, s.6, s.7, s.10, s.11, s.20, s.28"
+    present_in_every_case: true      # every trip runs on the platform; in DISP-002 it is the 'system' sender and the actor of app events
+
+  - id: ENT-TRIP
+    name: Trip
+    zh: 行程（订单）
+    kind: business
+    identity: trip_id
+    definition: One booking from request to completion or cancellation. Booking and trip are one entity in v0.1 (minimum sufficient).
+    source: "DISP-002 trip_data"
+    attributes:
+      - {name: trip_id, type: string, source_field: trip_data.trip_id, required: true}
+      - {name: rider_account, type: "ref ENT-ACCOUNT", source_field: trip_data.rider_id}
+      - {name: driver_account, type: "ref ENT-ACCOUNT", source_field: trip_data.driver_id}
+      - {name: pickup, type: "ref ENT-PLACE", source_field: trip_data.pickup_location}
+      - {name: dropoff, type: "ref ENT-PLACE", source_field: trip_data.dropoff_location}
+      - {name: scheduled_time, type: datetime, source_field: trip_data.scheduled_time}
+      - {name: driver_arrival_time, type: datetime, source_field: trip_data.driver_arrival_time}
+      - {name: driver_wait_start, type: datetime, source_field: trip_data.driver_wait_start, note: "Organizer-provided canonical start of waiting (rule CW-F02)."}
+      - {name: cancellation_time, type: datetime, source_field: trip_data.cancellation_time}
+      - {name: cancellation_reason, type: "enum TX-CANCELREASON", source_field: trip_data.cancellation_reason}
+      - {name: booking_type, type: "enum TX-BOOKING", data_gap: true, note: "Not in DISP-002; inferred by rule CW-F01."}
+      - {name: service_type, type: "enum TX-SERVICE", data_gap: true}
+      - {name: pricing_mode, type: "enum TX-PRICING", data_gap: true}
+      - {name: matched_at, type: datetime, data_gap: true, note: "DISP-002 gives it only as the driver_assigned event time."}
+      - {name: picked_up_at, type: datetime, data_gap: true}
+      - {name: completed_at, type: datetime, data_gap: true}
+      - {name: quoted_fare, type: money, data_gap: true}
+      - {name: charged_total, type: money, data_gap: true}
+      - {name: recorded_distance_km, type: number, data_gap: true, note: "Needed for route deviation (rule FC-F02)."}
+      - {name: recommended_route, type: polyline, data_gap: true, note: "Precomputed at booking for demo reliability."}
+      - {name: status, type: "enum (state machine SM-TRIP)"}
+
+  - id: ENT-PLACE
+    name: Place
+    zh: 地点
+    kind: business
+    source: "DISP-002 trip_data.pickup_location / dropoff_location; reference coordinates from OneMap (Singapore Land Authority)"
+    attributes:
+      - {name: name, type: string, source_field: "*.name"}
+      - {name: pin_lat, type: number, source_field: "*.lat"}
+      - {name: pin_lng, type: number, source_field: "*.lng"}
+      - {name: venue_lat, type: number, data_gap: true, note: "From OneMap search by name (reference data)."}
+      - {name: venue_lng, type: number, data_gap: true}
+      - {name: pin_venue_distance_m, type: number, derived: true, note: "Finding F-PIN-VENUE (rule CW-F07)."}
+
+  - id: ENT-EVENT
+    name: TripEvent
+    zh: 行程事件
+    kind: business
+    source: "DISP-002 app_events (and system lines of chat_logs)"
+    attributes:
+      - {name: timestamp, type: datetime, source_field: "app_events[].timestamp"}
+      - {name: event_type, type: "enum TX-EVENT", source_field: "app_events[].event_type"}
+      - {name: details, type: string, source_field: "app_events[].details"}
+      - {name: actor_role, type: "enum TX-ROLE", data_gap: true, note: "Implied by event type in DISP-002."}
+
+  - id: ENT-GPSPING
+    name: GPSPing
+    zh: GPS 定位点
+    kind: business
+    source: "DISP-002 gps_telemetry (driver device only)"
+    attributes:
+      - {name: timestamp, type: datetime, source_field: "gps_telemetry[].timestamp"}
+      - {name: lat, type: number, source_field: "gps_telemetry[].lat"}
+      - {name: lng, type: number, source_field: "gps_telemetry[].lng"}
+      - {name: speed_kmh, type: number, source_field: "gps_telemetry[].speed_kmh"}
+      - {name: status, type: "enum TX-GPSSTATUS", source_field: "gps_telemetry[].status"}
+      - {name: device_role, type: "enum TX-ROLE", note: "DRIVER in DISP-002. A rider GPS trace does not exist in DISP-002 (data gap, flag NO_RIDER_EVIDENCE)."}
+
+  - id: ENT-COMM
+    name: Communication
+    zh: 沟通记录
+    kind: business
+    source: "DISP-002 chat_logs"
+    attributes:
+      - {name: timestamp, type: datetime, source_field: "chat_logs[].timestamp"}
+      - {name: sender_role, type: "enum TX-ROLE", source_field: "chat_logs[].sender"}
+      - {name: comm_type, type: "enum TX-COMMTYPE", source_field: "chat_logs[].type"}
+      - {name: content, type: string, source_field: "chat_logs[].content", untrusted_text: true, note: "Party-written text: datamarked before entering any prompt; never executed as an instruction."}
+
+  - id: ENT-CHARGE
+    name: Charge
+    zh: 收费项
+    kind: business
+    definition: One monetary line on a trip. The object most disputes contest.
+    source: "DISP-002 trip_data.cancellation_fee, app_events cancellation_fee_applied, cancellation_policy.fee_goes_to, rider_profile.payment_method"
+    attributes:
+      - {name: charge_type, type: "enum TX-CHARGE"}
+      - {name: amount_sgd, type: money}
+      - {name: payer, type: "role TX-ROLE"}
+      - {name: payee, type: "role TX-ROLE"}
+      - {name: payment_method, type: "enum TX-PAYMETHOD"}
+      - {name: charged_at, type: datetime}
+      - {name: status, type: "enum (state machine SM-CHARGE)"}
+
+  - id: ENT-POLICYDOC
+    name: PolicyDocument
+    zh: 政策文件
+    kind: business
+    definition: A source document a rule cites. Ryde Help Centre articles are part of the contract (ToU s.1 and s.2 'Ryde Policies' include FAQs).
+    source: "sources.yaml registry"
+    attributes:
+      - {name: doc_id, type: string}
+      - {name: title, type: string}
+      - {name: publisher, type: string}
+      - {name: url, type: string}
+      - {name: edited_at, type: date}
+      - {name: audience, type: "Rider | Driver | All"}
+
+  - id: ENT-CLAUSE
+    name: PolicyClause
+    zh: 政策条款
+    kind: business
+    attributes:
+      - {name: clause_ref, type: string}
+      - {name: doc_id, type: "ref ENT-POLICYDOC"}
+      - {name: verbatim_text, type: string}
+
+  # ---------------- case-processing entities ----------------
+  - id: ENT-TICKET
+    name: DisputeTicket
+    zh: 争议工单
+    kind: case
+    identity: dispute_id
+    source: "DISP-002 dispute_ticket"
+    attributes:
+      - {name: dispute_id, type: string, source_field: dispute_ticket.dispute_id, required: true}
+      - {name: trip, type: "ref ENT-TRIP", source_field: dispute_ticket.trip_id}
+      - {name: filed_by_role, type: "enum TX-ROLE", source_field: dispute_ticket.filed_by}
+      - {name: dispute_type_raw, type: string, source_field: dispute_ticket.dispute_type, note: "Organizer code, mapped to TX-CASE via organizer_code."}
+      - {name: description, type: string, source_field: dispute_ticket.description, untrusted_text: true}
+      - {name: filed_at, type: datetime, source_field: dispute_ticket.filed_at}
+      - {name: status, type: "enum (state machine SM-TICKET)", source_field: dispute_ticket.status}
+      - {name: related_ticket, type: "ref ENT-TICKET", data_gap: true, note: "Set by Matching (rule MAT-02)."}
+      - {name: relation_type, type: "enum TX-RELATION", data_gap: true}
+
+  - id: ENT-CLAIM
+    name: Claim
+    zh: 主张
+    kind: case
+    definition: One assertion inside a ticket, with the charge it contests and the remedy it asks for. The unit of classification (ONT.8 multi-event pitfall).
+    attributes:
+      - {name: claim_id, type: string}
+      - {name: ticket, type: "ref ENT-TICKET"}
+      - {name: taxonomy_code, type: "enum TX-CASE"}
+      - {name: priority, type: "primary | secondary"}
+      - {name: contested_charge, type: "ref ENT-CHARGE"}
+      - {name: remedy_requested, type: "enum TX-REMEDY-REQUESTED"}
+
+  - id: ENT-EVIDENCE
+    name: EvidenceItem
+    zh: 证据项
+    kind: case
+    definition: An immutable, ID-addressed wrapper around one source record. Agents may cite evidence only by these IDs.
+    id_pattern: "E-TKT-01, E-PRF-R, E-PRF-D, E-TRP-01(.field), E-GPS-nn (driver), E-RGPS-nn (rider, when present), E-CHT-nn, E-APP-nn, E-POL-01, E-GEO-nn (OneMap lookup: a reference, never counted as evidence in AUTH-05), E-PAY-nn"
+    id_regex: "^E-(TKT-01|PRF-[RD]|TRP-01|POL-01|(GPS|RGPS|CHT|APP|GEO|PAY)-(\\d{2}|\\*))(\\.[a-z_]+)?$"
+    attributes:
+      - {name: evidence_id, type: string}
+      - {name: evidence_type, type: "enum TX-EVIDENCE"}
+      - {name: tier, type: "enum TX-TIER"}
+      - {name: source_record, type: "ref to business entity instance"}
+      - {name: timestamp, type: datetime}
+      - {name: untrusted_text, type: boolean}
+
+  - id: ENT-FINDING
+    name: Finding
+    zh: 事实认定
+    kind: case
+    definition: A fact established by a deterministic fact rule from evidence (for example wait_elapsed_s = 480).
+    attributes:
+      - {name: finding_type, type: "enum finding_types (below)"}
+      - {name: value, type: any}
+      - {name: unit, type: string}
+      - {name: status, type: "established | inferred | read | contested | unknown | not_applicable", note: "established = a HARD rule computed it from records; inferred = computed from indirect records (for example the booking type from matching time and ETA); read = a READ judgment of party text; contested = records of equal standing disagree; unknown = no usable evidence; not_applicable = the rule has nothing to assess in this case (for example contact attempts when there is no wait)"}
+      - {name: basis_evidence, type: "list ref ENT-EVIDENCE"}
+      - {name: produced_by_rule, type: "ref rule id"}
+      - {name: tool_version, type: string}
+
+  - id: ENT-RULING
+    name: Ruling
+    zh: 裁决
+    kind: case
+    attributes:
+      - {name: outcome, type: "enum TX-OUTCOME"}
+      - {name: reason_codes, type: "list enum TX-REASON"}
+      - {name: remedy_amount_sgd, type: money}
+      - {name: remedy_payer, type: "role TX-ROLE"}
+      - {name: remedy_payee, type: "role TX-ROLE"}
+      - {name: remedy_form, type: "enum TX-REMEDY-FORM"}
+      - {name: cited_rules, type: "list rule id"}
+      - {name: cited_evidence, type: "list evidence id"}
+      - {name: flags, type: "list enum TX-FLAG"}
+      - {name: confidence_components, type: "object {A, M, E, R, C}"}
+      - {name: autonomy_tier, type: "enum TX-TIER-AUTONOMY (AUTO, APPROVE, HUMAN)"}
+      - {name: explanation_rider, type: text}
+      - {name: explanation_driver, type: text}
+      - {name: policy_profile, type: string}
+      - {name: rulebook_version, type: string}
+      - {name: model_version, type: string}
+      - {name: status, type: "enum (state machine SM-RULING)"}
+
+  - id: ENT-REVIEW
+    name: HumanReview
+    zh: 人工复核记录
+    kind: case
+    definition: "The log row the ChordX protocol says must exist from Phase 1 (ONT.10.2): AI suggestion, human final decision, notes, time, model version."
+    attributes:
+      - {name: ruling, type: "ref ENT-RULING"}
+      - {name: reviewer, type: string}
+      - {name: action, type: "confirm | edit | reject"}
+      - {name: ai_suggestion, type: "copy of Ruling outcome and amount"}
+      - {name: final_outcome, type: "enum TX-OUTCOME"}
+      - {name: final_amount_sgd, type: money}
+      - {name: reason_code, type: string}
+      - {name: notes, type: text}
+      - {name: reviewed_at, type: datetime}
+      - {name: model_version, type: string}
+      - {name: rulebook_version, type: string}
+      - {name: independent_audit, type: boolean, note: "True when the reviewer did not see the AI suggestion first (audit sample, ONT.10.3)."}
+
+  - id: ENT-PRECEDENT
+    name: Precedent
+    zh: 判例
+    kind: case
+    definition: A human-reviewed ruling stored for retrieval by shared decisive factors (not by text similarity).
+    attributes:
+      - {name: from_ruling, type: "ref ENT-RULING"}
+      - {name: taxonomy_code, type: "enum TX-CASE"}
+      - {name: factor_vector, type: "object of decisive findings"}
+      - {name: outcome, type: "enum TX-OUTCOME"}
+      - {name: policy_profile, type: string}
+      - {name: human_reviewed, type: boolean}
+      - {name: eval_excluded, type: boolean, note: "Cases from the evaluation sets are never stored here (ONT.10.3)."}
+
+  # ---------------- system artifact ----------------
+  - id: ENT-ARGUMENT
+    name: Argument
+    zh: 辩护论点
+    kind: system_artifact
+    definition: A Rider or Driver Advocate's claim with premises. Logged and shown in the UI; never treated as evidence (tier D at most).
+    attributes:
+      - {name: author_agent, type: "rider_advocate | driver_advocate"}
+      - {name: claim, type: text}
+      - {name: evidence_ids, type: "list evidence id"}
+      - {name: rule_ids, type: "list rule id"}
+      - {name: rebuttal_to, type: "ref ENT-ARGUMENT"}
+      - {name: concessions, type: text}
+
+finding_types:
+  - {code: F-BOOKING-TYPE, label: Booking type (recorded or inferred), values: "TX-BOOKING", produced_by: CW-F01}
+  - {code: F-WAIT-ANCHOR, label: Canonical start of waiting, produced_by: [CW-F02, CW-F02B]}
+  - {code: F-WAIT-ELAPSED, label: Seconds from the confirmed wait start (later of the anchor and the GPS confirmation) to cancellation, unit: s, produced_by: CW-F03}
+  - {code: F-WAIT-MARGIN, label: Elapsed minus threshold, unit: s, produced_by: CW-F03}
+  - {code: F-PRESENCE, label: Driver presence at the pick-up point during the wait, values: [CONSISTENT, SPARSE, LEFT, UNKNOWN], produced_by: CW-F04}
+  - {code: F-CONTACT, label: Contact attempts after arrival, values: [ADEQUATE, INSUFFICIENT, NONE], produced_by: CW-F05}
+  - {code: F-RIDER-EVIDENCE, label: Rider counter-evidence strength, values: [NONE, WEAK, STRONG], produced_by: CW-F06}
+  - {code: F-PIN-VENUE, label: Pickup pin to OneMap venue distance, unit: m, produced_by: CW-F07}
+  - {code: F-ARRIVAL-VALID, label: "Arrival indication valid (platform GPS arrival check and the moment ping, after GPS outliers are set aside)", values: ['TRUE', 'FALSE', CONTESTED, UNKNOWN], produced_by: CW-R06}
+  - {code: F-CHARGE-AMOUNT, label: Amount charged versus the policy amount of the profile, unit: SGD, produced_by: DQ-06}
+  - {code: F-TS-CONSISTENCY, label: Cross-source timestamp consistency, produced_by: DQ-01}
+  - {code: F-SPEED-CONSISTENCY, label: Reported vs implied speed consistency, produced_by: DQ-02}
+  - {code: F-PRICING-MODE, label: Pricing mode of the trip, produced_by: FC-F01}
+  - {code: F-DETOUR, label: "Detour ratio, extra distance and corridor exits", produced_by: FC-F02}
+  - {code: F-JUSTIFICATION, label: Legitimate reason for deviation present, produced_by: FC-F03}
+  - {code: F-ERP-EXPECTED, label: ERP for gantries actually passed at time-of-day rates, unit: SGD, produced_by: FC-F04}
+  - {code: F-FILING-WINDOW, label: Days from trip to filing, unit: days, produced_by: MAT-04}
+
+# =====================================================================
+roles:
+  - {code: RIDER, played_by: ENT-ACCOUNT, in: ENT-TRIP, source: "trip_data.rider_id", example_DISP002: "R-7823"}
+  - {code: DRIVER, played_by: ENT-ACCOUNT, in: ENT-TRIP, source: "trip_data.driver_id; ToU s.2 'Partner ... including driver-partners'", example_DISP002: "D-2398"}
+  - {code: CLAIMANT, played_by: ENT-ACCOUNT, in: ENT-TICKET, source: "dispute_ticket.filed_by", example_DISP002: "R-7823 (filed_by = rider)"}
+  - {code: RESPONDENT, played_by: ENT-ACCOUNT, in: ENT-TICKET, source: "the other trip party", example_DISP002: "D-2398"}
+  - {code: PAYER, played_by: "ENT-ACCOUNT or ENT-PLATFORM", in: "ENT-CHARGE or Remedy", example_DISP002: "R-7823 pays the S$5.00 cancellation fee by e-wallet"}
+  - {code: PAYEE, played_by: "ENT-ACCOUNT or ENT-PLATFORM", in: "ENT-CHARGE or Remedy", source: "cancellation_policy.fee_goes_to", example_DISP002: "D-2398 (driver_compensation)"}
+  - code: PLATFORM_LINKER
+    played_by: ENT-PLATFORM
+    in: ENT-TRIP
+    source_quote: "ToU s.1: \"Where the Services are provided by a Partner (as defined below), Ryde's role is merely to link the User with such Partners.\""
+  - code: PLATFORM_COLLECTION_AGENT
+    played_by: ENT-PLATFORM
+    in: ENT-CHARGE
+    source_quote: "ToU s.6.1: \"Ryde may administer and act as your collection agent to pay to you the total amount of User Charges due to you\""
+  - code: PLATFORM_REFUND_DECIDER
+    played_by: ENT-PLATFORM
+    in: ENT-RULING
+    source_quote: "ToU s.7.2: \"Ryde reserves its absolute discretion to any refunds to you\""
+    note: "FairRyde's ruling is therefore a recommendation executed under Ryde's discretion, not an entitlement (rule AUTH-00)."
+  - code: PLATFORM_CLEANING_VERIFIER
+    played_by: ENT-PLATFORM
+    in: "ENT-CHARGE (CLEANING_FEE)"
+    source_quote: "ToU s.11: \"Ryde may, subject to verification under its Vehicle Contamination Policy, reimburse the driver for the applicable cleaning costs and separately recover the amount from the rider.\""
+  - {code: REVIEWER, played_by: "Ryde staff (human)", in: ENT-RULING}
+role_notes:
+  - "The same account can be CLAIMANT in one ticket and RESPONDENT in another (a driver files cleaning claims but defends no-show disputes)."
+  - "PAYER and PAYEE flip under a remedy: if a no-show fee is waived, the voucher is issued by the platform (Ryde's remedy form) while the driver's earlier credit is a separate decision (open decision D7)."
+  - "ToU s.10 says complaints between Partners and Users are taken up directly and s.20 says Ryde is not a party to their disputes, yet Ryde runs fee waivers and cleaning claims through RydeHELP. FairRyde models Ryde as REFUND_DECIDER for charges Ryde collected, not as a court between the parties."
+
+# =====================================================================
+relations:
+  - {subject: ENT-ACCOUNT, predicate: plays_role_in, object: "ENT-TRIP | ENT-TICKET | ENT-CHARGE", cardinality: "many-to-many via role", source: "trip_data.rider_id / driver_id; dispute_ticket.filed_by"}
+  - {subject: ENT-ACCOUNT, predicate: operates, object: ENT-VEHICLE, cardinality: "1 driver : 1 vehicle per trip", source: driver_profile.vehicle}
+  - {subject: ENT-TRIP, predicate: has_pickup, object: ENT-PLACE, cardinality: "1:1", source: trip_data.pickup_location}
+  - {subject: ENT-TRIP, predicate: has_dropoff, object: ENT-PLACE, cardinality: "1:1", source: trip_data.dropoff_location}
+  - {subject: ENT-TRIP, predicate: has_event, object: ENT-EVENT, cardinality: "1:N ordered by time", source: app_events}
+  - {subject: ENT-TRIP, predicate: has_telemetry, object: ENT-GPSPING, cardinality: "1:N", source: gps_telemetry}
+  - {subject: ENT-TRIP, predicate: has_communication, object: ENT-COMM, cardinality: "1:N", source: chat_logs}
+  - {subject: ENT-TRIP, predicate: incurs, object: ENT-CHARGE, cardinality: "1:N", source: "trip_data.cancellation_fee; future fare breakdown"}
+  - {subject: ENT-EVENT, predicate: changes_state_of, object: "ENT-TRIP | ENT-CHARGE | ENT-TICKET", cardinality: "N:1", source: "events table below"}
+  - {subject: ENT-TICKET, predicate: concerns, object: ENT-TRIP, cardinality: "N:1", source: dispute_ticket.trip_id}
+  - {subject: ENT-TICKET, predicate: contains, object: ENT-CLAIM, cardinality: "1:N (one primary)"}
+  - {subject: ENT-CLAIM, predicate: contests, object: ENT-CHARGE, cardinality: "N:0..1", note: "No contested charge means ROUTE_TO_SUPPORT unless safety (rule CLS-03)."}
+  - {subject: ENT-TICKET, predicate: related_to, object: ENT-TICKET, cardinality: "N:N", qualifier: "TX-RELATION", note: "Set by Matching."}
+  - {subject: ENT-EVIDENCE, predicate: wraps, object: "any business record", cardinality: "1:1"}
+  - {subject: ENT-FINDING, predicate: based_on, object: ENT-EVIDENCE, cardinality: "N:N"}
+  - {subject: ENT-FINDING, predicate: produced_by, object: Rule, cardinality: "N:1"}
+  - {subject: Rule, predicate: implements, object: ENT-CLAUSE, cardinality: "N:N", note: "A rule with no clause must be credibility C or D and labeled a generic assumption."}
+  - {subject: ENT-RULING, predicate: decides, object: ENT-CLAIM, cardinality: "1:1"}
+  - {subject: ENT-RULING, predicate: cites, object: "Rule | ENT-FINDING | ENT-EVIDENCE", cardinality: "1:N"}
+  - {subject: ENT-REVIEW, predicate: reviews, object: ENT-RULING, cardinality: "N:1"}
+  - {subject: ENT-PRECEDENT, predicate: derived_from, object: ENT-RULING, cardinality: "1:1", note: "Only human-reviewed rulings."}
+  - {subject: ENT-ARGUMENT, predicate: rebuts, object: ENT-ARGUMENT, cardinality: "N:N"}
+
+# =====================================================================
+# Events: who did what to whom, and which state it changed (ONT.4 Step 3)
+events:
+  - {code: booking_confirmed, actor: RIDER, target: PLATFORM, changes: "SM-TRIP: - -> REQUESTED", is_update: false}
+  - {code: driver_assigned, actor: PLATFORM, target: "DRIVER, RIDER", changes: "SM-TRIP: REQUESTED -> MATCHED", note: "Starts the 3-minute free cancellation window (Ryde)."}
+  - {code: driver_en_route, actor: DRIVER, target: RIDER, changes: "SM-TRIP: MATCHED -> EN_ROUTE"}
+  - {code: driver_arrived, actor: DRIVER, target: RIDER, changes: "SM-TRIP: EN_ROUTE -> ARRIVED", note: "Ryde 'I'm Here'. Valid only if GPS shows the driver at the pickup (rule CW-R06)."}
+  - {code: rider_notified, actor: PLATFORM, target: RIDER, changes: "none (notification)"}
+  - {code: wait_timer_started, actor: PLATFORM, target: "DRIVER, RIDER", changes: "SM-TRIP: ARRIVED -> WAITING_FREE", note: "In DISP-002 it is logged 10 s after arrival; tolerance rule DQ-01."}
+  - {code: wait_timer_expired, actor: PLATFORM, target: "DRIVER, RIDER", changes: "SM-TRIP: WAITING_FREE -> WAITING_CHARGEABLE", is_update: true, note: "An UPDATE of the waiting state, not a new trip."}
+  - {code: driver_called_rider, actor: DRIVER, target: RIDER, changes: "none (contact attempt)"}
+  - {code: rider_called_driver, actor: RIDER, target: DRIVER, changes: "none (contact attempt; counts as rider-side system evidence, rule CW-F06)"}
+  - {code: message_sent, actor: "RIDER or DRIVER", target: "the other party", changes: "none (contact attempt or agreement)"}
+  - {code: rider_cancelled, actor: RIDER, target: PLATFORM, changes: "SM-TRIP: any pre-pickup state -> CANCELLED_BY_RIDER"}
+  - {code: driver_cancelled, actor: DRIVER, target: PLATFORM, changes: "SM-TRIP: WAITING_* -> CANCELLED_NO_SHOW; SM-TRIP: EN_ROUTE -> CANCELLED_BY_DRIVER; SM-TRIP: WAITING_* -> CANCELLED_BY_DRIVER", note: "CANCELLED_NO_SHOW when the reason is rider_no_show."}
+  - {code: cancellation_fee_applied, actor: PLATFORM, target: "RIDER (payer), DRIVER (payee)", changes: "SM-CHARGE: - -> APPLIED"}
+  - {code: driver_released, actor: PLATFORM, target: DRIVER, changes: "none (assignment ends)"}
+  - {code: rider_picked_up, actor: DRIVER, target: PLATFORM, changes: "SM-TRIP: ARRIVED -> ONBOARD; SM-TRIP: WAITING_* -> ONBOARD", note: "Ryde: tap PICK UP only when the rider has boarded; after it the driver cannot cancel."}
+  - {code: destination_edit_requested, actor: RIDER, target: DRIVER, changes: "none until accepted (Ryde: the fee applies only if the driver accepts, rule FC-R09)", is_update: true}
+  - {code: destination_edit_accepted, actor: DRIVER, target: RIDER, changes: "SM-TRIP: ONBOARD -> ONBOARD (fare recalculated); SM-CHARGE: DESTINATION_FEE APPLIED", is_update: true}
+  - {code: stop_added, actor: RIDER, target: PLATFORM, changes: "SM-TRIP: route updated (fare recalculated)", is_update: true}
+  - {code: toll_entered, actor: DRIVER, target: PLATFORM, changes: "SM-CHARGE: TOLL APPLIED"}
+  - {code: waiting_fee_tapped, actor: DRIVER, target: PLATFORM, changes: "SM-CHARGE: WAITING_FEE APPLIED"}
+  - {code: trip_completed, actor: DRIVER, target: PLATFORM, changes: "SM-TRIP: ONBOARD -> COMPLETED"}
+  - {code: payment_charged, actor: PLATFORM, target: "RIDER (payer)", changes: "SM-CHARGE: each fare line - -> APPLIED"}
+  - {code: dispute_filed, actor: "CLAIMANT", target: PLATFORM, changes: "SM-TICKET: - -> OPEN; SM-CHARGE: APPLIED -> DISPUTED; SM-CHARGE: RECOVERED_FROM_RIDER -> DISPUTED", note: "Matching decides NEW vs DUPLICATE / UPDATE / APPEAL / COUNTER_CLAIM (rule MAT-02)."}
+  - {code: evidence_added, actor: "CLAIMANT or RESPONDENT", target: PLATFORM, changes: "SM-TICKET: stays, evidence set grows", is_update: true}
+  - {code: ticket_triaged, actor: PLATFORM, target: "CLAIMANT, RESPONDENT", changes: "SM-TICKET: OPEN -> TRIAGED; SM-TICKET: REOPENED -> TRIAGED", note: "Intake and matching done (PB-INTAKE)."}
+  - {code: ticket_merged, actor: PLATFORM, target: CLAIMANT, changes: "SM-TICKET: OPEN -> MERGED", is_update: true, note: "DUPLICATE found by MAT-02."}
+  - {code: evidence_ready, actor: PLATFORM, target: "CLAIMANT, RESPONDENT", changes: "SM-TICKET: TRIAGED -> EVIDENCE_READY", note: "Evidence items and findings recorded."}
+  - {code: arguments_submitted, actor: PLATFORM, target: "CLAIMANT, RESPONDENT", changes: "SM-TICKET: EVIDENCE_READY -> ARGUED", note: "Rider Advocate and Driver Advocate briefs are in (GEN-R05)."}
+  - {code: ruling_issued, actor: PLATFORM, target: "CLAIMANT, RESPONDENT", changes: "SM-TICKET: ARGUED -> RULED; SM-RULING: - -> DRAFT; SM-RULING: DRAFT -> AUTO_FINAL; SM-RULING: DRAFT -> PENDING_HUMAN"}
+  - {code: ruling_executed, actor: PLATFORM, target: "CLAIMANT, RESPONDENT", changes: "SM-CHARGE: DISPUTED -> UPHELD; SM-CHARGE: DISPUTED -> WAIVED; SM-CHARGE: DISPUTED -> PARTIALLY_REFUNDED; SM-CHARGE: DISPUTED -> REFUNDED; SM-TICKET: RULED -> CLOSED", note: "Runs after AUTO_FINAL or HUMAN_FINAL. WAIVE_FEE -> WAIVED; PARTIAL_REFUND and TOLL_REFUND -> PARTIALLY_REFUNDED (the fare) or REFUNDED (the toll line); FULL_REFUND -> REFUNDED."}
+  - {code: human_review_completed, actor: REVIEWER, target: PLATFORM, changes: "SM-RULING: PENDING_HUMAN -> HUMAN_FINAL; SM-RULING: UNDER_APPEAL -> HUMAN_FINAL"}
+  - {code: appeal_filed, actor: "CLAIMANT or RESPONDENT", target: PLATFORM, changes: "SM-TICKET: CLOSED -> REOPENED; SM-RULING: AUTO_FINAL -> UNDER_APPEAL; SM-RULING: HUMAN_FINAL -> UNDER_APPEAL; SM-CHARGE: UPHELD -> DISPUTED; SM-CHARGE: WAIVED -> DISPUTED; SM-CHARGE: PARTIALLY_REFUNDED -> DISPUTED; SM-CHARGE: REFUNDED -> DISPUTED", is_update: true, note: "The reopened ticket goes back to TRIAGED and a person reviews the earlier ruling, confirming or changing it (MAT-03, tier APPROVE); the charge is disputed again until the review ends."}
+  - {code: refund_issued, actor: PLATFORM, target: PAYEE, changes: "none (money movement after ruling_executed has set WAIVED, PARTIALLY_REFUNDED or REFUNDED)"}
+  - {code: trip_terminated, actor: DRIVER, target: RIDER, changes: "SM-TRIP: ONBOARD -> TERMINATED_MID_TRIP", note: "Allowed for safety or a guideline breach (SE-R02)."}
+  - {code: amount_recovered, actor: PLATFORM, target: "RIDER (payer)", changes: "SM-CHARGE: APPLIED -> RECOVERED_FROM_RIDER", note: "Ryde reimburses the driver and recovers a cleaning fee from the rider separately (DM-R06)."}
+
+terminal_states:      # states with no outgoing event (checked by build_kb.py)
+  SM-TRIP: [COMPLETED, CANCELLED_BY_RIDER, CANCELLED_NO_SHOW, CANCELLED_BY_DRIVER, TERMINATED_MID_TRIP]
+  SM-CHARGE: []        # every charge state can be disputed again (dispute_filed, appeal_filed)
+  SM-TICKET: [MERGED]
+  SM-RULING: []
+state_machines:
+  SM-TRIP: [REQUESTED, MATCHED, EN_ROUTE, ARRIVED, WAITING_FREE, WAITING_CHARGEABLE, ONBOARD, COMPLETED, CANCELLED_BY_RIDER, CANCELLED_NO_SHOW, CANCELLED_BY_DRIVER, TERMINATED_MID_TRIP]
+  SM-CHARGE: [APPLIED, DISPUTED, UPHELD, WAIVED, PARTIALLY_REFUNDED, REFUNDED, RECOVERED_FROM_RIDER]
+  SM-TICKET: [OPEN, TRIAGED, EVIDENCE_READY, ARGUED, RULED, CLOSED, REOPENED, MERGED]
+  SM-RULING: [DRAFT, AUTO_FINAL, PENDING_HUMAN, HUMAN_FINAL, UNDER_APPEAL]
+
+new_vs_update:
+  - "A second ticket from the same claimant on the same trip and charge while the first is open is a DUPLICATE, merged into the first (no new case)."
+  - "The same after the first is closed is an APPEAL: reopen, and require human review if the first ruling was automatic."
+  - "Extra photos, screenshots or explanations on an open ticket are an UPDATE: re-run fact rules; do not start a new case."
+  - "The other party filing about the same trip is a COUNTER_CLAIM: a new claim linked to the first; overlapping facts are decided once."
+  - "A different issue on the same trip (for example a fee plus a rude-driver complaint) is RELATED_OTHER: separate claims; any safety claim is routed to humans regardless."
+  - "wait_timer_expired and destination_edit_accepted update an existing trip state; they are not new trips."
+
+# =====================================================================
+# Validation against the only real sample (ONT.1: verify with real samples)
+disp002_mapping:
+  - {path: dispute_ticket.dispute_id, maps_to: DisputeTicket.dispute_id}
+  - {path: dispute_ticket.trip_id, maps_to: DisputeTicket.trip}
+  - {path: dispute_ticket.filed_by, maps_to: DisputeTicket.filed_by_role, vocab: TX-ROLE}
+  - {path: dispute_ticket.dispute_type, maps_to: DisputeTicket.dispute_type_raw, vocab: "TX-CASE (organizer_code no_show_charge -> CW-NOSHOW)"}
+  - {path: dispute_ticket.description, maps_to: DisputeTicket.description, note: untrusted text}
+  - {path: dispute_ticket.filed_at, maps_to: DisputeTicket.filed_at}
+  - {path: dispute_ticket.status, maps_to: DisputeTicket.status, vocab: SM-TICKET}
+  - {path: rider_profile.rider_id, maps_to: Account.account_id (role RIDER)}
+  - {path: rider_profile.name, maps_to: Account.display_name, note: PII}
+  - {path: rider_profile.account_age_days, maps_to: Account.account_age_days}
+  - {path: rider_profile.total_trips, maps_to: Account.total_trips}
+  - {path: rider_profile.avg_rating, maps_to: Account.avg_rating}
+  - {path: rider_profile.dispute_history.total_disputes, maps_to: DisputeHistory.total_disputes}
+  - {path: rider_profile.dispute_history.upheld, maps_to: DisputeHistory.upheld}
+  - {path: rider_profile.dispute_history.rejected, maps_to: DisputeHistory.rejected}
+  - {path: rider_profile.fraud_flags, maps_to: Account.fraud_flags}
+  - {path: rider_profile.fraud_flag_details, maps_to: Account.fraud_flag_details}
+  - {path: rider_profile.payment_method, maps_to: Account.payment_method, vocab: TX-PAYMETHOD}
+  - {path: driver_profile.driver_id, maps_to: Account.account_id (role DRIVER)}
+  - {path: driver_profile.name, maps_to: Account.display_name, note: PII}
+  - {path: driver_profile.account_age_days, maps_to: Account.account_age_days}
+  - {path: driver_profile.total_trips, maps_to: Account.total_trips}
+  - {path: driver_profile.avg_rating, maps_to: Account.avg_rating}
+  - {path: driver_profile.dispute_history.total_disputes, maps_to: DisputeHistory.total_disputes}
+  - {path: driver_profile.dispute_history.upheld_against, maps_to: DisputeHistory.upheld_against}
+  - {path: driver_profile.dispute_history.rejected, maps_to: DisputeHistory.rejected}
+  - {path: driver_profile.fraud_flags, maps_to: Account.fraud_flags}
+  - {path: driver_profile.vehicle, maps_to: "Vehicle.model + Vehicle.plate"}
+  - {path: trip_data.trip_id, maps_to: Trip.trip_id}
+  - {path: trip_data.rider_id, maps_to: Trip.rider_account}
+  - {path: trip_data.driver_id, maps_to: Trip.driver_account}
+  - {path: trip_data.pickup_location.name, maps_to: Place.name (pickup)}
+  - {path: trip_data.pickup_location.lat, maps_to: Place.pin_lat (pickup)}
+  - {path: trip_data.pickup_location.lng, maps_to: Place.pin_lng (pickup)}
+  - {path: trip_data.dropoff_location.name, maps_to: Place.name (dropoff)}
+  - {path: trip_data.dropoff_location.lat, maps_to: Place.pin_lat (dropoff)}
+  - {path: trip_data.dropoff_location.lng, maps_to: Place.pin_lng (dropoff)}
+  - {path: trip_data.scheduled_time, maps_to: Trip.scheduled_time}
+  - {path: trip_data.driver_arrival_time, maps_to: Trip.driver_arrival_time}
+  - {path: trip_data.driver_wait_start, maps_to: Trip.driver_wait_start}
+  - {path: trip_data.cancellation_time, maps_to: Trip.cancellation_time}
+  - {path: trip_data.cancellation_fee, maps_to: "Charge.amount_sgd (charge_type CANCELLATION_FEE)"}
+  - {path: trip_data.cancellation_reason, maps_to: Trip.cancellation_reason, vocab: TX-CANCELREASON}
+  - {path: "gps_telemetry[].timestamp", maps_to: GPSPing.timestamp}
+  - {path: "gps_telemetry[].lat", maps_to: GPSPing.lat}
+  - {path: "gps_telemetry[].lng", maps_to: GPSPing.lng}
+  - {path: "gps_telemetry[].speed_kmh", maps_to: GPSPing.speed_kmh}
+  - {path: "gps_telemetry[].status", maps_to: GPSPing.status, vocab: TX-GPSSTATUS}
+  - {path: "chat_logs[].timestamp", maps_to: Communication.timestamp}
+  - {path: "chat_logs[].sender", maps_to: Communication.sender_role, vocab: TX-ROLE}
+  - {path: "chat_logs[].type", maps_to: Communication.comm_type, vocab: TX-COMMTYPE}
+  - {path: "chat_logs[].content", maps_to: Communication.content, note: untrusted text}
+  - {path: "app_events[].timestamp", maps_to: TripEvent.timestamp}
+  - {path: "app_events[].event_type", maps_to: TripEvent.event_type, vocab: TX-EVENT}
+  - {path: "app_events[].details", maps_to: TripEvent.details}
+  - {path: cancellation_policy.free_wait_time_min, maps_to: "PolicyClause of the embedded PolicyDocument (organizer) -> reference_data organizer_case.FREE_WAIT_S (x 60)", param: FREE_WAIT_S, scale: 60}
+  - {path: cancellation_policy.cancellation_fee_after_wait, maps_to: "PolicyClause of the embedded PolicyDocument (organizer) -> reference_data organizer_case.NO_SHOW_FEE_SGD", param: NO_SHOW_FEE_SGD, scale: 1}
+  - {path: cancellation_policy.no_show_threshold_min, maps_to: "PolicyClause of the embedded PolicyDocument (organizer) -> reference_data organizer_case.NO_SHOW_THRESHOLD_S (x 60)", param: NO_SHOW_THRESHOLD_S, scale: 60}
+  - {path: cancellation_policy.fee_goes_to, maps_to: "Charge.payee and reference_data organizer_case.FEE_PAYEE (driver_compensation -> DRIVER)", param: FEE_PAYEE}

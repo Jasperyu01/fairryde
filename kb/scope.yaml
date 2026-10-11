@@ -1,0 +1,119 @@
+# FairRyde Knowledge Base - DECISION GOAL, SCOPE AND LINKS TO THE RUNTIME
+# ChordX ONT.1 (when and why), ONT.4 Step 1 (decision goal) and Step 6 (minimum sufficient), ONT.7 (links to DRT / DEP),
+# ONT.10.1 (starting route) and ONT.10.4 (knowledge base is a resource, built by an offline flow).
+
+meta:
+  kb: FairRyde Knowledge Base
+  version: 0.1.0
+  status: draft
+  updated: 2026-10-05
+  owner: Jasper
+  reviewers: [Cao]
+
+# ---------------------------------------------------------------------
+decision_goal:            # ONT.4 Step 1: which decision does this knowledge base serve?
+  statement: >-
+    For one dispute ticket about one Ryde trip, decide what Ryde should do and who must approve it:
+    (1) whether it is an adjudicable dispute, and which claims it contains (one primary, any secondary);
+    (2) which trip it concerns, and whether it is new, a duplicate, an update, an appeal or a counter-claim;
+    (3) the outcome of each claim (uphold, waive, refund, compensate, escalate, request information, route to support),
+    with amount, payer, payee and form of any remedy;
+    (4) the autonomy tier (AUTO with human review on request, APPROVE a human approves, HUMAN a human decides);
+    (5) what each party is told, citing rules (with source and credibility) and evidence IDs.
+  zh: >-
+    针对一张关于某一趟 Ryde 行程的争议工单，决定 Ryde 应该怎么处理、由谁批准：
+    （1）是不是可裁决的争议、包含哪些主张（一个主项、若干次项）；（2）对应哪一趟行程、是新工单还是重复、补充、申诉或反诉；
+    （3）每个主张的结果（维持、免除、退款、补偿、转人工、补充信息、转普通客服）以及金额、付款方、收款方和形式；
+    （4）自治等级（AUTO 自动执行，可申请人工复核；APPROVE 人工批准；HUMAN 人工裁决）；（5）告诉双方什么，引用规则（含来源与可信度）和证据编号。
+  decision_owner: "Ryde. Terms of Use s.7.2 gives Ryde 'absolute discretion' over refunds, so FairRyde recommends and executes only within the approval tiers (AUTH-00)."
+  users: [rider, driver, Ryde support reviewer, hackathon judges]
+  never_decided_by_fairryde:
+    - "Account sanctions: suspension, hold, deactivation (GEN-R06)"
+    - "Safety findings and anything possibly criminal (SE-R01, AUTH-03)"
+    - "Consequences of a fraud signal (FRD-01, FRD-02)"
+  track_requirements:        # verbatim from the organizer handbook, section 5
+    - {quote: "issues a final ruling (refund, compensation, no action)", source: ORG-HANDBOOK}
+    - {quote: "without human intervention for the majority of standard dispute categories.", source: ORG-HANDBOOK}
+    - {quote: "issues a ruling with a confidence score and natural language reasoning summary.", source: ORG-HANDBOOK}
+    - {quote: "Teams should ensure their system can handle at least two of the following dispute types:", source: ORG-HANDBOOK}
+    - {quote: "Inter-agent communication should be observable", source: ORG-HANDBOOK}
+  success_criteria:
+    - "Reproduce the organizer's expected ruling on organizer cases (DISP-002: cancellation charge UPHELD)."
+    - "Outcome accuracy on the held-out set, reported by category and difficulty; boundary cases reported separately."
+    - "Citation validity 100%: every cited rule, clause and evidence ID exists; every number in an explanation equals a finding (EXP-03)."
+    - "Safety recall 100%; prompt-injection success 0; history used as decisive 0%."
+    - "Most standard cases resolved in tier AUTO, matching the handbook's 'without human intervention for the majority of standard dispute categories'; boundary cases such as DISP-002 go to one-click human approval."
+    - "Tier AUTO share reported separately for rider-favorable and driver-favorable outcomes, so automation does not lean toward one side."
+
+competency_questions:      # questions the three layers must let us answer on DISP-002 (ONT.1: verify with a real sample)
+  - {q: "Which category and type is the claim?", answered_by: "TX-CASE via CLS-05 (no_show_charge -> CW-NOSHOW)"}
+  - {q: "Which trip, and is the ticket new?", answered_by: "MAT-01, MAT-02"}
+  - {q: "Which policy parameters apply?", answered_by: "META-01 (organizer_case), META-02"}
+  - {q: "When did the wait start and how long did the driver wait?", answered_by: "CW-F02, CW-F03, CW-F03B"}
+  - {q: "Was the driver at the pick-up point, and for the whole wait?", answered_by: "CW-R06, CW-F04"}
+  - {q: "Did anyone try to make contact?", answered_by: "CW-F05"}
+  - {q: "Is there rider-side system evidence?", answered_by: "CW-F06"}
+  - {q: "Is the pick-up pin where the named venue is?", answered_by: "CW-F07 with reference table VENUES"}
+  - {q: "What is the outcome, amount, payer, payee and form?", answered_by: "DT-CW-NOSHOW, CW-R09, CW-R10, DQ-06"}
+  - {q: "Who must approve, and why?", answered_by: "AUTH-01 to AUTH-06"}
+  - {q: "What is each party told, and which points were generic assumptions?", answered_by: "EXP-01 to EXP-03, META-05"}
+
+# ---------------------------------------------------------------------
+scope_v0_1:                # ONT.4 Step 6: minimum sufficient
+  handbook_mapping:
+    "1 Route Deviation": FC-ROUTE
+    "2 No-Show Charge": CW-NOSHOW
+    "3 Property Damage / Mess": "DM-CLEANING (approval); DM-DAMAGE (triage)"
+    "4 Safety Incident": "SE-CONDUCT and the other SE types (triage)"
+  adjudicate: [CW-NOSHOW, CW-RIDERCANCEL, CW-WAITING, FC-ROUTE, FC-TOLL]
+  adjudicate_with_approval: [FC-DEST, FC-NOPICKUP, DM-CLEANING]
+  triage_to_human: [SE-CONDUCT, SE-DRIVING, SE-MISMATCH, SE-ACCIDENT, SE-RECORDING, SE-TERMINATED, SE-OTHER, DM-DAMAGE]
+  route_to_support: [EX-LOST, EX-RATING, EX-FEEDBACK, EX-LOCATION, EX-APP, EX-OTHER]
+  why_these: >-
+    The organizer sample is a no-show case and the handbook names route deviation as the other demo category, so
+    CW-NOSHOW and FC-ROUTE are the core. The other CW types share the same evidence and policy article, and FC-TOLL is
+    the part of route disputes that changes money under fixed fares, so they cost little to add. Cleaning, destination
+    fees and no-pickup have clear Ryde rules but need human approval (approval_reason in taxonomy.yaml). Safety is always a
+    human decision.
+  stop_rule: >-
+    Stop adding to the three layers when every dev case fits exactly one leaf per dimension, every in-scope decision point
+    has a rule with a source and credibility, and the DISP-002 competency questions can all be answered. Anything else goes
+    to the backlog below instead of into v0.1.
+
+backlog:                   # ONT.4 Step 6 / ONT.10 to-do: deliberately left out of v0.1
+  - "CW-DRIVERNOSHOW, CW-FEEMISSED, CW-OTHER, FC-SURCHARGE, FC-SURGE, FC-PROMO, FC-PAYMENT, FC-TIP, FC-OTHER, DM-OTHER, OT-OTHER: classified, then escalated by GEN-R07 when a charge is contested"
+  - "Cash payments and cash collection of fees"
+  - "RydePOOL and carpool trips with several riders"
+  - "Separate Booking entity (booking and trip are one entity in v0.1)"
+  - "Live data integrations (OneMap, LTA DataMall, ERP rates): reference tables only in v0.1"
+  - "Image analysis for mess and damage photos (handbook stretch goal)"
+  - "Supervised classifier for stable, high-volume labels (ONT.10 Phase 4), only after enough reviewed labels exist"
+  - "Sensitivity classes aligned to ChordX SEC.6 (provisional labels in inventory.yaml)"
+
+# ---------------------------------------------------------------------
+start_route:               # ONT.10.1
+  condition: "No labeled disputes; Ryde publishes policies (Help Centre, Terms of Use); one organizer sample."
+  route: "LLM + RAG + Rules cold start (ONT.10.1 first row). Rules decide, code computes, the LLM argues and explains."
+  phase_1_logging: "From the first run, every ruling writes a HumanReview row when a person confirms, edits or rejects it (ENT-REVIEW: AI suggestion, final decision, notes, time, model version, rulebook version)."
+  eval_separation: "Evaluation cases are held out from the start, never used as few-shot examples and never stored in the precedent library; cases are split by seed family (ONT.10.3)."
+
+offline_vs_runtime:        # ONT.10.4
+  knowledge_base_is: "A resource read by runtime nodes, not a runtime node."
+  offline_flow: "Collect sources -> pseudonymize (privacy.yaml) -> write and verify the three layers (build_kb.py) -> label cases (annotation sheet) -> freeze -> index rule cards and reviewed precedents."
+  runtime_flow: "Ticket -> intake and classification -> matching -> evidence and facts -> advocates -> judge -> verifier -> approval tier -> explanation -> execution or human review -> log."
+
+runtime_mapping:           # ONT.7, not yet verified against chordx_core.md (node letters only where the protocol names them)
+  note: >-
+    ONT.10.4 names D nodes R/A/M/P and E nodes G/T/X/S/E/D, and gives three of them a meaning: Matching (D), Ranking (D),
+    Generate (E) and eXecute (E). Other letters are left blank until chordx_core.md is available.
+  rows:
+    - {node: Intake and classification, chordx_node: "D (letter to confirm)", reads: "TX-CASE, TX-ROLE, TX-SEVERITY; CLS-01 to CLS-05; GEN-R04", writes: "Claim(s) with primary and secondary types"}
+    - {node: Matching (ticket to trip and to earlier tickets), chordx_node: "D: Matching", reads: "TX-RELATION; ontology events and new_vs_update; MAT-01 to MAT-03", writes: "relation_type, related_ticket, trip"}
+    - {node: Evidence and facts (deterministic tools), chordx_node: "E (letter to confirm)", reads: "Ontology entities as the data contract; DQ and fact rules; reference_data", writes: "EvidenceItem IDs, Findings"}
+    - {node: Rider Advocate and Driver Advocate, chordx_node: "E: Generate", reads: "Findings, evidence IDs, rule cards; READ rules retrieved verbatim (EXP-02)", writes: "Arguments (system artifact, never evidence)"}
+    - {node: Rules engine decision, chordx_node: "D (letter to confirm)", reads: "Decision tables, outcome and remedy rules, profile parameters", writes: "Outcome, reason codes, remedy"}
+    - {node: Judge, chordx_node: "E: Generate (reasoned ruling) + D: Ranking (only when several remedies are open)", reads: "Both briefs, findings, rules engine result; history only in the fraud pass (GEN-R03)", writes: "Ruling draft with confidence components"}
+    - {node: Verifier, chordx_node: "D (letter to confirm)", reads: "EXP-03; citation index", writes: "pass or fail (gate G7)"}
+    - {node: Approval tier, chordx_node: "D (letter to confirm)", reads: "AUTH-00 to AUTH-06", writes: "tier AUTO, APPROVE or HUMAN; escalation gates"}
+    - {node: Explanation, chordx_node: "E: Generate", reads: "EXP-01 to EXP-03, META-05", writes: "rider and driver explanations"}
+    - {node: Execute remedy and update states, chordx_node: "E: eXecute", reads: "SM-CHARGE, SM-TICKET, SM-RULING", writes: "state changes; refund instruction (after approval when tier APPROVE)"}

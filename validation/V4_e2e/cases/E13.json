@@ -1,0 +1,119 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E13",
+    "trip_id": "TRIP-2026-36004",
+    "filed_by": "rider",
+    "dispute_type": "safety_incident",
+    "description": "During the ride the driver kept commenting on my looks, asked if I had a boyfriend and whether I lived alone, and wanted to know which floor I stay on. I gave short answers and pretended to be on my phone. After I got home he messaged me in the app asking if I reached home safely and saying my block is dark, and then he WhatsApped me before midnight from his own number asking me out for supper. I never gave him my number. I feel very unsafe because he knows where I live. I don't want a refund, I want Ryde to take action against this driver.",
+    "filed_at": "2026-09-21T00:20:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-9530",
+    "name": "Amanda Lau",
+    "account_age_days": 410,
+    "total_trips": 66,
+    "avg_rating": 4.9,
+    "dispute_history": {
+      "total_disputes": 0,
+      "upheld": 0,
+      "rejected": 0
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "card"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-4772",
+    "name": "Ng Wee Liang",
+    "account_age_days": 230,
+    "total_trips": 640,
+    "avg_rating": 4.80,
+    "dispute_history": {
+      "total_disputes": 2,
+      "upheld_against": 1,
+      "rejected": 1
+    },
+    "fraud_flags": 0,
+    "vehicle": "Mazda 3 (SMQ 2275 J)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-36004",
+    "rider_id": "R-9530",
+    "driver_id": "D-4772",
+    "service_type": "RydeX",
+    "booking_type": "on_demand",
+    "pickup_location": {
+      "name": "313@somerset (Somerset Road pick-up point)",
+      "lat": 1.3010,
+      "lng": 103.8384
+    },
+    "dropoff_location": {
+      "name": "Blk 405 Woodlands Street 41",
+      "lat": 1.4335,
+      "lng": 103.7745
+    },
+    "scheduled_time": "2026-09-20T23:13:00+08:00",
+    "driver_arrival_time": "2026-09-20T23:13:10+08:00",
+    "driver_wait_start": "2026-09-20T23:13:10+08:00",
+    "rider_boarded_time": "2026-09-20T23:14:00+08:00",
+    "dropoff_time": "2026-09-20T23:42:30+08:00",
+    "cancellation_time": null,
+    "cancellation_fee": null,
+    "cancellation_reason": null,
+    "quoted_fare": 24.30
+  },
+
+  "fare_breakdown": {
+    "base_fare": 24.30,
+    "platform_fee_included_in_base_fare": 1.47,
+    "waiting_time_fee": 0.00,
+    "erp_toll": 0.00,
+    "subtotal": 24.30,
+    "transaction_fee": 0.72,
+    "transaction_fee_basis": "1.96% + $0.24 (local Visa/Mastercard) on subtotal",
+    "total_charged": 25.02,
+    "payment_method": "card"
+  },
+
+  "evidence_attachments": [
+    {"file": "whatsapp_screenshot_2358.png", "type": "screenshot", "taken_at": "2026-09-21T00:12:00+08:00", "description": "Screenshot of a WhatsApp chat from an unsaved number (+65 9XXX 4471), message received 2026-09-20 23:58: 'Hi Amanda, it's your Ryde driver just now. You're very pretty, I enjoyed our chat. Can I take you for supper next time?'"}
+  ],
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-20T23:10:00+08:00", "lat": 1.3035, "lng": 103.8360, "speed_kmh": 30, "status": "en_route"},
+    {"timestamp": "2026-09-20T23:13:10+08:00", "lat": 1.3010, "lng": 103.8384, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-20T23:14:00+08:00", "lat": 1.3010, "lng": 103.8384, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-20T23:20:00+08:00", "lat": 1.3300, "lng": 103.8420, "speed_kmh": 75, "status": "on_trip"},
+    {"timestamp": "2026-09-20T23:27:00+08:00", "lat": 1.3800, "lng": 103.8350, "speed_kmh": 82, "status": "on_trip"},
+    {"timestamp": "2026-09-20T23:33:00+08:00", "lat": 1.4100, "lng": 103.7900, "speed_kmh": 78, "status": "on_trip"},
+    {"timestamp": "2026-09-20T23:39:00+08:00", "lat": 1.4300, "lng": 103.7780, "speed_kmh": 40, "status": "on_trip"},
+    {"timestamp": "2026-09-20T23:42:30+08:00", "lat": 1.4335, "lng": 103.7745, "speed_kmh": 0, "status": "completed"},
+    {"timestamp": "2026-09-20T23:44:00+08:00", "lat": 1.4335, "lng": 103.7745, "speed_kmh": 0, "status": "available"},
+    {"timestamp": "2026-09-20T23:47:00+08:00", "lat": 1.4335, "lng": 103.7745, "speed_kmh": 0, "status": "available"},
+    {"timestamp": "2026-09-20T23:49:00+08:00", "lat": 1.4342, "lng": 103.7760, "speed_kmh": 22, "status": "available"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-20T23:13:20+08:00", "sender": "driver", "type": "message", "content": "Arrived, grey Mazda 3 SMQ 2275 J"},
+    {"timestamp": "2026-09-20T23:13:40+08:00", "sender": "rider", "type": "message", "content": "coming"},
+    {"timestamp": "2026-09-20T23:47:05+08:00", "sender": "driver", "type": "message", "content": "You reached home safely? Your block quite dark ah. Which floor you stay haha"}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-20T23:08:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-9530 booked on-demand RydeX trip TRIP-2026-36004 from 313@somerset to Blk 405 Woodlands Street 41. Fixed fare quoted $24.30. Payment: card."},
+    {"timestamp": "2026-09-20T23:08:20+08:00", "event_type": "driver_assigned", "details": "Driver D-4772 (Ng Wee Liang, Mazda 3 SMQ 2275 J) assigned. ETA 5 min."},
+    {"timestamp": "2026-09-20T23:08:25+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-20T23:13:10+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS within 9m of pickup point. Speed 0 km/h. Arrival confirmed."},
+    {"timestamp": "2026-09-20T23:14:00+08:00", "event_type": "rider_picked_up", "details": "Driver tapped PICK UP. Rider boarded 50 s after 'I'm Here'."},
+    {"timestamp": "2026-09-20T23:14:05+08:00", "event_type": "trip_started", "details": "Trip started. Navigation to Blk 405 Woodlands Street 41."},
+    {"timestamp": "2026-09-20T23:42:30+08:00", "event_type": "rider_dropped_off", "details": "Driver tapped DROP OFF at Blk 405 Woodlands Street 41."},
+    {"timestamp": "2026-09-20T23:42:40+08:00", "event_type": "trip_completed", "details": "Trip completed. Toll (ERP) entered: $0.00. No waiting time fee."},
+    {"timestamp": "2026-09-20T23:42:45+08:00", "event_type": "payment_charged", "details": "$25.02 charged to rider card (fixed fare $24.30 + transaction fee $0.72)."},
+    {"timestamp": "2026-09-20T23:50:10+08:00", "event_type": "rating_submitted", "details": "Rider rated driver 1 star. Review: 'Made me very uncomfortable.'"},
+    {"timestamp": "2026-09-21T00:20:00+08:00", "event_type": "safety_report_submitted", "details": "Rider submitted 'Report a Safety Issue' via RydeHELP with one screenshot attached."}
+  ]
+}

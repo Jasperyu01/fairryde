@@ -1,0 +1,44 @@
+RYDE HELP CENTRE ARTICLE 60139384607897
+TITLE: RydePOOL Auto switch
+AUDIENCE: Rider
+SECTION: RydePOOL
+URL: https://help.rydesharing.com/hc/en-us/articles/60139384607897-RydePOOL-Auto-switch
+EDITED: 2026-07-17
+
+1. Why was my RydePOOL ride switched to RydeX?
+If we can't find a RydePOOL match after 90 seconds, we'll automatically switch your booking to a RydeX. This helps increase the likelihood of finding you a driver sooner, so you can get on your way faster.
+
+There's no need to cancel or make a new booking. We'll handle the switch automatically and continue searching for a driver while keeping your booking details the same.
+
+2. Will I be notified before the switch and when my booking is switched?
+Yes. Before you confirm your booking, we'll show you the reserved RydeX fare and the time window during which your booking will automatically switch if no RydePOOL match is found.
+
+While we're searching for a driver, you'll also see the switching time in the app. If your booking is switched to RydeX, we'll notify you via a push notification.
+
+Your pickup location, destination, and all other booking details will remain unchanged.
+
+3. Will the fare change?
+Yes, the fare may change. RydePOOL and RydeX are different ride services with different fares.
+When you book a RydePOOL ride, we'll also show you a reserved RydeX fare upfront. This fare will only apply if your booking is automatically switched to RydeX.
+
+If your booking remains as a RydePOOL ride, you'll pay the RydePOOL fare. If it's switched to RydeX, you'll pay the pre-reserved RydeX fare shown at the time of booking.
+The final fare will be reflected in the app, and you'll only be charged based on the service type of your completed trip.
+
+4. Can I choose not to switch to RydeX?
+Auto-switch is designed to help you get matched with a driver sooner, so RydePOOL bookings will automatically switch to RydeX if no match is found within the waiting period.
+
+If you no longer wish to continue with the booking after it has switched, you may cancel before a driver is matched. Please note that the standard cancellation policy may apply.
+
+5. My payment method has enough balance for RydePOOL, why can't I book it?
+Because your booking may be automatically switched to RydeX, your selected payment method must have sufficient funds or available credit to cover the reserved RydeX fare to ensure a smooth booking experience.
+
+6. Why is a higher amount temporarily held on my payment method?
+When you book a RydePOOL ride, we may temporarily authorise or hold the reserved RydeX fare on your payment method.
+This is not an additional charge. It's a temporary authorisation that allows your booking to switch seamlessly to RydeX if no RydePOOL match is found.
+
+If your trip is completed as a RydePOOL ride, you'll only be charged the RydePOOL fare. Any unused authorised amount will be released by your bank or payment provider according to their processing timeline.
+
+7. Does auto-switch affect how I pay for my trip?
+No. Your selected payment method will remain the same.
+
+You'll only be charged the final fare for the service you completed. If a higher amount was temporarily authorised, any unused amount will be released or refunded by your bank or payment provider.

@@ -1,0 +1,18 @@
+RYDE HELP CENTRE ARTICLE 360007214273
+TITLE: How to accept On-Demand PING Trip request?
+AUDIENCE: Driver
+SECTION: Accepting a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/360007214273-How-to-accept-On-Demand-PING-Trip-request
+EDITED: 2021-01-21
+
+Now, it cannot be any easier to receive the on-demand trip request with your Ryde Driver app!
+
+Whenever there is a trip request nearby your location, you will receive the pop up trip request. You are given 15 seconds to accept the job. If you do not want to accept, please tap reject or ignore the pop up box.
+
+1. After you tap ACCEPT, we will notify the rider that you are on the way to the pick up location. Please proceed directly to the pick up location stated in the app.
+
+2. Upon arrival at the pick up location, tap "I'M HERE" and the rider will be notified that the driver has arrived.
+
+3. Please tap PICK UP only when the rider has boarded your car. You can proceed to start the trip as per normal.
+
+[Image: featuredscreens_accepttrip.png]

@@ -1,0 +1,731 @@
+# FairRyde Knowledge Base - Layer 1: TAXONOMY (controlled vocabularies)
+# Question this layer answers: "Which class does it belong to?"
+# Follows the ChordX knowledge-base protocol (ONT.2, ONT.4 Step 4).
+
+meta:
+  kb: FairRyde Knowledge Base
+  layer: Taxonomy
+  version: 0.1.0
+  status: draft            # draft -> approved after review by the team lead and, where possible, the organizer / Ryde
+  updated: 2026-10-05
+  owner: Jasper
+  reviewers: [Cao]
+  authority: >-
+    Business vocabulary. Labels reuse Ryde's own words from the Ryde Help Centre
+    (2 categories, 46 sections and their article titles, read through the public Zendesk API on 2026-10-05)
+    and the organizer's handbook and sample dataset DISP-002. FairRyde only assigns codes and groups;
+    it does not invent business terms where Ryde already has one.
+  placement_test: >-
+    Put something in the Taxonomy when it names a CLASS from a closed list that could be a dropdown,
+    and changing it means renaming or regrouping, not changing logic.
+    (Things with identity and attributes go to the Ontology; IF/THEN conditions, thresholds, amounts,
+    deadlines and permissions go to the Rules.)
+  editing_rules:
+    - Every vocabulary keeps an OTHER value plus a free-text field (ONT.4 Step 4).
+    - Reuse Ryde wording when it exists and record where each label came from (term_sources).
+    - Add a value only when a real or synthetic case cannot be placed; stop when every case fits exactly one leaf per dimension (Nickerson ending conditions).
+    - Codes never change meaning. Retired codes are marked deprecated, never reused.
+    - Event types come from the Ontology layer and are frozen here as a controlled list (ONT.2 dependency).
+    - The classification unit is the CLAIM, not the ticket. One ticket may carry a primary claim and secondary claims (ONT.8).
+
+scope_values:
+  ADJUDICATE: In MVP. Full rule support; may be auto-resolved within the authority matrix.
+  ADJUDICATE_WITH_APPROVAL: Rules support the check, but a human must approve the outcome (autonomy tier APPROVE).
+  TRIAGE_TO_HUMAN: The AI classifies, preserves evidence and summarizes; a human decides (autonomy tier HUMAN).
+  ROUTE_TO_SUPPORT: Not an adjudicable dispute (no contested charge or remedy); route to normal support. Used as negative samples.
+  BACKLOG: Recognized by the classifier; rules not written in v0.1. Handled by rule GEN-R07 (escalate as a policy gap) and playbook PB-TRIAGE-HUMAN.
+scope_playbooks:      # default playbook by scope when a leaf names none
+  TRIAGE_TO_HUMAN: PB-TRIAGE-HUMAN
+  BACKLOG: PB-TRIAGE-HUMAN
+  ROUTE_TO_SUPPORT: PB-ROUTE-SUPPORT
+
+vocabularies:
+
+  # ------------------------------------------------------------------
+  - id: TX-CASE
+    name: Dispute category and type
+    zh: 争议类别与类型
+    used_by: [Claim.taxonomy_code, DisputeTicket.dispute_type]
+    assigned_when: At intake (may be corrected later). Safety language anywhere overrides to SE (rule CLS-01).
+    levels: [category, type]
+    values:
+
+      - code: CW
+        level: category
+        label: Cancellation and Waiting Fee
+        zh: 取消费与等候费
+        term_sources:
+          - "Ryde rider article 23534478435353 'Cancellation and Waiting Fee'"
+          - "Ryde driver article 33362932998937 'Cancellation and Waiting Time Policy'"
+        children:
+          - code: CW-NOSHOW
+            label: No-show cancellation fee
+            zh: 乘客缺席（no-show）取消费争议
+            definition: The rider contests a cancellation fee charged after the DRIVER canceled the trip because the rider did not show up.
+            excludes: "Fee after the RIDER canceled (CW-RIDERCANCEL); waiting fee on a completed trip (CW-WAITING)."
+            term_sources:
+              - "Handbook category 2 'No-Show Charge': 'Driver didn't show up but I was charged a cancellation fee.'"
+              - "Ryde rider article 4407754403353 'What if my driver hasn't arrived, but has indicated that he/she arrived?'"
+              - "Ryde driver article 115001438754 'I am unable to contact my rider. The rider did not turn up. What should I do?'"
+            organizer_code: no_show_charge          # observed in DISP-002 dispute_ticket.dispute_type
+            example_phrases: ["the driver never showed up", "I was there, the driver was not", "charged a cancellation fee for a no-show", "couldn't find the car"]
+            scope: ADJUDICATE
+            rule_family: CW
+            playbook: PB-CW-NOSHOW
+          - code: CW-RIDERCANCEL
+            label: Rider cancellation fee
+            zh: 乘客自行取消被收费
+            definition: The rider contests a cancellation fee charged after the RIDER canceled (on-demand after the free window, or an advance trip inside the cut-off).
+            excludes: "Driver-initiated no-show cancellation (CW-NOSHOW)."
+            term_sources:
+              - "Ryde rider article 4407761228825 'Will I be charged for cancelling a ride?'"
+              - "Ryde rider article 18229758389017 'Cancellation Fee Waiver Request'"
+            organizer_code: null
+            example_phrases: ["I canceled because the driver was far away and still got charged", "charged after canceling"]
+            scope: ADJUDICATE
+            rule_family: CW
+            playbook: PB-CW-RIDERCANCEL
+          - code: CW-WAITING
+            label: Waiting time fee
+            zh: 等候费争议
+            definition: The rider contests a waiting time fee added at the end of a completed trip.
+            term_sources:
+              - "Ryde rider article 4407754351257 'Why am I charged for a Waiting Time Fee?'"
+              - "Ryde rider article 27085468660505 'Waiting Fee Waiver Request'"
+              - "Ryde driver article 4408071347993 'How Does the Waiting Fee Work?'"
+            organizer_code: null
+            example_phrases: ["why was I charged a waiting fee", "I boarded within a minute"]
+            scope: ADJUDICATE
+            rule_family: CW
+            playbook: PB-CW-WAITING
+          - code: CW-DRIVERNOSHOW
+            label: Driver did not arrive or was uncontactable
+            zh: 司机未到或联系不上（乘客未被收费）
+            definition: The rider reports that the driver did not come, was uncontactable or canceled, and no fee was charged to the rider; the rider seeks redress or reports the driver.
+            excludes: "Any case where the rider was charged a fee (classify by that fee: CW-RIDERCANCEL or CW-NOSHOW)."
+            term_sources:
+              - "Ryde rider article 115000772593 'My Ryde driver is uncontactable. What should I do?'"
+            organizer_code: null
+            scope: BACKLOG
+            rule_family: CW
+          - code: CW-FEEMISSED
+            label: Driver did not receive a cancellation or waiting fee
+            zh: 司机未收到取消费或等候费
+            definition: The DRIVER claims a cancellation or waiting time fee that was not credited or not added.
+            term_sources:
+              - "Ryde driver article 4408079464217 'What if I forgot to add in the Waiting Time Fee?'"
+              - "Ryde driver article 23575142762393 'I wish to make an appeal'"
+              - "Ryde driver article 4408071485081 'How do I charge the Cancellation or Waiting Time Fee if the Rider pays by Cash?'"
+            organizer_code: null
+            scope: BACKLOG
+            rule_family: CW
+          - code: CW-OTHER
+            label: Other cancellation or waiting issue
+            zh: 其他取消或等候问题
+            definition: Fits the category but no type above; record free text.
+            scope: BACKLOG
+
+      - code: FC
+        level: category
+        label: Fares and Charges
+        zh: 车费与收费
+        term_sources:
+          - "Ryde Help Centre section 'Fares and Charges' (Rider, 4406764226201) and 'Fares & Charges' (Driver, 4406764191129)"
+        children:
+          - code: FC-ROUTE
+            label: Route deviation / longer route
+            zh: 绕路或路线更长
+            definition: The claimant says the driver's route, unexpected stops or a longer trip duration made the trip longer and/or raised the fare.
+            term_note: "The handbook lists 'Route deviation analysis', 'unexpected stops' and 'trip duration vs. estimated time' as GPS evidence for this type."
+            excludes: "Disputes about the ERP/toll amount itself (FC-TOLL), even if caused by the route; destination-edit fees (FC-DEST)."
+            term_sources:
+              - "Handbook category 1 'Route Deviation': 'Driver took a longer route and I was overcharged.'"
+              - "Ryde rider article 4412121982745 'Can I suggest my preferred route to the driver?'"
+              - "Ryde driver article 4412122016153 'Am I required to follow the suggested route by the rider?'"
+            organizer_code: route_deviation          # assumed (snake_case of the handbook name); not yet observed in organizer data
+            example_phrases: ["took a longer route", "went the long way", "overcharged because of the route", "driver detoured"]
+            scope: ADJUDICATE
+            rule_family: FC
+            playbook: PB-FC-ROUTE
+          - code: FC-TOLL
+            label: ERP / toll overcharge
+            zh: ERP 或过路费多收
+            definition: The claimant contests the ERP or road-toll amount added to the trip.
+            term_sources:
+              - "Ryde rider article 30741244296217 'I was overcharged for ERP/toll'"
+              - "Ryde rider article 115000772653 'Do I need to pay ERP charges?'"
+              - "Ryde driver articles 115001438614 'Which trips do I need to include ERP?' and 900005170163 'How to add ERP to my trip fare?'"
+            organizer_code: null
+            example_phrases: ["charged ERP twice", "there was no ERP on this road", "ERP amount is wrong"]
+            scope: ADJUDICATE
+            rule_family: FC
+            playbook: PB-FC-TOLL
+          - code: FC-DEST
+            label: Add/edit destination fee
+            zh: 改目的地费
+            definition: The claimant contests the add/edit destination fee or the fare recalculated after a destination edit.
+            term_sources:
+              - "Ryde Help Centre section 'Add/Edit Destination Fee' (Rider, 51386363038873) and 'Add/Edit Destination' (Driver, 51400100407321)"
+            organizer_code: null
+            scope: ADJUDICATE_WITH_APPROVAL
+            approval_reason: "The fee condition can be checked (FC-R09), but the recalculated fare comes from Ryde's pricing, which is not published, so the amount cannot be verified."
+            rule_family: FC
+            playbook: PB-FC-DEST
+          - code: FC-NOPICKUP
+            label: Trip completed without pickup
+            zh: 未接到乘客却完成行程并收费
+            definition: The rider was charged a fare although the trip was completed without the rider onboard.
+            term_sources:
+              - "Ryde rider article 18230976652185 'Driver completed the trip without picking me up'"
+              - "Ryde driver article 20692560042649 'I completed a trip without picking up the rider'"
+            organizer_code: null
+            scope: ADJUDICATE_WITH_APPROVAL
+            approval_reason: "A full refund reverses a completed fare, and whether the rider boarded rests on GPS from both phones, which is often missing."
+            rule_family: FC
+            playbook: PB-FC-NOPICKUP
+          - code: FC-SURCHARGE
+            label: Surcharge or entry fee
+            zh: 附加费或入场费
+            definition: The claimant contests a surcharge or entry fee (Sentosa entrance, Jurong Island pass, bulky item or wheelchair fee, child seat).
+            term_sources:
+              - "Ryde rider articles 17735760737817 'Sentosa Entrance Fee', 48945760704537 'Jurong Island Entry Pass', 4408072421785 'Are surcharges included in the base fee?', 4408080441497 'Do I need to pay an extra fee for my bulky items or wheelchair?', 37057430899225 'Baby and Child seat'"
+            organizer_code: null
+            scope: BACKLOG
+            rule_family: FC
+          - code: FC-PAYMENT
+            label: Payment or transaction fee issue
+            zh: 支付或交易费问题
+            definition: Platform fee, transaction fee, duplicate charge, unpaid fare or cash collection issues.
+            term_sources:
+              - "Ryde rider articles 22836370596377 'Platform Fee', 52594357168281 'Transaction Fee', 18230595517465 'I forgot to pay for my trip.', 115000777574 'How can I pay my Ryde driver?'"
+              - "Ryde driver articles 4842763548825 'Fare Evasion', 115001439613 'How do I collect payment from my pickups?'"
+            organizer_code: null
+            scope: BACKLOG
+            rule_family: FC
+          - code: FC-TIP
+            label: Tip charged or not removed
+            zh: 小费被收取或未能取消
+            definition: The rider contests a tip amount that was charged, including a tip added automatically and not removed (ToU s.6.2). Questions about how to tip are EX-OTHER.
+            term_sources:
+              - "Ryde rider articles 18230620209049 'How do I tip my driver?', 62021500374041 'Can I tip more than $10?'"
+              - "Ryde Terms of Use s.6.2: 'This will automatically be included in the User Charges after the Solution has been provided and given to the Partner unless you choose to remove the tip.'"
+            scope: BACKLOG
+          - code: FC-SURGE
+            label: Surge or dynamic price
+            zh: 高峰加价或动态价格
+            definition: The claimant contests a surge or demand-based price component.
+            term_sources:
+              - "Handbook MVP evidence: 'Payment & Fare Data' includes 'surge pricing disputes'"
+              - "Ryde driver article 900005170043 'How are the trip fares calculated?'"
+            scope: BACKLOG
+            rule_family: FC
+          - code: FC-PROMO
+            label: Promo code or discount not applied
+            zh: 优惠码或折扣未生效
+            definition: The rider says a promo code, voucher or discount was not applied to a trip fare.
+            term_sources:
+              - "Handbook MVP evidence: 'Payment & Fare Data' includes 'promo code usage'"
+            scope: BACKLOG
+            rule_family: FC
+          - code: FC-OTHER
+            label: Other fare or charge issue
+            zh: 其他车费问题
+            scope: BACKLOG
+
+      - code: DM
+        level: category
+        label: Rider made a mess / damage
+        zh: 车内脏污与损坏
+        term_sources:
+          - "Ryde driver article 900004381243 'My Rider Made a Mess'"
+          - "Handbook category 3 'Property Damage / Mess'"
+        children:
+          - code: DM-CLEANING
+            label: Cleaning fee claim
+            zh: 清洁费索赔
+            definition: The driver claims a cleaning fee for a mess caused by the rider, or the rider contests such a fee.
+            term_sources:
+              - "Handbook: 'Rider spilled drinks in the car and driver is claiming cleaning fees.'"
+              - "Ryde driver article 900004381243 'My Rider Made a Mess'"
+            organizer_code: property_damage          # assumed
+            scope: ADJUDICATE_WITH_APPROVAL
+            approval_reason: "Ryde reimburses cleaning costs subject to verification under its Vehicle Contamination Policy (ToU s.11), and judging photos and receipts needs a person."
+            rule_family: DM
+            playbook: PB-DM-CLEANING
+          - code: DM-DAMAGE
+            label: Vehicle damage
+            zh: 车辆损坏
+            scope: TRIAGE_TO_HUMAN
+          - code: DM-OTHER
+            label: Other mess or damage issue
+            zh: 其他
+            scope: BACKLOG
+
+      - code: SE
+        level: category
+        label: Safety & Emergency
+        zh: 安全与紧急情况
+        term_sources:
+          - "Ryde Help Centre section 'Safety & Emergency' (Rider, 17001140853529; Driver, 17000727296025)"
+          - "Handbook category 4 'Safety Incident'"
+        children:
+          - code: SE-CONDUCT
+            label: Inappropriate behavior or harassment
+            zh: 不当行为或骚扰
+            term_sources:
+              - "Handbook: 'Driver behaved inappropriately during the trip.'"
+              - "Ryde rider article 51354502165913 'Report a safety issue'"
+            organizer_code: safety_incident          # assumed
+            scope: TRIAGE_TO_HUMAN
+            rule_family: SE
+            playbook: PB-TRIAGE-HUMAN
+          - code: SE-DRIVING
+            label: Unsafe driving
+            zh: 危险驾驶
+            scope: TRIAGE_TO_HUMAN
+            rule_family: SE
+          - code: SE-MISMATCH
+            label: Driver or vehicle does not match the app
+            zh: 司机或车辆与 app 不符
+            term_sources:
+              - "Ryde rider articles 35170207360025 'Driver profile did not match on app', 115000777594 'My Ryde driver came in a different car from the one in his/her profile.'"
+            scope: TRIAGE_TO_HUMAN
+            rule_family: SE
+          - code: SE-ACCIDENT
+            label: Accident
+            zh: 交通事故
+            term_sources:
+              - "Ryde rider article 900003838306 'I was involved in an accident'; driver article 900003838386"
+            scope: TRIAGE_TO_HUMAN
+            rule_family: SE
+          - code: SE-RECORDING
+            label: In-vehicle recording device
+            zh: 车内录像设备
+            term_sources:
+              - "Ryde rider article 51813221666457 'What should I do if I notice a driver using a dashcam/IVRD?'"
+            scope: TRIAGE_TO_HUMAN
+            rule_family: SE
+          - code: SE-TERMINATED
+            label: Ride terminated after the trip started
+            zh: 行程中途被终止
+            term_sources:
+              - "Ryde articles 16925196526489 / 16925303332889 'Can driver terminate a ride after trip started ?'"
+            scope: TRIAGE_TO_HUMAN
+            rule_family: SE
+          - code: SE-OTHER
+            label: Other safety concern
+            zh: 其他安全问题
+            scope: TRIAGE_TO_HUMAN
+
+      - code: EX
+        level: category
+        label: Ryde Experience (no contested charge)
+        zh: 服务体验（无争议款项）
+        term_sources:
+          - "Ryde Help Centre section 'Ryde Experience' (Rider, 4406764216985; Driver, 4406764180761)"
+        children:
+          - code: EX-LOST
+            label: Lost or found item
+            zh: 失物
+            term_sources: ["Ryde rider article 25969395777305 'I lost my item.'", "Ryde driver article 360011925934 'I found an item'"]
+            scope: ROUTE_TO_SUPPORT
+          - code: EX-RATING
+            label: Rating issue
+            zh: 评分问题
+            term_sources:
+              - "Ryde rider article 48132902021017 'Why was a 5-star rating submitted even though I didn't rate the trip?'"
+              - "Ryde driver article 4408079364889 'What if my Rider rates me poorly because of the Cancellation or Waiting Time Fee?'"
+            scope: ROUTE_TO_SUPPORT
+          - code: EX-FEEDBACK
+            label: Feedback about the driver or rider
+            zh: 对司机或乘客的一般反馈
+            term_sources: ["Ryde rider article 18230876398105", "Ryde driver article 20690825386521"]
+            scope: ROUTE_TO_SUPPORT
+          - code: EX-LOCATION
+            label: Pick-up or drop-off location issue (no charge contested)
+            zh: 上下车点问题（无争议款项）
+            definition: Location problem reported without contesting any charge. If a fee is contested because of a location problem, classify by the fee (for example CW-NOSHOW) and record the reason code CW-R-PIN-AMBIGUOUS.
+            term_sources: ["Ryde articles 18230398581913 / 20691147765401 'Report issue with pick-up & drop-off location'"]
+            scope: ROUTE_TO_SUPPORT
+          - code: EX-APP
+            label: App or tracking problem
+            zh: App 或定位追踪问题
+            term_sources: ["Ryde rider articles 18230787646361 'Issue with tracking the driver', 46037468973337 'In-App Calling Feature'"]
+            scope: ROUTE_TO_SUPPORT
+          - code: EX-OTHER
+            label: Other experience issue
+            zh: 其他体验问题
+            scope: ROUTE_TO_SUPPORT
+
+      - code: OT
+        level: category
+        label: Other / unclassified
+        zh: 其他（自填）
+        children:
+          - code: OT-OTHER
+            label: Other (free text)
+            zh: 其他（自填）
+            definition: Cannot be placed anywhere else. Always fill the free-text field. If a charge is contested it is escalated (GEN-R07); if not, it goes to support (CLS-03). A rising share signals that the taxonomy needs a new value.
+            scope: BACKLOG
+
+  # ------------------------------------------------------------------
+  - id: TX-ROLE
+    name: Party role
+    zh: 当事方角色
+    note: Roles are NOT entity types. An Account plays a role in a Trip, a Ticket or a Charge (ONT.4 Step 2, ONT.8).
+    values:
+      - {code: RIDER, label: Rider, zh: 乘客, context: Trip, aliases: [rider], term_source: "DISP-002 trip_data.rider_id; Ryde 'Rider' category"}
+      - {code: DRIVER, label: Driver, zh: 司机, context: Trip, aliases: [driver], term_source: "DISP-002 trip_data.driver_id; Ryde 'Driver' category (driver-partner)"}
+      - {code: CLAIMANT, label: Claimant (filer), zh: 申诉方, context: DisputeTicket, term_source: "DISP-002 dispute_ticket.filed_by"}
+      - {code: RESPONDENT, label: Respondent, zh: 被申诉方, context: DisputeTicket}
+      - {code: PAYER, label: Payer, zh: 付款方, context: Charge or Remedy}
+      - {code: PAYEE, label: Payee, zh: 收款方, context: Charge or Remedy, term_source: "DISP-002 cancellation_policy.fee_goes_to = driver_compensation"}
+      - {code: PLATFORM, label: Ryde acting as a party (for example the payer of a voucher or the sender of system messages), zh: 平台（作为一方）, context: "Trip, Charge, Ruling", aliases: [system], term_source: "Ryde Terms of Use; DISP-002 chat_logs[].sender = system"}
+      - {code: PLATFORM_LINKER, label: Ryde linking the user with a partner, zh: 平台作为撮合方, context: Trip, term_source: "ToU s.1"}
+      - {code: PLATFORM_COLLECTION_AGENT, label: Ryde collecting charges for the driver, zh: 平台作为代收方, context: Charge, term_source: "ToU s.6.1"}
+      - {code: PLATFORM_REFUND_DECIDER, label: Ryde deciding refunds, zh: 平台作为退款决定方, context: Ruling, term_source: "ToU s.7.2"}
+      - {code: PLATFORM_CLEANING_VERIFIER, label: Ryde verifying cleaning claims, zh: 平台作为清洁费核实方, context: "Charge (CLEANING_FEE)", term_source: "ToU s.11"}
+      - {code: REVIEWER, label: Human reviewer, zh: 人工复核员, context: Ruling}
+      - {code: OTHER, label: Other, zh: 其他（自填）}
+
+  # ------------------------------------------------------------------
+  - id: TX-BOOKING
+    name: Booking type
+    zh: 下单类型
+    values:
+      - {code: ON_DEMAND, label: On-demand (immediate), zh: 即时单, term_source: "Ryde articles: 'On-demand'"}
+      - {code: ADVANCE, label: Advance booking (scheduled), zh: 预约单, aliases: [scheduled], term_source: "Ryde rider policy 23534478435353: 'advanced trip request'; DISP-002 app event: 'Scheduled pickup 08:45'"}
+      - {code: UNKNOWN, label: Not recorded, zh: 未记录（需推断）, note: "DISP-002 does not record booking type; see rule CW-F01."}
+      - {code: OTHER, label: Other (free text), zh: 其他（自填）}
+
+  # ------------------------------------------------------------------
+  - id: TX-SERVICE
+    name: Service type
+    zh: 服务类型
+    term_source: "Ryde Help Centre product sections (read 2026-10-05)"
+    values:
+      - {code: RYDEX, label: RydeX}
+      - {code: RYDEXL, label: RydeXL}
+      - {code: RYDEX_GO, label: Ryde X GO}
+      - {code: RYDEPOOL, label: RydePOOL}
+      - {code: RYDETAXI, label: RydeTAXI, note: "Metered fare; excluded from the cancellation policy (rule FC-R03, CW-R00)."}
+      - {code: RYDEPET, label: RydePET}
+      - {code: RYDEFLASH, label: RydeFLASH}
+      - {code: RYDELUXE, label: RydeLUXE}
+      - {code: RYDESEND, label: RydeSEND, note: "Delivery; ERP not added (rule FC-R06)."}
+      - {code: CARPOOL, label: Carpooling}
+      - {code: RYDEHIRE, label: RydeHIRE, term_source: "Ryde Terms of Use s.2 'Services'"}
+      - {code: RYDEPLUS, label: Ryde+, term_source: "Ryde Terms of Use s.2 'Services'"}
+      - {code: UNKNOWN, label: Not recorded, note: "DISP-002 does not record service type."}
+      - {code: OTHER, label: Other}
+
+  # ------------------------------------------------------------------
+  - id: TX-PRICING
+    name: Pricing mode
+    zh: 计价方式
+    values:
+      - {code: FIXED_AT_BOOKING, label: Fixed at booking, zh: 下单时固定价, term_source: "Ryde article 360004075214: 'All fares are fixed at the time of booking but does not include toll charges such as ERP.'"}
+      - {code: METERED, label: Metered (RydeTAXI), zh: 计程表计价, term_source: "Ryde article 30741244296217: 'Fares quoted for our services are generally fixed, except for RydeTAXI.'"}
+      - {code: RECALCULATED, label: Recalculated after an edit, zh: 改目的地后重算, term_source: "Ryde article 51399796192921 (add/edit destination)"}
+      - {code: UNKNOWN, label: Not recorded}
+      - {code: OTHER, label: Other (free text), zh: 其他（自填）}
+
+  # ------------------------------------------------------------------
+  - id: TX-PAYMETHOD
+    name: Payment method
+    zh: 支付方式
+    values:
+      - {code: E_WALLET, label: e-wallet, aliases: [e-wallet], term_source: "DISP-002 rider_profile.payment_method = e-wallet"}
+      - {code: CARD, label: Credit/debit card}
+      - {code: CASH, label: Cash, term_source: "Ryde article 4408070775193"}
+      - {code: RYDECOINS, label: RydeCoins wallet, term_source: "Ryde article 115002153414"}
+      - {code: APPLE_PAY, label: Apple Pay, term_source: "Ryde Terms of Use s.6.2"}
+      - {code: ALIPAY, label: AliPay, term_source: "Ryde section 'AliPay'"}
+      - {code: CORPORATE, label: Ryde for Business / Corporate}
+      - {code: OTHER, label: Other}
+
+  # ------------------------------------------------------------------
+  - id: TX-EVENT
+    name: Trip and case event type
+    zh: 事件类型
+    note: >-
+      Converged from the Ontology's events (ONT.2). observed_in_DISP002 marks types seen in the organizer data;
+      the others are Ryde terms or case-processing events that the rules need.
+    values:
+      - {code: booking_confirmed, label: Booking confirmed, actor: RIDER, observed_in_DISP002: true}
+      - {code: driver_assigned, label: Driver assigned, actor: PLATFORM, observed_in_DISP002: true}
+      - {code: driver_en_route, label: Driver en route, actor: DRIVER, observed_in_DISP002: true}
+      - {code: driver_arrived, label: "Driver arrived ('I'm Here')", actor: DRIVER, observed_in_DISP002: true, term_source: "Ryde rider article 23534478435353: 'The driver presses \"I'm Here\"'; DISP-002: 'Auto-arrival confirmed'"}
+      - {code: rider_notified, label: Rider notified of arrival, actor: PLATFORM, observed_in_DISP002: true}
+      - {code: wait_timer_started, label: Free wait timer started, actor: PLATFORM, observed_in_DISP002: true}
+      - {code: driver_called_rider, label: Driver called rider, actor: DRIVER, observed_in_DISP002: true}
+      - {code: rider_called_driver, label: Rider called driver, actor: RIDER, observed_in_DISP002: false}
+      - {code: message_sent, label: Chat message sent, actor: "RIDER or DRIVER", observed_in_DISP002: true, note: "In DISP-002 messages are in chat_logs, not app_events."}
+      - {code: wait_timer_expired, label: Free wait expired, actor: PLATFORM, observed_in_DISP002: true}
+      - {code: rider_cancelled, label: Rider canceled, actor: RIDER, observed_in_DISP002: false}
+      - {code: driver_cancelled, label: Driver canceled, actor: DRIVER, observed_in_DISP002: true, note: "DISP-002 chat system message: 'Trip cancelled by driver. Reason: rider_no_show.'"}
+      - {code: cancellation_fee_applied, label: Cancellation fee applied, actor: PLATFORM, observed_in_DISP002: true}
+      - {code: driver_released, label: Driver released from trip, actor: PLATFORM, observed_in_DISP002: true}
+      - {code: rider_picked_up, label: "Rider picked up ('Pick Up')", actor: DRIVER, observed_in_DISP002: false, term_source: "Ryde driver article 20692560042649 ('Pick Up')"}
+      - {code: destination_edit_requested, label: Destination edit requested, actor: RIDER, observed_in_DISP002: false}
+      - {code: destination_edit_accepted, label: Destination edit accepted, actor: DRIVER, observed_in_DISP002: false}
+      - {code: stop_added, label: Stop added, actor: RIDER, observed_in_DISP002: false}
+      - {code: toll_entered, label: ERP/toll entered by driver, actor: DRIVER, observed_in_DISP002: false, term_source: "Ryde article 900005170163: 'Enter the amount in the box next to Toll (ERP).'"}
+      - {code: waiting_fee_tapped, label: Waiting Time Fee button tapped, actor: DRIVER, observed_in_DISP002: false, term_source: "Ryde article 4408071347993: 'tap on the $5* Waiting Time Fee button upon Drop-off'"}
+      - {code: trip_completed, label: "Trip completed ('Drop Off')", actor: DRIVER, observed_in_DISP002: false}
+      - {code: payment_charged, label: Payment charged, actor: PLATFORM, observed_in_DISP002: false}
+      - {code: dispute_filed, label: Dispute filed, actor: "RIDER or DRIVER", observed_in_DISP002: true, note: "dispute_ticket.filed_at"}
+      - {code: evidence_added, label: Evidence or information added to a ticket, actor: "RIDER or DRIVER", observed_in_DISP002: false}
+      - {code: ruling_issued, label: Ruling issued, actor: PLATFORM, observed_in_DISP002: false}
+      - {code: appeal_filed, label: Appeal filed, actor: "RIDER or DRIVER", observed_in_DISP002: false, term_source: "Ryde driver article 23575142762393 'I wish to make an appeal'"}
+      - {code: human_review_completed, label: Human review completed, actor: REVIEWER, observed_in_DISP002: false}
+      - {code: refund_issued, label: Refund or voucher issued, actor: PLATFORM, observed_in_DISP002: false}
+      - {code: ticket_triaged, label: Ticket classified and matched, actor: PLATFORM, observed_in_DISP002: false}
+      - {code: evidence_ready, label: Evidence and findings assembled, actor: PLATFORM, observed_in_DISP002: false}
+      - {code: arguments_submitted, label: Both advocates submitted their briefs, actor: PLATFORM, observed_in_DISP002: false}
+      - {code: ruling_executed, label: Final ruling executed, actor: PLATFORM, observed_in_DISP002: false}
+      - {code: ticket_merged, label: Ticket merged into an open ticket, actor: PLATFORM, observed_in_DISP002: false}
+      - {code: trip_terminated, label: Trip ended by the driver after pickup, actor: DRIVER, observed_in_DISP002: false, term_source: "Ryde rider article 16925196526489 'Can driver terminate a ride after trip started ?'"}
+      - {code: amount_recovered, label: Amount recovered from the rider (for example a cleaning fee), actor: PLATFORM, observed_in_DISP002: false}
+      - {code: other, label: Other (free text)}
+
+  # ------------------------------------------------------------------
+  - id: TX-GPSSTATUS
+    name: Telemetry status
+    zh: GPS 状态
+    values:
+      - {code: en_route, observed_in_DISP002: true}
+      - {code: arrived, observed_in_DISP002: true}
+      - {code: waiting, observed_in_DISP002: true}
+      - {code: onboard, observed_in_DISP002: false}
+      - {code: completed, observed_in_DISP002: false}
+      - {code: cancelled, observed_in_DISP002: true}
+      - {code: other}
+
+  - id: TX-COMMTYPE
+    name: Communication type
+    zh: 沟通记录类型
+    values:
+      - {code: message, observed_in_DISP002: true}
+      - {code: call, observed_in_DISP002: true}
+      - {code: system, observed_in_DISP002: true}
+      - {code: other}
+
+  - id: TX-CANCELREASON
+    name: Cancellation reason
+    zh: 取消原因
+    values:
+      - {code: rider_no_show, observed_in_DISP002: true}
+      - {code: rider_cancelled}
+      - {code: driver_cancelled_other}
+      - {code: safety_termination}
+      - {code: system_cancelled}
+      - {code: other}
+
+  # ------------------------------------------------------------------
+  - id: TX-CHARGE
+    name: Charge type
+    zh: 收费项目
+    values:
+      - {code: FARE, label: Trip fare}
+      - {code: CANCELLATION_FEE, label: Cancellation fee, term_source: "Ryde 'Cancellation Fee'"}
+      - {code: WAITING_FEE, label: Waiting time fee, term_source: "Ryde 'Waiting Time Fee'"}
+      - {code: TOLL, label: ERP / toll}
+      - {code: DESTINATION_FEE, label: Add/edit destination fee}
+      - {code: PLATFORM_FEE, label: Platform fee}
+      - {code: TRANSACTION_FEE, label: Transaction fee}
+      - {code: SURCHARGE, label: Surcharge or entry fee}
+      - {code: CLEANING_FEE, label: Cleaning fee}
+      - {code: OTHER, label: Other}
+
+  # ------------------------------------------------------------------
+  - id: TX-REMEDY-REQUESTED
+    name: Remedy requested
+    zh: 申诉诉求
+    values:
+      - {code: FEE_WAIVER, label: Fee waiver / reversal, term_source: "Ryde 'Cancellation Fee Waiver Request'"}
+      - {code: FARE_REFUND, label: Fare refund (full or partial)}
+      - {code: TOLL_REFUND, label: ERP/toll refund}
+      - {code: COMPENSATION, label: Compensation (for example a driver's cleaning fee)}
+      - {code: ACTION_AGAINST_PARTY, label: Action against the other party}
+      - {code: INFORMATION, label: Explanation only}
+      - {code: OTHER, label: Other}
+
+  # ------------------------------------------------------------------
+  - id: TX-OUTCOME
+    name: Ruling outcome
+    zh: 裁决结果
+    closed: true
+    closed_reason: "System decision set. A case that fits no outcome is ESCALATE_HUMAN, so no OTHER value."
+    note: "Maps to the handbook's 'refund, compensation, no action'."
+    values:
+      - {code: UPHOLD, label: Charge upheld / claim rejected, zh: 维持原收费（驳回申诉）, handbook: no action, observed_in_DISP002: true, note: "UPHOLD means the charge stands. In organizer profiles, dispute_history.upheld probably counts disputes the rider WON, the opposite direction (question O9)."}
+      - {code: WAIVE_FEE, label: Fee waived (reversed), zh: 免除费用, handbook: refund}
+      - {code: PARTIAL_REFUND, label: Partial refund, zh: 部分退款, handbook: refund}
+      - {code: FULL_REFUND, label: Full refund, zh: 全额退款, handbook: refund}
+      - {code: TOLL_REFUND, label: ERP/toll refund, zh: 退还 ERP 差额, handbook: refund}
+      - {code: COMPENSATE_DRIVER, label: Compensate the driver, zh: 补偿司机, handbook: compensation}
+      - {code: GOODWILL_CREDIT, label: Goodwill credit without fault finding, zh: 善意补偿（不认定过错）, handbook: compensation}
+      - {code: ESCALATE_HUMAN, label: Escalate to a human, zh: 转人工}
+      - {code: REQUEST_INFO, label: Ask the claimant for missing information, zh: 要求补充信息}
+      - {code: ROUTE_TO_SUPPORT, label: Not a dispute; route to support, zh: 非争议，转普通客服}
+      - {code: MERGE_DUPLICATE, label: Merge into an existing ticket, zh: 合并重复工单}
+
+  - id: TX-REMEDY-FORM
+    name: Remedy form
+    zh: 补偿形式
+    values:
+      - {code: WALLET_VOUCHER, label: Ryde wallet voucher, term_source: "Ryde 18229758389017: 'a voucher** with a unique code worth $6.61 as a refund'"}
+      - {code: CARD_REFUND, label: Refund to payment card, term_source: "Ryde Terms of Use cl. 7.2"}
+      - {code: RYDECOINS_CREDIT, label: RydeCoins credit}
+      - {code: DRIVER_WALLET_CREDIT, label: Credit to driver wallet}
+      - {code: NONE, label: None}
+      - {code: OTHER, label: Other (free text), zh: 其他（自填）}
+
+  # ------------------------------------------------------------------
+  - id: TX-REASON
+    name: Ruling reason code (closing code)
+    zh: 裁决理由代码
+    closed: true
+    closed_reason: "Closing codes. GEN-R-POLICY-GAP is the catch-all; a new code needs a producing rule."
+    note: Assigned at ruling time. Each code is produced by the rule(s) listed; the build check verifies that every code has a producing rule.
+    values:
+      - {code: CW-R-NOSHOW-VALID, label: "Rider no-show confirmed: driver at pickup, waited past the threshold, rider absent", outcome: UPHOLD}
+      - {code: CW-R-DRIVER-NOT-AT-PICKUP, label: Driver indicated arrival but GPS shows the driver was not at the pickup point, outcome: WAIVE_FEE}
+      - {code: CW-R-WAIT-SHORT, label: Driver canceled before the no-show threshold, outcome: WAIVE_FEE}
+      - {code: CW-R-FREE-WINDOW, label: Canceled inside the free cancellation window, outcome: WAIVE_FEE}
+      - {code: CW-R-ARRIVAL-UNVERIFIED, label: Arrival or presence cannot be established because the records are missing (burden on the driver), outcome: WAIVE_FEE}
+      - {code: CW-R-DRIVER-LEFT, label: Driver left the pick-up point during the wait, outcome: WAIVE_FEE}
+      - {code: CW-R-RIDER-COUNTER-EVIDENCE, label: The rider's system-recorded evidence contradicts the no-show, outcome: ESCALATE_HUMAN}
+      - {code: CW-R-PIN-AMBIGUOUS, label: Pickup pin and named venue differ materially, outcome: "secondary note; the outcome is unchanged, and human approval is required when the rider's statement places the rider at the named venue (AUTH-02)"}
+      - {code: CW-R-WAITING-VALID, label: Waiting fee conditions met, outcome: UPHOLD}
+      - {code: CW-R-WAITING-INVALID, label: Waiting fee conditions not met, outcome: WAIVE_FEE}
+      - {code: CW-R-RIDERCANCEL-VALID, label: Rider canceled after the free window, outcome: UPHOLD}
+      - {code: CW-R-DRIVER-LATE, label: "Driver was late or not approaching when the rider canceled (generic assumption)", outcome: WAIVE_FEE}
+      - {code: CW-R-OUT-OF-WINDOW, label: Waiver request filed after 30 days, outcome: UPHOLD}
+      - {code: FC-R-FIXED-FARE, label: Fare fixed at booking; route length did not change the amount charged, outcome: UPHOLD}
+      - {code: FC-R-DETOUR-CONFIRMED, label: Unjustified detour increased a metered or recalculated fare, outcome: PARTIAL_REFUND}
+      - {code: FC-R-DETOUR-JUSTIFIED, label: "Deviation justified (traffic, closure, rider request, app reroute)", outcome: UPHOLD}
+      - {code: FC-R-DETOUR-BORDERLINE, label: Detour near the threshold, outcome: ESCALATE_HUMAN}
+      - {code: FC-R-TOLL-OVERSTATED, label: ERP entered exceeds the gantries passed, outcome: TOLL_REFUND}
+      - {code: FC-R-TOLL-FROM-DETOUR, label: ERP incurred only because of an unjustified detour, outcome: TOLL_REFUND}
+      - {code: FC-R-TOLL-VALID, label: ERP matches the gantries passed, outcome: UPHOLD}
+      - {code: FC-R-DEST-FEE-VALID, label: Destination edit was accepted by the driver; fee and recalculated fare stand, outcome: UPHOLD}
+      - {code: FC-R-DEST-FEE-INVALID, label: Destination fee charged without an accepted edit or on a service that cannot edit, outcome: PARTIAL_REFUND}
+      - {code: FC-R-NOPICKUP-CONFIRMED, label: Trip completed without the rider onboard, outcome: FULL_REFUND}
+      - {code: FC-R-NOPICKUP-NOT-SUPPORTED, label: Records show the rider was picked up, outcome: UPHOLD}
+      - {code: FC-R-INSUFFICIENT-DATA, label: Route or fare evidence insufficient, outcome: ESCALATE_HUMAN}
+      - {code: DM-R-CLAIM-ELIGIBLE, label: Cleaning claim meets documentary requirements (human approval needed), outcome: COMPENSATE_DRIVER}
+      - {code: DM-R-CLAIM-INELIGIBLE, label: Cleaning claim misses a deadline or required proof, outcome: UPHOLD}
+      - {code: SE-R-HUMAN-DECIDES, label: Safety matter decided by a human, outcome: ESCALATE_HUMAN}
+      - {code: GEN-R-NOT-A-DISPUTE, label: No contested charge or remedy, outcome: ROUTE_TO_SUPPORT}
+      - {code: GEN-R-DUPLICATE, label: Duplicate of an open ticket, outcome: MERGE_DUPLICATE}
+      - {code: GEN-R-NEED-INFO, label: Trip or charge cannot be identified, outcome: REQUEST_INFO}
+      - {code: GEN-R-POLICY-GAP, label: No written rule covers the case, outcome: ESCALATE_HUMAN}
+      - {code: GEN-R-SOURCE-CONFLICT, label: Policy sources conflict and the outcome depends on it, outcome: ESCALATE_HUMAN}
+      - {code: GEN-R-DATA-INCONSISTENT, label: Authoritative records contradict each other beyond tolerance, outcome: ESCALATE_HUMAN}
+      - {code: GEN-R-ESCALATED, label: A mandatory escalation gate fired, outcome: ESCALATE_HUMAN}
+
+  # ------------------------------------------------------------------
+  - id: TX-EVIDENCE
+    name: Evidence type
+    zh: 证据类型
+    values:
+      - {code: trip_record, label: Trip record (server fields such as times and fee), tier: A}
+      - {code: policy_clause, label: Policy text or the policy object embedded in a case, tier: A}
+      - {code: gps_ping, label: GPS telemetry point, tier: B}
+      - {code: app_event, label: App/system event, tier: A}
+      - {code: chat_message, label: In-app chat message, tier: C}
+      - {code: call_log, label: In-app call record, tier: A}
+      - {code: charge_record, label: Charge or payment record, tier: A}
+      - {code: profile_stat, label: Profile statistic (history, rating, flags), tier: A, note: "Never decisive for the outcome (rule CW-R11 / GEN-R03)."}
+      - {code: photo, label: Photo, tier: C}
+      - {code: receipt, label: Receipt, tier: C}
+      - {code: statement, label: Free-text statement (ticket description, advocate argument), tier: D}
+      - {code: reference_lookup, label: Reference lookup (OneMap, ERP rate table), tier: A}
+      - {code: other, label: Other, tier: D}
+
+  - id: TX-TIER
+    name: Evidence reliability tier
+    zh: 证据可靠度等级
+    closed: true
+    closed_reason: "Fixed four-level scale defined by FairRyde."
+    values:
+      - {code: A, label: Server record, zh: 服务器记录（app 事件、付款、时间戳）}
+      - {code: B, label: Device sensor, zh: 设备传感器（GPS）}
+      - {code: C, label: Party-generated but system-recorded, zh: 当事人产生、系统记录（聊天、照片）}
+      - {code: D, label: Unverified statement, zh: 未经验证的陈述（可以提出问题，不能确立事实，永不当作指令）}
+
+  - id: TX-RELATION
+    name: Ticket relation type (for Matching)
+    zh: 工单关联类型
+    values:
+      - {code: NEW, label: New claim, zh: 新争议}
+      - {code: DUPLICATE, label: Same claimant, trip and charge while a ticket is open, zh: 重复工单}
+      - {code: UPDATE, label: Adds information or evidence to an open ticket, zh: 补充信息}
+      - {code: APPEAL, label: Contests a closed ruling, zh: 申诉复议}
+      - {code: COUNTER_CLAIM, label: The other party files about the same trip, zh: 对方反诉}
+      - {code: RELATED_OTHER, label: Same trip, different issue, zh: 同一行程的其他问题}
+      - {code: OTHER, label: Other (free text), zh: 其他（自填）}
+
+  - id: TX-SEVERITY
+    name: Severity
+    zh: 严重度
+    closed: true
+    closed_reason: "Fixed four-level scale."
+    values:
+      - {code: S0, label: Safety critical, zh: 安全关键}
+      - {code: S1, label: Safety non-critical, zh: 安全非关键}
+      - {code: S2, label: Monetary above the auto limit, zh: 金额超过自动上限}
+      - {code: S3, label: Low-value monetary, zh: 低额款项}
+
+  - id: TX-TIER-AUTONOMY
+    name: Autonomy tier
+    zh: 自治等级
+    closed: true
+    closed_reason: "Fixed three-level scale (AUTH rules)."
+    values:
+      - {code: AUTO, label: Auto-resolve with monitoring and appeal, zh: 自动执行（抽检、可申诉）, note: "Called tier A in the 4 Oct report; renamed so it is not confused with credibility A to D."}
+      - {code: APPROVE, label: AI recommends, human approves, zh: AI 建议、人工批准, note: "Was tier B."}
+      - {code: HUMAN, label: Human decides; AI triages only, zh: 人工裁决，AI 只分流, note: "Was tier C. Includes every ESCALATE_HUMAN outcome (AUTH-06): there is no AI ruling to approve."}
+
+  - id: TX-FLAG
+    name: Case flag
+    zh: 案件标记
+    values:
+      - {code: BOUNDARY_MARGIN, label: Decisive value within the boundary band of a threshold}
+      - {code: TIMER_ANCHOR_MISMATCH, label: System timers use different start points beyond tolerance}
+      - {code: BOOKING_TYPE_INFERRED, label: Booking type not recorded; inferred}
+      - {code: PIN_VENUE_MISMATCH, label: Pickup pin far from the named venue (OneMap)}
+      - {code: SPARSE_GPS, label: GPS gaps exceed the coverage parameter}
+      - {code: SPEED_INCONSISTENT, label: Reported speed inconsistent with distance between pings}
+      - {code: NO_RIDER_EVIDENCE, label: No rider-side system evidence}
+      - {code: SOURCE_CONFLICT, label: Policy sources disagree}
+      - {code: GENERIC_ASSUMPTION_USED, label: A credibility C or D rule was decisive}
+      - {code: INJECTION_SUSPECTED, label: Free text contains instructions to the system}
+      - {code: FRAUD_SIGNAL, label: Fraud or bad-faith pattern detected (either party)}
+      - {code: OUT_OF_WINDOW, label: Filed after the allowed window}
+      - {code: CONTACT_NOT_ATTEMPTED, label: No call or message between arrival and cancellation}
+      - {code: CHARGE_AMOUNT_MISMATCH, label: Amount charged differs from the policy amount of the profile}
+      - {code: MARGIN_WITHIN_SPREAD, label: The decisive margin is not larger than the disagreement between sources about the same moment}
+      - {code: RECORDS_MISSING, label: A decisive finding is UNKNOWN because records are missing}
+      - {code: GPS_OUTLIER, label: "An outside stretch shorter than LEFT_MIN_OUTSIDE_S followed by a return inside, or reached at an impossible speed, after the driver was seen inside the pick-up area; set aside (CW-F04)"}
+      - {code: GPS_AMBIGUOUS, label: "The driver's GPS cannot settle whether the driver left during the wait (a stretch set aside between inside pings far apart, a departure around the window end, or a single ping); human approval (CW-F04, AUTH-02)"}
+      - {code: GPS_DATA_ERROR, label: Driver GPS implies a speed above SPEED_MAX_KMH; the jump is set aside and gate G1 fires (DQ-02)}
+      - {code: ARRIVAL_UNCONFIRMED, label: "GPS did not confirm the driver at the pick-up point when arrival was indicated; the wait counts from the first confirming ping (CW-R06, CW-F03B)"}
+      - {code: OTHER, label: Other}
+
+  - id: TX-SOURCE-TYPE
+    name: Rule source type
+    zh: 规则来源类型
+    closed: true
+    closed_reason: "Fixed authority ladder (rules.yaml meta.authority)."
+    values:
+      - {code: ORGANIZER, label: Organizer handbook or sample dataset, zh: 组织方赛题或样例数据}
+      - {code: RYDE_POLICY, label: Ryde Help Centre policy article, zh: Ryde 帮助中心政策原文}
+      - {code: RYDE_TOU, label: Ryde Terms of Use, zh: Ryde 用户条款}
+      - {code: REGULATION, label: Singapore law or regulator text, zh: 新加坡法规或监管文件}
+      - {code: GOV_GUIDANCE, label: Official non-binding guidance (IMDA, PDPC), zh: 官方指引（非强制）}
+      - {code: INTERNAL_STANDARD, label: Team method standard (ChordX knowledge-base protocol), zh: 团队方法规范（ChordX 协议）, note: "Used only for method rules (how the knowledge base and the process work). Never cited as evidence of what Ryde's policy is."}
+      - {code: INDUSTRY, label: Other platforms' published practice, zh: 同业公开做法（通用假设）}
+      - {code: FAIRRYDE, label: FairRyde design assumption, zh: FairRyde 自定假设（通用假设）}

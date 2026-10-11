@@ -1,0 +1,29 @@
+{
+ "rule_id": "DM-R05",
+ "name": "Cleaning claim appeal window",
+ "family": "DM",
+ "type": "procedural",
+ "applies_to": [
+  "DM-CLEANING"
+ ],
+ "mode": "HARD",
+ "statement": "A driver may appeal a cleaning-claim outcome within 24 hours with additional evidence.",
+ "params": [
+  {
+   "name": "CLEANING_APPEAL_H",
+   "value": 24,
+   "unit": "h"
+  }
+ ],
+ "produces": null,
+ "produces_finding": null,
+ "sources": [
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-900004381243",
+   "quote": "You can appeal within 24 hours if you disagree with the outcome of your claim with any additional supporting evidence.",
+   "source_file": "packs/sources/RYDE-900004381243.txt"
+  }
+ ],
+ "set": "random"
+}

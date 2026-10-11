@@ -1,0 +1,27 @@
+RYDE HELP CENTRE ARTICLE 360011925934
+TITLE: I found an item
+AUDIENCE: Driver
+SECTION: Ryde Experience
+URL: https://help.rydesharing.com/hc/en-us/articles/360011925934-I-found-an-item
+EDITED: 2025-07-09
+
+Before reporting it to RydeHELP, always check for messages from riders in your Ryde Driver App. These chats will appear in the ≡ menu. Note that these chats will only remain available for 24 hours from the time of trip completion.
+
+If you find a lost item in your vehicle and know which trip it is from (Known Trip):
+
+Report to RydeHELP by tapping on 'Ryde Experience' > 'I found an item' with the following information:
+- Item Description
+- Trip ID/Details
+- Location of the item found in the vehicle
+- Consent to share your mobile number with the rider for contact purposes
+
+If you are unsure which trip the lost item is from (Unknown Trip):
+
+1. Step 1: Verify that the lost item is from a Ryde trip
+2. Step 2: Make a police report immediately
+3. Step 3: Submit a copy of the police report via RydeHELP
+4. Step 4: Ryde will follow up with the rider based on the police report
+
+In the event that you find an item after 24 hours from trip completion, we encourage you to grant our team consent to share your mobile number with the rider. After which, the rider will be in touch with you to make arrangements on returning the item. We encourage you to do this as soon as possible.
+
+We also recommend that any compensation collected from the rider reflects the distance you travelled to reach them, with a minimum fare of $25 to account for your time and effort.

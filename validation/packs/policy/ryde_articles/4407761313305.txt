@@ -1,0 +1,10 @@
+RYDE HELP CENTRE ARTICLE 4407761313305
+TITLE: Does the Cancellation Policy apply to all Ryde services?
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/4407761313305-Does-the-Cancellation-Policy-apply-to-all-Ryde-services
+EDITED: 2024-03-18
+
+Cancellation Policy applies to all Service Types * in the Ryde app and is executed on a service level, not driver level. Hence, all carpool drivers are included in the Cancellation Policy.
+
+*All services except RydeTAXI

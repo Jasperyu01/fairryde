@@ -1,0 +1,10 @@
+RYDE HELP CENTRE ARTICLE 4407754351257
+TITLE: Why am I charged for a Waiting Time Fee?
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/4407754351257-Why-am-I-charged-for-a-Waiting-Time-Fee
+EDITED: 2023-01-01
+
+A Waiting Time Fee allows our Driver-Partners to be compensated by riders for the time spent waiting at a pickup location.
+
+Waiting Time Fees begin to kick in after the driver waits for more than 3 minutes at the pick-up point for the rider to board.

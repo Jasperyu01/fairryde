@@ -1,0 +1,30 @@
+# FairRyde Knowledge Base - DATA COLLECTION CHECKLIST (ChordX ONT.3)
+# Columns: item / who provides / format / layer / sensitivity / status / if missing
+# Sensitivity uses a provisional scale until aligned with ChordX SEC.6: PUBLIC, INTERNAL, PII (personal data), CONFIDENTIAL.
+
+meta:
+  version: 0.1.0
+  updated: 2026-10-05
+  sensitivity_note: Provisional labels; replace with SEC.6 classes once chordx_security.md is available.
+
+items:
+  - {item: "Track challenge statement and requirements (handbook section 5)", provider: Organizer, format: PDF, layer: "Taxonomy (4 categories), Rules (deliverables)", sensitivity: PUBLIC, status: have, if_missing: "-"}
+  - {item: "Sample case DISP-002 (no-show) with expected ruling", provider: Organizer, format: "JSON inside Markdown", layer: "Ontology (master-data schema), Rules (policy object), ground-truth seed", sensitivity: "PII pattern (synthetic names, plate)", status: have, if_missing: "-"}
+  - {item: "Other sample cases (DISP-001, route deviation, mess, safety)", provider: Organizer, format: unknown, layer: "Ontology validation, ground truth", sensitivity: PII pattern, status: missing, if_missing: "Ask in the track WhatsApp group; meanwhile synthetic cases labeled 'synthetic'"}
+  - {item: "Track-specific judging criteria", provider: Organizer, format: unknown, layer: "none (scope)", sensitivity: INTERNAL, status: missing, if_missing: "Ask; align to Ryde's press-release themes and the Demo Day rubric"}
+  - {item: "Ryde rider policies (cancellation, waiting, waivers, fares, ERP, destination edits, platform and transaction fees)", provider: "Ryde (public Help Centre)", format: "Zendesk API JSON, 125 articles captured 2026-10-05", layer: "Rules (contract terms via ToU s.1-2), Taxonomy (business terms)", sensitivity: PUBLIC, status: have, if_missing: "-"}
+  - {item: "Ryde driver policies (cancellation and waiting policy, appeals, cleaning claims, community standards, fraud definitions, IVRD)", provider: "Ryde (public Help Centre)", format: "Zendesk API JSON", layer: Rules, sensitivity: PUBLIC, status: have, if_missing: "-"}
+  - {item: "Ryde Terms of Use", provider: Ryde, format: web page (49 clauses captured), layer: "Ontology (parties and Ryde's roles), Rules (refund discretion, disputes, cleaning)", sensitivity: PUBLIC, status: "have (s.18 and s.20 only as excerpts)", if_missing: "Copy s.18 and s.20 manually if a rule needs them"}
+  - {item: "Ryde Help Centre structure (2 categories, 46 sections, article titles)", provider: Ryde, format: Zendesk API, layer: "Taxonomy (business vocabulary)", sensitivity: PUBLIC, status: have, if_missing: "-"}
+  - {item: "Real dispute tickets and past rulings", provider: Ryde (internal), format: n/a, layer: "Taxonomy validation, precedents, ground truth", sensitivity: CONFIDENTIAL, status: "not available", if_missing: "Synthetic cases from the factor model plus handwritten held-out cases; label every case 'synthetic' (ONT.3 fallback)"}
+  - {item: "Refund approval authority matrix (who may approve what amount)", provider: Ryde (internal), format: n/a, layer: "Rules (AUTH)", sensitivity: CONFIDENTIAL, status: "not available", if_missing: "FairRyde assumption: tiers A/B/C and a S$10 automatic limit (credibility D), aligned with IMDA guidance; confirm with organizer"}
+  - {item: "RydeX / RydePOOL fare formulas (base, per km, per minute)", provider: Ryde, format: n/a, layer: "Rules (fare recomputation)", sensitivity: CONFIDENTIAL, status: "not public", if_missing: "Fixed-fare trips need no recomputation (FC-R01); metered trips use the CDG taxi tariff (credibility C)"}
+  - {item: "Trip fields missing from DISP-002 (booking type, service type, pricing mode, matched/picked-up/completed times, fare breakdown, recorded distance, recommended route, rider GPS)", provider: Organizer, format: JSON, layer: Ontology, sensitivity: PII pattern, status: missing, if_missing: "Marked data_gap in ontology.yaml; inferred with flags (for example BOOKING_TYPE_INFERRED) or escalated"}
+  - {item: "ERP rate table for the trip date", provider: LTA, format: PDF, layer: "Rules (reference data)", sensitivity: PUBLIC, status: "partial (23 Mar 2026 table)", if_missing: "Check whether a 7 Sep 2026 table applies; load the full table"}
+  - {item: "LTA conduct rules (shortest route, demerit points, IVRD)", provider: LTA, format: PDF, layer: "Rules (regulation)", sensitivity: PUBLIC, status: have, if_missing: "-"}
+  - {item: "Venue reference coordinates", provider: "OneMap (SLA)", format: API, layer: "Ontology (Place), Rules (CW-F07)", sensitivity: PUBLIC, status: "have for 3 venues", if_missing: "Look up 20 to 30 venues for synthetic cases"}
+  - {item: "Traffic and incident snapshots", provider: "LTA DataMall", format: API (key needed), layer: "Rules (FC-F03 justification evidence)", sensitivity: PUBLIC, status: missing, if_missing: "Synthetic snapshots stored in the case file, labeled 'synthetic'"}
+  - {item: "Industry practice (Grab, Bolt, Lyft, DiDi, Gojek, Zig)", provider: Public web, format: web pages, layer: "Rules (credibility C fallbacks)", sensitivity: PUBLIC, status: have, if_missing: "-"}
+  - {item: "Singapore AI governance guidance (IMDA, PDPC, CSA)", provider: Government, format: PDF, layer: "Rules (AUTH, EXP)", sensitivity: PUBLIC, status: have, if_missing: "-"}
+  - {item: "Human gold labels (annotation sheet)", provider: "Team: Jasper (all, blind), junior teammate (25 to 30 double labels and 10 to 15 handwritten held-out cases), Cao (adjudication)", format: xlsx, layer: Ground truth, sensitivity: INTERNAL, status: "to produce", if_missing: "-"}
+  - {item: "Pseudonymization map (real name -> code)", provider: Team, format: "xlsx, local only", layer: "Ontology (parties)", sensitivity: PII, status: "to produce (only synthetic names today)", if_missing: "Follow ONT.11: never commit, never upload"}

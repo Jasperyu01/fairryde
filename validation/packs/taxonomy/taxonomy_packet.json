@@ -1,0 +1,366 @@
+{
+ "note": "Classify each complaint with these dispute types. Scope says what FairRyde does with a type; it does not change the type.",
+ "TX-CASE": {
+  "assigned_when": "At intake (may be corrected later). Safety language anywhere overrides to SE (rule CLS-01).",
+  "values": [
+   {
+    "code": "CW",
+    "level": "category",
+    "label": "Cancellation and Waiting Fee",
+    "category": null
+   },
+   {
+    "code": "CW-NOSHOW",
+    "label": "No-show cancellation fee",
+    "definition": "The rider contests a cancellation fee charged after the DRIVER canceled the trip because the rider did not show up.",
+    "excludes": "Fee after the RIDER canceled (CW-RIDERCANCEL); waiting fee on a completed trip (CW-WAITING).",
+    "example_phrases": [
+     "the driver never showed up",
+     "I was there, the driver was not",
+     "charged a cancellation fee for a no-show",
+     "couldn't find the car"
+    ],
+    "scope": "ADJUDICATE",
+    "category": "CW"
+   },
+   {
+    "code": "CW-RIDERCANCEL",
+    "label": "Rider cancellation fee",
+    "definition": "The rider contests a cancellation fee charged after the RIDER canceled (on-demand after the free window, or an advance trip inside the cut-off).",
+    "excludes": "Driver-initiated no-show cancellation (CW-NOSHOW).",
+    "example_phrases": [
+     "I canceled because the driver was far away and still got charged",
+     "charged after canceling"
+    ],
+    "scope": "ADJUDICATE",
+    "category": "CW"
+   },
+   {
+    "code": "CW-WAITING",
+    "label": "Waiting time fee",
+    "definition": "The rider contests a waiting time fee added at the end of a completed trip.",
+    "example_phrases": [
+     "why was I charged a waiting fee",
+     "I boarded within a minute"
+    ],
+    "scope": "ADJUDICATE",
+    "category": "CW"
+   },
+   {
+    "code": "CW-DRIVERNOSHOW",
+    "label": "Driver did not arrive or was uncontactable",
+    "definition": "The rider reports that the driver did not come, was uncontactable or canceled, and no fee was charged to the rider; the rider seeks redress or reports the driver.",
+    "excludes": "Any case where the rider was charged a fee (classify by that fee: CW-RIDERCANCEL or CW-NOSHOW).",
+    "scope": "BACKLOG",
+    "category": "CW"
+   },
+   {
+    "code": "CW-FEEMISSED",
+    "label": "Driver did not receive a cancellation or waiting fee",
+    "definition": "The DRIVER claims a cancellation or waiting time fee that was not credited or not added.",
+    "scope": "BACKLOG",
+    "category": "CW"
+   },
+   {
+    "code": "CW-OTHER",
+    "label": "Other cancellation or waiting issue",
+    "definition": "Fits the category but no type above; record free text.",
+    "scope": "BACKLOG",
+    "category": "CW"
+   },
+   {
+    "code": "FC",
+    "level": "category",
+    "label": "Fares and Charges",
+    "category": null
+   },
+   {
+    "code": "FC-ROUTE",
+    "label": "Route deviation / longer route",
+    "definition": "The claimant says the driver's route, unexpected stops or a longer trip duration made the trip longer and/or raised the fare.",
+    "excludes": "Disputes about the ERP/toll amount itself (FC-TOLL), even if caused by the route; destination-edit fees (FC-DEST).",
+    "example_phrases": [
+     "took a longer route",
+     "went the long way",
+     "overcharged because of the route",
+     "driver detoured"
+    ],
+    "scope": "ADJUDICATE",
+    "term_note": "The handbook lists 'Route deviation analysis', 'unexpected stops' and 'trip duration vs. estimated time' as GPS evidence for this type.",
+    "category": "FC"
+   },
+   {
+    "code": "FC-TOLL",
+    "label": "ERP / toll overcharge",
+    "definition": "The claimant contests the ERP or road-toll amount added to the trip.",
+    "example_phrases": [
+     "charged ERP twice",
+     "there was no ERP on this road",
+     "ERP amount is wrong"
+    ],
+    "scope": "ADJUDICATE",
+    "category": "FC"
+   },
+   {
+    "code": "FC-DEST",
+    "label": "Add/edit destination fee",
+    "definition": "The claimant contests the add/edit destination fee or the fare recalculated after a destination edit.",
+    "scope": "ADJUDICATE_WITH_APPROVAL",
+    "category": "FC"
+   },
+   {
+    "code": "FC-NOPICKUP",
+    "label": "Trip completed without pickup",
+    "definition": "The rider was charged a fare although the trip was completed without the rider onboard.",
+    "scope": "ADJUDICATE_WITH_APPROVAL",
+    "category": "FC"
+   },
+   {
+    "code": "FC-SURCHARGE",
+    "label": "Surcharge or entry fee",
+    "definition": "The claimant contests a surcharge or entry fee (Sentosa entrance, Jurong Island pass, bulky item or wheelchair fee, child seat).",
+    "scope": "BACKLOG",
+    "category": "FC"
+   },
+   {
+    "code": "FC-PAYMENT",
+    "label": "Payment or transaction fee issue",
+    "definition": "Platform fee, transaction fee, duplicate charge, unpaid fare or cash collection issues.",
+    "scope": "BACKLOG",
+    "category": "FC"
+   },
+   {
+    "code": "FC-TIP",
+    "label": "Tip charged or not removed",
+    "definition": "The rider contests a tip amount that was charged, including a tip added automatically and not removed (ToU s.6.2). Questions about how to tip are EX-OTHER.",
+    "scope": "BACKLOG",
+    "category": "FC"
+   },
+   {
+    "code": "FC-SURGE",
+    "label": "Surge or dynamic price",
+    "definition": "The claimant contests a surge or demand-based price component.",
+    "scope": "BACKLOG",
+    "category": "FC"
+   },
+   {
+    "code": "FC-PROMO",
+    "label": "Promo code or discount not applied",
+    "definition": "The rider says a promo code, voucher or discount was not applied to a trip fare.",
+    "scope": "BACKLOG",
+    "category": "FC"
+   },
+   {
+    "code": "FC-OTHER",
+    "label": "Other fare or charge issue",
+    "scope": "BACKLOG",
+    "category": "FC"
+   },
+   {
+    "code": "DM",
+    "level": "category",
+    "label": "Rider made a mess / damage",
+    "category": null
+   },
+   {
+    "code": "DM-CLEANING",
+    "label": "Cleaning fee claim",
+    "definition": "The driver claims a cleaning fee for a mess caused by the rider, or the rider contests such a fee.",
+    "scope": "ADJUDICATE_WITH_APPROVAL",
+    "category": "DM"
+   },
+   {
+    "code": "DM-DAMAGE",
+    "label": "Vehicle damage",
+    "scope": "TRIAGE_TO_HUMAN",
+    "category": "DM"
+   },
+   {
+    "code": "DM-OTHER",
+    "label": "Other mess or damage issue",
+    "scope": "BACKLOG",
+    "category": "DM"
+   },
+   {
+    "code": "SE",
+    "level": "category",
+    "label": "Safety & Emergency",
+    "category": null
+   },
+   {
+    "code": "SE-CONDUCT",
+    "label": "Inappropriate behavior or harassment",
+    "scope": "TRIAGE_TO_HUMAN",
+    "category": "SE"
+   },
+   {
+    "code": "SE-DRIVING",
+    "label": "Unsafe driving",
+    "scope": "TRIAGE_TO_HUMAN",
+    "category": "SE"
+   },
+   {
+    "code": "SE-MISMATCH",
+    "label": "Driver or vehicle does not match the app",
+    "scope": "TRIAGE_TO_HUMAN",
+    "category": "SE"
+   },
+   {
+    "code": "SE-ACCIDENT",
+    "label": "Accident",
+    "scope": "TRIAGE_TO_HUMAN",
+    "category": "SE"
+   },
+   {
+    "code": "SE-RECORDING",
+    "label": "In-vehicle recording device",
+    "scope": "TRIAGE_TO_HUMAN",
+    "category": "SE"
+   },
+   {
+    "code": "SE-TERMINATED",
+    "label": "Ride terminated after the trip started",
+    "scope": "TRIAGE_TO_HUMAN",
+    "category": "SE"
+   },
+   {
+    "code": "SE-OTHER",
+    "label": "Other safety concern",
+    "scope": "TRIAGE_TO_HUMAN",
+    "category": "SE"
+   },
+   {
+    "code": "EX",
+    "level": "category",
+    "label": "Ryde Experience (no contested charge)",
+    "category": null
+   },
+   {
+    "code": "EX-LOST",
+    "label": "Lost or found item",
+    "scope": "ROUTE_TO_SUPPORT",
+    "category": "EX"
+   },
+   {
+    "code": "EX-RATING",
+    "label": "Rating issue",
+    "scope": "ROUTE_TO_SUPPORT",
+    "category": "EX"
+   },
+   {
+    "code": "EX-FEEDBACK",
+    "label": "Feedback about the driver or rider",
+    "scope": "ROUTE_TO_SUPPORT",
+    "category": "EX"
+   },
+   {
+    "code": "EX-LOCATION",
+    "label": "Pick-up or drop-off location issue (no charge contested)",
+    "definition": "Location problem reported without contesting any charge. If a fee is contested because of a location problem, classify by the fee (for example CW-NOSHOW) and record the reason code CW-R-PIN-AMBIGUOUS.",
+    "scope": "ROUTE_TO_SUPPORT",
+    "category": "EX"
+   },
+   {
+    "code": "EX-APP",
+    "label": "App or tracking problem",
+    "scope": "ROUTE_TO_SUPPORT",
+    "category": "EX"
+   },
+   {
+    "code": "EX-OTHER",
+    "label": "Other experience issue",
+    "scope": "ROUTE_TO_SUPPORT",
+    "category": "EX"
+   },
+   {
+    "code": "OT",
+    "level": "category",
+    "label": "Other / unclassified",
+    "category": null
+   },
+   {
+    "code": "OT-OTHER",
+    "label": "Other (free text)",
+    "definition": "Cannot be placed anywhere else. Always fill the free-text field. If a charge is contested it is escalated (GEN-R07); if not, it goes to support (CLS-03). A rising share signals that the taxonomy needs a new value.",
+    "scope": "BACKLOG",
+    "category": "OT"
+   }
+  ]
+ },
+ "TX-ROLE (who files)": [
+  {
+   "code": "RIDER",
+   "label": "Rider"
+  },
+  {
+   "code": "DRIVER",
+   "label": "Driver"
+  },
+  {
+   "code": "CLAIMANT",
+   "label": "Claimant (filer)"
+  },
+  {
+   "code": "RESPONDENT",
+   "label": "Respondent"
+  },
+  {
+   "code": "PAYER",
+   "label": "Payer"
+  },
+  {
+   "code": "PAYEE",
+   "label": "Payee"
+  },
+  {
+   "code": "PLATFORM",
+   "label": "Ryde acting as a party (for example the payer of a voucher or the sender of system messages)"
+  },
+  {
+   "code": "PLATFORM_LINKER",
+   "label": "Ryde linking the user with a partner"
+  },
+  {
+   "code": "PLATFORM_COLLECTION_AGENT",
+   "label": "Ryde collecting charges for the driver"
+  },
+  {
+   "code": "PLATFORM_REFUND_DECIDER",
+   "label": "Ryde deciding refunds"
+  },
+  {
+   "code": "PLATFORM_CLEANING_VERIFIER",
+   "label": "Ryde verifying cleaning claims"
+  },
+  {
+   "code": "REVIEWER",
+   "label": "Human reviewer"
+  },
+  {
+   "code": "OTHER",
+   "label": "Other"
+  }
+ ],
+ "classification_rules": {
+  "CLS-01": {
+   "name": "Safety override",
+   "statement": "If any free text in the case (description, chat, added evidence) contains safety language (assault, harassment, threats, unsafe driving, accident, injury, intoxication), create an SE claim, set severity S0 or S1 and route it to a human, whatever else the ticket contains."
+  },
+  "CLS-02": {
+   "name": "Split a ticket into claims",
+   "statement": "One claim per contested charge or issue. A safety claim (CLS-01) is always the primary claim; otherwise the primary claim is the one contesting the largest charge; otherwise the first stated issue. Other claims are secondary. If the free text contradicts the organizer's dispute code, the code stays primary, the text's issue becomes a secondary claim, and the case is flagged for review."
+  },
+  "CLS-03": {
+   "name": "Not a dispute",
+   "statement": "A claim with no contested charge and no remedy beyond an explanation is routed to normal support, unless CLS-01 applies."
+  },
+  "CLS-04": {
+   "name": "Location problem with a contested fee",
+   "statement": "If a fee is contested because of a pick-up or drop-off location problem, classify by the fee (for example CW-NOSHOW), not EX-LOCATION."
+  },
+  "CLS-05": {
+   "name": "Organizer dispute codes",
+   "statement": "Map dispute_ticket.dispute_type through organizer_code (no_show_charge -> CW-NOSHOW). Contradictions between the code and the free text are handled by CLS-02."
+  }
+ }
+}

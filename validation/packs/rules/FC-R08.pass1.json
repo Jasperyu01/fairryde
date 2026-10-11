@@ -1,0 +1,25 @@
+{
+ "rule_id": "FC-R08",
+ "name": "ERP caused by an unjustified detour",
+ "family": "FC",
+ "type": "outcome",
+ "applies_to": [
+  "FC-TOLL"
+ ],
+ "mode": "HARD+READ",
+ "statement": "If the actual path passed gantries that the recommended route avoids and the deviation is unjustified (FC-F03), refund ERP(actual) minus ERP(recommended).",
+ "params": [],
+ "produces": [
+  "FC-R-TOLL-FROM-DETOUR"
+ ],
+ "produces_finding": null,
+ "sources": [
+  {
+   "type": "REGULATION",
+   "doc": "LTA-PDVL-OFFENCES",
+   "quote": "Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct route",
+   "source_file": "packs/sources/LTA-PDVL-OFFENCES.txt"
+  }
+ ],
+ "set": "random"
+}

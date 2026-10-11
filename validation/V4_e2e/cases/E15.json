@@ -1,0 +1,133 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E15",
+    "trip_id": "TRIP-2026-37988",
+    "filed_by": "driver",
+    "dispute_type": "rating_appeal",
+    "description": "Yesterday's rider gave me 1 star and wrote that I am 'money-grabbing' just because I tapped the waiting fee. I waited almost 7 minutes at his block, called him and messaged him. My driving and service were fine and he said nothing during the trip. This 1 star pulled my rating from 4.86 to 4.82 and I'm worried about going near 4.80. Please remove this rating.",
+    "filed_at": "2026-09-24T09:30:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-7316",
+    "name": "Eugene Pang",
+    "account_age_days": 560,
+    "total_trips": 74,
+    "avg_rating": 4.3,
+    "dispute_history": {
+      "total_disputes": 2,
+      "upheld": 0,
+      "rejected": 2
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "card"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-2207",
+    "name": "Fatimah binte Ismail",
+    "account_age_days": 1750,
+    "total_trips": 5900,
+    "avg_rating": 4.82,
+    "dispute_history": {
+      "total_disputes": 1,
+      "upheld_against": 0,
+      "rejected": 1
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Corolla Cross (SNA 5532 F)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-37988",
+    "rider_id": "R-7316",
+    "driver_id": "D-2207",
+    "service_type": "RydeX",
+    "booking_type": "on_demand",
+    "pickup_location": {
+      "name": "Blk 302 Serangoon Avenue 2 (drop-off porch)",
+      "lat": 1.3525,
+      "lng": 103.8720
+    },
+    "dropoff_location": {
+      "name": "Our Tampines Hub",
+      "lat": 1.3533,
+      "lng": 103.9403
+    },
+    "scheduled_time": "2026-09-23T17:34:00+08:00",
+    "driver_arrival_time": "2026-09-23T17:34:30+08:00",
+    "driver_wait_start": "2026-09-23T17:34:30+08:00",
+    "rider_boarded_time": "2026-09-23T17:41:20+08:00",
+    "dropoff_time": "2026-09-23T18:02:40+08:00",
+    "cancellation_time": null,
+    "cancellation_fee": null,
+    "cancellation_reason": null,
+    "quoted_fare": 16.70
+  },
+
+  "fare_breakdown": {
+    "base_fare": 16.70,
+    "platform_fee_included_in_base_fare": 1.25,
+    "waiting_time_fee": 5.00,
+    "erp_toll": 0.00,
+    "subtotal": 21.70,
+    "transaction_fee": 0.67,
+    "transaction_fee_basis": "1.96% + $0.24 (local Visa/Mastercard) on subtotal",
+    "total_charged": 22.37,
+    "payment_method": "card",
+    "rider_fee_dispute_filed": false
+  },
+
+  "rating_record": {
+    "rating_by_rider": 1,
+    "review_text": "Money-grabbing driver. Charged me $5 waiting fee for 3 minutes. Never again.",
+    "submitted_at": "2026-09-23T18:05:10+08:00",
+    "driver_rating_before": 4.86,
+    "driver_rating_after": 4.82,
+    "rating_basis": "average of the driver's last 100 trips"
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-23T17:30:00+08:00", "lat": 1.3580, "lng": 103.8770, "speed_kmh": 38, "status": "en_route"},
+    {"timestamp": "2026-09-23T17:32:30+08:00", "lat": 1.3548, "lng": 103.8742, "speed_kmh": 30, "status": "en_route"},
+    {"timestamp": "2026-09-23T17:34:00+08:00", "lat": 1.3530, "lng": 103.8725, "speed_kmh": 10, "status": "en_route"},
+    {"timestamp": "2026-09-23T17:34:30+08:00", "lat": 1.3525, "lng": 103.8720, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-23T17:36:00+08:00", "lat": 1.3525, "lng": 103.8720, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-23T17:38:30+08:00", "lat": 1.3525, "lng": 103.8720, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-23T17:40:30+08:00", "lat": 1.3525, "lng": 103.8720, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-23T17:41:20+08:00", "lat": 1.3525, "lng": 103.8720, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-23T17:47:00+08:00", "lat": 1.3500, "lng": 103.8950, "speed_kmh": 55, "status": "on_trip"},
+    {"timestamp": "2026-09-23T17:54:00+08:00", "lat": 1.3480, "lng": 103.9200, "speed_kmh": 60, "status": "on_trip"},
+    {"timestamp": "2026-09-23T17:59:00+08:00", "lat": 1.3510, "lng": 103.9330, "speed_kmh": 30, "status": "on_trip"},
+    {"timestamp": "2026-09-23T18:02:40+08:00", "lat": 1.3533, "lng": 103.9403, "speed_kmh": 0, "status": "completed"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-23T17:34:50+08:00", "sender": "driver", "type": "message", "content": "Hi, I'm at the porch of Blk 302, white Corolla Cross SNA 5532 F."},
+    {"timestamp": "2026-09-23T17:36:10+08:00", "sender": "driver", "type": "call", "content": "Outgoing call to rider — not answered (rang 22s, no response)."},
+    {"timestamp": "2026-09-23T17:38:00+08:00", "sender": "rider", "type": "message", "content": "coming"},
+    {"timestamp": "2026-09-23T17:39:40+08:00", "sender": "driver", "type": "message", "content": "Ok, still waiting at the porch."}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-23T17:28:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-7316 booked on-demand RydeX trip TRIP-2026-37988 from Blk 302 Serangoon Avenue 2 to Our Tampines Hub. Fixed fare quoted $16.70. Payment: card."},
+    {"timestamp": "2026-09-23T17:28:20+08:00", "event_type": "driver_assigned", "details": "Driver D-2207 (Fatimah binte Ismail, Toyota Corolla Cross SNA 5532 F) assigned. ETA 6 min."},
+    {"timestamp": "2026-09-23T17:28:25+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-23T17:34:30+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS within 8m of pickup point. Speed 0 km/h. Arrival confirmed."},
+    {"timestamp": "2026-09-23T17:34:30+08:00", "event_type": "wait_timer_started", "details": "Free wait timer started. 3 min free wait period ends at 17:37:30."},
+    {"timestamp": "2026-09-23T17:34:35+08:00", "event_type": "rider_notified", "details": "Push notification + in-app alert sent to rider: 'Your driver has arrived.'"},
+    {"timestamp": "2026-09-23T17:36:10+08:00", "event_type": "driver_called_rider", "details": "Driver initiated in-app call to rider. Call rang 22s, no answer."},
+    {"timestamp": "2026-09-23T17:37:30+08:00", "event_type": "wait_timer_expired", "details": "Free 3-min wait period expired. Rider had not boarded. Waiting Time Fee applicable if the trip continues."},
+    {"timestamp": "2026-09-23T17:41:20+08:00", "event_type": "rider_picked_up", "details": "Driver tapped PICK UP. Rider boarded 6 min 50 s after 'I'm Here'."},
+    {"timestamp": "2026-09-23T17:41:25+08:00", "event_type": "trip_started", "details": "Trip started. Navigation to Our Tampines Hub."},
+    {"timestamp": "2026-09-23T18:02:40+08:00", "event_type": "rider_dropped_off", "details": "Driver tapped DROP OFF at Our Tampines Hub."},
+    {"timestamp": "2026-09-23T18:02:45+08:00", "event_type": "waiting_fee_added", "details": "Driver tapped the Waiting Time Fee button at drop-off: $5.00 added."},
+    {"timestamp": "2026-09-23T18:02:55+08:00", "event_type": "trip_completed", "details": "Trip completed. Toll (ERP) entered: $0.00."},
+    {"timestamp": "2026-09-23T18:03:00+08:00", "event_type": "payment_charged", "details": "$22.37 charged to rider card (base fare $16.70 + waiting time fee $5.00 + transaction fee $0.67)."},
+    {"timestamp": "2026-09-23T18:05:10+08:00", "event_type": "rating_submitted", "details": "Rider rated driver 1 star. Review: 'Money-grabbing driver. Charged me $5 waiting fee for 3 minutes. Never again.'"},
+    {"timestamp": "2026-09-23T18:06:00+08:00", "event_type": "driver_rating_updated", "details": "Driver rating (last 100 trips) changed from 4.86 to 4.82."},
+    {"timestamp": "2026-09-24T09:30:00+08:00", "event_type": "rating_appeal_submitted", "details": "Driver submitted a rating appeal via RydeHELP for trip TRIP-2026-37988."}
+  ]
+}

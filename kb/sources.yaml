@@ -1,0 +1,157 @@
+# FairRyde Knowledge Base - SOURCE REGISTRY
+# Every rule cites a document from this registry (or a Ryde Help Centre article, registered automatically from
+# sources/ryde_policy_corpus.json as RYDE-<article id>). verify_against tells the build script where to check quotes.
+# All verify_against files are bundled under kb/sources/ so the check can be rerun anywhere.
+# External pages (Grab, Bolt, DiDi, LTA, IMDA) were read on 2026-10-05 and their exact wording was recorded in the
+# fact-check note (sources/research/09_fact_check.md); quotes are verified against that record, not the live page.
+
+meta:
+  version: 0.1.0
+  updated: 2026-10-05
+  note: Ryde Help Centre articles (125 of them; 2 added on 2026-10-05 to verify taxonomy term sources) are registered automatically from the corpus with title, URL, audience and edited date.
+
+documents:
+
+  - id: ORG-HANDBOOK
+    title: "AI CAN DO IT: Tencent Cloud AI Singapore Hackathon 2026 Handbook (section 5, Ryde track)"
+    publisher: Tencent Cloud and AI Singapore (organizer)
+    date: 2026-09-22
+    type: ORGANIZER
+    verify_against: sources/organizer/handbook.txt
+    credibility_default: A
+
+  - id: ORG-DISP002
+    title: "RydeResolve Sample Dataset, DISP-002 No-Show Charge Dispute (SG)"
+    publisher: Organizer (Ryde track)
+    date: 2026-09
+    type: ORGANIZER
+    verify_against: sources/organizer/disp002.md
+    credibility_default: A
+    note: The embedded cancellation_policy object is treated as a case-level contract (rule META-01).
+
+  - id: RYDE-TOU
+    title: Ryde Terms of Use (Section A Terms of Service; Section B)
+    publisher: Ryde Technologies Pte Ltd
+    url: https://rydesharing.com/terms-of-use/
+    date: "last modified 6 Apr 2022 (contains later content, such as the S$200 cleaning cap)"
+    type: RYDE_TOU
+    verify_against: sources/ryde_policy_corpus.json#terms_of_use
+    credibility_default: A
+    note: Sections 18 and 20 could only be captured as excerpts; copy them manually if a rule needs them.
+
+  - id: LTA-PDVL-OFFENCES
+    title: "LTA list of offences for Private Hire Car Driver's Vocational Licence holders (accurate as at 1 Apr 2023)"
+    publisher: Land Transport Authority
+    url: https://www.lta.gov.sg/content/dam/ltagov/industry_innovations/industry_matters/regulations_licensing/taxis_private_hire_cars/private_hire_car_licence/pdf/PDVL_holders_Offences.pdf
+    date: 2023-04-01
+    type: REGULATION
+    verify_against: sources/research/09_fact_check.md
+    credibility_default: B
+    note: "Rule 23(1)(c) of the Road Traffic (Public Service Vehicles) (Vocational Licences and Conduct of Drivers...) Rules; composition S$100 and 3 demerit points."
+
+  - id: LTA-ERP-RATES
+    title: "LTA ERP rate table, with effect from 23 Mar 2026"
+    publisher: Land Transport Authority
+    url: https://onemotoring.lta.gov.sg/content/dam/onemotoring/Driving/ERP/ERP%20Rates.pdf
+    date: 2026-03-23
+    type: REGULATION
+    verify_against: null
+    credibility_default: A
+    note: Reference data only (values), see reference_data.yaml ERP_RATE_TABLE.
+
+  - id: ONEMAP
+    title: OneMap search API
+    publisher: Singapore Land Authority
+    url: https://www.onemap.gov.sg/api/common/elastic/search
+    date: 2026-10-04
+    type: REGULATION
+    verify_against: null
+    credibility_default: A
+    note: Reference coordinates for named venues, looked up by hand and stored in reference_data.yaml VENUES. Not a live integration.
+
+  - id: IND-GRAB-ADVANCE
+    title: Grab Singapore, Advance Booking
+    publisher: Grab
+    url: https://www.grab.com/sg/transport/advance-booking/
+    date: read 2026-10-05
+    type: INDUSTRY
+    verify_against: sources/research/09_fact_check.md
+    credibility_default: C
+
+  - id: IND-BOLT-SCHEDULED
+    title: "Bolt, How to handle scheduled rides (for drivers)"
+    publisher: Bolt
+    url: https://bolt.eu/en/support/articles/7769413257746/
+    date: read 2026-10-05
+    type: INDUSTRY
+    verify_against: sources/research/09_fact_check.md
+    credibility_default: C
+
+  - id: IND-DIDI-DETOUR
+    title: "网约车司机违约责任条款 (DiDi driver liability terms)"
+    publisher: DiDi (udache.com domain)
+    url: https://dpubstatic.udache.com/static/dpubimg/dpub2_project_10967/index_10967.html
+    date: undated (read 2026-10-05)
+    type: INDUSTRY
+    verify_against: sources/research/09_fact_check.md
+    credibility_default: C
+
+  - id: IND-BENCHMARK-NOTES
+    title: "FairRyde research note 02: industry dispute benchmark (Grab, Gojek, Zig, Uber, Lyft, Bolt, DiDi), with sources inside"
+    publisher: FairRyde (secondary compilation)
+    url: https://help.lyft.com/hc/en-us/all/articles/115012922687-Cancel-and-no-show-policy-for-riders
+    date: 2026-10-05
+    type: INDUSTRY
+    verify_against: sources/research/02_industry_dispute_benchmark.md
+    credibility_default: C
+    note: Secondary. Each paraphrase points to the platform page listed in the note.
+
+  - id: GOV-IMDA-AGENTIC
+    title: "IMDA Model AI Governance Framework for Agentic AI, Version 1.0 (22 Jan 2026)"
+    publisher: Infocomm Media Development Authority
+    url: https://www.imda.gov.sg/-/media/imda/files/about/emerging-tech-and-research/artificial-intelligence/mgf-for-agentic-ai.pdf
+    date: 2026-01-22
+    type: GOV_GUIDANCE
+    verify_against: sources/research/09_fact_check.md
+    credibility_default: B
+    note: Voluntary guidance. A Version 1.5 update (20 May 2026) is reported by law firms but was not retrieved.
+
+  - id: GOV-MGF2
+    title: "Model AI Governance Framework, Second Edition (2020)"
+    publisher: IMDA and PDPC
+    url: https://www.pdpc.gov.sg/-/media/Files/PDPC/PDF-Files/Resource-for-Organisation/AI/SGModelAIGovFramework2.pdf
+    date: 2020-01-21
+    type: GOV_GUIDANCE
+    verify_against: null
+    paraphrase_record: sources/research/07_singapore_regulation_and_responsible_ai.md
+    credibility_default: B
+    note: Cited by paragraph (paraphrase), not verbatim.
+
+  - id: GOV-PDPC-AI
+    title: "PDPC Advisory Guidelines on Use of Personal Data in AI Recommendation and Decision Systems (1 Mar 2024)"
+    publisher: Personal Data Protection Commission
+    url: https://www.pdpc.gov.sg/-/media/files/pdpc/pdf-files/advisory-guidelines/advisory-guidelines-on-the-use-of-personal-data-in-ai-recommendation-and-decision-systems.pdf
+    date: 2024-03-01
+    type: GOV_GUIDANCE
+    verify_against: null
+    paraphrase_record: sources/research/07_singapore_regulation_and_responsible_ai.md
+    credibility_default: B
+    note: Cited by paragraph (paraphrase), not verbatim.
+
+  - id: INT-CHORDX-ONT
+    title: "ChordX knowledge-base protocol (ONT.1 to ONT.12), draft, modified 2026-09-25"
+    publisher: Team lead (Cao), internal method standard
+    date: 2026-09-25
+    type: INTERNAL_STANDARD
+    verify_against: sources/chordx_knowledge_base.md
+    credibility_default: A
+    note: Governs how the knowledge base is built, not what Ryde's policy is.
+
+  - id: FAIRRYDE-DECISIONS
+    title: FairRyde design decisions log (open decisions D1 to D23, open_items.yaml)
+    publisher: FairRyde team
+    date: 2026-10-05
+    type: FAIRRYDE
+    verify_against: null
+    credibility_default: D
+    note: Every rule citing only this source is a generic assumption and must be labeled to users (META-05).

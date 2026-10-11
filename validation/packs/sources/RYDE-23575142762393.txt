@@ -1,0 +1,57 @@
+DOCUMENT RYDE-23575142762393
+TITLE: I wish to make an appeal
+TYPE: RYDE_POLICY
+URL: https://help.rydesharing.com/hc/en-us/articles/23575142762393-I-wish-to-make-an-appeal
+DATE: 2023-10-02
+AUDIENCE: Driver
+SECTION: Fares & Charges
+EDITED: 2023-10-02
+
+I wish to make an appeal
+
+Request for cancellation & waiting fee
+
+To qualify for a cancellation/waiting fee, the following conditions must be met:
+
+You arrived at the pickup location and the customer was not present within 3 minutes of your arrival.
+
+In the event that a customer cancels the booking, the fee will be automatically credited to you, provided you meet the eligibility criteria.
+
+Appealing for Cancellation/Waiting Fee Due to Various Reasons
+
+1. Rider booked the wrong service or wrong location and refused to cancel
+2. Rider cancelled the trip once you reached the pickup point
+3. Rider came with additional riders
+4. Rider arrived with a child without a booster seat
+5. My RydeSEND order was delayed for more than 3 minutes and I did not receive the waiting fee
+6. My RydeSEND order was cancelled after 3 minutes and I did not receive the cancellation fee
+7. I cancelled the RydeSEND trip as the order was not ready after 3 minutes but did not receive the cancellation fee
+
+If you forgot to include ERP charges in the fares
+
+You may file a claim with the following details:
+
+1. Name of ERP Gantry
+2. Time of Entry
+3. Screenshot of Cashcard Statement
+
+Note: RydePOOL, RydeHIRE and RydeSEND include ERP.
+
+My rider made a mess in my vehicle
+
+1. Vomit
+2. Seat stains
+3. Spillage
+4. Soil
+
+Tip: Keeping Plastic Bags Handy & newspaper to protect Your Seats with Pets
+
+Having plastic bags easily accessible in your car can be helpful if any passenger feels nauseous or needs to vomit. Consider using newspapers to keep your seats clean if you allow pets in your vehicle.
+
+Please let us know via the RydeHELP feature on your app and include the following details:
+
+- Photo evidence (e.g. a picture of the vomit/stain/etc)
+- Receipt from the Cleaning Company with the following details:
+  - Name, contact number & address
+  - Date of cleaning
+  - Authorised personnel's signature/company stamp

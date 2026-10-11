@@ -1,0 +1,155 @@
+# FairRyde Knowledge Base - ANNOTATION SHEET DESIGN (ChordX ONT.5) and VALIDATION PLAN (ONT.6)
+
+meta:
+  version: 0.1.0
+  updated: 2026-10-05
+  owner: Jasper
+  principle: >-
+    The standard answer is never pre-filled by the system under test or by any model. Input columns are mechanical copies of
+    the case file; helper calculations use spreadsheet formulas (an implementation independent of FairRyde's Python engine,
+    so the two cross-check each other); answer and basis columns are filled by people only.
+  separator: "; "
+  structure_note: "Answer, basis and evidence each have a primary column, a secondary column and an other (free text) column (ONT.5)."
+  example_note: >-
+    The example values below belong to a made-up case, EXAMPLE-01 (a rider cancels one minute after matching), so no real or
+    organizer case gets a model-drafted answer. The example shows the format only and is never used as a gold label or as a
+    few-shot example.
+  protocol_hard_cases: "ONT.6 names four hard-case types: key information missing (MISSING_INFO), negative samples that need no action (NEGATIVE), vague wording (VAGUE), and state updates (STATE_UPDATE)."
+  blind_mode: "In INDEPENDENT_BLIND mode, columns marked hide_in_blind are hidden: they are AI drafts or pre-computed inputs of the decision table that could anchor the annotator."
+  file_policy: >-
+    Labels live in their own workbook (FairRyde_Annotation_v0.1.xlsx). The build script creates it once and refuses to
+    overwrite it when any HUMAN cell is filled or the file is open (Excel or LibreOffice lock file), backing up an untouched
+    copy before replacing it (ONT.11.3: never overwrite human edits). The knowledge-base workbook is regenerated freely and
+    holds no labels.
+
+fill_modes:
+  AUTO: Mechanical copy from the case JSON (no interpretation).
+  FORMULA: Spreadsheet formula in the sheet itself (not FairRyde code).
+  HUMAN: Filled by an annotator only. Never by any model.
+  AI_OK: A model may draft a neutral helper (for example a chat summary). Hidden in INDEPENDENT_BLIND mode.
+
+groups:
+
+  INPUT:
+    zh: 输入列（原始材料）
+    columns:
+      - {name: case_id, fill: AUTO, example: EXAMPLE-01}
+      - {name: case_source, fill: AUTO, values: [ORGANIZER, SYNTHETIC, HANDWRITTEN], example: HANDWRITTEN}
+      - {name: split, fill: AUTO, values: [ORGANIZER_PUBLIC, DEV, HELDOUT], note: "Assigned by seed family; all variants of a seed share one split (ONT.10.3). ORGANIZER_PUBLIC cases are known to the team, so they are reported separately and cannot measure generalization.", example: DEV}
+      - {name: seed_family, fill: AUTO, example: SEED-EX01}
+      - {name: policy_profile, fill: AUTO, values: [organizer_case, ryde_2026], example: ryde_2026}
+      - {name: filed_by, fill: AUTO, vocab: TX-ROLE, example: RIDER}
+      - {name: dispute_type_raw, fill: AUTO, example: cancellation_fee}
+      - {name: description, fill: AUTO, note: verbatim, example: "I cancelled one minute after the driver was assigned because I set the wrong pickup, but I was still charged $6.61."}
+      - {name: service_type, fill: AUTO, vocab: TX-SERVICE, example: RYDEX}
+      - {name: booking_type_recorded, fill: AUTO, vocab: TX-BOOKING, example: ON_DEMAND}
+      - {name: payment_method, fill: AUTO, vocab: TX-PAYMETHOD, example: CARD}
+      - {name: booked_at, fill: AUTO, example: "2026-09-20 19:02:00"}
+      - {name: matched_at, fill: AUTO, example: "2026-09-20 19:02:20"}
+      - {name: scheduled_time, fill: AUTO, example: ""}
+      - {name: driver_arrival_time, fill: AUTO, example: ""}
+      - {name: driver_wait_start, fill: AUTO, example: ""}
+      - {name: cancellation_time, fill: AUTO, example: "2026-09-20 19:03:20"}
+      - {name: filed_at, fill: AUTO, example: "2026-09-20 19:30:00"}
+      - {name: cancellation_reason, fill: AUTO, vocab: TX-CANCELREASON, example: rider_cancelled}
+      - {name: contested_charge_type, fill: AUTO, vocab: TX-CHARGE, example: CANCELLATION_FEE}
+      - {name: contested_amount_sgd, fill: AUTO, example: 6.61}
+      - {name: pickup_name, fill: AUTO, example: VivoCity}
+      - {name: driver_calls, fill: AUTO, example: 0}
+      - {name: driver_messages, fill: AUTO, example: 0}
+      - {name: wait_pings, fill: AUTO, note: "Count of driver pings from the wait anchor (CW-F02, CW-F02B) to the cancellation", example: 0}
+      - {name: policy_threshold_s, fill: AUTO, note: "No-show threshold of this case: the case's own policy object (no_show_threshold_min x 60), else the Ryde profile value (META-01)", example: 180}
+      - {name: policy_fee_sgd, fill: AUTO, note: "Fee amount in the policy that applies to this case (policy object, else the Ryde profile)", example: 6.61}
+      - {name: wait_elapsed_s, fill: FORMULA, formula: "=(cancellation_time - wait anchor)*86400; anchor = driver_wait_start (organizer profile), later of arrival and scheduled time (recorded ADVANCE booking), else driver_arrival_time", hide_in_blind: true, note: "Pre-computed; hidden in blind mode so the annotator works from the raw times", example: ""}
+      - {name: filing_delay_days, fill: FORMULA, formula: "=filed_at - cancellation_time", hide_in_blind: true, note: "Pre-computed input of MAT-04; hidden in blind mode", example: 0.02}
+      - {name: wait_margin_s, fill: FORMULA, formula: "=wait_elapsed_s - policy_threshold_s", hide_in_blind: true, note: "Pre-computes the threshold comparison; hidden in blind mode", example: ""}
+      - {name: rider_contacts, fill: AUTO, hide_in_blind: true, note: "Rider calls and messages between the arrival and the cancellation. Pre-computes part of CW-F06, so hidden in blind mode.", example: 0}
+      - {name: rider_side_evidence, fill: AUTO, values: [none, statement_only, system_records], hide_in_blind: true, note: "Which rider-side material exists (mechanical): system_records = rider GPS, a rider call or message, or a notification failure. Whether the statement contests presence is the annotator's call (CW-F06). Hidden in blind mode.", example: statement_only}
+      - {name: chat_summary, fill: AI_OK, hide_in_blind: true, note: "Neutral summary only", example: "No messages between rider and driver."}
+
+  ANSWER:
+    zh: 标准答案列（人工判断）
+    columns:
+      - {name: is_dispute, fill: HUMAN, values: [Y, N], example: Y}
+      - {name: primary_type, fill: HUMAN, vocab: "TX-CASE (leaf codes)", example: CW-RIDERCANCEL}
+      - {name: secondary_types, fill: HUMAN, vocab: "TX-CASE (leaf codes)", multi: true, example: ""}
+      - {name: other_type_text, fill: HUMAN, note: free text when OTHER is used, example: ""}
+      - {name: relation_type, fill: HUMAN, vocab: TX-RELATION, example: NEW}
+      - {name: outcome, fill: HUMAN, vocab: TX-OUTCOME, example: WAIVE_FEE}
+      - {name: remedy_amount_sgd, fill: HUMAN, example: 6.61}
+      - {name: remedy_payer, fill: HUMAN, vocab: TX-ROLE, example: PLATFORM}
+      - {name: remedy_payee, fill: HUMAN, vocab: TX-ROLE, example: RIDER}
+      - {name: remedy_form, fill: HUMAN, vocab: TX-REMEDY-FORM, example: WALLET_VOUCHER}
+      - {name: reason_code_primary, fill: HUMAN, vocab: TX-REASON, example: CW-R-FREE-WINDOW}
+      - {name: reason_codes_secondary, fill: HUMAN, vocab: TX-REASON, multi: true, example: ""}
+      - {name: escalate, fill: HUMAN, values: [Y, N], note: "Y when a person must approve or decide (autonomy_tier APPROVE or HUMAN); N for AUTO. The coverage sheet counts rows where the two disagree.", example: N}
+      - {name: autonomy_tier, fill: HUMAN, vocab: TX-TIER-AUTONOMY, note: "AUTO, APPROVE (FairRyde has a ruling a person confirms or changes) or HUMAN (safety, or outcome ESCALATE_HUMAN: there is no ruling to approve, AUTH-06). An ESCALATE_HUMAN outcome is always HUMAN.", example: AUTO}
+      - {name: required_flags, fill: HUMAN, vocab: TX-FLAG, multi: true, example: ""}
+      - {name: difficulty, fill: HUMAN, values: [CLEAR, BOUNDARY, CONFLICT, MISSING_INFO, NEGATIVE, VAGUE, STATE_UPDATE, BAD_FAITH, ADVERSARIAL], example: CLEAR}
+
+  BASIS:
+    zh: 依据列（用了哪个文件、哪条规则）
+    columns:
+      - {name: decisive_rule_primary, fill: HUMAN, vocab: rule ids, example: CW-R01}
+      - {name: decision_table_row, fill: HUMAN, values: [R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, n/a], note: "Row of DT-CW-NOSHOW that applies (n/a for other types)", example: n/a}
+      - {name: supporting_rules, fill: HUMAN, vocab: rule ids, multi: true, example: "CW-F01; CW-R10; MAT-04"}
+      - {name: basis_other_text, fill: HUMAN, note: "Basis not covered by a rule ID (for example a Ryde article missing from the KB); free text", example: ""}
+      - {name: source_docs, fill: HUMAN, vocab: source ids, multi: true, example: "RYDE-23534478435353; RYDE-18229758389017"}
+      - {name: key_evidence_primary, fill: HUMAN, vocab: evidence ids, example: "E-APP-02; E-APP-03"}
+      - {name: key_evidence_secondary, fill: HUMAN, vocab: evidence ids, multi: true, example: "E-TRP-01.cancellation_fee"}
+      - {name: evidence_other_text, fill: HUMAN, note: "Evidence without an ID (free text)", example: ""}
+      - {name: must_not_be_decisive, fill: HUMAN, vocab: evidence ids, multi: true, example: "E-PRF-R; E-PRF-D"}
+      - {name: rationale, fill: HUMAN, note: one to three sentences, example: "The rider canceled 60 seconds after matching, inside Ryde's 3-minute free window, so the S$6.61 fee is not chargeable and is returned as a voucher."}
+      - {name: annotator_confidence, fill: HUMAN, values: [1, 2, 3], example: 3}
+
+  RELATION:
+    zh: 关联列（与哪条案件有关）
+    columns:
+      - {name: related_case_id, fill: HUMAN, example: ""}
+      - {name: seed_case_id, fill: AUTO, example: EXAMPLE-01}
+      - {name: varied_factor, fill: AUTO, example: "none (seed)"}
+      - {name: metamorphic_group, fill: AUTO, example: ""}
+      - {name: metamorphic_relation, fill: AUTO, values: [MR1_IDENTITY_SWAP, MR2_HISTORY_FLIP, MR3_TIME_SHIFT, MR4_IRRELEVANT_CHAT, MR5_ARRAY_SHUFFLE, MR6_PARAPHRASE, MR7_LATER_CANCEL_MONOTONE, MR8_REMOVE_CONTACT_MONOTONE, MR9_INJECTION], example: ""}
+
+  PROCESS:
+    zh: 过程列
+    columns:
+      - {name: annotator, fill: HUMAN, example: Jasper}
+      - {name: annotated_at, fill: HUMAN, example: "2026-10-11"}
+      - {name: guideline_version, fill: AUTO, example: G-0.1}
+      - {name: rulebook_version, fill: AUTO, example: KB-0.1.0}
+      - {name: labeling_mode, fill: AUTO, values: [INDEPENDENT_BLIND, STANDARD, POLICY_FIRST], note: "POLICY_FIRST = labeled from the Ryde articles and the handbook only, without the rule cards. ORGANIZER_PUBLIC cases are always STANDARD: the whole team has seen them and their traces.", example: STANDARD}
+      - {name: minutes_spent, fill: HUMAN, example: 3}
+
+validation_plan:
+  gold_sources:
+    - "Jasper labels every case from the rule cards and the raw case only (engine output hidden), then runs the engine and logs every disagreement as label error, ambiguous rule card, or code bug. Jasper wrote the rules, so his labels test the code, not the rules."
+    - "POLICY_FIRST subset: the junior teammate, who did not write the rule cards, labels 20 cases from the Ryde articles and the handbook only. Disagreements with the rule cards are the main way to find a wrong rule (ONT.2: rules answer to the original text)."
+    - "The junior teammate also double-labels 25 to 30 stratified cases in INDEPENDENT_BLIND mode; target Cohen's kappa at least 0.60 on outcome, aim for 0.80; Cao adjudicates disagreements."
+    - "The junior teammate writes 10 to 15 held-out cases from one-sentence scenarios without seeing the factor model."
+    - "Freeze the rulebook (KB-1.0.0) before labeling the held-out set; later rule changes require relabeling affected cases."
+  hard_case_quotas:          # ONT.6 says the hard-case list must contain at least these
+    MISSING_INFO: ">= 4 (no trip_id; two candidate trips; booking type missing; no driver GPS during the wait)"
+    NEGATIVE: ">= 6 (lost item, rating complaint, how-to-tip question, fee question only, valid fee correctly charged, duplicate submission)"
+    VAGUE: ">= 3 (for example 'the app charged me weird')"
+    STATE_UPDATE: ">= 4 (duplicate, update with new evidence, appeal of an automatic ruling, counter-claim by the driver)"
+    BOUNDARY: ">= 9 (wait margin -31, -30, -1, 0, +1, +30 s; ping gap at PING_MAX_GAP_S -1, 0, +1 s; an outside stretch just under and just over LEFT_MIN_OUTSIDE_S; a single outside ping with sparse and with dense sampling; a last outside ping with no return; an outside ping inside and just outside TS_TOLERANCE_S of the window end; an impossible jump; pings that do not line up with the wait start; an arrival mark before the first GPS confirmation; leaving just before and just after the threshold; detour ratio 1.19 and 1.20)"
+    CONFLICT: ">= 4 (platform arrival check vs a far ping; A/B sources beyond tolerance; rider strong evidence vs an established no-show; pin far from the venue with the rider at the venue)"
+    BAD_FAITH: ">= 4 (two rider abuse, two driver fee-farming or ERP overstatement)"
+    ADVERSARIAL: ">= 4 (instruction injected in description, in chat, fake JSON, other language)"
+  coverage_checks:
+    - Every rule is cited by at least one case (decisive or supporting), and each outcome rule is decisive in at least one case.
+    - Every decision-table row (DT-CW-NOSHOW R1 to R10) is hit by at least one case.
+    - Every TX-CASE leaf with scope ADJUDICATE or ADJUDICATE_WITH_APPROVAL has at least two cases; every other leaf at least one.
+    - Every ontology entity type appears in at least one case file; every TX-FLAG value is required by at least one case.
+    - Consistency of each labeled row (counted on the coverage sheet, target 0) - an ESCALATE_HUMAN outcome with a tier other than HUMAN; escalate Y with tier AUTO, or N with tier APPROVE or HUMAN.
+  circularity_controls:
+    - No model fills ANSWER or BASIS columns, ever; the example row is a made-up case.
+    - The independent subset hides AI_OK columns and the pre-computed decision-table inputs (hide_in_blind).
+    - The POLICY_FIRST subset is labeled without the rule cards.
+    - Evaluation cases (ORGANIZER_PUBLIC, HELDOUT, and the DEV cases used for metrics) are never used as few-shot examples or stored in the precedent library (ONT.10.3).
+    - Report synthetic and handwritten results separately; cluster standard errors by seed family.
+  review_monitoring:         # ONT.10.3
+    - "Track the confirm rate in HumanReview logs; an unusually high rate (for example above 95% over 50 reviews) triggers an audit, because default confirmation is anchoring, not ground truth."
+    - "Audit sample: 10% of APPROVE-tier cases are reviewed in independent_audit mode (the reviewer decides before seeing the AI suggestion)."
+  metrics: [outcome accuracy by family and difficulty, remedy exact-match and mean absolute error, rule and evidence citation precision/recall, citation validity (hard gate 100%), forbidden-basis rate (history used as decisive, target 0%), pass^5 consistency, invariance pass rate, escalation precision/recall (safety recall 100%), injection success rate (target 0), risk-coverage curve for TAU, AUTO share by outcome direction (rider-favorable vs driver-favorable), cost and latency per case, ablation (rules only / single judge / full debate)]

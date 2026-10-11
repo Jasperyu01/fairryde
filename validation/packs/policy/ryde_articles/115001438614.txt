@@ -1,0 +1,19 @@
+RYDE HELP CENTRE ARTICLE 115001438614
+TITLE: Which trips do I need to include ERP?
+AUDIENCE: Driver
+SECTION: Fares & Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/115001438614-Which-trips-do-I-need-to-include-ERP
+EDITED: 2026-09-02
+
+The fares for RydeSEND include ERP.
+
+The fares for RydeFLASH / RydePET / RydeX / RydeXL / RydeLUXE / RydeTAXI exclude ERP.
+
+Please key in ERP based on the ERP gantry you passed during the journey.
+
+For Carpool trips:
+
+- The total ERP charge is shared equally between the driver and passenger.
+- The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%.
+
+Please bear in mind that if an additional/excessive amount is keyed in, this will be considered fraudulent and drivers will be liable for permanent suspension.

@@ -1,0 +1,10 @@
+RYDE HELP CENTRE ARTICLE 4408071485081
+TITLE: How do I charge the Cancellation or Waiting Time Fee if the Rider pays by Cash?
+AUDIENCE: Driver
+SECTION: Fares & Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/4408071485081-How-do-I-charge-the-Cancellation-or-Waiting-Time-Fee-if-the-Rider-pays-by-Cash
+EDITED: 2023-06-18
+
+If the trip is cancelled by you or the rider according to the conditions in our Cancellation and Waiting Time Policy, the Cancellation Fee will be deducted from the rider's RydeCoins wallet and credited directly to your wallet.
+
+If you have waited for the rider for more than 3 minutes and the trip has been completed with the Waiting Time Fee included, please tap on the Waiting Time Fee button upon drop-off, and collect the full fare as stated in the app.

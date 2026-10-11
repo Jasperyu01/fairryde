@@ -1,0 +1,27 @@
+{
+ "item_id": "O14",
+ "stratum": "event",
+ "item": {
+  "code": "human_review_completed",
+  "actor": "REVIEWER",
+  "target": "PLATFORM",
+  "changes": "SM-RULING: PENDING_HUMAN -> HUMAN_FINAL; SM-RULING: UNDER_APPEAL -> HUMAN_FINAL"
+ },
+ "context": {
+  "state_machine": {
+   "SM-RULING": [
+    "DRAFT",
+    "AUTO_FINAL",
+    "PENDING_HUMAN",
+    "HUMAN_FINAL",
+    "UNDER_APPEAL"
+   ]
+  }
+ },
+ "source_files": [
+  "packs/sources/ORG-DISP002.txt",
+  "packs/sources/RYDE-TOU.txt",
+  "packs/sources/ORG-HANDBOOK.txt",
+  "packs/policy/ryde_articles/ (index: packs/policy/ryde_articles_index.tsv)"
+ ]
+}

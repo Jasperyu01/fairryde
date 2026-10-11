@@ -1,0 +1,65 @@
+{
+ "rule_id": "CW-R03",
+ "name": "No-show cancellation fee is valid",
+ "family": "CW",
+ "type": "outcome",
+ "applies_to": [
+  "CW-NOSHOW"
+ ],
+ "mode": "HARD",
+ "statement": "The fee stands when all of Ryde's conditions are established: the driver canceled with reason rider_no_show; the arrival indication is valid (CW-R06); the driver stayed at the pick-up point during the wait (CW-F04); and the wait meets the threshold (CW-F03). How FairRyde handles sparse GPS, missing records and rider counter-evidence is set out row by row in decision table DT-CW-NOSHOW, with each row's own credibility. Organizer profile: the case's policy object (DISP-002: S$5.00, no-show cancellation at 8 minutes). Ryde profile: S$6.61 after more than 3 minutes.",
+ "params": [
+  {
+   "name": "NO_SHOW_THRESHOLD_S",
+   "value": 180,
+   "unit": "s"
+  },
+  {
+   "name": "THRESHOLD_COMPARISON",
+   "value": "more_than",
+   "unit": null
+  },
+  {
+   "name": "NO_SHOW_FEE_SGD",
+   "value": 6.61,
+   "unit": "SGD"
+  }
+ ],
+ "produces": [
+  "CW-R-NOSHOW-VALID",
+  "CW-R-WAIT-SHORT",
+  "CW-R-DRIVER-LEFT"
+ ],
+ "produces_finding": null,
+ "sources": [
+  {
+   "type": "ORGANIZER",
+   "doc": "ORG-DISP002",
+   "quote": "\"no_show_threshold_min\": 8",
+   "profile": "organizer_case",
+   "source_file": "packs/sources/ORG-DISP002.txt"
+  },
+  {
+   "type": "ORGANIZER",
+   "doc": "ORG-DISP002",
+   "quote": "\"cancellation_fee_after_wait\": 5.00",
+   "profile": "organizer_case",
+   "source_file": "packs/sources/ORG-DISP002.txt"
+  },
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-23534478435353",
+   "quote": "Rider will be charged a Cancellation Fee of $6.61* if:",
+   "profile": "ryde_2026",
+   "source_file": "packs/sources/RYDE-23534478435353.txt"
+  },
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-23534478435353",
+   "quote": "The driver presses \"I'm Here\", waits for > 3 minutes for the rider to arrive at the pick-up point and cancels the trip (Rider NO SHOW and no trip completion)",
+   "profile": "ryde_2026",
+   "source_file": "packs/sources/RYDE-23534478435353.txt"
+  }
+ ],
+ "set": "critical_path"
+}

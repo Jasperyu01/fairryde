@@ -1,0 +1,18 @@
+RYDE HELP CENTRE ARTICLE 50798691815449
+TITLE: Can I change my destination?
+AUDIENCE: Rider
+SECTION: Add/Edit Destination Fee
+URL: https://help.rydesharing.com/hc/en-us/articles/50798691815449-Can-I-change-my-destination
+EDITED: 2025-10-09
+
+We are excited to announce the full rollout of a new feature that allows you to update your trip destination during a ride. Please note the following guidelines:
+
+1. Inform Your Driver First - Before changing your destination, kindly notify your driver. If the new destination significantly increases the trip's distance or duration, the driver may not be able to accommodate the change.
+
+2. Driver Acceptance - After updating your destination in the app, please let your driver know. They will have a limited time to accept the change. If they do not respond within this period, your request will be automatically declined.
+
+3. Fare Adjustment - Once the driver accepts, your trip fare will be recalculated, and your route will be updated to the new destination.
+
+*RydePOOL, RydeTAXI & Multiple stop bookings are not allowed to make any changes in destination.
+
+Effective 17 Oct 2025

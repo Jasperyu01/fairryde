@@ -1,0 +1,15 @@
+RYDE HELP CENTRE ARTICLE 52594357168281
+TITLE: Transaction Fee
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/52594357168281-Transaction-Fee
+EDITED: 2025-11-23
+
+We have introduced a transaction fee for cashless payments effective 2 January 2024.
+
+It's a small fee applied when you pay by card or other cashless methods, covering the cost of secure payment processing charged by the payment provider.
+
+Fee structure wef 4 Dec
+1.96% + $0.24 for Local Visa, Mastercard, and Rydecoins
+3.3% + $0.50 for AMEX, Foreign Cards & Other credit/debit cards
+An additional 3% applies to all Foreign Debit/Credit Cards & Alipay on top of the prevailing transaction fee

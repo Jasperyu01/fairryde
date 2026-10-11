@@ -1,0 +1,51 @@
+{"time": "2026-10-07T18:28:32+08:00", "event": "start", "step": "P0", "dep": "E", "actor": "builder", "what": "freeze KB v0.1: hash every file, make the KB read-only"}
+{"time": "2026-10-07T18:28:45+08:00", "event": "end", "step": "P0", "result": "52 files hashed; KB read-only", "outputs": ["00_freeze.json"]}
+{"time": "2026-10-07T18:28:53+08:00", "event": "note", "note": "P0 correction: 35 files hashed, not 52. The read-only mode does not stop root, so the end-of-run hash check is the real guarantee."}
+{"time": "2026-10-07T18:29:39+08:00", "event": "start", "step": "P1", "dep": "E", "actor": "builder", "what": "pre-register plan"}
+{"time": "2026-10-07T18:29:39+08:00", "event": "end", "step": "P1", "result": "plan written and hashed before any result", "outputs": ["01_plan.yaml", "01_plan.sha256"]}
+{"time": "2026-10-07T18:31:04+08:00", "event": "start", "step": "P2", "dep": "E", "actor": "builder", "what": "draw seeded samples, build packets"}
+{"time": "2026-10-07T18:32:17+08:00", "event": "end", "step": "P2", "result": "20 random rules (A6 B4 C3 D7) + 2 critical-path (CW-R03, CW-R06); 14 ontology items; 19 source docs; policy pack 125 articles; KB pack 5 files", "outputs": ["V3_rules/30_sample.json", "V2_ontology/20_sample.json", "packs/"]}
+{"time": "2026-10-07T18:33:55+08:00", "event": "note", "note": "wave 1 launched: V1.1 collector, V2.1 ontology reviewer, V3.1a and V3.1b rule reviewers (overlap: CW-F04, FC-R08), V4.1 case writer"}
+{"time": "2026-10-07T18:34:23+08:00", "event": "start", "step": "V1.1", "dep": "D", "actor": "collector", "what": "collect 20 real complaint texts"}
+{"time": "2026-10-07T18:34:30+08:00", "event": "start", "step": "V2.1", "dep": "D", "actor": "ontology_reviewer", "what": "ground 14 ontology items"}
+{"time": "2026-10-07T18:34:48+08:00", "event": "start", "step": "V3.1a", "dep": "D", "actor": "rule_reviewer_a", "what": "ground rules CLS-05, DM-R05, FC-F04, CW-F04, FC-R01, CW-F02B, CLS-03, CW-F07, FC-F02, FRD-02, CW-R03, FC-R08"}
+{"time": "2026-10-07T18:34:59+08:00", "event": "start", "step": "V3.1b", "dep": "D", "actor": "rule_reviewer_b", "what": "ground rules CW-F02, EXP-02, MAT-04, EXP-01, GEN-R06, CW-R08, FC-R08, CLS-04, DQ-03, MAT-03, CW-R06, CW-F04"}
+{"time": "2026-10-07T18:35:11+08:00", "event": "start", "step": "V4.1", "dep": "D", "actor": "case_writer", "what": "write 15 end-to-end cases"}
+{"time": "2026-10-07T18:45:21+08:00", "event": "end", "step": "V2.1", "result": "PASS 11, UNSUPPORTED 2 (MINOR 2), WRONG_RELATION 1 (CRITICAL 1)", "outputs": ["V2_ontology/21_verdicts.jsonl"]}
+{"time": "2026-10-07T18:50:37+08:00", "event": "end", "step": "V1.1", "result": "20 eligible cases from 134 candidates", "outputs": ["V1_taxonomy/10_cases.jsonl", "V1_taxonomy/10_collection_log.jsonl"]}
+{"time": "2026-10-07T18:58:10+08:00", "event": "end", "step": "V3.1a", "result": "PASS 7; MISSING_EXCEPTION 2 (1 CRITICAL, 1 MAJOR); UNSUPPORTED 1 (CRITICAL); CONFLICT 2 (CRITICAL); 6 changed from pass 1; credibility TOO_HIGH 2 (CW-F04, FC-R08)", "outputs": ["V3_rules/32_pass1_a.jsonl", "V3_rules/32_final_a.jsonl"]}
+{"time": "2026-10-07T19:04:37+08:00", "event": "end", "step": "V3.1b", "result": "PASS 9, UNSUPPORTED 1 (MINOR), MISSING_EXCEPTION 1 (CRITICAL), CONFLICT 1 (MINOR), OVERGENERALIZED 0; 6 changed from pass 1", "outputs": ["V3_rules/32_pass1_b.jsonl", "V3_rules/32_final_b.jsonl"]}
+{"time": "2026-10-07T19:22:47+08:00", "event": "end", "step": "V4.1", "result": "15 cases written", "outputs": ["V4_e2e/cases", "V4_e2e/40_intended.jsonl"]}
+{"time": "2026-10-07T19:24:14+08:00", "event": "start", "step": "V4.4", "dep": "E", "actor": "builder", "what": "run the KB reference engine on the no-show cases E01 to E04"}
+{"time": "2026-10-07T19:24:37+08:00", "event": "end", "step": "V4.4", "result": "E01 ESCALATE_HUMAN (R7), E02 WAIVE_FEE (R1), E03 ESCALATE_HUMAN (R7), E04 WAIVE_FEE (R6); no crashes", "outputs": ["V4_e2e/43_kb_engine.jsonl"]}
+{"time": "2026-10-07T19:25:34+08:00", "event": "note", "note": "deviation: the plan did not say how to combine the two overlap reviews (CW-F04, FC-R08); added V3.2, a fresh adjudicator, decided before any metric was computed. Wave 2 launched: V1.2, V3.2, V4.2, V4.5"}
+{"time": "2026-10-07T19:25:50+08:00", "event": "start", "step": "V1.2", "dep": "D", "actor": "kb_classifier", "what": "classify 20 complaint texts with the KB taxonomy"}
+{"time": "2026-10-07T19:25:58+08:00", "event": "start", "step": "V3.2", "dep": "D", "actor": "overlap_adjudicator", "what": "settle reviewer disagreements on CW-F04 and FC-R08"}
+{"time": "2026-10-07T19:26:07+08:00", "event": "start", "step": "V4.2", "dep": "D", "actor": "policy_labeler", "what": "label 15 cases from policy text only"}
+{"time": "2026-10-07T19:26:13+08:00", "event": "start", "step": "V4.5", "dep": "D", "actor": "kb_applier", "what": "decide E05 to E15 with the KB"}
+{"time": "2026-10-07T19:34:11+08:00", "event": "end", "step": "V3.2", "result": "CW-F04 UNSUPPORTED CRITICAL (agrees a, credibility TOO_HIGH); FC-R08 CONFLICT CRITICAL (agrees a, credibility TOO_HIGH)", "outputs": ["V3_rules/33_overlap_adjudication.jsonl"]}
+{"time": "2026-10-07T19:37:03+08:00", "event": "end", "step": "V4.2", "result": "15 labels", "outputs": ["V4_e2e/41_labels_policy.jsonl"]}
+{"time": "2026-10-07T19:40:44+08:00", "event": "end", "step": "V1.2", "result": "20 labels", "outputs": ["V1_taxonomy/11_labels_kb.jsonl"]}
+{"time": "2026-10-07T19:59:04+08:00", "event": "end", "step": "V4.5", "result": "11 decisions", "outputs": ["V4_e2e/43_kb_applier.jsonl"]}
+{"time": "2026-10-07T20:00:01+08:00", "event": "start", "step": "V4.3", "dep": "E", "actor": "builder", "what": "settle reference labels (writer vs policy labeler)"}
+{"time": "2026-10-07T20:00:01+08:00", "event": "end", "step": "V4.3", "result": "see 42_reference.jsonl", "outputs": ["V4_e2e/42_reference.jsonl"]}
+{"time": "2026-10-07T20:00:23+08:00", "event": "start", "step": "V4.6", "dep": "E", "actor": "builder", "what": "compare KB decisions with settled references"}
+{"time": "2026-10-07T20:00:23+08:00", "event": "end", "step": "V4.6", "result": "see 44_comparison.jsonl", "outputs": ["V4_e2e/44_comparison.jsonl"]}
+{"time": "2026-10-07T20:01:20+08:00", "event": "start", "step": "V1.3", "dep": "D", "actor": "taxonomy_judge", "what": "blind labels, then verdicts on 20 KB labels"}
+{"time": "2026-10-07T20:01:32+08:00", "event": "start", "step": "V4.7", "dep": "D", "actor": "adjudicator", "what": "explain 4 end-to-end mismatches"}
+{"time": "2026-10-07T20:12:19+08:00", "event": "end", "step": "V4.7", "result": "E01 KB_RULE_WRONG CW-F06/CW-R12 (CRITICAL, safe); E03 KB_RULE_WRONG CW-F06/CW-R12 (CRITICAL, safe); E07 KB_RULE_WRONG CW-F06/CW-R12 (CRITICAL, safe); E10 KB_RULE_WRONG FC-R03/FC-R05 (CRITICAL, unsafe); reference right in all 4", "outputs": ["V4_e2e/45_adjudication.jsonl"]}
+{"time": "2026-10-07T20:13:54+08:00", "event": "end", "step": "V1.3", "result": "PASS 18, WRONG_CLASS 0, UNCOVERED 2 (C15 MAJOR, C16 MINOR); blind=KB primary 17/20; is_dispute wrong on C08", "outputs": ["V1_taxonomy/12_labels_judge_blind.jsonl", "V1_taxonomy/13_verdicts.jsonl"]}
+{"time": "2026-10-07T20:14:53+08:00", "event": "start", "step": "V5.0", "dep": "E", "actor": "builder", "what": "check every evidence quote against its cited source"}
+{"time": "2026-10-07T20:15:14+08:00", "event": "end", "step": "V5.0", "result": "see 50_evidence_check.json", "outputs": ["V5_scorecard/50_evidence_check.json"]}
+{"time": "2026-10-07T20:15:36+08:00", "event": "note", "note": "V5.0 rerun after fixing the checker (split ' | ' fragments, resolve E-case paths, search only source files)"}
+{"time": "2026-10-07T20:22:30+08:00", "event": "start", "step": "V5.1", "dep": "E", "actor": "builder", "what": "compute the five metrics, Wilson intervals, thresholds and the pre-registered decision"}
+{"time": "2026-10-07T20:24:21+08:00", "event": "end", "step": "V5.1", "result": "M1 0.90 GOOD, M2 0.786 BAD, M3 0.65 BAD (post-stratified 0.708), M4 0.206 BAD, M5 0.733 ACCEPTABLE; NO_GO (3 bad metrics, 4 systematic CRITICAL patterns); robust to the lenient readings", "outputs": ["V5_scorecard/51_scorecard.json"]}
+{"time": "2026-10-07T20:24:21+08:00", "event": "start", "step": "V5.2", "dep": "E", "actor": "builder", "what": "check the KB hashes against the P0 freeze"}
+{"time": "2026-10-07T20:24:30+08:00", "event": "end", "step": "V5.2", "result": "KB unchanged (35 of 35 files match the freeze); plan unchanged since pre-registration", "outputs": ["V5_scorecard/52_integrity.json"]}
+{"time": "2026-10-07T20:28:01+08:00", "event": "start", "step": "V5.3", "dep": "D", "actor": "builder", "what": "group findings into a prioritized fix list for v0.2 (builder synthesis, not a reviewer verdict)"}
+{"time": "2026-10-07T20:28:45+08:00", "event": "end", "step": "V5.3", "result": "9 fix items (6 priority 1, all CRITICAL); re-validation plan with doubled samples and new held-out cases", "outputs": ["V5_scorecard/54_fix_list.json"]}
+{"time": "2026-10-07T20:30:19+08:00", "event": "start", "step": "V5.4", "dep": "E", "actor": "builder", "what": "render the scorecard page from the checkpoint files"}
+{"time": "2026-10-07T20:33:32+08:00", "event": "end", "step": "V5.4", "result": "scorecard page rendered from the checkpoint files", "outputs": ["V5_scorecard/55_scorecard_page.html"]}
+{"time": "2026-10-07T20:33:40+08:00", "event": "note", "note": "V5.4 re-rendered once after refreshing 53_timeline.json so the chart includes V5.4"}
+{"time": "2026-10-07T20:34:25+08:00", "event": "note", "note": "KB write permission restored after V5.2 (content unchanged, hash check still passes)"}
+{"time": "2026-10-07T20:35:47+08:00", "event": "note", "note": "fix list: FX7 (O08, CRITICAL) moved to priority 1 so priority 1 covers every CRITICAL finding; page re-rendered"}

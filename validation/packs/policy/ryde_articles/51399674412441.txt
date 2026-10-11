@@ -1,0 +1,17 @@
+RYDE HELP CENTRE ARTICLE 51399674412441
+TITLE: What is the process for adding/editing a destination after a trip has started?
+AUDIENCE: Rider
+SECTION: Add/Edit Destination Fee
+URL: https://help.rydesharing.com/hc/en-us/articles/51399674412441-What-is-the-process-for-adding-editing-a-destination-after-a-trip-has-started
+EDITED: 2025-10-10
+
+1. The trip has started.
+2. The rider needs to let their driver know.
+3. The destination is selected.
+4. The rider types and selects the new destination.
+5. There will be a map confirmation (for a single stop).
+6. The rider can add another destination, leading to a map confirmation (for multiple stops).
+7. New destination and fare confirmation will be displayed.
+8. The rider waits for the driver to accept or reject the request.
+9. If the driver accepts, the trip details are updated, and the add/edit destination fee is reflected on the rider receipt.
+10. If the driver rejects, the previous trip details remain.

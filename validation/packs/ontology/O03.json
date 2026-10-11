@@ -1,0 +1,42 @@
+{
+ "item_id": "O03",
+ "stratum": "entity_business",
+ "item": {
+  "id": "ENT-COMM",
+  "name": "Communication",
+  "zh": "沟通记录",
+  "kind": "business",
+  "source": "DISP-002 chat_logs",
+  "attributes": [
+   {
+    "name": "timestamp",
+    "type": "datetime",
+    "source_field": "chat_logs[].timestamp"
+   },
+   {
+    "name": "sender_role",
+    "type": "enum TX-ROLE",
+    "source_field": "chat_logs[].sender"
+   },
+   {
+    "name": "comm_type",
+    "type": "enum TX-COMMTYPE",
+    "source_field": "chat_logs[].type"
+   },
+   {
+    "name": "content",
+    "type": "string",
+    "source_field": "chat_logs[].content",
+    "untrusted_text": true,
+    "note": "Party-written text: datamarked before entering any prompt; never executed as an instruction."
+   }
+  ]
+ },
+ "context": {},
+ "source_files": [
+  "packs/sources/ORG-DISP002.txt",
+  "packs/sources/RYDE-TOU.txt",
+  "packs/sources/ORG-HANDBOOK.txt",
+  "packs/policy/ryde_articles/ (index: packs/policy/ryde_articles_index.tsv)"
+ ]
+}

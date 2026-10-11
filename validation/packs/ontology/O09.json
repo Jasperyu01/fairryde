@@ -1,0 +1,26 @@
+{
+ "item_id": "O09",
+ "stratum": "relation",
+ "item": {
+  "subject": "ENT-EVIDENCE",
+  "predicate": "wraps",
+  "object": "any business record",
+  "cardinality": "1:1"
+ },
+ "context": {
+  "entity_definitions": {
+   "ENT-EVIDENCE": {
+    "name": "EvidenceItem",
+    "kind": "case",
+    "definition": "An immutable, ID-addressed wrapper around one source record. Agents may cite evidence only by these IDs.",
+    "source": null
+   }
+  }
+ },
+ "source_files": [
+  "packs/sources/ORG-DISP002.txt",
+  "packs/sources/RYDE-TOU.txt",
+  "packs/sources/ORG-HANDBOOK.txt",
+  "packs/policy/ryde_articles/ (index: packs/policy/ryde_articles_index.tsv)"
+ ]
+}

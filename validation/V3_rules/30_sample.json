@@ -1,0 +1,63 @@
+{
+ "seed": "20261007-rules",
+ "strata": {
+  "A": {
+   "population": 27,
+   "sample": 6
+  },
+  "B": {
+   "population": 11,
+   "sample": 4
+  },
+  "C": {
+   "population": 6,
+   "sample": 3
+  },
+  "D": {
+   "population": 43,
+   "sample": 7
+  }
+ },
+ "sample": {
+  "A": [
+   "CLS-05",
+   "CW-F02",
+   "DM-R05",
+   "EXP-02",
+   "FC-F04",
+   "MAT-04"
+  ],
+  "B": [
+   "CW-F04",
+   "EXP-01",
+   "FC-R01",
+   "GEN-R06"
+  ],
+  "C": [
+   "CW-F02B",
+   "CW-R08",
+   "FC-R08"
+  ],
+  "D": [
+   "CLS-03",
+   "CLS-04",
+   "CW-F07",
+   "DQ-03",
+   "FC-F02",
+   "FRD-02",
+   "MAT-03"
+  ]
+ },
+ "critical_path": {
+  "source": "DT-CW-NOSHOW row R8 rules (decided DISP-002)",
+  "row_rules": [
+   "CW-R03",
+   "CW-R06",
+   "CW-F04"
+  ],
+  "not_drawn": [
+   "CW-R03",
+   "CW-R06"
+  ]
+ }
+}

@@ -1,0 +1,19 @@
+RYDE HELP CENTRE ARTICLE 900005170163
+TITLE: How to add ERP to my trip fare?
+AUDIENCE: Driver
+SECTION: Fares & Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/900005170163-How-to-add-ERP-to-my-trip-fare
+EDITED: 2023-06-25
+
+How to input Toll (ERP) amount:
+
+1. Remember the amount of ERP incurred during the trip.
+2. Tap on Drop Off.
+3. Enter the amount in the box next to Toll (ERP).
+4. Rate your Rider.
+5. Input Reviews.
+6. Tap Confirm to end the trip.
+
+Please bear in mind that if an additional / excessive amount is keyed in, this will be considered fraudulent and drivers will be liable for permanent suspension.
+
+[Image: featuredscreens_erp.png]

@@ -1,0 +1,18 @@
+RYDE HELP CENTRE ARTICLE 20244181329049
+TITLE: Unique Trip Count
+AUDIENCE: Driver
+SECTION: Popular Topics
+URL: https://help.rydesharing.com/hc/en-us/articles/20244181329049-Unique-Trip-Count
+EDITED: 2023-07-03
+
+What is a unique trip?
+A unique trip refers to a trip picking up a new rider. To be calculated and included in the bonus count, the "unique trip" must be from a different rider's request. If you have picked up the rider before, the trip will not be considered a unique trip.
+
+How can I capture unique trips?
+In order to capture unique trips, drivers must review and complete the unique trip. Additionally, all riders should leave a review to help identify the unique trip. This means that if you have picked up a rider before, the trip will not be considered a unique trip.
+
+What happens if there are criteria that are not met?
+The bonus tracks will be paused should there be any criteria that are not met. All the criteria must be in GREEN in order for trips to be counted. In case one of the criteria, such as a high cancellation rate, is not met, you will see it in RED instead of GREEN. Your bonus tracking will be paused at that point in time until all the criteria have been met.
+
+Where can I check the conditions for the incentives?
+You may check the conditions for the incentives in your app. Please note that only unique trips will be counted for the bonuses.

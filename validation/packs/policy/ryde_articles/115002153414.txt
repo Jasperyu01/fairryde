@@ -1,0 +1,46 @@
+RYDE HELP CENTRE ARTICLE 115002153414
+TITLE: How do I use RydeCoins?
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/115002153414-How-do-I-use-RydeCoins
+EDITED: 2025-10-08
+
+How to top up your RydeCoins
+
+1. Tap on the Wallet on the top right corner.
+2. Choose Top-Up.
+3. Choose your value and top-up method.
+4. Tap Top-Up when completed.
+5. Your available coins will be displayed. You can now choose to pay with RydeCoins!
+
+Can I refund my RydeCoins?
+
+Like a prepaid mobile plan, RydeCoins are non-refundable and not redeemable, exchanged or transferred for cash value under any circumstances.
+
+Will my RydeCoins expire?
+
+Your coins are valid for 6 months from your last wallet transaction.
+
+How much RydeCoins can I top up each time?
+
+There is a top up limit of $1,000 per transaction.
+
+What is the minimum amount I can top-up in my RydeCoins wallet?
+
+The minimum amount needed for a top-up is $2.
+
+What is the maximum amount I can have in my RydeCoins wallet?
+
+Your RydeCoins wallet should hold a maximum of $1,000 at any one time.
+
+Can RydeCoins be combined with other payment methods for any rides?
+
+No. Payment has to be made in full using RydeCoins.
+
+What does "On-Hold" mean in my transaction history?
+
+Your Rydecoins are held for an upcoming ride and will be deducted after a trip is completed. No coins will be deducted if the ride is cancelled.
+
+Can I use RydeCoins overseas?
+
+No, your RydeCoins will only be valid locally.

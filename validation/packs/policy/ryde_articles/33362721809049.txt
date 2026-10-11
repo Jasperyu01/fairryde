@@ -1,0 +1,117 @@
+RYDE HELP CENTRE ARTICLE 33362721809049
+TITLE: Driver Performance and Community Standards
+AUDIENCE: Driver
+SECTION: Driver Community Guidelines
+URL: https://help.rydesharing.com/hc/en-us/articles/33362721809049-Driver-Performance-and-Community-Standards
+EDITED: 2026-04-10
+
+At Ryde, we want to create value sustainably for our users by providing simple, seamless and reliable transportation and logistic services at reasonable prices. The mission is to build a platform and ecosystem that makes every ride a better one.
+
+We strive to continually upkeep the community to ensure that it is trustworthy, like-minded and respectable. In order to do so, our app will monitor the driver-partner's performance via the following metrics - driver ratings, cancellation rates, reviews and account activity, etc.
+
+1. Conditions, where driver accounts will be temporarily disabled:
+
+Driver Rating (DR) | < 4.80
+Cancellation Rate (CR) | > 17.5%
+Adverse Ratings | Drivers who receive poor ratings for errant behaviour. E.g. Comments on race, ethnicity, national origin, disability, etc.
+Minimum Acceptance Rate (AR) | We do not have a minimum AR criteria
+Fraudulent Activity | Drivers who overcharge riders and/or complete the trip without the rider onboard.
+Dormant Account | Did not complete at least one trip within 1 Year.
+
+2. Driver Ratings (DR)
+
+The driver's rating is calculated based on his/her last 100 trips to ensure that it reflects the driver's recent performance. All new drivers will have a default rating of 4.90 and will be adjusted after the 11th unique review. Please allow up to 7 working days for the update to be reflected.
+
+3. Cancellation Rate (CR)
+
+The driver's cancellation rate will be calculated based on his/her most recent trips. The driver's cancellation rate will increase after a driver accepts a trip booking and cancels. We strongly advise drivers to only accept jobs that they can fulfill.
+
+In the case of rider no-shows, drivers can still cancel the trip. Drivers do not have to worry about account suspension from trip cancellations. Our app algorithms will look at the driver's most recent trips. As long as the driver continues accepting trips, he/she will not be suspended from cancellations.
+
+3A. Trip Acceptance and Cancellation Policy
+
+Drivers are strictly prohibited from accepting a trip and subsequently canceling it without a valid reason after the rider has boarded the vehicle. Such behavior undermines trust and violates Ryde's community standards. Valid reasons do not include, but are not limited to:
+
+1. Cancelling due to the rider's race, ethnicity, or national origin
+2. Cancelling due to the rider's pet type or the presence of pets
+3. Cancelling for any discriminatory or prejudiced reasons
+4. Cancelling for personal preferences not related to safety or legal regulations
+
+For bookings with specific requirements, drivers should accept only if they can fulfil them:
+- RydePet: only if comfortable transporting pets. If not, or if you have allergies, do not accept
+- Child/Booster seat: only if a suitable booster seat is available
+
+Any such breaches will be subject to investigation and may result in account suspension or other penalties under Ryde's policies.
+
+4. Fraudulent Activity
+
+Drivers who are found to have overcharged riders or completed trips without the rider onboard may face account suspension. The Ryde Driver app is equipped with Artificial Intelligence (AI) algorithms that automatically detect and flag suspicious activity. Any incentives, bonuses, or rewards claimed through such misconduct will be forfeited. We take such matters seriously to ensure a fair and trustworthy platform for all users.
+
+4A. In-Vehicle Recording Devices (IVRDs)
+
+To maintain the privacy and safety of all users, in-vehicle recording devices (IVRDs) are not allowed on the Ryde platform.
+
+If you currently have IVRDs installed in your vehicle, you are required to remove them immediately. Ryde takes privacy seriously, and the use of such devices may constitute a breach of local data protection regulations.
+
+Should any reports be received regarding the use of IVRDs, your account may be suspended immediately, with or without prior notice. The matter may also be reported to the Land Transport Authority (LTA) for further investigation and possible enforcement action.
+
+5. Reporting to Government Authorities
+
+Ryde enforces a strict zero-tolerance policy against fraudulent activity to uphold the integrity of our platform and ensure compliance with government regulations. Any suspected fraudulent or misleading activity may result in immediate temporary suspension pending investigation, and if confirmed, may lead to account suspension, forfeiture, and/or reversal of payments, incentives, bonuses, vouchers, or rewards, as well as reporting to the relevant authorities.
+
+Fraudulent behavior may take many forms. This includes, but is not limited to:
+
+1. Overcharging riders or manipulating fares
+2. Completing trips without the rider onboard
+3. Misrepresenting trip or rider details to obtain incentives
+4. Submitting false documents or declarations
+5. Remaining stationary and uncontactable after accepting a ride to trigger cancellation or waiting fees
+6. Using another person's account or allowing others to use your account
+7. Attempting to bypass platform policies or system checks
+8. Abuse of Cancellation and Waiting Fee Policy
+
+Where Ryde reasonably suspects serious or repeated violations, it may report such conduct to government agencies such as the Ministry of Manpower (MOM), Land Transport Authority (LTA), Inland Revenue Authority of Singapore (IRAS), and the Central Provident Fund Board (CPF Board). These agencies may take enforcement actions, including license revocation, financial penalties, or legal prosecution, which may result in possible imprisonment.
+
+We expect all driver-partners to operate responsibly and lawfully. Ryde is committed to investigating all reports of misconduct fairly and impartially. Driver-partners will be given the opportunity to respond before final decisions are made, except in urgent or high-risk situations. Repeated or severe breaches may lead to permanent suspension from the Ryde platform.
+
+6. Restoration of Disabled Driver Account
+
+At Ryde, ensuring a positive experience for both drivers and riders is paramount, and maintaining community standards is essential. Accounts not meeting our standards, as identified by our computer algorithms, will be automatically placed on temporary hold.
+
+However, we value your commitment and support to our platform and we are here to listen to your concerns. As such, If you believe that your account disability is not justified, we encourage you to appeal. Rest assured, your appeal will receive our prompt attention, and we will strive to resolve it within 3 days. We are here to assist you throughout this process.
+
+Alternatively, if you prefer not to appeal, you can proceed to pay the processing fee of $10 [excluding GST] for the restoration of your account using the link to your registered email address with Ryde. Upon account reactivation, the driver ratings will be reset to 4.90 and CR reset to 0%.
+
+7. The processing fee of $10 (excluding GST) is applied for the account restoration. This fee has been implemented to cover the operational costs associated with the account restoration, outlined below:
+
+a. To cover efforts for re-verifying your profile and backend processing, including document review, to meet standards for resuming driving activities
+
+b. To avoid any adverse effects stemming from a prior account suspension, the fee incorporates the resetting of your rating and review, offering a clean slate for your account.
+
+c. To maintain a fair and secure environment for all users by enforcing necessary checks and balances during the account restoration process.
+
+Repeated failure to abide by Ryde community standards will lead to permanent suspension from the Ryde platform. This is to ensure we uphold high standards and offer a good user experience for our community.
+
+8. Dormant Accounts
+
+All driver accounts must be active in the past 1 year and did not complete at least one trip in 1 year. This is to ensure that the drivers on Ryde remain current. We also aim to prevent compromised driver accounts and to eliminate fraud risks.
+
+Drivers who are unable to log in after 1 year of inactivity must appeal by writing to support@rydesharing.com. Drivers will need to pay a processing fee of $10 [excluding GST] for reactivation. Driver ratings and cancellation rate will reset to 4.90 and 0% respectively. Please allow up to 48 hours for processing upon successful appeal.
+
+*UPDATE*
+
+Inactive driver processing fees may be waived until December 2025, subject to account eligibility and review. Simply write to support@rydesharing with your registered mobile number indicating a request for restoration. Our Customer Excellence team will process your request accordingly.
+
+9. Closed Accounts
+
+Driver accounts will be de-activated and their Wallet balance will be written off upon three years of inactivity from the date of the last completed trip.
+
+Should you wish to drive on the Ryde platform again, you would then have to write in to support@rydesharing.com to obtain approval from the operations team to create a new driver account. Criteria for approval include but is not limited to, a track record of conduct that is in line with our driver community standards. Please allow up to 7 working days for approval.
+
+# We advise drivers to keep their accounts in good standing by doing at least a few trips each month.
+
+## We advise drivers to cash out all earnings should drivers not plan to drive for the next 12 months. Some common case studies include change or sale of car, change of job or change of work priorities.
+
+For more information, you may refer to our Driver Handbook
+
+https://rydesharing.com/wp-content/uploads/2024/06/Ryde-Driver-Partners-Handbook-2024-V23_4-6.pdf

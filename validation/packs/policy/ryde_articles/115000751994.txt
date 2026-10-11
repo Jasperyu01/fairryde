@@ -1,0 +1,8 @@
+RYDE HELP CENTRE ARTICLE 115000751994
+TITLE: Is Ryde safe to use?
+AUDIENCE: Rider
+SECTION: Booking a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/115000751994-Is-Ryde-safe-to-use
+EDITED: 2023-05-05
+
+Ryde drivers are verified upon sign up and submission of their National ID and Driving License. In addition, we have a "Rate & Review" system in place where both drivers and riders are able to read one another's ratings/reviews received from others, prior to accepting a trip request. We monitor all drivers' and riders' activities, ratings and reviews closely to ensure that every Ryde experience is a safe and an enjoyable one.

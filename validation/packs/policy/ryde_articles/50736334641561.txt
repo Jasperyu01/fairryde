@@ -1,0 +1,10 @@
+RYDE HELP CENTRE ARTICLE 50736334641561
+TITLE: What if I booked the wrong pick-up point?
+AUDIENCE: Rider
+SECTION: Popular Topics
+URL: https://help.rydesharing.com/hc/en-us/articles/50736334641561-What-if-I-booked-the-wrong-pick-up-point
+EDITED: 2025-09-16
+
+- Check your pick-up location before confirming the ride.
+- If the pick-up point is incorrect, re-enter the correct address.
+- If you realize the pick-up is wrong after being matched with a driver, please cancel and rebook. Standard cancellation fees may apply.

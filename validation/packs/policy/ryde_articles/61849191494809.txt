@@ -1,0 +1,52 @@
+RYDE HELP CENTRE ARTICLE 61849191494809
+TITLE: What is Multi Select?
+AUDIENCE: Driver
+SECTION: Accepting a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/61849191494809-What-is-Multi-Select
+EDITED: 2026-09-03
+
+1. What is a Multi-Select booking?
+
+Multi-Select allows a rider to select more than one eligible ride option in a single booking.
+
+The booking may then be made available to eligible drivers across the selected ride services, creating more opportunities for drivers to receive jobs.
+
+Only one driver will ultimately be assigned to the booking.
+
+2. Which drivers are eligible to receive Multi-Select bookings?
+
+Eligibility depends on the service selected and the driver's:
+
+- Driver type
+- Vehicle capacity
+- Applicable service eligibility
+
+Only drivers who meet the requirements for the relevant service will be able to receive the booking.
+
+3. How will Multi-Select bookings appear in the Driver App?
+
+A Multi-Select booking will appear as an eligible job in the Driver App.
+
+Where a driver is eligible for more than one selected service, the system will display one job card for the booking rather than multiple job cards for the same trip.
+
+4. Which fare will I receive?
+
+The fare shown on the job card is the applicable fare for the service presented to you.
+
+If you accept the booking, the applicable fare shown for that job will apply to your trip, subject to the usual fare rules and any applicable adjustments.
+
+5. Why did the booking disappear after I tried to accept it?
+
+A Multi-Select booking may no longer be available if another eligible driver has already accepted it or if the booking has expired.
+
+The booking may briefly remain visible until the Driver App refreshes.
+
+If you attempt to accept a booking that has already been taken, you may see a "Job Taken" message.
+
+6. Will Multi-Select affect my rating?
+
+Multi-Select bookings will be subject to the applicable driver metrics. Multi-Select itself does not change how these metrics are calculated.
+
+7. Can I tell which other ride options the rider selected?
+
+No. The Driver App will show the applicable service and fare for the job presented to you. Other ride options selected by the rider will not be shown as separate job options.

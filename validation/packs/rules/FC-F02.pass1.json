@@ -1,0 +1,33 @@
+{
+ "rule_id": "FC-F02",
+ "name": "Detour measurement",
+ "family": "FC",
+ "type": "fact",
+ "applies_to": [
+  "FC-ROUTE",
+  "FC-TOLL"
+ ],
+ "mode": "HARD",
+ "statement": "Detour ratio DR = actual distance / recommended-route distance; extra distance = actual minus recommended. Actual distance comes from the recorded trip distance, else a road-matched path, never the sum of straight lines between sparse pings (that sum may only prove a detour, never disprove one). Spatial confirmation needs at least CORRIDOR_MIN_CONSEC_PINGS consecutive pings beyond CORRIDOR_HALF_WIDTH_M of the recommended route, ignoring ENDPOINT_EXCLUSION_M at both ends.",
+ "params": [
+  {
+   "name": "CORRIDOR_HALF_WIDTH_M",
+   "value": 100,
+   "unit": "m"
+  },
+  {
+   "name": "CORRIDOR_MIN_CONSEC_PINGS",
+   "value": 2,
+   "unit": null
+  },
+  {
+   "name": "ENDPOINT_EXCLUSION_M",
+   "value": 500,
+   "unit": "m"
+  }
+ ],
+ "produces": null,
+ "produces_finding": "F-DETOUR",
+ "sources": [],
+ "set": "random"
+}

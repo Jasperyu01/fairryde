@@ -1,0 +1,94 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E02",
+    "trip_id": "TRIP-2026-33951",
+    "filed_by": "rider",
+    "dispute_type": "no_show_charge",
+    "description": "The driver pressed 'arrived' but he was never at Westgate. I was standing at the Gateway Drive pick-up point the whole time and the map showed his car parked about 600m away, not moving. I messaged him twice and called him, no answer. Then he cancelled and I got charged $6.61 for a no-show. I was there, he wasn't. Please refund the fee.",
+    "filed_at": "2026-09-15T19:02:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-6030",
+    "name": "Darren Koh Wei Jie",
+    "account_age_days": 820,
+    "total_trips": 143,
+    "avg_rating": 4.8,
+    "dispute_history": {
+      "total_disputes": 0,
+      "upheld": 0,
+      "rejected": 0
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "card"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-5874",
+    "name": "Hafiz bin Osman",
+    "account_age_days": 410,
+    "total_trips": 1380,
+    "avg_rating": 4.81,
+    "dispute_history": {
+      "total_disputes": 4,
+      "upheld_against": 2,
+      "rejected": 2
+    },
+    "fraud_flags": 0,
+    "vehicle": "Hyundai Ioniq (SLA 6638 B)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-33951",
+    "rider_id": "R-6030",
+    "driver_id": "D-5874",
+    "pickup_location": {
+      "name": "Westgate (Gateway Drive pick-up point)",
+      "lat": 1.3341,
+      "lng": 103.7429
+    },
+    "dropoff_location": {
+      "name": "NTU Hall of Residence 2",
+      "lat": 1.3485,
+      "lng": 103.6857
+    },
+    "scheduled_time": "2026-09-15T18:26:00+08:00",
+    "driver_arrival_time": "2026-09-15T18:25:30+08:00",
+    "driver_wait_start": "2026-09-15T18:25:30+08:00",
+    "cancellation_time": "2026-09-15T18:30:10+08:00",
+    "cancellation_fee": 6.61,
+    "cancellation_reason": "rider_no_show"
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-15T18:21:00+08:00", "lat": 1.3268, "lng": 103.7561, "speed_kmh": 36, "status": "en_route"},
+    {"timestamp": "2026-09-15T18:23:00+08:00", "lat": 1.3289, "lng": 103.7519, "speed_kmh": 31, "status": "en_route"},
+    {"timestamp": "2026-09-15T18:24:40+08:00", "lat": 1.3306, "lng": 103.7489, "speed_kmh": 18, "status": "en_route"},
+    {"timestamp": "2026-09-15T18:25:30+08:00", "lat": 1.3312, "lng": 103.7478, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-15T18:27:00+08:00", "lat": 1.3312, "lng": 103.7478, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-15T18:29:00+08:00", "lat": 1.3312, "lng": 103.7478, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-15T18:30:10+08:00", "lat": 1.3312, "lng": 103.7478, "speed_kmh": 0, "status": "cancelled"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-15T18:26:20+08:00", "sender": "rider", "type": "message", "content": "Hi, I'm at the Gateway Drive pick-up point outside Westgate. App says you've arrived but I don't see you?"},
+    {"timestamp": "2026-09-15T18:27:45+08:00", "sender": "rider", "type": "message", "content": "Your car on the map is not at Westgate, it's quite far away. Are you coming?"},
+    {"timestamp": "2026-09-15T18:28:15+08:00", "sender": "rider", "type": "call", "content": "Outgoing call to driver — not answered (rang 30s, no response)."},
+    {"timestamp": "2026-09-15T18:29:30+08:00", "sender": "rider", "type": "message", "content": "Hello?? I'm still here at the pick-up point."},
+    {"timestamp": "2026-09-15T18:30:10+08:00", "sender": "system", "type": "system", "content": "Trip cancelled by driver. Reason: rider_no_show. Cancellation fee of $6.61 applied."}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-15T18:20:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-6030 booked on-demand RydeX trip TRIP-2026-33951 from Westgate (Gateway Drive pick-up point) to NTU Hall of Residence 2. Estimated pickup 18:26. Payment: card."},
+    {"timestamp": "2026-09-15T18:20:15+08:00", "event_type": "driver_assigned", "details": "Driver D-5874 (Hafiz bin Osman, Hyundai Ioniq SLA 6638 B) assigned. ETA 6 min."},
+    {"timestamp": "2026-09-15T18:20:20+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-15T18:25:30+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS 630m from pickup point. Speed 0 km/h. Arrival not auto-confirmed (outside pickup geofence)."},
+    {"timestamp": "2026-09-15T18:25:30+08:00", "event_type": "wait_timer_started", "details": "Free wait timer started. 3 min free wait period ends at 18:28:30."},
+    {"timestamp": "2026-09-15T18:25:35+08:00", "event_type": "rider_notified", "details": "Push notification + in-app alert sent to rider: 'Your driver has arrived.'"},
+    {"timestamp": "2026-09-15T18:28:30+08:00", "event_type": "wait_timer_expired", "details": "Free 3-min wait period expired. Rider had not boarded. Cancellation fee now applicable per policy."},
+    {"timestamp": "2026-09-15T18:30:10+08:00", "event_type": "cancellation_fee_applied", "details": "Driver cancelled 4 min 40 s after tapping 'I'm Here' (rider_no_show). Driver GPS still 630m from pickup point. $6.61 cancellation fee charged to rider payment method (card)."},
+    {"timestamp": "2026-09-15T18:30:15+08:00", "event_type": "driver_released", "details": "Driver D-5874 released from trip. Trip status: cancelled (rider_no_show)."}
+  ]
+}

@@ -1,0 +1,7 @@
+{
+ "rule_id": "CW-R06",
+ "credibility": "B",
+ "credibility_note": "The article calls the S$6.61 charge a \"Waiting Time Fee\", while the main policy page calls S$6.61 the Cancellation Fee (META-04 known conflict). Reading the condition as covering the no-show cancellation fee is an interpretation, so the norm is B. The interpretation is made once for all cases (the META-04 resolution), so applying it to a case is HARD. The radius, time tolerance, look-back window and outlier settings are FairRyde parameters (D), tested case by case by the sensitivity test.",
+ "status": "draft",
+ "fairryde_sources_and_source_notes": []
+}

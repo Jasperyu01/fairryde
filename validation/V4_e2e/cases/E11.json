@@ -1,0 +1,123 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E11",
+    "trip_id": "TRIP-2026-31820",
+    "filed_by": "rider",
+    "dispute_type": "erp_toll",
+    "description": "The driver added $8.50 for ERP. We only went under one gantry on the CTE, and my husband's car was charged $2.50 at that same gantry around the same time this week. $8.50 is way too much for one gantry. I paid cash because I was rushing to work. Please refund the extra $6.",
+    "filed_at": "2026-09-09T12:40:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-3904",
+    "name": "Rachel Yeo",
+    "account_age_days": 700,
+    "total_trips": 150,
+    "avg_rating": 4.8,
+    "dispute_history": {
+      "total_disputes": 1,
+      "upheld": 1,
+      "rejected": 0
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "cash"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-6187",
+    "name": "Lee Kah Hock",
+    "account_age_days": 1100,
+    "total_trips": 3700,
+    "avg_rating": 4.83,
+    "dispute_history": {
+      "total_disputes": 3,
+      "upheld_against": 1,
+      "rejected": 2
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Prius (SMW 6629 S)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-31820",
+    "rider_id": "R-3904",
+    "driver_id": "D-6187",
+    "service_type": "RydeX",
+    "booking_type": "on_demand",
+    "pickup_location": {
+      "name": "Blk 153 Bishan Street 13 (drop-off porch)",
+      "lat": 1.3487,
+      "lng": 103.8536
+    },
+    "dropoff_location": {
+      "name": "One Raffles Quay (taxi stand)",
+      "lat": 1.2811,
+      "lng": 103.8516
+    },
+    "scheduled_time": "2026-09-09T08:22:00+08:00",
+    "driver_arrival_time": "2026-09-09T08:22:30+08:00",
+    "driver_wait_start": "2026-09-09T08:22:30+08:00",
+    "rider_boarded_time": "2026-09-09T08:23:40+08:00",
+    "dropoff_time": "2026-09-09T08:47:10+08:00",
+    "cancellation_time": null,
+    "cancellation_fee": null,
+    "cancellation_reason": null,
+    "quoted_fare": 19.80,
+    "fare_type": "fixed at booking (ERP excluded)"
+  },
+
+  "fare_breakdown": {
+    "base_fare": 19.80,
+    "platform_fee_included_in_base_fare": 1.47,
+    "waiting_time_fee": 0.00,
+    "erp_toll": 8.50,
+    "erp_toll_source": "keyed in by driver at drop-off",
+    "transaction_fee": 0.00,
+    "total_paid": 28.30,
+    "payment_method": "cash (collected by driver)"
+  },
+
+  "erp_charges": {
+    "gantry_passes": [
+      {"timestamp": "2026-09-09T08:29:50+08:00", "gantry": "CTE (southbound) after Braddell Road", "lat": 1.3378, "lng": 103.8487, "active": true, "rate_sgd": 2.50}
+    ],
+    "erp_total_from_gantry_log_sgd": 2.50,
+    "erp_keyed_by_driver_sgd": 8.50,
+    "difference_sgd": 6.00,
+    "source": "GPS gantry-crossing log matched to the ERP rate table in force at the time (attached to trip)"
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-09T08:19:00+08:00", "lat": 1.3530, "lng": 103.8580, "speed_kmh": 35, "status": "en_route"},
+    {"timestamp": "2026-09-09T08:21:00+08:00", "lat": 1.3502, "lng": 103.8551, "speed_kmh": 20, "status": "en_route"},
+    {"timestamp": "2026-09-09T08:22:30+08:00", "lat": 1.3487, "lng": 103.8536, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-09T08:23:40+08:00", "lat": 1.3487, "lng": 103.8536, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-09T08:27:00+08:00", "lat": 1.3410, "lng": 103.8500, "speed_kmh": 48, "status": "on_trip"},
+    {"timestamp": "2026-09-09T08:29:50+08:00", "lat": 1.3378, "lng": 103.8487, "speed_kmh": 62, "status": "on_trip"},
+    {"timestamp": "2026-09-09T08:35:00+08:00", "lat": 1.3080, "lng": 103.8440, "speed_kmh": 55, "status": "on_trip"},
+    {"timestamp": "2026-09-09T08:40:00+08:00", "lat": 1.2900, "lng": 103.8460, "speed_kmh": 30, "status": "on_trip"},
+    {"timestamp": "2026-09-09T08:44:00+08:00", "lat": 1.2840, "lng": 103.8505, "speed_kmh": 18, "status": "on_trip"},
+    {"timestamp": "2026-09-09T08:47:10+08:00", "lat": 1.2811, "lng": 103.8516, "speed_kmh": 0, "status": "completed"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-09T08:22:40+08:00", "sender": "driver", "type": "message", "content": "Arrived at the porch, white Prius SMW 6629 S"},
+    {"timestamp": "2026-09-09T08:23:00+08:00", "sender": "rider", "type": "message", "content": "coming"}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-09T08:17:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-3904 booked on-demand RydeX trip TRIP-2026-31820 from Blk 153 Bishan Street 13 to One Raffles Quay. Fixed fare quoted $19.80 (ERP excluded). Payment: cash."},
+    {"timestamp": "2026-09-09T08:17:20+08:00", "event_type": "driver_assigned", "details": "Driver D-6187 (Lee Kah Hock, Toyota Prius SMW 6629 S) assigned. ETA 5 min."},
+    {"timestamp": "2026-09-09T08:17:25+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-09T08:22:30+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS within 6m of pickup point. Speed 0 km/h. Arrival confirmed."},
+    {"timestamp": "2026-09-09T08:23:40+08:00", "event_type": "rider_picked_up", "details": "Driver tapped PICK UP. Rider boarded 1 min 10 s after 'I'm Here'."},
+    {"timestamp": "2026-09-09T08:23:45+08:00", "event_type": "trip_started", "details": "Trip started. Navigation via CTE to One Raffles Quay."},
+    {"timestamp": "2026-09-09T08:29:50+08:00", "event_type": "erp_gantry_passed", "details": "Vehicle passed ERP gantry CTE (southbound) after Braddell Road. Gantry active. Rate at this time: $2.50."},
+    {"timestamp": "2026-09-09T08:47:10+08:00", "event_type": "rider_dropped_off", "details": "Driver tapped DROP OFF at One Raffles Quay."},
+    {"timestamp": "2026-09-09T08:47:15+08:00", "event_type": "erp_entered", "details": "Driver keyed Toll (ERP) $8.50 at drop-off."},
+    {"timestamp": "2026-09-09T08:47:30+08:00", "event_type": "trip_completed", "details": "Trip completed. No waiting time fee."},
+    {"timestamp": "2026-09-09T08:47:35+08:00", "event_type": "payment_collected", "details": "Cash payment of $28.30 recorded as collected by driver (fixed fare $19.80 + Toll (ERP) $8.50)."}
+  ]
+}

@@ -1,0 +1,10 @@
+RYDE HELP CENTRE ARTICLE 4408070775193
+TITLE: How am I charged under the Policy if I am paying my fare by Cash?
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/4408070775193-How-am-I-charged-under-the-Policy-if-I-am-paying-my-fare-by-Cash
+EDITED: 2023-05-04
+
+If the trip is cancelled by the rider or the driver according to the conditions in our Cancellation and Waiting Time Policy, the Cancellation or Waiting Time Fee will be deducted from your RydeCoins wallet and credited directly to the driver's wallet.
+
+If the driver has waited for you for more than 3 minutes and the trip has been completed with the Waiting Time Fee included, please pay the driver according to the final calculated fare stated on the app.

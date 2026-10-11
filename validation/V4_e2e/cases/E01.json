@@ -1,0 +1,98 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E01",
+    "trip_id": "TRIP-2026-31408",
+    "filed_by": "rider",
+    "dispute_type": "no_show_charge",
+    "description": "I told the driver I was coming down and he cancelled on me anyway, then the app charged me $6.61 as a 'no-show'. I wasn't a no-show, I was just running a few minutes late getting ready for work and I messaged him. A decent driver would have waited a bit longer. I had to book another car and was late for my meeting. Please refund the $6.61.",
+    "filed_at": "2026-09-08T09:12:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-5512",
+    "name": "Priya Nair",
+    "account_age_days": 540,
+    "total_trips": 61,
+    "avg_rating": 4.6,
+    "dispute_history": {
+      "total_disputes": 1,
+      "upheld": 1,
+      "rejected": 0
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "card"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-4127",
+    "name": "Tan Boon Kiat",
+    "account_age_days": 1320,
+    "total_trips": 4870,
+    "avg_rating": 4.88,
+    "dispute_history": {
+      "total_disputes": 3,
+      "upheld_against": 0,
+      "rejected": 3
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Corolla Altis (SMK 7215 H)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-31408",
+    "rider_id": "R-5512",
+    "driver_id": "D-4127",
+    "pickup_location": {
+      "name": "Blk 456 Tampines Street 42 (drop-off porch)",
+      "lat": 1.3589,
+      "lng": 103.9532
+    },
+    "dropoff_location": {
+      "name": "Changi Business Park Central 1",
+      "lat": 1.3346,
+      "lng": 103.9636
+    },
+    "scheduled_time": "2026-09-08T07:48:00+08:00",
+    "driver_arrival_time": "2026-09-08T07:48:20+08:00",
+    "driver_wait_start": "2026-09-08T07:48:20+08:00",
+    "cancellation_time": "2026-09-08T07:55:20+08:00",
+    "cancellation_fee": 6.61,
+    "cancellation_reason": "rider_no_show"
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-08T07:42:00+08:00", "lat": 1.3462, "lng": 103.9381, "speed_kmh": 38, "status": "en_route"},
+    {"timestamp": "2026-09-08T07:44:00+08:00", "lat": 1.3505, "lng": 103.9433, "speed_kmh": 44, "status": "en_route"},
+    {"timestamp": "2026-09-08T07:46:00+08:00", "lat": 1.3551, "lng": 103.9488, "speed_kmh": 35, "status": "en_route"},
+    {"timestamp": "2026-09-08T07:47:30+08:00", "lat": 1.3580, "lng": 103.9521, "speed_kmh": 15, "status": "en_route"},
+    {"timestamp": "2026-09-08T07:48:20+08:00", "lat": 1.3589, "lng": 103.9532, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-08T07:50:00+08:00", "lat": 1.3589, "lng": 103.9532, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-08T07:52:00+08:00", "lat": 1.3589, "lng": 103.9532, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-08T07:54:00+08:00", "lat": 1.3589, "lng": 103.9532, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-08T07:55:20+08:00", "lat": 1.3589, "lng": 103.9532, "speed_kmh": 0, "status": "cancelled"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-08T07:48:40+08:00", "sender": "driver", "type": "message", "content": "Hi, I've arrived at the drop-off porch of Blk 456. Silver Corolla Altis SMK 7215 H."},
+    {"timestamp": "2026-09-08T07:50:10+08:00", "sender": "driver", "type": "call", "content": "Outgoing call to rider — not answered (rang 25s, no response)."},
+    {"timestamp": "2026-09-08T07:51:58+08:00", "sender": "rider", "type": "message", "content": "sorry uncle still getting ready. can wait another 10 min?"},
+    {"timestamp": "2026-09-08T07:52:30+08:00", "sender": "driver", "type": "message", "content": "Sorry miss, cannot wait 10 min, I have another booking after this. Please come down now."},
+    {"timestamp": "2026-09-08T07:54:05+08:00", "sender": "driver", "type": "message", "content": "Already waiting 6 min. If you are not down in 1 min I will have to cancel."},
+    {"timestamp": "2026-09-08T07:55:20+08:00", "sender": "system", "type": "system", "content": "Trip cancelled by driver. Reason: rider_no_show. Cancellation fee of $6.61 applied."}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-08T07:41:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-5512 booked on-demand RydeX trip TRIP-2026-31408 from Blk 456 Tampines Street 42 to Changi Business Park Central 1. Estimated pickup 07:48. Payment: card."},
+    {"timestamp": "2026-09-08T07:41:20+08:00", "event_type": "driver_assigned", "details": "Driver D-4127 (Tan Boon Kiat, Toyota Corolla Altis SMK 7215 H) assigned. ETA 7 min."},
+    {"timestamp": "2026-09-08T07:41:25+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-08T07:48:20+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS within 8m of pickup point. Speed 0 km/h. Arrival confirmed."},
+    {"timestamp": "2026-09-08T07:48:20+08:00", "event_type": "wait_timer_started", "details": "Free wait timer started. 3 min free wait period ends at 07:51:20."},
+    {"timestamp": "2026-09-08T07:48:25+08:00", "event_type": "rider_notified", "details": "Push notification + in-app alert sent to rider: 'Your driver has arrived.'"},
+    {"timestamp": "2026-09-08T07:50:10+08:00", "event_type": "driver_called_rider", "details": "Driver initiated in-app call to rider. Call rang 25s, no answer."},
+    {"timestamp": "2026-09-08T07:51:20+08:00", "event_type": "wait_timer_expired", "details": "Free 3-min wait period expired. Rider had not boarded. Cancellation fee now applicable per policy."},
+    {"timestamp": "2026-09-08T07:55:20+08:00", "event_type": "cancellation_fee_applied", "details": "Driver cancelled 7 min after tapping 'I'm Here' (rider_no_show). $6.61 cancellation fee charged to rider payment method (card)."},
+    {"timestamp": "2026-09-08T07:55:25+08:00", "event_type": "driver_released", "details": "Driver D-4127 released from trip. Trip status: cancelled (rider_no_show)."}
+  ]
+}

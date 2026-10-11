@@ -1,0 +1,18 @@
+{
+ "rule_id": "CLS-04",
+ "name": "Location problem with a contested fee",
+ "family": "CLS",
+ "type": "classification",
+ "applies_to": [
+  "CW-NOSHOW",
+  "CW-RIDERCANCEL",
+  "EX-LOCATION"
+ ],
+ "mode": "HARD",
+ "statement": "If a fee is contested because of a pick-up or drop-off location problem, classify by the fee (for example CW-NOSHOW), not EX-LOCATION.",
+ "params": [],
+ "produces": null,
+ "produces_finding": null,
+ "sources": [],
+ "set": "random"
+}

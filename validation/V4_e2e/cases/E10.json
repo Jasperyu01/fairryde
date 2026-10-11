@@ -1,0 +1,123 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E10",
+    "trip_id": "TRIP-2026-37145",
+    "filed_by": "rider",
+    "dispute_type": "route_deviation",
+    "description": "Booked a RydeTAXI from Paya Lebar Quarter to Holland Village. Instead of the PIE the driver went down the ECP into town and out on the AYE. The meter came to $31.60 plus a $3.30 booking fee, which I paid in cash. This trip is normally about $22 on the meter. He said the PIE was jammed but there was nothing on the traffic news. I want the extra $9.60 back.",
+    "filed_at": "2026-09-23T09:05:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-5067",
+    "name": "Kelvin Ng",
+    "account_age_days": 1800,
+    "total_trips": 420,
+    "avg_rating": 4.7,
+    "dispute_history": {
+      "total_disputes": 2,
+      "upheld": 1,
+      "rejected": 1
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "cash"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-8390",
+    "name": "Ong Ah Huat",
+    "driver_type": "taxi",
+    "account_age_days": 2700,
+    "total_trips": 9400,
+    "avg_rating": 4.85,
+    "dispute_history": {
+      "total_disputes": 5,
+      "upheld_against": 1,
+      "rejected": 4
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Corolla Altis taxi (SHD 8823 M)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-37145",
+    "rider_id": "R-5067",
+    "driver_id": "D-8390",
+    "service_type": "RydeTAXI",
+    "booking_type": "on_demand",
+    "pickup_location": {
+      "name": "Paya Lebar Quarter (Paya Lebar Road pick-up point)",
+      "lat": 1.3176,
+      "lng": 103.8930
+    },
+    "dropoff_location": {
+      "name": "Holland Village (Lorong Mambong)",
+      "lat": 1.3112,
+      "lng": 103.7961
+    },
+    "scheduled_time": "2026-09-22T21:35:00+08:00",
+    "driver_arrival_time": "2026-09-22T21:35:40+08:00",
+    "driver_wait_start": "2026-09-22T21:35:40+08:00",
+    "rider_boarded_time": "2026-09-22T21:36:30+08:00",
+    "dropoff_time": "2026-09-22T22:04:50+08:00",
+    "cancellation_time": null,
+    "cancellation_fee": null,
+    "cancellation_reason": null,
+    "fare_type": "metered",
+    "fare_estimate_shown_at_booking": "S$20.00 - S$24.00 (metered estimate; booking fee extra)"
+  },
+
+  "fare_breakdown": {
+    "metered_fare": 31.60,
+    "booking_fee": 3.30,
+    "booking_fee_note": "Taxi company booking fee; Ryde platform fee included in the booking fee",
+    "erp_toll": 0.00,
+    "transaction_fee": 0.00,
+    "total_paid": 34.90,
+    "payment_method": "cash (collected by driver)"
+  },
+
+  "route_summary": {
+    "recommended_route": {"via": "PIE westbound - Adam Road - Holland Road", "distance_km": 13.8, "est_duration_min": 20, "est_meter_fare_sgd": 22.00},
+    "actual_route": {"via": "ECP - AYE - Clementi Road - Holland Road", "distance_km": 21.4, "duration_min": 28, "meter_fare_sgd": 31.60},
+    "extra_distance_km": 7.6,
+    "extra_meter_fare_sgd": 9.60,
+    "route_agreed_in_advance": false,
+    "traffic_incidents_on_recommended_route": "none reported on PIE westbound between 21:30 and 22:00 (traffic feed snapshot attached to trip)"
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-22T21:33:00+08:00", "lat": 1.3205, "lng": 103.8962, "speed_kmh": 30, "status": "en_route"},
+    {"timestamp": "2026-09-22T21:35:00+08:00", "lat": 1.3182, "lng": 103.8937, "speed_kmh": 10, "status": "en_route"},
+    {"timestamp": "2026-09-22T21:35:40+08:00", "lat": 1.3176, "lng": 103.8930, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-22T21:36:30+08:00", "lat": 1.3176, "lng": 103.8930, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-22T21:40:00+08:00", "lat": 1.3020, "lng": 103.8930, "speed_kmh": 55, "status": "on_trip"},
+    {"timestamp": "2026-09-22T21:44:00+08:00", "lat": 1.2930, "lng": 103.8750, "speed_kmh": 75, "status": "on_trip"},
+    {"timestamp": "2026-09-22T21:48:00+08:00", "lat": 1.2780, "lng": 103.8520, "speed_kmh": 70, "status": "on_trip"},
+    {"timestamp": "2026-09-22T21:53:00+08:00", "lat": 1.2870, "lng": 103.8150, "speed_kmh": 78, "status": "on_trip"},
+    {"timestamp": "2026-09-22T21:58:00+08:00", "lat": 1.3000, "lng": 103.7900, "speed_kmh": 60, "status": "on_trip"},
+    {"timestamp": "2026-09-22T22:02:00+08:00", "lat": 1.3080, "lng": 103.7930, "speed_kmh": 35, "status": "on_trip"},
+    {"timestamp": "2026-09-22T22:04:50+08:00", "lat": 1.3112, "lng": 103.7961, "speed_kmh": 0, "status": "completed"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-22T21:35:50+08:00", "sender": "driver", "type": "message", "content": "Reached, blue taxi SHD 8823 M"},
+    {"timestamp": "2026-09-22T21:36:05+08:00", "sender": "rider", "type": "message", "content": "ok coming"}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-22T21:31:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-5067 booked RydeTAXI trip TRIP-2026-37145 from Paya Lebar Quarter to Holland Village. Fare: metered, estimate S$20.00 - S$24.00 plus booking fee. Payment: cash."},
+    {"timestamp": "2026-09-22T21:31:30+08:00", "event_type": "driver_assigned", "details": "Driver D-8390 (Ong Ah Huat, taxi SHD 8823 M) assigned. ETA 4 min."},
+    {"timestamp": "2026-09-22T21:31:35+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-22T21:35:40+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS within 10m of pickup point. Speed 0 km/h. Arrival confirmed."},
+    {"timestamp": "2026-09-22T21:36:30+08:00", "event_type": "rider_picked_up", "details": "Driver tapped PICK UP. Rider boarded 50 s after 'I'm Here'."},
+    {"timestamp": "2026-09-22T21:36:35+08:00", "event_type": "trip_started", "details": "Trip started. Recommended navigation route: PIE westbound (13.8 km, est. 20 min)."},
+    {"timestamp": "2026-09-22T21:39:20+08:00", "event_type": "route_deviation_detected", "details": "Driver left the recommended route; navigation rerouted via ECP."},
+    {"timestamp": "2026-09-22T22:04:50+08:00", "event_type": "rider_dropped_off", "details": "Driver tapped DROP OFF at Holland Village. Distance driven 21.4 km, trip duration 28 min."},
+    {"timestamp": "2026-09-22T22:05:00+08:00", "event_type": "meter_fare_entered", "details": "Driver keyed meter fare $31.60. Booking fee $3.30. Toll (ERP) $0.00."},
+    {"timestamp": "2026-09-22T22:05:10+08:00", "event_type": "trip_completed", "details": "Trip completed."},
+    {"timestamp": "2026-09-22T22:05:15+08:00", "event_type": "payment_collected", "details": "Cash payment of $34.90 recorded as collected by driver."}
+  ]
+}

@@ -1,0 +1,39 @@
+{
+ "rule_id": "MAT-04",
+ "name": "Rider waiver filing window",
+ "family": "MAT",
+ "type": "eligibility",
+ "applies_to": [
+  "CW-NOSHOW",
+  "CW-RIDERCANCEL",
+  "CW-WAITING"
+ ],
+ "mode": "HARD",
+ "statement": "A rider's request to waive a cancellation or waiting fee filed more than 30 days after the trip is not considered.",
+ "params": [
+  {
+   "name": "WAIVER_WINDOW_DAYS",
+   "value": 30,
+   "unit": "days"
+  }
+ ],
+ "produces": [
+  "CW-R-OUT-OF-WINDOW"
+ ],
+ "produces_finding": "F-FILING-WINDOW",
+ "sources": [
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-18229758389017",
+   "quote": "*Requests submitted after 30 days of the trip will not be considered for waivers.",
+   "source_file": "packs/sources/RYDE-18229758389017.txt"
+  },
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-27085468660505",
+   "quote": "you may submit a fee waiver request via RydeHELP in our app within 30 days of the trip*",
+   "source_file": "packs/sources/RYDE-27085468660505.txt"
+  }
+ ],
+ "set": "random"
+}

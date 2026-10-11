@@ -1,0 +1,10 @@
+RYDE HELP CENTRE ARTICLE 4412121982745
+TITLE: Can I suggest my preferred route to the driver?
+AUDIENCE: Rider
+SECTION: Booking a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/4412121982745-Can-I-suggest-my-preferred-route-to-the-driver
+EDITED: 2024-10-01
+
+The trip fare is fixed based on pick-up and drop-off points, hence the driver may decide to take the most efficient route according to GPS.
+
+If you have a preferred route, you may recommend this to your driver and reach a mutual agreement before you go.

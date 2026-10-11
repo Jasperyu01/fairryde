@@ -1,0 +1,13 @@
+{
+ "rule_id": "FC-F02",
+ "credibility": "D",
+ "status": "draft",
+ "fairryde_sources_and_source_notes": [
+  {
+   "type": "FAIRRYDE",
+   "doc": "FAIRRYDE-DECISIONS",
+   "quote_kind": "none",
+   "note": "Method from research note 08 (sparse-ping simulation)."
+  }
+ ]
+}

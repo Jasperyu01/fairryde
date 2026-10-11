@@ -1,0 +1,27 @@
+{
+ "rule_id": "DQ-03",
+ "name": "Coordinates and venue sanity",
+ "family": "DQ",
+ "type": "data_quality",
+ "applies_to": [
+  "ALL"
+ ],
+ "mode": "HARD",
+ "statement": "All coordinates must fall inside the Singapore bounding box; named venues are looked up in OneMap to obtain reference coordinates.",
+ "params": [
+  {
+   "name": "SG_BBOX",
+   "value": [
+    1.15,
+    103.59,
+    1.48,
+    104.1
+   ],
+   "unit": null
+  }
+ ],
+ "produces": null,
+ "produces_finding": null,
+ "sources": [],
+ "set": "random"
+}

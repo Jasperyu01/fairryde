@@ -1,0 +1,14 @@
+RYDE HELP CENTRE ARTICLE 26353570035097
+TITLE: What is a processing fee?
+AUDIENCE: Driver
+SECTION: Popular Topics
+URL: https://help.rydesharing.com/hc/en-us/articles/26353570035097-What-is-a-processing-fee
+EDITED: 2024-01-05
+
+A processing fee of $10 (excluding GST) is applied for the account restoration. This fee is implemented to cover the operational costs associated with the account restoration, outlined below:
+
+a. To cover efforts for re-verifying your profile and backend processing, including document review, to meet standards for resuming driving activities
+
+b. To avoid any adverse effects stemming from a prior account suspension, the fee incorporates the resetting of your rating and review, offering a clean slate for your account.
+
+c. To maintain a fair and secure environment for all users by enforcing necessary checks and balances during the account restoration process.

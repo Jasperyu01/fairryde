@@ -1,0 +1,119 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E14",
+    "trip_id": "TRIP-2026-32766",
+    "filed_by": "rider",
+    "dispute_type": "lost_item",
+    "description": "I left my iPad mini (grey, in a navy blue sleeve) in the seat pocket behind the driver after my airport ride on Friday night. I only realised on Saturday evening and now the app won't let me chat with or call the driver anymore. Please help me contact him to get it back. Do I have to pay him to bring it to me? I'm not disputing the fare, I just want my iPad back.",
+    "filed_at": "2026-09-13T08:15:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-4021",
+    "name": "Hannah Wee",
+    "account_age_days": 1300,
+    "total_trips": 280,
+    "avg_rating": 4.9,
+    "dispute_history": {
+      "total_disputes": 1,
+      "upheld": 1,
+      "rejected": 0
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "card"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-3519",
+    "name": "Krishnan Muthu",
+    "account_age_days": 2100,
+    "total_trips": 7200,
+    "avg_rating": 4.9,
+    "dispute_history": {
+      "total_disputes": 1,
+      "upheld_against": 0,
+      "rejected": 1
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Corolla Altis (SLQ 4108 A)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-32766",
+    "rider_id": "R-4021",
+    "driver_id": "D-3519",
+    "service_type": "RydeX",
+    "booking_type": "on_demand",
+    "pickup_location": {
+      "name": "Jewel Changi Airport (Arrival pick-up, Level 1)",
+      "lat": 1.3602,
+      "lng": 103.9897
+    },
+    "dropoff_location": {
+      "name": "Blk 47 Telok Blangah Drive",
+      "lat": 1.2731,
+      "lng": 103.8086
+    },
+    "scheduled_time": "2026-09-11T22:09:00+08:00",
+    "driver_arrival_time": "2026-09-11T22:09:40+08:00",
+    "driver_wait_start": "2026-09-11T22:09:40+08:00",
+    "rider_boarded_time": "2026-09-11T22:11:00+08:00",
+    "dropoff_time": "2026-09-11T22:38:20+08:00",
+    "cancellation_time": null,
+    "cancellation_fee": null,
+    "cancellation_reason": null,
+    "quoted_fare": 31.50
+  },
+
+  "fare_breakdown": {
+    "base_fare": 31.50,
+    "platform_fee_included_in_base_fare": 1.47,
+    "waiting_time_fee": 0.00,
+    "erp_toll": 0.00,
+    "subtotal": 31.50,
+    "transaction_fee": 0.86,
+    "transaction_fee_basis": "1.96% + $0.24 (local Visa/Mastercard) on subtotal",
+    "total_charged": 32.36,
+    "payment_method": "card"
+  },
+
+  "lost_item_report": {
+    "item": "iPad mini (grey) in a navy blue sleeve",
+    "last_seen": "seat pocket behind the driver's seat",
+    "reported_at": "2026-09-13T08:15:00+08:00",
+    "hours_since_trip_end": 33.6,
+    "in_app_chat_and_call_available": false
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-11T22:07:00+08:00", "lat": 1.3580, "lng": 103.9870, "speed_kmh": 25, "status": "en_route"},
+    {"timestamp": "2026-09-11T22:09:40+08:00", "lat": 1.3602, "lng": 103.9897, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-11T22:11:00+08:00", "lat": 1.3602, "lng": 103.9897, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-11T22:17:00+08:00", "lat": 1.3300, "lng": 103.9500, "speed_kmh": 80, "status": "on_trip"},
+    {"timestamp": "2026-09-11T22:24:00+08:00", "lat": 1.2950, "lng": 103.8900, "speed_kmh": 85, "status": "on_trip"},
+    {"timestamp": "2026-09-11T22:31:00+08:00", "lat": 1.2780, "lng": 103.8400, "speed_kmh": 70, "status": "on_trip"},
+    {"timestamp": "2026-09-11T22:36:00+08:00", "lat": 1.2745, "lng": 103.8150, "speed_kmh": 35, "status": "on_trip"},
+    {"timestamp": "2026-09-11T22:38:20+08:00", "lat": 1.2731, "lng": 103.8086, "speed_kmh": 0, "status": "completed"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-11T22:09:50+08:00", "sender": "driver", "type": "message", "content": "I'm at Jewel arrival pick-up, pillar 6, silver Altis SLQ 4108 A"},
+    {"timestamp": "2026-09-11T22:10:20+08:00", "sender": "rider", "type": "message", "content": "Coming, I have 2 luggage"}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-11T22:05:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-4021 booked on-demand RydeX trip TRIP-2026-32766 from Jewel Changi Airport to Blk 47 Telok Blangah Drive. Fixed fare quoted $31.50. Payment: card."},
+    {"timestamp": "2026-09-11T22:05:30+08:00", "event_type": "driver_assigned", "details": "Driver D-3519 (Krishnan Muthu, Toyota Corolla Altis SLQ 4108 A) assigned. ETA 4 min."},
+    {"timestamp": "2026-09-11T22:05:35+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-11T22:09:40+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS within 10m of pickup point. Speed 0 km/h. Arrival confirmed."},
+    {"timestamp": "2026-09-11T22:11:00+08:00", "event_type": "rider_picked_up", "details": "Driver tapped PICK UP. Rider boarded 1 min 20 s after 'I'm Here'."},
+    {"timestamp": "2026-09-11T22:11:05+08:00", "event_type": "trip_started", "details": "Trip started. Navigation to Blk 47 Telok Blangah Drive."},
+    {"timestamp": "2026-09-11T22:38:20+08:00", "event_type": "rider_dropped_off", "details": "Driver tapped DROP OFF at Blk 47 Telok Blangah Drive."},
+    {"timestamp": "2026-09-11T22:38:30+08:00", "event_type": "trip_completed", "details": "Trip completed. Toll (ERP) entered: $0.00. No waiting time fee."},
+    {"timestamp": "2026-09-11T22:38:35+08:00", "event_type": "payment_charged", "details": "$32.36 charged to rider card (fixed fare $31.50 + transaction fee $0.86)."},
+    {"timestamp": "2026-09-12T22:38:20+08:00", "event_type": "chat_window_closed", "details": "In-app chat and call with the driver no longer available (24 hours after trip end)."},
+    {"timestamp": "2026-09-13T08:15:00+08:00", "event_type": "lost_item_report_submitted", "details": "Rider submitted 'I lost an item' via RydeHELP: iPad mini in navy blue sleeve, seat pocket behind the driver's seat."}
+  ]
+}

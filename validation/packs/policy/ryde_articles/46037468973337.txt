@@ -1,0 +1,37 @@
+RYDE HELP CENTRE ARTICLE 46037468973337
+TITLE: In-App Calling Feature
+AUDIENCE: Rider
+SECTION: Ryde Experience
+URL: https://help.rydesharing.com/hc/en-us/articles/46037468973337-In-App-Calling-Feature
+EDITED: 2025-04-22
+
+1. What is the in-app call feature?
+
+It's a new way for riders and drivers to call each other directly through the Ryde app - no need to use your personal phone line.
+
+In-app calls offer better privacy and convenience. Your number stays hidden, and you won't need to switch between the app and your phone dialer.
+
+2. Do I need to allow any permissions?
+
+Yes. You'll need to allow microphone access for the app to enable voice communication.
+
+As long as you have notifications and microphone access enabled, you'll be alerted to an incoming in-app call.
+
+3. What should I do if I can't hear the other person?
+
+Try these steps:
+- Check your volume settings
+- Ensure your mic permission is enabled
+- If the problem persists, hang up and call again or use chat
+
+4. What to do if in-app call failed
+
+If the in-app call doesn't go through, you can still use the in-app chat or contact the other party via SMS or a masked number.
+
+In-app calls require a stable internet connection. If your connection is weak, the call quality may be affected or may not go through.
+
+You can report issues through the app under RydeHelp > Contact Support. We'd love to hear your feedback!
+
+5. Can I use regular phone calls?
+
+In-app calling is the default option. However, if you have no internet, the system will automatically use a regular phone call.

@@ -1,0 +1,38 @@
+{
+ "rule_id": "CW-F02",
+ "name": "Wait anchor (organizer cases and on-demand trips)",
+ "family": "CW",
+ "type": "fact",
+ "applies_to": [
+  "CW-NOSHOW",
+  "CW-WAITING"
+ ],
+ "mode": "HARD",
+ "statement": "Organizer profile: the wait starts at trip_data.driver_wait_start. Ryde profile, on-demand: the wait starts when the driver presses \"I'm Here\", provided the driver is at the pick-up point according to GPS (CW-R06).",
+ "params": [
+  {
+   "name": "WAIT_ANCHOR_FIELD",
+   "value": "driver_arrived event ('I'm Here') with GPS at pickup",
+   "unit": null
+  }
+ ],
+ "produces": null,
+ "produces_finding": "F-WAIT-ANCHOR",
+ "sources": [
+  {
+   "type": "ORGANIZER",
+   "doc": "ORG-DISP002",
+   "quote": "\"driver_wait_start\": \"2026-09-13T08:43:00+08:00\"",
+   "profile": "organizer_case",
+   "source_file": "packs/sources/ORG-DISP002.txt"
+  },
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-23534478435353",
+   "quote": "waits for > 3 minutes for the rider to arrive at the pick-up point and cancels the trip (Rider NO SHOW and no trip completion)",
+   "profile": "ryde_2026",
+   "source_file": "packs/sources/RYDE-23534478435353.txt"
+  }
+ ],
+ "set": "random"
+}

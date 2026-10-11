@@ -1,0 +1,71 @@
+{
+ "rule_id": "CW-R06",
+ "name": "Arrival counts only if GPS shows the driver at the pick-up point",
+ "family": "CW",
+ "type": "eligibility",
+ "applies_to": [
+  "CW-NOSHOW",
+  "CW-WAITING"
+ ],
+ "mode": "HARD",
+ "statement": "An arrival indication is valid only if the driver was at the pick-up location according to GPS. Driver pings are sorted by time and GPS outliers are set aside first (CW-F04: an outside stretch seen for less than LEFT_MIN_OUTSIDE_S before the driver is seen inside again, or one reached at an impossible speed; the approach before the driver is first seen inside is never an outlier on duration). The moment ping is the last remaining ping from PING_MAX_GAP_S before the arrival event to TS_TOLERANCE_S after it. Confirmed at the arrival: the platform's own recorded GPS arrival check (DISP-002: \"Driver GPS within 10m of pickup point.\"), or a moment ping inside ARRIVAL_GEOFENCE_M. Contradicted: the moment ping is outside the area and was taken at or after the arrival event. Values: CONTESTED if the platform check is contradicted (GEN-R02); TRUE if confirmed at the arrival; TRUE with flag ARRIVAL_UNCONFIRMED if not confirmed at the arrival but a remaining ping more than TS_TOLERANCE_S after it and before the cancellation is inside the area (the wait then counts from that ping, CW-F03); FALSE if neither, and remaining pings exist from the arrival to the cancellation (outliers never count as evidence of being outside); UNKNOWN otherwise (no arrival indication, or no remaining ping from the arrival on).",
+ "params": [
+  {
+   "name": "ARRIVAL_GEOFENCE_M",
+   "value": 50,
+   "unit": "m"
+  },
+  {
+   "name": "TS_TOLERANCE_S",
+   "value": 30,
+   "unit": "s"
+  },
+  {
+   "name": "PING_MAX_GAP_S",
+   "value": 300,
+   "unit": "s"
+  },
+  {
+   "name": "LEFT_MIN_OUTSIDE_S",
+   "value": 60,
+   "unit": "s"
+  },
+  {
+   "name": "SPEED_MAX_KMH",
+   "value": 120,
+   "unit": "km/h"
+  }
+ ],
+ "produces": [
+  "CW-R-DRIVER-NOT-AT-PICKUP"
+ ],
+ "produces_finding": "F-ARRIVAL-VALID",
+ "sources": [
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-4407754403353",
+   "quote": "Drivers are only allowed to indicate arrival and impose the Waiting Time Fee only if he/she:",
+   "source_file": "packs/sources/RYDE-4407754403353.txt"
+  },
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-4407754403353",
+   "quote": "Is at the pick-up location according to GPS data",
+   "source_file": "packs/sources/RYDE-4407754403353.txt"
+  },
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-4407754403353",
+   "quote": "Otherwise, you will not be charged the $6.61 Waiting Time Fee if any of the above are not fulfilled.",
+   "source_file": "packs/sources/RYDE-4407754403353.txt"
+  },
+  {
+   "type": "ORGANIZER",
+   "doc": "ORG-DISP002",
+   "quote": "Driver GPS within 10m of pickup point. Speed 0 km/h. Auto-arrival confirmed.",
+   "profile": "organizer_case",
+   "source_file": "packs/sources/ORG-DISP002.txt"
+  }
+ ],
+ "set": "critical_path"
+}

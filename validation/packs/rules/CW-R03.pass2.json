@@ -1,0 +1,11 @@
+{
+ "rule_id": "CW-R03",
+ "credibility": "A",
+ "status": "draft",
+ "fairryde_sources_and_source_notes": [
+  {
+   "doc": "RYDE-23534478435353",
+   "note": "Quoted for the amount; the operative condition is the next quote."
+  }
+ ]
+}

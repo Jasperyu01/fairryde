@@ -1,0 +1,24 @@
+{
+ "rule_id": "EXP-02",
+ "name": "Quote the original text of READ rules",
+ "family": "EXP",
+ "type": "explanation",
+ "applies_to": [
+  "ALL"
+ ],
+ "mode": "HARD",
+ "statement": "When a READ rule is cited, the clause is quoted verbatim from the policy corpus and never paraphrased into a threshold.",
+ "params": [],
+ "produces": null,
+ "produces_finding": null,
+ "sources": [
+  {
+   "type": "INTERNAL_STANDARD",
+   "doc": "INT-CHORDX-ONT",
+   "clause": "ONT.4",
+   "quote": "分\"可以写死的规则\"和\"必须回头读原文的规则\"",
+   "source_file": "packs/sources/INT-CHORDX-ONT.txt"
+  }
+ ],
+ "set": "random"
+}

@@ -1,0 +1,16 @@
+RYDE HELP CENTRE ARTICLE 115001439693
+TITLE: How do I complete the trip in the Ryde app?
+AUDIENCE: Driver
+SECTION: Accepting a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/115001439693-How-do-I-complete-the-trip-in-the-Ryde-app
+EDITED: 2023-06-16
+
+1. Once you have completed the rider's trip, tap DROP OFF.
+2. Enter the Toll (ERP) charge, if incurred.
+3. Rate your Rider.
+4. Input Reviews.
+5. Tap Confirm to end the trip.
+
+Always remember to provide an honest rating and review for the rider.
+
+Please also bear in mind that if an additional / excessive amount is keyed in for Toll (ERP), this will be considered fraudulent and drivers will be liable for permanent suspension.

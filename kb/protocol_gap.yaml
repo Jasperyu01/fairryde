@@ -1,0 +1,162 @@
+# FairRyde Knowledge Base - GAP ANALYSIS AGAINST THE CHORDX KNOWLEDGE-BASE PROTOCOL
+# "before" = the 4 Oct research report (parts 1 and 2); "now" = KB v0.1 (5 Oct), after an independent review.
+# Counts marked {n_...} are filled in by build_kb.py from the YAML files.
+
+meta:
+  version: 0.1.0
+  updated: 2026-10-05
+  owner: Jasper
+  method: "Each 'before' statement was checked against the text of the 4 Oct report; an independent reviewer then checked both columns against the files."
+
+rows:
+  - clause: ONT.1
+    requirement: 适用范围；最小够用；用真实样本验证
+    before: 有能力问题（competency questions）的设想，并用 DISP-002 做了数据核对和推演（零余量、两个计时锚点、pin 偏离 1,259 m），但没有明确写出决策目标。
+    now: scope.yaml 写明决策目标和 11 个能力问题；三层在 DISP-002 上逐条回答，脚本自动推演出裁决。
+    where: scope.yaml；out/disp002_trace.md
+    status: 已做
+    remaining: 第二个真实样本（问组织方 O2）
+
+  - clause: ONT.2
+    requirement: 三层分开，各层数据来源和权威方不同
+    before: 有三层的概念解释和三节草案，但没有写各层的数据来源和权威方，也没有"放哪一层"的判断标准。
+    now: 三个独立文件，各自写明权威方和放层标准。Taxonomy 用 Ryde 帮助中心的原词；Ontology 以 DISP-002 字段和用户条款为准；Rules 只认文件原文。
+    where: taxonomy.yaml；ontology.yaml；rules.yaml（meta.authority、placement_test）
+    status: 部分
+    remaining: Taxonomy 的权威方目前用 Ryde 帮助中心的用词代替，还没有业务方审核；谁来当业务权威方请曹老师定
+
+  - clause: ONT.2
+    requirement: 层间依赖（事件类型收敛成受控词表；Rules 依赖 Ontology 实体）
+    before: 写了接口（taxonomy 代码是 Claim.dispute_type 的取值域，rules 只引用 ontology 术语），event_type 也是受控列表，但没有和本体事件一一对应，依赖关系没有检查。
+    now: "本体 {n_events} 个事件与 TX-EVENT 一一对应；本体角色都在 TX-ROLE 里；规则引用的参数、事实认定、类型代码、决策表都由脚本检查存在；每个状态都有事件能到达。"
+    where: build_kb.py（event-convergence、role-convergence、rule-params、finding-producer、state-reachability 检查）
+    status: 已做
+    remaining: ""
+
+  - clause: ONT.2
+    requirement: 同一份单据在三层各自的样子
+    before: 做过 DISP-002 的分类（NS.1、S3）、证据编号和逐步推演，但没有按三层并排展示。
+    now: DISP-002 三层视图：分类代码、实体与角色、逐条规则推演、敏感性测试和给双方的解释。
+    where: 工作簿"15_DISP-002三层视图"
+    status: 已做
+    remaining: ""
+
+  - clause: ONT.3
+    requirement: 数据清单（谁提供、格式、属于哪层、敏感度、缺了怎么办）
+    before: 没有清单，数据来源散在各研究笔记里。
+    now: "inventory.yaml 共 {n_inventory} 项。"
+    where: inventory.yaml
+    status: 部分
+    remaining: 敏感度要对齐 SEC.6（需要 chordx_security.md）
+
+  - clause: ONT.3
+    requirement: 客户给不了时用行业通用规则顶上，并显式标注"通用假设"
+    before: 有全局声明（"除非注明出处，所有阈值都是 FairRyde 自定参数"），DiDi 等来源也注明了，联系要求注明是 FairRyde 的选择；但没有逐条规则标可信度，裁决里也不告诉当事人哪一点是通用假设。
+    now: 每条规则标 A 到 D 可信度，每个参数标可信度和合理区间；C、D 级规则、参数或决策表行起决定作用时打 GENERIC_ASSUMPTION_USED、需人工批准并告诉双方（META-05、AUTH-02）。联系乘客不再当收费条件（D6）。
+    where: rules.yaml（credibility_scale、decisive_definition、META-05）；reference_data.yaml
+    status: 已做
+    remaining: ""
+
+  - clause: ONT.4 Step 1
+    requirement: 先定业务决策目标
+    before: 隐含在方案里；decisions.md 计划在 10 月 6 日写。
+    now: 一句话决策目标加五个输出（是否争议与主张、行程与关联、结果与金额、自治等级、对双方说什么）。
+    where: scope.yaml decision_goal
+    status: 已做
+    remaining: ""
+
+  - clause: ONT.4 Step 2
+    requirement: 区分实体和实体在关系里的角色
+    before: Party 带 role 属性（乘客、司机当作 Party 的类型），申诉方、被申诉方已写成关系 isClaimantIn / isRespondentIn；但没有把实体和角色分开，Ryde 自己的角色也没有建模。
+    now: 实体是 Account；RIDER、DRIVER、CLAIMANT、RESPONDENT、PAYER、PAYEE 都是角色；Ryde 在用户条款里的四种角色（撮合方、代收方、退款决定方、清洁费核实方）各有原文出处，并进了 TX-ROLE。
+    where: ontology.yaml roles、role_notes；taxonomy.yaml TX-ROLE
+    status: 已做
+    remaining: ""
+
+  - clause: ONT.4 Step 3
+    requirement: 事件（谁对谁做了什么、引起什么状态变化）；新事件与更新的区别
+    before: Event 类有受控的 event_type 和 actor，但没有对象和状态变化，也没有新建与更新的区分。
+    now: "{n_events} 个事件（行为方、对象、状态变化、是否更新），4 个状态机且每个状态都能到达，6 条新建与更新规则，Matching 规则 MAT-02（NEW、DUPLICATE、UPDATE、APPEAL、COUNTER_CLAIM、RELATED_OTHER）。"
+    where: ontology.yaml events、state_machines、new_vs_update；rules.yaml MAT-01 到 MAT-03
+    status: 已做
+    remaining: ""
+
+  - clause: ONT.4 Step 4
+    requirement: 从业务人员的叫法收敛成受控词表，保留"其他"自填口
+    before: 自编代码（RD、NS、DM、SF），只有 OT 一个"其他"。
+    now: "类别名用 Ryde 帮助中心的叫法（Cancellation and Waiting Fee、Fares and Charges 等），每个词条记来源文章编号和标题，脚本核对了 {n_terms} 处；手册提到的高峰加价、优惠码也有了类型；每个业务词表都有 OTHER 加自填，系统量表写明为什么封闭。"
+    where: taxonomy.yaml（term_sources、closed_reason）
+    status: 已做
+    remaining: 业务方审核（同 ONT.2）
+
+  - clause: ONT.4 Step 5
+    requirement: 每条规则标来源和可信度；分可以写死的和必须读原文的
+    before: 规则卡设计里有"原文与 URL"字段，但没有可信度等级，没有写死与读原文之分，引文也没有逐字核对。
+    now: "{n_rules} 条规则，各有来源、可信度（A {n_cred_A}、B {n_cred_B}、C {n_cred_C}、D {n_cred_D}）和模式（HARD {n_mode_HARD}、READ {n_mode_READ}、HARD+READ {n_mode_HR}）；{n_quotes_verified} 条引文由脚本逐字核对，{n_quotes_bad} 条不符；Ryde 页面之间的矛盾按条款记录，矛盾一方的条款不能支撑 A 级。"
+    where: rules.yaml；out/check_report.md
+    status: 已做
+    remaining: 规则全部是 draft，需要曹老师审后改 approved；引文"支撑"规则与否由独立审查抽查过约 40 条，没有全量人工复核
+
+  - clause: ONT.4 Step 6
+    requirement: 最小够用判定，剩下的进待办
+    before: MVP 定为 NS 加 RD 两类，但没有写停止条件和待办清单，其余类型怎么处理没有定。
+    now: 5 类自动裁决、3 类需人工批准、安全类只分流，其余进 backlog（分类后按政策空缺转人工）；写明停止条件。
+    where: scope.yaml scope_v0_1、stop_rule、backlog
+    status: 已做
+    remaining: ""
+
+  - clause: ONT.5
+    requirement: 标注表（输入、标准答案、依据、关联四组列；下拉加自填；主次其他；哪些自动、哪些 AI、哪些必须人工；说明写进表里）
+    before: 有盲标流程、"LLM 不得生成 gold 标签"的要求和 12 个标签字段（ruling、remedy、decisive_rules、key_evidence、required_flags 等），但没有按四组列设计，没有主次其他结构，也没有标明哪些列自动、AI、人工。
+    now: 五组列（多一个过程列）；下拉允许自填；分号分隔多值；答案、依据、证据各有主项、次项、其他；每列标 AUTO、FORMULA、HUMAN、AI_OK，会锚定标注人的列在盲标时隐藏；示例行用虚构案件；标注放在单独的工作簿里，脚本不会覆盖已填的标注。
+    where: annotation_schema.yaml；FairRyde_Annotation_v0.1.xlsx
+    status: 已做
+    remaining: 开始造案例和标注
+
+  - clause: ONT.6
+    requirement: 验证（标注一致性；难例含关键信息缺失、负样本、措辞含糊、状态更新；循环论证；覆盖检查）
+    before: 有 kappa、元变换、成对覆盖、留出集，"证据缺失 10%"案例族和改写变体部分对应关键信息缺失和措辞含糊；但没有负样本和状态更新难例，也没有"每条规则、每个实体至少一个样本"的覆盖检查。
+    now: 难例配额覆盖协议四类并加边界、冲突、恶意、注入；不看规则卡、只看 Ryde 原文和手册的独立标注子集（用来发现规则本身的错）；覆盖检查到每条规则、每个决策表行、每个类型、每个实体、每个标记；确认率监控和独立审计抽样。
+    where: annotation_schema.yaml validation_plan；标注工作簿"覆盖检查"页
+    status: 方案已做
+    remaining: 实际案例与标注
+
+  - clause: ONT.7
+    requirement: 与 DRT、DEP 衔接（实体到数据契约；规则到决策节点；读原文的规则到检索节点；Matching 独立；Generate 与 Ranking 分开）
+    before: 有"产物交给 agent 的方式"对照（taxonomy 进 prompt、ontology 变 JSON Schema、规则卡做检索、引擎做工具），但 Matching 没有独立成节点，Generate 和 Ranking 没有拆开，也没有对 DRT/DEP 的节点类型。
+    now: 知识库元素到运行节点的对照表，Matching 独立成节点，Judge 拆成 Generate 加 Ranking。
+    where: scope.yaml runtime_mapping
+    status: 部分
+    remaining: 节点字母要用 chordx_core.md 核对
+
+  - clause: ONT.8
+    requirement: 六个常见坑
+    before: 处理了三个：分类对象是主张而不是工单（一单多事件）、先冻结规则卡再盲标（部分防锚定）、没有成文规则时标 ESCALATE（部分防偷换通用规则）；角色当实体、更新与新建、关键实体不在正文三个没处理。
+    now: 逐个对应：角色表；主张拆分 CLS-02；MAT-02；MAT-01；META-05、GEN-R07 和逐条可信度；虚构示例行、盲标隐藏列和不看规则卡的独立子集。
+    where: ontology.yaml；rules.yaml；annotation_schema.yaml
+    status: 已做
+    remaining: ""
+
+  - clause: ONT.10
+    requirement: 冷启动路线；第一阶段就设计日志；评测集提前留出，不进 few-shot 和 RAG；按链切分；确认率监控和独立审计
+    before: 提到冻结规则卡、留出集、prompt 和 τ 只在 dev 上调。
+    now: 选定 LLM + RAG + Rules 冷启动；HumanReview 日志字段（AI 建议、人的最终决定、备注、时间、模型版本、规则库版本、是否独立审计）；评测集不进 few-shot 和判例库；按种子族切分；确认率异常偏高时审计，10% 批准类案件独立审计。
+    where: scope.yaml start_route；ontology.yaml ENT-REVIEW、ENT-PRECEDENT；annotation_schema.yaml review_monitoring
+    status: 已做
+    remaining: ""
+
+  - clause: ONT.10b
+    requirement: 操作指引（触发、回答模式、状态、来源、所需证据、步骤原语）和参考数据表（值、来源、日期、备注）
+    before: 没有操作指引；带生效日期的两个参数档（effective_from）算是参考数据表的雏形。
+    now: "{n_playbooks} 份操作指引；参考数据表含值、单位、来源、文件日期、读取日期、可信度、合理区间和生效日期，并注明是人工维护的查询表，不是实时对接；组织方参数档的四个字段（免费等待、no-show 阈值、费用、收款方）从案件自带的政策对象逐案读取，缺的字段和其他参数按 META-01 用 Ryde 默认值并在推演里注明。"
+    where: playbooks.yaml；reference_data.yaml
+    status: 已做
+    remaining: 操作指引由业务方审核后才能从 draft 改 approved
+
+  - clause: ONT.11
+    requirement: 脱敏与实体对照表（对照表只放本机；只输出计数；泄漏扫描；保护人工修改）
+    before: 没有（只有 Judge 盲审时去掉姓名和 ID）。
+    now: "privacy.yaml 写明替换什么、保留什么、对照表规则和泄漏扫描；脚本在 DISP-002 上试跑，只输出计数：替换前姓名 {n_priv_names} 处、姓名片段 {n_priv_tokens} 处、车牌 {n_priv_plates} 处，替换后全部为 0；生成的工作簿和报告也扫描，命中为 0；.gitignore 挡住对照表目录。"
+    where: privacy.yaml；tools/privacy_scan.py；.gitignore
+    status: 已做
+    remaining: 真实数据出现前再用 SEC.6 复核

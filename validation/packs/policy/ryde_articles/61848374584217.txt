@@ -1,0 +1,66 @@
+RYDE HELP CENTRE ARTICLE 61848374584217
+TITLE: Multi Select Trips
+AUDIENCE: Rider
+SECTION: Booking a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/61848374584217-Multi-Select-Trips
+EDITED: 2026-09-11
+
+1. What is Multi-Select?
+
+Multi-Select allows you to select more than one eligible ride option when making a booking.
+
+By selecting multiple ride options, your booking can be considered across a wider pool of available drivers, giving you more matching opportunities through a single request.
+
+You will still receive one confirmed ride with one driver.
+
+2. Will I be charged for selecting multiple ride options?
+
+No. There is no additional fee for using Multi-Select.
+
+You will only be charged for the ride option you are matched with, based on the applicable fare shown for that ride.
+
+Selecting multiple options does not mean you will be charged for multiple rides.
+
+3. How will I know which ride type I was matched with?
+
+You'll be matched with one of the ride types you selected, depending on which eligible driver accepts your booking first.
+
+For example, if you select RydeFLASH and RydeX, you may be matched with either RydeFLASH or RydeX. You will not be matched with a ride type you did not select.
+
+Once a driver accepts your booking, the assigned ride type and applicable fare will be shown in your booking details.
+
+4. Will I receive more than one driver if I select multiple ride options?
+
+No. Although your request may be considered across multiple eligible ride options, only one driver will be assigned to your booking.
+
+5. Can I change my selected ride options after booking?
+
+No. Once your booking has been confirmed, the selected ride options cannot be changed.
+
+If you need a different ride option, you may need to cancel the existing booking and make a new booking, subject to the applicable cancellation policy.
+
+Multi-Select is not available for Advance Bookings.
+
+6. Can I use Multi-Select for Advance Booking?
+
+At the moment, Multi-Select is only available for on-demand bookings. If you'd like to schedule a ride in advance, you can continue to use Advance Booking for a specific ride option of your choice.
+
+7. Can I use Multi-Select for private booking?
+
+No. Multi-Select is not available for private bookings.
+
+A private booking assigns your job specifically to the driver you requested, so the booking is only offered to that particular driver.
+
+8. What happens if no driver accepts my Multi-Select booking?
+
+Your booking will continue to follow the applicable booking and matching process.
+
+If the booking remains unmatched or expires, you can make another booking based on the options available at that time.
+
+9. What if I only want a specific ride option?
+
+If you only want a specific ride option, you can select that option instead of using Multi-Select. Under the current Multi-Select design, RydeFLASH works as a combined matching option with RydeX.
+
+When you select RydeFLASH, your booking request is considered across both RydeFLASH and RydeX, giving you more matching opportunities through a single request.
+
+You will still receive only one confirmed ride, and the applicable ride type and fare will be clearly shown in the app.

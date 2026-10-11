@@ -1,0 +1,11 @@
+RYDE HELP CENTRE ARTICLE 51400229761177
+TITLE: What is the process for a driver accepting the edit a destination request from Rider?
+AUDIENCE: Driver
+SECTION: Add/Edit Destination
+URL: https://help.rydesharing.com/hc/en-us/articles/51400229761177-What-is-the-process-for-a-driver-accepting-the-edit-a-destination-request-from-Rider
+EDITED: 2025-10-10
+
+1. The driver receives an edit request pop-up.
+2. The driver can accept or reject the request.
+3. If the driver accepts, they receive a notification, and the add/edit destination fee is reflected on their receipt.
+4. If the driver rejects, the previous trip details remain, and no fee is reflected on their receipt.

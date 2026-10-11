@@ -1,0 +1,16 @@
+RYDE HELP CENTRE ARTICLE 360036735393
+TITLE: What if I have an In-Vehicle Recording Device (IVRD) including Dashcam?
+AUDIENCE: Driver
+SECTION: Accepting a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/360036735393-What-if-I-have-an-In-Vehicle-Recording-Device-IVRD-including-Dashcam
+EDITED: 2025-09-19
+
+We do not allow IVRDs on the Ryde platform at this moment.
+
+If you have IVRDs/Dashcams installed in your vehicle, you are required to remove them immediately. The presence or use of such devices may constitute a breach of personal data protection laws and platform policies.
+
+Unauthorised installation of inward-facing IVRD/Dashcams may result in 21 demerit points and suspension from our platform. Should any reports be received regarding the use of IVRDs/Dascham, your driver account may be suspended with or without prior notice.
+
+Ryde takes all such matters seriously. The matter may also be reported to the Land Transport Authority (LTA) for further investigation and possible enforcement action.
+
+Thank you.

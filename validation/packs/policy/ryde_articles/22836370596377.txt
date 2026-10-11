@@ -1,0 +1,17 @@
+RYDE HELP CENTRE ARTICLE 22836370596377
+TITLE: Platform Fee
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/22836370596377-Platform-Fee
+EDITED: 2026-02-26
+
+Ryde charges a fee on each ride, which is reinvested back into the platform to improve the experience for all users-end-users, driver-partners, and merchants. These fees contribute to the ongoing development, maintenance, and enhancement of product features, ensuring continued service improvements.
+
+Tiered-Platform Fee
+We have introduced a tiered platform fee for all service types. Platform fees will be charged differently based on the fare amount. These fees help support our platform's operations and fund ongoing innovations that enhance the experience for both driver-partners and passengers.
+
+Effective 17 Feb 2026
+Fee Structure
+*First Tier Platform Fee: $1.25 (including GST) for fares $18 and below.
+*Second Tier Platform Fee: $1.47 (including GST) for fares above $18.
+The platform fees are applicable for both cash and cashless payments

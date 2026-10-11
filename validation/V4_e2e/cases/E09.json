@@ -1,0 +1,123 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E09",
+    "trip_id": "TRIP-2026-29630",
+    "filed_by": "rider",
+    "dispute_type": "route_deviation",
+    "description": "The driver went the long way. Instead of taking the ECP and KPE like the app showed, he went up the CTE and through Ang Mo Kio. It was about 5 km longer and took 36 minutes instead of 23. When I asked, he just said CTE was faster today, which it obviously wasn't. I want a partial refund for the detour, at least $8.",
+    "filed_at": "2026-09-06T18:45:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-2290",
+    "name": "Grace Lee Hui Wen",
+    "account_age_days": 900,
+    "total_trips": 140,
+    "avg_rating": 4.8,
+    "dispute_history": {
+      "total_disputes": 1,
+      "upheld": 0,
+      "rejected": 1
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "card"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-4408",
+    "name": "Sanjay Pillai",
+    "account_age_days": 520,
+    "total_trips": 1900,
+    "avg_rating": 4.84,
+    "dispute_history": {
+      "total_disputes": 1,
+      "upheld_against": 0,
+      "rejected": 1
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Prius (SMF 1187 C)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-29630",
+    "rider_id": "R-2290",
+    "driver_id": "D-4408",
+    "service_type": "RydeX",
+    "booking_type": "on_demand",
+    "pickup_location": {
+      "name": "Marina Bay Sands Hotel Tower 1 lobby",
+      "lat": 1.2834,
+      "lng": 103.8607
+    },
+    "dropoff_location": {
+      "name": "Sengkang General Hospital (main entrance)",
+      "lat": 1.3954,
+      "lng": 103.8930
+    },
+    "scheduled_time": "2026-09-06T15:17:00+08:00",
+    "driver_arrival_time": "2026-09-06T15:17:10+08:00",
+    "driver_wait_start": "2026-09-06T15:17:10+08:00",
+    "rider_boarded_time": "2026-09-06T15:18:30+08:00",
+    "dropoff_time": "2026-09-06T15:54:40+08:00",
+    "cancellation_time": null,
+    "cancellation_fee": null,
+    "cancellation_reason": null,
+    "quoted_fare": 28.40,
+    "fare_type": "fixed at booking"
+  },
+
+  "fare_breakdown": {
+    "base_fare": 28.40,
+    "platform_fee_included_in_base_fare": 1.47,
+    "waiting_time_fee": 0.00,
+    "erp_toll": 0.00,
+    "subtotal": 28.40,
+    "transaction_fee": 0.80,
+    "transaction_fee_basis": "1.96% + $0.24 (local Visa/Mastercard) on subtotal",
+    "total_charged": 29.20,
+    "payment_method": "card"
+  },
+
+  "route_summary": {
+    "recommended_route": {"via": "ECP - KPE - TPE - Sengkang East Way", "distance_km": 19.6, "est_duration_min": 23},
+    "actual_route": {"via": "Bras Basah Road - CTE - Yio Chu Kang Road - Sengkang", "distance_km": 24.9, "duration_min": 36},
+    "extra_distance_km": 5.3,
+    "extra_duration_min": 13,
+    "route_agreed_in_advance": false,
+    "erp_gantries_active_on_either_route": "none (Sunday)"
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-06T15:14:00+08:00", "lat": 1.2862, "lng": 103.8580, "speed_kmh": 32, "status": "en_route"},
+    {"timestamp": "2026-09-06T15:16:30+08:00", "lat": 1.2841, "lng": 103.8601, "speed_kmh": 12, "status": "en_route"},
+    {"timestamp": "2026-09-06T15:17:10+08:00", "lat": 1.2834, "lng": 103.8607, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-06T15:18:30+08:00", "lat": 1.2834, "lng": 103.8607, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-06T15:22:00+08:00", "lat": 1.2960, "lng": 103.8470, "speed_kmh": 45, "status": "on_trip"},
+    {"timestamp": "2026-09-06T15:27:00+08:00", "lat": 1.3240, "lng": 103.8530, "speed_kmh": 68, "status": "on_trip"},
+    {"timestamp": "2026-09-06T15:33:00+08:00", "lat": 1.3600, "lng": 103.8560, "speed_kmh": 70, "status": "on_trip"},
+    {"timestamp": "2026-09-06T15:40:00+08:00", "lat": 1.3790, "lng": 103.8650, "speed_kmh": 42, "status": "on_trip"},
+    {"timestamp": "2026-09-06T15:47:00+08:00", "lat": 1.3880, "lng": 103.8820, "speed_kmh": 45, "status": "on_trip"},
+    {"timestamp": "2026-09-06T15:52:00+08:00", "lat": 1.3930, "lng": 103.8905, "speed_kmh": 25, "status": "on_trip"},
+    {"timestamp": "2026-09-06T15:54:40+08:00", "lat": 1.3954, "lng": 103.8930, "speed_kmh": 0, "status": "completed"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-06T15:17:20+08:00", "sender": "driver", "type": "message", "content": "I'm at Tower 1 lobby, white Prius SMF 1187 C."},
+    {"timestamp": "2026-09-06T15:17:50+08:00", "sender": "rider", "type": "message", "content": "Coming out now"}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-06T15:12:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-2290 booked on-demand RydeX trip TRIP-2026-29630 from Marina Bay Sands Hotel Tower 1 to Sengkang General Hospital. Fixed fare quoted $28.40. Payment: card."},
+    {"timestamp": "2026-09-06T15:12:20+08:00", "event_type": "driver_assigned", "details": "Driver D-4408 (Sanjay Pillai, Toyota Prius SMF 1187 C) assigned. ETA 5 min."},
+    {"timestamp": "2026-09-06T15:12:25+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-06T15:17:10+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS within 6m of pickup point. Speed 0 km/h. Arrival confirmed."},
+    {"timestamp": "2026-09-06T15:18:30+08:00", "event_type": "rider_picked_up", "details": "Driver tapped PICK UP. Rider boarded 1 min 20 s after 'I'm Here'."},
+    {"timestamp": "2026-09-06T15:18:35+08:00", "event_type": "trip_started", "details": "Trip started. Recommended navigation route: ECP - KPE - TPE (19.6 km, est. 23 min)."},
+    {"timestamp": "2026-09-06T15:21:40+08:00", "event_type": "route_deviation_detected", "details": "Driver left the recommended route; navigation rerouted via CTE."},
+    {"timestamp": "2026-09-06T15:54:40+08:00", "event_type": "rider_dropped_off", "details": "Driver tapped DROP OFF at Sengkang General Hospital. Distance driven 24.9 km, trip duration 36 min."},
+    {"timestamp": "2026-09-06T15:54:50+08:00", "event_type": "trip_completed", "details": "Trip completed. Toll (ERP) entered: $0.00. No waiting time fee."},
+    {"timestamp": "2026-09-06T15:55:00+08:00", "event_type": "payment_charged", "details": "$29.20 charged to rider card (fixed fare $28.40 + transaction fee $0.80)."}
+  ]
+}

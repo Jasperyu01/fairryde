@@ -1,0 +1,35 @@
+RYDE HELP CENTRE ARTICLE 6959605073177
+TITLE: I received an SMS or Email regarding irregular trip behaviour. What does that mean?
+AUDIENCE: Driver
+SECTION: Driver Community Guidelines
+URL: https://help.rydesharing.com/hc/en-us/articles/6959605073177-I-received-an-SMS-or-Email-regarding-irregular-trip-behaviour-What-does-that-mean
+EDITED: 2022-06-20
+
+This SMS is sent to drivers who accounts have been flagged by our algorithm. The reason may be one of or a combination of the following:
+
+Unusual or Fraudulent Activities
+
+The Ryde driver app has Artificial Intelligence (AI) algorithm that will automatically detect unusual or fraudulent driver activity. This is a list of scenarios that are representative, but not exhaustive, of the possible irregularities in driver behaviour:
+
+Driver actions:
+- Multiple cancellations
+- Low driver ratings
+- Overcharging of additional fees
+- Abuse of the cancellation and waiting time button
+
+Trip characteristics:
+- Trips that were completed without rider onboard
+- Unusual trip patterns
+- Speeding and reckless driving
+
+Please ensure that you adhere to the community guidelines and policy statement.
+
+Find out more:
+
+Driver Performance and Community Guidelines
+
+https://help.rydesharing.com/hc/en-us/articles/900000382886-Driver-Performance-and-Community-Standards
+
+Cancellation and Waiting Fee Policy Statement
+
+https://help.rydesharing.com/hc/en-us/articles/4407761371161-Cancellation-and-Waiting-Time-Policy-Statement

@@ -1,0 +1,10 @@
+RYDE HELP CENTRE ARTICLE 115001438754
+TITLE: I am unable to contact my rider. The rider did not turn up. What should I do?
+AUDIENCE: Driver
+SECTION: Ryde Experience
+URL: https://help.rydesharing.com/hc/en-us/articles/115001438754-I-am-unable-to-contact-my-rider-The-rider-did-not-turn-up-What-should-I-do
+EDITED: 2021-09-20
+
+Try to contact the rider by in-app chat or call. If the rider still cannot be reached, you may need to cancel the trip.
+
+Do not worry about rider no-shows, as our driver CR requirements have catered for a buffer based on statistical data for these unfortunate events. Drivers' CR is improved based on the most recent trips as well.

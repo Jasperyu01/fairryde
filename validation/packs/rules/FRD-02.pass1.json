@@ -1,0 +1,28 @@
+{
+ "rule_id": "FRD-02",
+ "name": "Rider dispute-abuse signal",
+ "family": "FRD",
+ "type": "fraud",
+ "applies_to": [
+  "CW",
+  "FC"
+ ],
+ "mode": "HARD",
+ "statement": "At least RIDER_ABUSE_MIN_DISPUTES past disputes, of which at least RIDER_ABUSE_REJECT_SHARE_MIN were rejected, together with an existing platform fraud flag of any kind (the reviewer sees the flag detail; in DISP-002 it is for frequent late cancellations), raise FRAUD_SIGNAL against the rider. Per GEN-R03 it never changes the outcome; like any fraud signal it requires human approval whichever party the outcome favors (AUTH-02 trigger 2).",
+ "params": [
+  {
+   "name": "RIDER_ABUSE_MIN_DISPUTES",
+   "value": 3,
+   "unit": null
+  },
+  {
+   "name": "RIDER_ABUSE_REJECT_SHARE_MIN",
+   "value": 0.5,
+   "unit": null
+  }
+ ],
+ "produces": null,
+ "produces_finding": null,
+ "sources": [],
+ "set": "random"
+}

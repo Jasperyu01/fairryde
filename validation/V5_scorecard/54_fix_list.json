@@ -1,0 +1,175 @@
+{
+ "note": "Builder synthesis (DEP: D). Groups the reviewers' and adjudicators' findings into fix items for KB v0.2. Every item points to the verdict lines it comes from; nothing here changes a verdict or a metric.",
+ "items": [
+  {
+   "id": "FX1",
+   "priority": 1,
+   "severity": "CRITICAL",
+   "direction": "safe",
+   "title": "Make rider counter-evidence depend on what the rider said",
+   "problem": "CW-F06 rates any rider call or message during the wait as STRONG, whatever it says, so CW-R12 escalates routine no-show and waiting-fee cases where the rider's own message admits being late or still on the way.",
+   "from": [
+    "V4_e2e/45_adjudication.jsonl: E01, E03, E07"
+   ],
+   "change": [
+    "CW-F06: a call or message is STRONG only if its content places the rider at the pin or venue, or contests presence, timing or place; an admission of lateness or 'coming' is NONE",
+    "define 'during the wait' for waiting fees (same window as CW-F04)",
+    "engine_noshow.py F-RIDER-EVIDENCE and new self-tests for the E01, E03 and E07 patterns"
+   ],
+   "verify": "rerun E01, E03, E07 (expected UPHOLD) and add new held-out rider-message variants"
+  },
+  {
+   "id": "FX2",
+   "priority": 1,
+   "severity": "CRITICAL",
+   "direction": "unsafe",
+   "title": "No platform-computed detour refund for metered RydeTAXI fares",
+   "problem": "FC-R03 and FC-R05 compute and propose a refund (S$9.60 in E10) for METERED fares, which in this KB means RydeTAXI cash trips, where Ryde's texts leave fares to the taxi company and give no refund basis.",
+   "from": [
+    "V4_e2e/45_adjudication.jsonl: E10"
+   ],
+   "change": [
+    "add a RydeTAXI or METERED exclusion to FC-R03 and FC-R05, like CW-R00 for cancellation fees",
+    "escalate under GEN-R07 (policy gap) with the computed difference and the driver's response attached for the reviewer"
+   ],
+   "verify": "rerun E10 (expected ESCALATE_HUMAN) and add a metered-taxi case to the next held-out set"
+  },
+  {
+   "id": "FX3",
+   "priority": 1,
+   "severity": "CRITICAL",
+   "direction": "both",
+   "title": "Apply the ERP exceptions everywhere ERP is computed",
+   "problem": "FC-R06 states that RydeSEND fares include ERP and carpool riders pay 50%, but F-ERP-EXPECTED (FC-F04) and the detour ERP refund (FC-R08) ignore it; FC-F03's justification list omits Ryde's 'most efficient route according to GPS'; FC-R01's wording ('conduct information only') clashes with FC-R08 unless ERP is split into an FC-TOLL claim.",
+   "from": [
+    "V3_rules/32_final_a.jsonl: FC-F04, FC-R01, FC-R08",
+    "V3_rules/32_final_b.jsonl: FC-R08",
+    "V3_rules/33_overlap_adjudication.jsonl: FC-R08"
+   ],
+   "change": [
+    "one ERP computation that applies FC-R06 in FC-F04, FC-R07 and FC-R08, with the precedence recorded",
+    "FC-R08 credibility C to D; add the PDVL-only scope of the LTA duty",
+    "FC-F03: add the GPS most-efficient-route justification",
+    "FC-R01: ERP from a detour always goes to its own FC-TOLL claim"
+   ],
+   "verify": "rerun E11; add carpool and RydeSEND ERP cases"
+  },
+  {
+   "id": "FX4",
+   "priority": 1,
+   "severity": "CRITICAL",
+   "direction": "both",
+   "title": "Apply the KB's own credibility principle to every B and C rule",
+   "problem": "4 of the 8 reviewed B or C rules are rated higher than credibility_principle allows ('a Ryde condition extended by FairRyde to a new situation is D'): CW-F04, CW-R06, FC-R08, EXP-01. Credibility feeds the approval tier, so a case resting on FairRyde's own logic can be decided automatically. DISP-002 itself is not affected (already APPROVE).",
+   "from": [
+    "V3_rules/33_overlap_adjudication.jsonl: CW-F04",
+    "V3_rules/32_final_b.jsonl: CW-R06, EXP-01",
+    "V5_scorecard/51_scorecard.json: systematic_issues[0]"
+   ],
+   "change": [
+    "census of all 17 B and C rules: one row per element with its source; the weakest essential element sets the label",
+    "split CW-F04 into the Ryde core (driver at the pick-up per GPS while waiting, B) and FairRyde's presence machinery (outliers, window edge, LEFT, SPARSE, UNKNOWN, GPS_AMBIGUOUS, D), so DT rows take the weaker label only when that machinery decides",
+    "ask the organizer whether Ryde defines how GPS presence is checked (radius, ping gap); an answer would lift the D part"
+   ],
+   "verify": "the census table itself (fresh reviewer), then the approval-tier rate on the no-show cases"
+  },
+  {
+   "id": "FX5",
+   "priority": 1,
+   "severity": "CRITICAL",
+   "direction": "fairness (a flagged rider's win is escalated, a loss is not)",
+   "title": "Stop gate G3 from changing outcomes on a fraud signal",
+   "problem": "AUTH-04 gate G3 turns a disagreement between the history-aware pass or fraud check and the history-blind pass into ESCALATE_HUMAN, so a flagged rider's win is escalated while a loss only needs approval, against FRD-02 and GEN-R03 ('never changes the outcome').",
+   "from": [
+    "V3_rules/32_final_a.jsonl: FRD-02"
+   ],
+   "change": [
+    "G3 keeps the history-blind ruling as the provisional ruling (tier APPROVE) and shows the disagreement to the reviewer",
+    "or record the conflict and its precedence explicitly"
+   ],
+   "verify": "a test pair: same facts, flagged and unflagged rider, both outcomes"
+  },
+  {
+   "id": "FX6",
+   "priority": 1,
+   "severity": "CRITICAL",
+   "direction": "safety",
+   "title": "Safety routing must not depend on a word list",
+   "problem": "CLS-03's safety exception names only CLS-01 (a word list), so a mid-trip ejection with no listed word (C08, SE-TERMINATED) is sent to normal support despite the TRIAGE_TO_HUMAN scope; 'kidnapping' is not in the list (C16); SE-CONDUCT has no definition (C02, C05, C06, C11).",
+   "from": [
+    "V1_taxonomy/13_verdicts.jsonl: C08, C16, C02, C05, C06, C11"
+   ],
+   "change": [
+    "CLS-03: 'unless CLS-01 applies or the claim is any SE leaf'",
+    "CLS-01: a definition with examples, not only words (abduction, unsafe drop-off, refusal with threats)",
+    "define SE-CONDUCT (harassment, threats, assault, discrimination)"
+   ],
+   "verify": "the 20 complaint texts again plus new safety texts without listed words"
+  },
+  {
+   "id": "FX7",
+   "priority": 1,
+   "severity": "CRITICAL",
+   "direction": "both",
+   "title": "A trip can have several drop-offs, and they can change",
+   "problem": "ENT-TRIP has_dropoff ENT-PLACE is 1:1, but Ryde supports multi-stop bookings and mid-trip destination edits that change the route and the fare; a legitimate added stop would read as a detour.",
+   "from": [
+    "V2_ontology/21_verdicts.jsonl: O08"
+   ],
+   "change": [
+    "has_dropoff 1:N, ordered, with a destination-change event",
+    "route and fare rules compare against the final itinerary"
+   ],
+   "verify": "a multi-stop route case in the next held-out set"
+  },
+  {
+   "id": "FX8",
+   "priority": 2,
+   "severity": "MAJOR",
+   "direction": "n/a",
+   "title": "Fill the taxonomy gaps seen in real complaints",
+   "problem": "No leaf for a booked fare that differs from the charged fare (C15, only FC-OTHER, no decision path); driver demands for extra or off-app payment scatter across FC-PAYMENT, FC-SURCHARGE and FC-OTHER (C07, C18, C19); no rule for an unstated canceling party (C04).",
+   "from": [
+    "V1_taxonomy/13_verdicts.jsonl: C15, C07, C18, C19, C04"
+   ],
+   "change": [
+    "add a fare-mismatch leaf and an off-app or driver-imposed charge leaf",
+    "classification rule: take the canceling party from the trip record; if absent, ask"
+   ],
+   "verify": "taxonomy round with 40 new texts"
+  },
+  {
+   "id": "FX9",
+   "priority": 3,
+   "severity": "MINOR",
+   "direction": "n/a",
+   "title": "Wording and labels",
+   "problem": "EXP-02 vs EXP-03 on numbers inside verbatim quotes; EXP-01 elements without labels; ontology relations O09 and O10 are design choices without a design label; CW-F02B conflict note misses two 2024 driver pages; CW-R08 does not define 'assignment ETA' for advance bookings; FC-R01 omits its article's toll caveat.",
+   "from": [
+    "V3_rules/32_final_b.jsonl: EXP-02, EXP-01, CW-R08",
+    "V3_rules/32_final_a.jsonl: CW-F02B, FC-R01",
+    "V2_ontology/21_verdicts.jsonl: O09, O10"
+   ],
+   "change": [
+    "exempt quoted spans from EXP-03",
+    "label EXP-01's design elements",
+    "add source: FairRyde design to O09 and O10",
+    "add the two pages to CW-F02B's note",
+    "define the ETA for advance bookings",
+    "add the toll caveat"
+   ],
+   "verify": "next rules and ontology rounds"
+  }
+ ],
+ "revalidation": {
+  "when": "after FX1 to FX7 (FX8 and FX9 if time allows)",
+  "same": "pipeline, verdict definitions, metrics and thresholds; plan re-hashed before results",
+  "changes": [
+   "doubled samples (pre-registered expand rule): taxonomy 40 new texts, ontology 28, rules 40 including all 17 B and C rules as a census, end-to-end 30",
+   "new seed and new texts and cases, because the fixer has seen this round's samples",
+   "M5 is computed on the 15 new held-out cases only; the 15 old cases become a regression check",
+   "two reviewers on a quarter of the rules (this round they disagreed on 1 of 2 shared rules)",
+   "a human (Jasper or a teammate) spot-checks every end-to-end mismatch"
+  ]
+ }
+}

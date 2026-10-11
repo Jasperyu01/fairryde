@@ -1,0 +1,12 @@
+{
+ "rule_id": "DQ-03",
+ "credibility": "D",
+ "status": "draft",
+ "fairryde_sources_and_source_notes": [
+  {
+   "type": "FAIRRYDE",
+   "doc": "FAIRRYDE-DECISIONS",
+   "quote_kind": "none"
+  }
+ ]
+}

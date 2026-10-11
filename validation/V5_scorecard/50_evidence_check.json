@@ -1,0 +1,83 @@
+{
+ "by_step": {
+  "V2.1": {
+   "VERIFIED": 57,
+   "FOUND_ELSEWHERE": 0,
+   "NOT_FOUND": 0,
+   "EMPTY": 0
+  },
+  "V3.1a": {
+   "VERIFIED": 59,
+   "FOUND_ELSEWHERE": 0,
+   "NOT_FOUND": 0,
+   "EMPTY": 0
+  },
+  "V3.1b": {
+   "VERIFIED": 62,
+   "FOUND_ELSEWHERE": 0,
+   "NOT_FOUND": 0,
+   "EMPTY": 0
+  },
+  "V3.2": {
+   "VERIFIED": 19,
+   "FOUND_ELSEWHERE": 0,
+   "NOT_FOUND": 0,
+   "EMPTY": 0
+  },
+  "V1.2": {
+   "VERIFIED": 20,
+   "FOUND_ELSEWHERE": 0,
+   "NOT_FOUND": 0,
+   "EMPTY": 0
+  },
+  "V1.3": {
+   "VERIFIED": 58,
+   "FOUND_ELSEWHERE": 0,
+   "NOT_FOUND": 0,
+   "EMPTY": 0
+  },
+  "V4.1": {
+   "VERIFIED": 63,
+   "FOUND_ELSEWHERE": 2,
+   "NOT_FOUND": 0,
+   "EMPTY": 0
+  },
+  "V4.2": {
+   "VERIFIED": 65,
+   "FOUND_ELSEWHERE": 0,
+   "NOT_FOUND": 0,
+   "EMPTY": 0
+  },
+  "V4.7": {
+   "VERIFIED": 50,
+   "FOUND_ELSEWHERE": 0,
+   "NOT_FOUND": 0,
+   "EMPTY": 0
+  }
+ },
+ "problems": [
+  {
+   "step": "V4.1",
+   "id": "E04",
+   "status": "FOUND_ELSEWHERE",
+   "cited": "E04.cancellation_policy",
+   "found_in": "V4_e2e/cases/E04.json",
+   "quote": "\"free_wait_time_min\": 6"
+  },
+  {
+   "step": "V4.1",
+   "id": "E04",
+   "status": "FOUND_ELSEWHERE",
+   "cited": "E04.cancellation_policy",
+   "found_in": "V4_e2e/cases/E04.json",
+   "quote": "\"no_show_threshold_min\": 10"
+  }
+ ],
+ "total": {
+  "VERIFIED": 453,
+  "FOUND_ELSEWHERE": 2,
+  "NOT_FOUND": 0,
+  "EMPTY": 0
+ },
+ "verified_share": 1.0
+}

@@ -1,0 +1,31 @@
+{
+ "rule_id": "FC-R01",
+ "name": "Fixed fare means the route did not change the amount",
+ "family": "FC",
+ "type": "outcome",
+ "applies_to": [
+  "FC-ROUTE"
+ ],
+ "mode": "HARD",
+ "statement": "If the pricing mode is FIXED_AT_BOOKING and the fare charged equals the quoted fare, a longer route did not change what the rider paid: no fare refund. The deviation is recorded as driver-conduct information only.",
+ "params": [],
+ "produces": [
+  "FC-R-FIXED-FARE"
+ ],
+ "produces_finding": null,
+ "sources": [
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-4412121982745",
+   "quote": "The trip fare is fixed based on pick-up and drop-off points, hence the driver may decide to take the most efficient route according to GPS.",
+   "source_file": "packs/sources/RYDE-4412121982745.txt"
+  },
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-30741244296217",
+   "quote": "Fares quoted for our services are generally fixed, except for RydeTAXI.",
+   "source_file": "packs/sources/RYDE-30741244296217.txt"
+  }
+ ],
+ "set": "random"
+}

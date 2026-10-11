@@ -1,0 +1,29 @@
+{
+ "rule_id": "MAT-03",
+ "name": "Appeals of automatic rulings go to a human",
+ "family": "MAT",
+ "type": "procedural",
+ "applies_to": [
+  "ALL"
+ ],
+ "mode": "HARD",
+ "statement": "An appeal against an automatic ruling is always reviewed by a human, who confirms or changes it (autonomy tier APPROVE), with the earlier ruling and its trace attached.",
+ "params": [],
+ "produces": null,
+ "produces_finding": null,
+ "sources": [
+  {
+   "type": "GOV_GUIDANCE",
+   "doc": "GOV-IMDA-AGENTIC",
+   "quote": "Organisations should define significant checkpoints or action boundaries that require human approval, especially before sensitive actions are executed.",
+   "source_file": "packs/sources/GOV-IMDA-AGENTIC.txt"
+  },
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-900004381243",
+   "quote": "You can appeal within 24 hours if you disagree with the outcome of your claim with any additional supporting evidence.",
+   "source_file": "packs/sources/RYDE-900004381243.txt"
+  }
+ ],
+ "set": "random"
+}

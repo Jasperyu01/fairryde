@@ -1,0 +1,45 @@
+RYDE HELP CENTRE ARTICLE 115000752294
+TITLE: How do I make a trip request?
+AUDIENCE: Rider
+SECTION: Booking a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/115000752294-How-do-I-make-a-trip-request
+EDITED: 2025-12-15
+
+How to Select Your Pick-Up and Drop-Off Points
+
+1. Tap 'Where to?'
+
+Start by tapping the 'Where to?' bar on your Ryde app home screen.
+
+2. Check Your Auto-Detected Pick-Up Point
+
+Your pick-up will be automatically filled based on your GPS location.
+
+- Orange dot = Pick-up point
+- Pink pin = Drop-off point
+
+3. Edit Your Pick-Up (If Needed)
+
+If you prefer a different pick-up spot, tap the pick-up field and type the exact location and select from suggestions or 'Choose from Map'.
+
+4. Enter Your Drop-Off
+
+If the pick-up is correct, proceed to enter your drop-off by typing the address or selecting 'Choose from Map'.
+
+5. Confirm Pick-Up Point
+
+After choosing your drop-off, you'll see the 'Confirm Pick-up' screen.
+
+- You can drag and drop the orange pin to fine-tune the exact point on the map.
+
+6. Proceed to Booking
+
+Once you have confirmed the pick up and drop offs, you'll be directed to the booking screen.
+
+7. Choose Your Ride Preferences
+
+Select your ride type, payment method, and any additional options.
+
+8. Book Your Ride
+
+Tap 'Book' and wait to be matched with a nearby driver.

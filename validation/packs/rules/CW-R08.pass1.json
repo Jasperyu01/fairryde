@@ -1,0 +1,31 @@
+{
+ "rule_id": "CW-R08",
+ "name": "Driver lateness makes a rider's cancellation fee waivable",
+ "family": "CW",
+ "type": "eligibility",
+ "applies_to": [
+  "CW-RIDERCANCEL"
+ ],
+ "mode": "HARD",
+ "statement": "If, when the rider canceled, the driver was already later than the assignment ETA plus DRIVER_LATE_GRACE_S, or was not moving toward the pick-up point, the rider's cancellation fee is eligible for a waiver. Ryde publishes no rule on this.",
+ "params": [
+  {
+   "name": "DRIVER_LATE_GRACE_S",
+   "value": 180,
+   "unit": "s"
+  }
+ ],
+ "produces": [
+  "CW-R-DRIVER-LATE"
+ ],
+ "produces_finding": null,
+ "sources": [
+  {
+   "type": "INDUSTRY",
+   "doc": "IND-BENCHMARK-NOTES",
+   "quote_kind": "paraphrase",
+   "source_file": "packs/sources/IND-BENCHMARK-NOTES.txt"
+  }
+ ],
+ "set": "random"
+}

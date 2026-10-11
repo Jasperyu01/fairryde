@@ -1,0 +1,16 @@
+RYDE HELP CENTRE ARTICLE 52596204611993
+TITLE: How is the Payment Transaction Fee calculated?
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/52596204611993-How-is-the-Payment-Transaction-Fee-calculated
+EDITED: 2025-11-21
+
+The fee is based on card type and will be shown as "Transaction Fee" on your ride receipt.
+
+- 1.96% + $0.24 for Local Visa, Mastercard and Rydecoins
+- 3.3% + $0.50 for AMEX, Foreign Cards & Others
+- Additional 3% applies to all Foreign Debit/Credit Cards & Alipay on top of the prevailing transaction fee
+
+Local Foreign
+
+[Image]. [Image]

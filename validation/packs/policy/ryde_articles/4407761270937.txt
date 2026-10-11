@@ -1,0 +1,8 @@
+RYDE HELP CENTRE ARTICLE 4407761270937
+TITLE: If a driver arrives during the rider's grace period, will  the grace period for cancellation be reduced?
+AUDIENCE: Rider
+SECTION: Booking a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/4407761270937-If-a-driver-arrives-during-the-rider-s-grace-period-will-the-grace-period-for-cancellation-be-reduced
+EDITED: 2023-01-01
+
+Riders are guaranteed 3 minutes of grace period from the time of match and/or 15 minutes before scheduled time for Advance Trip Request before the Cancellation Fee kicks in.

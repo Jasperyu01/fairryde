@@ -1,0 +1,806 @@
+{
+ "kb_version": "0.1.0",
+ "plan_sha256": "cd4d67fb771a34dac61af2234c5da725a896b908a7c331b2440832d5d1550223",
+ "metrics": {
+  "M1": {
+   "name": "Taxonomy Accuracy",
+   "num": 18,
+   "den": 20,
+   "rate": 0.9,
+   "wilson95": [
+    0.699,
+    0.972
+   ],
+   "status": "GOOD",
+   "thresholds": {
+    "good": ">= 0.90",
+    "acceptable": ">= 0.80",
+    "bad": "< 0.80"
+   },
+   "verdicts": {
+    "PASS": 18,
+    "UNCOVERED": 2
+   },
+   "supplementary": {
+    "coverage": 0.9,
+    "uncovered": [
+     "C15",
+     "C16"
+    ],
+    "blind_judge_vs_kb_same_primary": "17/20",
+    "same_primary_if_catch_all_equals_NONE": "19/20",
+    "blind_judge_vs_kb_same_is_dispute": "18/20",
+    "is_dispute_wrong_after_review": [
+     "C08"
+    ],
+    "strict_accuracy_type_and_routing": {
+     "num": 17,
+     "den": 20,
+     "rate": 0.85,
+     "wilson95": [
+      0.64,
+      0.948
+     ]
+    },
+    "codes_most_named_in_definition_issues": [
+     [
+      "CLS-01",
+      5
+     ],
+     [
+      "SE-CONDUCT",
+      4
+     ],
+     [
+      "CLS-02",
+      3
+     ],
+     [
+      "CW-DRIVERNOSHOW",
+      3
+     ],
+     [
+      "FC-OTHER",
+      3
+     ],
+     [
+      "CW-NOSHOW",
+      2
+     ]
+    ]
+   }
+  },
+  "M2": {
+   "name": "Ontology Grounding Rate",
+   "num": 11,
+   "den": 14,
+   "rate": 0.786,
+   "wilson95": [
+    0.524,
+    0.924
+   ],
+   "status": "BAD",
+   "thresholds": {
+    "good": ">= 0.90",
+    "acceptable": ">= 0.80",
+    "bad": "< 0.80"
+   },
+   "verdicts": {
+    "PASS": 11,
+    "WRONG_RELATION": 1,
+    "UNSUPPORTED": 2
+   },
+   "non_pass": [
+    {
+     "id": "O08",
+     "item": "Relation ENT-TRIP has_dropoff ENT-PLACE (1:1)",
+     "verdict": "WRONG_RELATION",
+     "severity": "CRITICAL"
+    },
+    {
+     "id": "O09",
+     "item": "Relation ENT-EVIDENCE wraps any business record (1:1)",
+     "verdict": "UNSUPPORTED",
+     "severity": "MINOR"
+    },
+    {
+     "id": "O10",
+     "item": "Relation ENT-ARGUMENT rebuts ENT-ARGUMENT (N:N)",
+     "verdict": "UNSUPPORTED",
+     "severity": "MINOR"
+    }
+   ],
+   "supplementary": {
+    "pass_if_unsupported_minor_design_additions_were_allowed": "13/14"
+   }
+  },
+  "M3": {
+   "name": "Rule Grounding Rate",
+   "num": 13,
+   "den": 20,
+   "rate": 0.65,
+   "wilson95": [
+    0.433,
+    0.819
+   ],
+   "status": "BAD",
+   "thresholds": {
+    "good": ">= 0.85",
+    "acceptable": ">= 0.70",
+    "bad": "< 0.70"
+   },
+   "verdicts": {
+    "PASS": 13,
+    "CONFLICT": 3,
+    "MISSING_EXCEPTION": 2,
+    "UNSUPPORTED": 2
+   },
+   "by_credibility_stratum": {
+    "A": "4/6",
+    "B": "1/4",
+    "C": "2/3",
+    "D": "6/7"
+   },
+   "supplementary": {
+    "post_stratified_kb_level_estimate": 0.708,
+    "post_stratified_status": "ACCEPTABLE",
+    "post_stratified_approx_95": [
+     0.528,
+     0.888
+    ],
+    "approx_note": "normal approximation with finite-population correction; strata of 3 to 7 rules make it rough",
+    "critical_path_DT_CW_NOSHOW_R8": [
+     {
+      "rule_id": "CW-R03",
+      "verdict": "PASS",
+      "severity": null,
+      "credibility_check": "OK"
+     },
+     {
+      "rule_id": "CW-R06",
+      "verdict": "PASS",
+      "severity": null,
+      "credibility_check": "TOO_HIGH"
+     },
+     {
+      "rule_id": "CW-F04",
+      "verdict": "UNSUPPORTED",
+      "severity": "CRITICAL",
+      "credibility_check": "TOO_HIGH"
+     }
+    ],
+    "credibility_checks_all_22_reviewed": {
+     "OK": 17,
+     "TOO_HIGH": 4,
+     "TOO_LOW": 1
+    },
+    "credibility_too_high_among_B_and_C_reviewed": "4/8"
+   }
+  },
+  "M4": {
+   "name": "Conflict/Unsupported Rate",
+   "num": 7,
+   "den": 34,
+   "rate": 0.206,
+   "wilson95": [
+    0.103,
+    0.368
+   ],
+   "status": "BAD",
+   "thresholds": {
+    "good": "<= 0.05",
+    "acceptable": "<= 0.10",
+    "bad": "> 0.10"
+   },
+   "direction": "lower is better",
+   "items": [
+    {
+     "layer": "rule",
+     "id": "EXP-02",
+     "verdict": "CONFLICT",
+     "severity": "MINOR"
+    },
+    {
+     "layer": "rule",
+     "id": "CW-F04",
+     "verdict": "UNSUPPORTED",
+     "severity": "CRITICAL"
+    },
+    {
+     "layer": "rule",
+     "id": "EXP-01",
+     "verdict": "UNSUPPORTED",
+     "severity": "MINOR"
+    },
+    {
+     "layer": "rule",
+     "id": "FC-R08",
+     "verdict": "CONFLICT",
+     "severity": "CRITICAL"
+    },
+    {
+     "layer": "rule",
+     "id": "FRD-02",
+     "verdict": "CONFLICT",
+     "severity": "CRITICAL"
+    },
+    {
+     "layer": "ontology",
+     "id": "O09",
+     "verdict": "UNSUPPORTED",
+     "severity": "MINOR"
+    },
+    {
+     "layer": "ontology",
+     "id": "O10",
+     "verdict": "UNSUPPORTED",
+     "severity": "MINOR"
+    }
+   ],
+   "supplementary": {
+    "critical_or_major_only": {
+     "num": 3,
+     "den": 34,
+     "rate": 0.088,
+     "wilson95": [
+      0.03,
+      0.23
+     ],
+     "status": "ACCEPTABLE"
+    },
+    "overlap_note": "M4's numerator is a subset of the M2 and M3 failures, so M2, M3 and M4 are not independent signals"
+   }
+  },
+  "M5": {
+   "name": "Held-out Decision Accuracy",
+   "num": 11,
+   "den": 15,
+   "rate": 0.733,
+   "wilson95": [
+    0.48,
+    0.891
+   ],
+   "status": "ACCEPTABLE",
+   "thresholds": {
+    "good": ">= 0.85",
+    "acceptable": ">= 0.70",
+    "bad": "< 0.70"
+   },
+   "by_decider": {
+    "engine": "2/4",
+    "kb_applier": "9/11"
+   },
+   "errors": [
+    {
+     "case_id": "E01",
+     "reference": "UPHOLD",
+     "kb": "ESCALATE_HUMAN",
+     "kb_amount": null,
+     "kb_tier": "HUMAN",
+     "cause": "KB_RULE_WRONG",
+     "severity": "CRITICAL",
+     "direction": "safe",
+     "rules": [
+      "CW-F06",
+      "CW-R12",
+      "DT-CW-NOSHOW R7"
+     ]
+    },
+    {
+     "case_id": "E03",
+     "reference": "UPHOLD",
+     "kb": "ESCALATE_HUMAN",
+     "kb_amount": null,
+     "kb_tier": "HUMAN",
+     "cause": "KB_RULE_WRONG",
+     "severity": "CRITICAL",
+     "direction": "safe",
+     "rules": [
+      "CW-F06",
+      "CW-R12",
+      "DT-CW-NOSHOW R7"
+     ]
+    },
+    {
+     "case_id": "E07",
+     "reference": "UPHOLD",
+     "kb": "ESCALATE_HUMAN",
+     "kb_amount": null,
+     "kb_tier": "HUMAN",
+     "cause": "KB_RULE_WRONG",
+     "severity": "CRITICAL",
+     "direction": "safe",
+     "rules": [
+      "CW-F06",
+      "CW-R12"
+     ]
+    },
+    {
+     "case_id": "E10",
+     "reference": "ESCALATE_HUMAN",
+     "kb": "PARTIAL_REFUND",
+     "kb_amount": 9.6,
+     "kb_tier": "APPROVE",
+     "cause": "KB_RULE_WRONG",
+     "severity": "CRITICAL",
+     "direction": "unsafe",
+     "rules": [
+      "FC-R03",
+      "FC-R05",
+      "GEN-R07"
+     ]
+    }
+   ],
+   "supplementary": {
+    "strict_accuracy_same_human_route": {
+     "num": 11,
+     "den": 15,
+     "rate": 0.733,
+     "wilson95": [
+      0.48,
+      0.891
+     ]
+    },
+    "safety_cases_reaching_a_human": "1/1",
+    "references_settled": "15/15",
+    "error_direction": {
+     "safe": 3,
+     "unsafe": 1
+    }
+   }
+  }
+ },
+ "decision": {
+  "verdict": "NO_GO",
+  "checks": {
+   "metrics_bad": 3,
+   "metrics_good": 1,
+   "critical_findings_on_DISP002_path": [
+    "CW-F04"
+   ],
+   "systematic_issues": 9,
+   "systematic_critical": 3
+  },
+  "rule": {
+   "GO": "all five metrics at least acceptable, at least three good, no CRITICAL finding on the DISP-002 critical path, and no systematic issue (the same failure pattern twice or more in one layer)",
+   "CONDITIONAL_GO": "at most one metric below acceptable, or CRITICAL findings that have a listed fix; agent building may start on the parts not affected, and the affected layer is re-validated after the fix",
+   "NO_GO": "two or more metrics bad, or a systematic CRITICAL issue",
+   "expand": "If a metric's interval reaches below its bad line, or a systematic issue appears, double the sample for that layer in the next round"
+  },
+  "robustness": {
+   "registered": {
+    "statuses": {
+     "M1": "GOOD",
+     "M2": "BAD",
+     "M3": "BAD",
+     "M4": "BAD",
+     "M5": "ACCEPTABLE"
+    },
+    "bad": 3,
+    "verdict": "NO_GO"
+   },
+   "M3_post_stratified": {
+    "statuses": {
+     "M1": "GOOD",
+     "M2": "BAD",
+     "M3": "ACCEPTABLE",
+     "M4": "BAD",
+     "M5": "ACCEPTABLE"
+    },
+    "bad": 2,
+    "verdict": "NO_GO"
+   },
+   "M3_post_stratified_and_M2_design_allowed": {
+    "statuses": {
+     "M1": "GOOD",
+     "M2": "GOOD",
+     "M3": "ACCEPTABLE",
+     "M4": "BAD",
+     "M5": "ACCEPTABLE"
+    },
+    "bad": 1,
+    "verdict": "NO_GO"
+   },
+   "all_three_lenient_readings": {
+    "statuses": {
+     "M1": "GOOD",
+     "M2": "GOOD",
+     "M3": "ACCEPTABLE",
+     "M4": "ACCEPTABLE",
+     "M5": "ACCEPTABLE"
+    },
+    "bad": 0,
+    "verdict": "NO_GO"
+   }
+  },
+  "expand_next_round": {
+   "layers": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5"
+   ],
+   "rule": "If a metric's interval reaches below its bad line, or a systematic issue appears, double the sample for that layer in the next round"
+  }
+ },
+ "systematic_issues": [
+  {
+   "layer": "rules",
+   "pattern": "credibility label higher than the KB's own credibility_principle allows (a Ryde condition extended by FairRyde should be D)",
+   "members": [
+    "CW-F04",
+    "CW-R06",
+    "EXP-01",
+    "FC-R08"
+   ],
+   "critical": true
+  },
+  {
+   "layer": "rules",
+   "pattern": "failing rules that implicate the same rule FC-R06",
+   "members": [
+    "FC-F04",
+    "FC-R08"
+   ],
+   "critical": true
+  },
+  {
+   "layer": "end_to_end",
+   "pattern": "end-to-end errors caused by the same rule CW-F06 / CW-R12",
+   "members": [
+    "E01",
+    "E03",
+    "E07"
+   ],
+   "critical": true
+  },
+  {
+   "layer": "ontology",
+   "pattern": "design relations with no source and no design label",
+   "members": [
+    "O09",
+    "O10"
+   ],
+   "critical": false
+  },
+  {
+   "layer": "taxonomy",
+   "pattern": "definition issue (not a verdict failure) naming CLS-02 in 3 texts",
+   "members": [
+    "C01",
+    "C08",
+    "C18"
+   ],
+   "critical": false
+  },
+  {
+   "layer": "taxonomy",
+   "pattern": "definition issue (not a verdict failure) naming CW-DRIVERNOSHOW in 3 texts",
+   "members": [
+    "C01",
+    "C02",
+    "C10"
+   ],
+   "critical": false
+  },
+  {
+   "layer": "taxonomy",
+   "pattern": "definition issue (not a verdict failure) naming SE-CONDUCT in 4 texts",
+   "members": [
+    "C02",
+    "C05",
+    "C06",
+    "C11"
+   ],
+   "critical": false
+  },
+  {
+   "layer": "taxonomy",
+   "pattern": "definition issue (not a verdict failure) naming CLS-01 in 5 texts",
+   "members": [
+    "C02",
+    "C06",
+    "C08",
+    "C16",
+    "C18"
+   ],
+   "critical": false
+  },
+  {
+   "layer": "taxonomy",
+   "pattern": "definition issue (not a verdict failure) naming FC-OTHER in 3 texts",
+   "members": [
+    "C07",
+    "C15",
+    "C19"
+   ],
+   "critical": false
+  }
+ ],
+ "rules_detail": [
+  {
+   "rule_id": "CLS-05",
+   "stratum": "A",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "A",
+   "source": "V3.1a",
+   "reason": "The organizer dataset grounds the no_show_charge to CW-NOSHOW mapping, and CLS-02 handles code and free-text contradictions as CLS-05 says (the code stays primary). Mismatches between the code and the trip record are handled by the DT-CW-NOSHOW precondition, which does not contradict CLS-05.",
+   "implicated": []
+  },
+  {
+   "rule_id": "CW-F02",
+   "stratum": "A",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "A",
+   "source": "V3.1b",
+   "reason": "Organizer data start the wait at driver_wait_start, and Ryde's on-demand policy starts it at the \"I'm Here\" press, with GPS presence checked through CW-R06. Advance bookings go to CW-F02B, which records its conflict with the older driver article, and GEN-R02 names driver_wait_start as the authority when records disagree, so nothing is left unrecorded.",
+   "implicated": []
+  },
+  {
+   "rule_id": "DM-R05",
+   "stratum": "A",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "A",
+   "source": "V3.1a",
+   "reason": "Every element is in the current driver article and no rule in rules.yaml contradicts it; MAT-02 and MAT-03 govern how appeals are matched and reviewed without setting a different window.",
+   "implicated": []
+  },
+  {
+   "rule_id": "EXP-02",
+   "stratum": "A",
+   "verdict": "CONFLICT",
+   "severity": "MINOR",
+   "credibility_check": "OK",
+   "credibility_label": "A",
+   "source": "V3.1b",
+   "reason": "The rule is grounded in ChordX ONT.4 and ONT.7 and matches the KB's definition of READ mode. It clashes with EXP-03's number check for verbatim clauses that contain numbers, a clash the KB does not record; one sentence exempting quoted spans, which citation verification already checks, would fix it.",
+   "implicated": [
+    "EXP-03"
+   ]
+  },
+  {
+   "rule_id": "FC-F04",
+   "stratum": "A",
+   "verdict": "MISSING_EXCEPTION",
+   "severity": "CRITICAL",
+   "credibility_check": "OK",
+   "credibility_label": "A",
+   "source": "V3.1a",
+   "reason": "FC-F04 still omits the exceptions in its own cited article (RydeSEND fares include ERP; carpool passengers pay 50%); FC-R06 records them but nothing applies them to F-ERP-EXPECTED, and FC-R07 refunds only ERP charged above that unadjusted total. A carpool rider charged the full ERP, or a RydeSEND rider charged any ERP, would get no refund.",
+   "implicated": [
+    "FC-R06",
+    "FC-R07"
+   ]
+  },
+  {
+   "rule_id": "MAT-04",
+   "stratum": "A",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "A",
+   "source": "V3.1b",
+   "reason": "Both waiver articles bar requests submitted after 30 days of the trip, for the Cancellation Fee (which covers the no-show charge) and for the Waiting Fee. EXP-01 explicitly limits the window to waiver requests, and CW-R07, CW-R08 and CW-R10 are consistent with it.",
+   "implicated": []
+  },
+  {
+   "rule_id": "CW-F04",
+   "stratum": "B",
+   "verdict": "UNSUPPORTED",
+   "severity": "CRITICAL",
+   "credibility_check": "TOO_HIGH",
+   "credibility_label": "B",
+   "source": "V3.2 adjudication",
+   "reviewers": {
+    "a": "UNSUPPORTED",
+    "b": "PASS"
+   },
+   "reason": "Ryde supports only the core test (driver at the pick-up per GPS while waiting); the outlier and data-error set-asides, the approach and window-edge rules, the LEFT/SPARSE/CONSISTENT/UNKNOWN definitions and the GPS_AMBIGUOUS criteria have no source and no label on the rule, whose credibility is B, whose only FairRyde notes cover the radius, gap and outlier-length parameters, and whose statement never names FairRyde. Reviewer b's labels sit in other rules (D rows R5, R9, R10 and AUTH-02 trigger 11), but the LEFT/CONSISTENT split this logic produces feeds rows R4 (waive) and R8 (uphold), both B and so applicable automatically, which lets unlabeled FairRyde design decide a no-show outcome without a human. Under the KB's credibility_principle (a Ryde condition extended by FairRyde is D, as already applied to CW-F03B) the norm is D, so B is too high.",
+   "implicated": []
+  },
+  {
+   "rule_id": "EXP-01",
+   "stratum": "B",
+   "verdict": "UNSUPPORTED",
+   "severity": "MINOR",
+   "credibility_check": "TOO_HIGH",
+   "credibility_label": "B",
+   "source": "V3.1b",
+   "reason": "The builder note cites MGF2 paras 3.48, 3.51 and 3.54, which I also checked online, but the decisive-rule markers, the two to four evidence items, the missing-evidence list and the claim that the 30-day limit does not bind FairRyde reviews have no source and no C, D or FairRyde label; META-05 and GEN-R03 back only the credibility labels and the history disclosure. EXP rules sit off the decision path, so this is a labeling fix.",
+   "implicated": []
+  },
+  {
+   "rule_id": "FC-R01",
+   "stratum": "B",
+   "verdict": "MISSING_EXCEPTION",
+   "severity": "MAJOR",
+   "credibility_check": "OK",
+   "credibility_label": "B",
+   "source": "V3.1a",
+   "reason": "The fixed-fare norm is supported and the contradicting driver pages are recorded in META-04, but the statement omits the cited article's toll caveat and its 'conduct information only' clause has no source or label. The fare outcome in the route claim is right, but the wording can suppress the detour-caused ERP refund that FC-R08 gives unless the ERP is split into its own FC-TOLL claim.",
+   "implicated": [
+    "FC-R08"
+   ]
+  },
+  {
+   "rule_id": "GEN-R06",
+   "stratum": "B",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "B",
+   "source": "V3.1b",
+   "reason": "The ToU give account suspension to Ryde, and IMDA guidance (quote confirmed in the PDF) requires human approval before sensitive actions; the rule is stricter than both. DM-R06, SE-R01, FC-R07, FC-R10 and AUTH-03 all leave sanctions to humans, so no rule contradicts it.",
+   "implicated": []
+  },
+  {
+   "rule_id": "CW-F02B",
+   "stratum": "C",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "C",
+   "source": "V3.1a",
+   "reason": "The KB rates the anchor C, records the conflict with the 2023 driver article and keeps open question O3; CW-F02, CW-F03 and CW-F03B use the anchor consistently. The 2024 driver policy pages (20244064619161, 33362932998937) also count from 'I'm Here' and could be added to the conflict note.",
+   "implicated": []
+  },
+  {
+   "rule_id": "CW-R08",
+   "stratum": "C",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "C",
+   "source": "V3.1b",
+   "reason": "Grab's official policy supports both conditions, the statement says openly that Ryde publishes no such rule, and CW-R07 records CW-R08 as its exception, so the departure from Ryde's unconditional fee is recorded. The rule does not say what \"assignment ETA\" means for an advance booking, a gap worth closing.",
+   "implicated": []
+  },
+  {
+   "rule_id": "FC-R08",
+   "stratum": "C",
+   "verdict": "CONFLICT",
+   "severity": "CRITICAL",
+   "credibility_check": "TOO_HIGH",
+   "credibility_label": "C",
+   "source": "V3.2 adjudication",
+   "reviewers": {
+    "a": "CONFLICT",
+    "b": "MISSING_EXCEPTION"
+   },
+   "reason": "FC-R08 refunds the full ERP(actual) minus ERP(recommended), contradicting FC-R06 (A) and Ryde's ERP pages (RydeSEND fares include ERP; carpool and RydePOOL riders pay 50%), so those trips are over-refunded, and rules.yaml records no conflict or precedence between FC-R08 and FC-R06. These carve-outs are not in FC-R08's only cited source (the LTA offence) but in another rule and its Ryde sources, so CONFLICT fits better than MISSING_EXCEPTION; FC-R08 also drops the offence's PDVL-only scope, and its justification test (FC-F03) omits Ryde's permission to take the most efficient GPS route, which FC-R02 applies to FC-ROUTE only. The refund is labeled FairRyde's generalization and cites no outside practice, so under the scale and the weakest-element principle the norm is D, not C.",
+   "implicated": [
+    "FC-R02",
+    "FC-R06"
+   ]
+  },
+  {
+   "rule_id": "CLS-03",
+   "stratum": "D",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "D",
+   "source": "V3.1a",
+   "reason": "The pass-1 gap was labeling only, and the KB rates the rule D with a FAIRRYDE-DECISIONS entry. CLS-01, CLS-04 and GEN-R07 are consistent with it.",
+   "implicated": []
+  },
+  {
+   "rule_id": "CLS-04",
+   "stratum": "D",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "TOO_LOW",
+   "credibility_label": "D",
+   "source": "V3.1b",
+   "reason": "The KB openly labels the rule as FairRyde design (D, FAIRRYDE-DECISIONS), which settles the missing citation. It agrees with CLS-02 (one claim per contested charge), CLS-03 and CW-R11.",
+   "implicated": []
+  },
+  {
+   "rule_id": "CW-F07",
+   "stratum": "D",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "D",
+   "source": "V3.1a",
+   "reason": "The KB rates the rule D, which openly labels the pin-versus-venue comparison as FairRyde's design. Its consumer CW-R11 keeps the outcome unchanged because the pin is the designated location (ToU s.7.2) and only adds approval when the rider says they were at the venue, consistent with Ryde's 'Standard cancellation fees may apply' for a wrong pin.",
+   "implicated": []
+  },
+  {
+   "rule_id": "DQ-03",
+   "stratum": "D",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "D",
+   "source": "V3.1b",
+   "reason": "The KB openly labels the rule as FairRyde design (D, FAIRRYDE-DECISIONS), so its unsourced elements are acceptable. CW-F07 uses the OneMap reference coordinates and AUTH-05 says such lookups are not evidence, which is consistent with this rule.",
+   "implicated": []
+  },
+  {
+   "rule_id": "FC-F02",
+   "stratum": "D",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "D",
+   "source": "V3.1a",
+   "reason": "The method carries credibility D and a FAIRRYDE-DECISIONS entry, so its unsourced elements are an openly labeled assumption. FC-R03 and FC-R12 use it consistently: a straight-line lower bound without spatial confirmation leads to escalation, not an adverse finding.",
+   "implicated": []
+  },
+  {
+   "rule_id": "FRD-02",
+   "stratum": "D",
+   "verdict": "CONFLICT",
+   "severity": "CRITICAL",
+   "credibility_check": "OK",
+   "credibility_label": "D",
+   "source": "V3.1a",
+   "reason": "The D label makes the signal an openly labeled assumption, but AUTH-04 gate G3 turns a disagreement between the fraud check or history-aware pass and the history-blind pass into outcome ESCALATE_HUMAN (tier HUMAN). A flagged rider's would-be win is then escalated while a loss only needs approval, which contradicts FRD-02's 'never changes the outcome ... whichever party the outcome favors' and AUTH-02 trigger 2, and the KB does not record it.",
+   "implicated": [
+    "AUTH-04"
+   ]
+  },
+  {
+   "rule_id": "MAT-03",
+   "stratum": "D",
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "D",
+   "source": "V3.1b",
+   "reason": "The widening to all automatic rulings and the attached trace are labeled FairRyde design (D). The 24-hour condition I flagged in pass 1 is kept in DM-R05 for cleaning appeals, and cleaning rulings are never automatic (DM-R04, AUTH-02 trigger 3); AUTH-01, AUTH-02 trigger 6, AUTH-06 and MAT-02 are consistent with this rule.",
+   "implicated": []
+  }
+ ],
+ "critical_path_detail": [
+  {
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "OK",
+   "credibility_label": "A",
+   "source": "V3.1a",
+   "reason": "The RydeTAXI exception found in pass 1 is carried by eligibility rule CW-R00, which the KB lists among the rules that stop a case before the outcome rules run, so CW-R03 need not repeat it. No rule contradicts CW-R03, and the organizer's 5-minute free wait versus 8-minute threshold is recorded as open question O10.",
+   "implicated": [],
+   "rule_id": "CW-R03"
+  },
+  {
+   "verdict": "PASS",
+   "severity": null,
+   "credibility_check": "TOO_HIGH",
+   "credibility_label": "B",
+   "source": "V3.1b",
+   "reason": "The KB labels every unsourced part as FairRyde design: the parameters are D in the note, CONTESTED is DQ-01/GEN-R02 (D, row R2), the re-anchored ARRIVAL_UNCONFIRMED path is CW-F03B (D, FAIRRYDE D26), and UNKNOWN goes through GEN-R01 (row R3, D). What remains is the rule's own B label, which lets a no-show uphold that depends on the D reading enter row R8 rated B.",
+   "implicated": [],
+   "rule_id": "CW-R06"
+  },
+  {
+   "verdict": "UNSUPPORTED",
+   "severity": "CRITICAL",
+   "credibility_check": "TOO_HIGH",
+   "credibility_label": "B",
+   "source": "V3.2 adjudication",
+   "reviewers": {
+    "a": "UNSUPPORTED",
+    "b": "PASS"
+   },
+   "reason": "Ryde supports only the core test (driver at the pick-up per GPS while waiting); the outlier and data-error set-asides, the approach and window-edge rules, the LEFT/SPARSE/CONSISTENT/UNKNOWN definitions and the GPS_AMBIGUOUS criteria have no source and no label on the rule, whose credibility is B, whose only FairRyde notes cover the radius, gap and outlier-length parameters, and whose statement never names FairRyde. Reviewer b's labels sit in other rules (D rows R5, R9, R10 and AUTH-02 trigger 11), but the LEFT/CONSISTENT split this logic produces feeds rows R4 (waive) and R8 (uphold), both B and so applicable automatically, which lets unlabeled FairRyde design decide a no-show outcome without a human. Under the KB's credibility_principle (a Ryde condition extended by FairRyde is D, as already applied to CW-F03B) the norm is D, so B is too high.",
+   "implicated": [],
+   "rule_id": "CW-F04"
+  }
+ ],
+ "evidence_traceability": {
+  "quotes_checked": 455,
+  "verified_in_cited_file": 453,
+  "found_in_another_source_file": 2,
+  "not_found": 0,
+  "share": 1.0
+ }
+}

@@ -1,0 +1,71 @@
+# FairRyde Knowledge Base - PSEUDONYMIZATION AND DATA HANDLING (ChordX ONT.11, ONT.10.3)
+# Applies before any case text reaches a cloud LLM, the annotation sheet or the precedent library.
+# Organizer data is synthetic, but the same pipeline must run on it so the flow is proven before any real data appears.
+
+meta:
+  version: 0.1.0
+  status: draft
+  updated: 2026-10-05
+  owner: Jasper
+  sensitivity_note: "Classes are provisional until aligned with ChordX SEC.6 (chordx_security.md not yet available)."
+
+principles:
+  - "Original case text is not sent to cloud LLMs by default; the pseudonymized version is. Any exception needs the data owner's explicit approval and is limited to excerpts (ONT.11.2 item 9)."
+  - "Recognition is a lookup first (closed dictionary from structured fields), discovery by pattern second (ONT.11.2 item 1)."
+  - "The mapping table contains real values: local only, never committed, never uploaded, never sent (ONT.11.2 item 8)."
+  - "Scripts print counts only, never the matched text (ONT.11.1 step 2)."
+  - "The Judge's history-blind pass sees no names, account IDs or history at all (GEN-R03), which is stricter than pseudonymization."
+  - "Deterministic tools compute distances from coordinates; the LLM receives the findings (for example 'pin is 1,259 m from the venue'), not raw coordinates of pick-up points that might be homes."
+
+replace:                 # pseudonymize (ONT.11.2 item 7: people, companies, contacts, accounts, vehicle identifiers)
+  - {type: PERSON_NAME, structured_fields: [rider_profile.name, driver_profile.name], free_text: [dispute_ticket.description, "chat_logs[].content", "app_events[].details"], code: "RIDER-NAME-1, DRIVER-NAME-1", method: "Closed dictionary from the profile fields, including every name token of two letters or more (given name, surname) so greetings such as 'Hi Daniel' or 'Dear Ng' are caught (ONT.11.4 item 5)"}
+  - {type: VEHICLE_PLATE, structured_fields: ["driver_profile.vehicle (inside the brackets)"], free_text: ["chat_logs[].content", "app_events[].details"], code: "PLATE-1", method: "Closed dictionary, then the Singapore plate pattern"}
+  - {type: ACCOUNT_ID, structured_fields: [rider_profile.rider_id, driver_profile.driver_id, trip_data.rider_id, trip_data.driver_id], free_text: ["app_events[].details"], code: "RIDER-1, DRIVER-1", method: "Structured fields; organizer IDs are already pseudonymous, so this matters for real data", keep_original_for_synthetic: true}
+  - {type: PHONE, method: "Pattern: Singapore numbers with or without +65, spaces or hyphens; partial replacements are a known failure (ONT.11.4)"}
+  - {type: EMAIL, method: "Pattern"}
+  - {type: NRIC_FIN, method: "Pattern: one of S T F G M, seven digits, one letter"}
+  - {type: CARD_OR_BANK_NUMBER, method: "Pattern: 12 to 19 digits (with spaces or hyphens) passing the Luhn check"}
+  - {type: UNIT_NUMBER, method: "Pattern '#12-345': identifies a home; public venue names stay"}
+
+keep:                    # ONT.11.2 item 7: what the rules need
+  - "Place names of public venues, and coordinates inside the deterministic tools"
+  - "Dates and times"
+  - "Amounts"
+  - "Clause, rule and reason codes; policy terms"
+  - "Trip and dispute IDs (case keys)"
+
+mapping_table:           # ONT.11.1 step 3 and ONT.11.3
+  location: "kb/private/mapping.xlsx on the owner's machine only; kb/private/ is listed in kb/.gitignore"
+  columns: [code, real_value, aliases, type, scope, status, keep_original, group]
+  column_notes:
+    scope: "global, or case:<dispute_id> when a word means different things in different cases (ONT.11.2 item 2)"
+    status: "auto (from structured fields) or review (found by pattern); people review only the review rows (ONT.11.1 step 4)"
+  protect_human_edits:   # ONT.11.3
+    - "Once the table is accepted, never regenerate it; back up before every change"
+    - "Find human edits by rebuilding a baseline and diffing cell by cell; change only cells nobody edited"
+    - "Do not write the file while someone has it open in Excel; for big changes create a new file"
+    - "Refer to rows by content (value and type), not by row number"
+
+procedure:               # ONT.11.1 adapted to case files
+  - "1 Structure probe without reading the text: list JSON paths, array lengths and free-text fields"
+  - "2 Build the closed dictionary from structured fields (names, plates, IDs); print counts only"
+  - "3 Pattern pass over free text (phones, emails, NRIC, cards, unit numbers, plates); new hits get status review"
+  - "4 Human reviews the review rows only"
+  - "5 Replace locally, then run the leak scan (below) on the output and the dictionary terms; fix and repeat until 0"
+  - "6 Send only the pseudonymized case to cloud models; keep the mapping local for re-identification in the UI"
+
+leak_scan:               # ONT.11.4: zero name hits does not mean clean
+  checks:
+    - "Every dictionary term and name token (case-insensitive, word boundaries)"
+    - "Phone shapes: +65 followed by 8 digits with optional spaces or hyphens; bare 8-digit numbers starting with 3, 6, 8 or 9; half-replaced numbers"
+    - "Singapore plates (for example SBA 1234 A, SBA1234A)"
+    - "NRIC or FIN; e-mail addresses; 12 to 19 digit numbers passing Luhn"
+    - "Unit numbers (#12-345)"
+    - "Name fragments right after a code (for example 'DRIVER-NAME-1 Kumar') or right before it (for example 'Mr Tan DRIVER-NAME-1'), ONT.11.4 items 4 and 6"
+    - "Generated outputs and our own YAML files too: the build scans both workbooks, the reports and kb/*.yaml for the dictionary terms and patterns and expects zero hits (sources/ keeps the organizer's original file)"
+  same_rules_as_runtime: "The leak scan uses the same patterns as the runtime boundary check that blocks unredacted text from cloud calls, so a case that passes one passes the other."
+  report: "Counts per check only."
+
+retention:               # ONT.10.3
+  - "Precedent library and labels are pseudonymized before storage"
+  - "Evaluation cases are never stored in the precedent library or used as few-shot examples"

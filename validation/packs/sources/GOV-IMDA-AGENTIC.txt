@@ -1,0 +1,405 @@
+DOCUMENT GOV-IMDA-AGENTIC
+TITLE: IMDA Model AI Governance Framework for Agentic AI, Version 1.0 (22 Jan 2026)
+TYPE: GOV_GUIDANCE
+URL: https://www.imda.gov.sg/-/media/imda/files/about/emerging-tech-and-research/artificial-intelligence/mgf-for-agentic-ai.pdf
+DATE: 2026-01-22
+LOCAL COPY: kb/sources/research/09_fact_check.md
+
+# 09 Fact check: decision-critical claims in research notes 01 to 08
+
+Checked 5 Oct 2026 for the FairRyde team (Ryde track, Tencent Cloud AI CAN DO IT Hackathon Singapore 2026).
+
+Method. Each claim was traced to the URL cited in notes 01 to 08 and the primary source was fetched with WebFetch. Ryde help-centre articles were read through the public Zendesk API (`https://help.rydesharing.com/api/v2/help_center/en-us/articles/{id}.json`), which returns `created_at`, `edited_at` and `updated_at`; "edited" below is the `edited_at` date (UTC). Section and category names come from the same API (`sections.json`, `categories.json`: category 900000276366 = "Driver", 115000109034 = "Rider"). The three rival GitHub repos were cloned on 5 Oct 2026 (about 09:37 SGT) and inspected with git. Quotes are verbatim as returned by the fetch tool. Where a source uses a dash, it is rendered here as a hyphen to follow the house style (no em or en dashes). Nothing below is guessed; where a source could not be read, the verdict says so.
+
+Verdict key: CONFIRMED (source supports the claim), CORRECTED (source gives a different fact), CONFLICT (sources disagree), UNVERIFIABLE (could not be checked, reason given).
+
+## Summary table
+
+| # | Claim (short) | Verdict | Correction or key caveat (one line) |
+|---|---|---|---|
+| 1 | Ryde rider cancel and no-show rules; S$6.61 vs S$5; driver S$4.50 | CONFIRMED (note 06 wording CORRECTED; Ryde's own driver pages CONFLICT on the waiting fee) | Riders pay S$6.61 for a late cancel or a driver-cancelled no-show, and S$5 only as a waiting fee on a completed trip; S$4.50 is what driver pages say the driver receives, so note 06's "$4.50 after 3 minutes" is the driver figure, not the rider charge |
+| 2 | Fixed fares; "most efficient route according to GPS"; manual ERP and fraud; RydeTAXI metered; S$3 edit fee; Dec 2025 article | CONFIRMED | The Dec 2025 "actual driven distance and time" sentence is in a Driver-category article answering "Will this affect my earnings?"; it describes driver pay, not rider fares |
+| 3 | Cleaning caps S$40 / S$120 / S$200; 24 h cleaning; 48 h claim; plate photo; stamped receipt; Ryde pays regardless | CONFIRMED | The payment guarantee applies once Ryde approves the claim; Ryde keeps "sole discretion" over approval and amount |
+| 4 | DR < 4.80, CR > 17.5%; fraud line; dashcam ban | CONFIRMED | The ban covers all IVRDs and dashcams on the platform ("at this moment"); the 21-demerit-point line refers only to unauthorised inward-facing devices |
+| 5 | 30-day waiver window; voucher refunds; ToU 6 Apr 2022, "absolute discretion", Singapore arbitration | CONFIRMED | The ToU also allow refunds to the payment card; arbitration is SIAC, sole arbitrator, seat Singapore |
+| 6 | 16 Sep 2026 hackathon release: Dolli quoted, "fair and explainable", assessment areas | CORRECTED (attribution) | Core facts confirmed, but "fair and transparent dispute outcomes" and "greater automation, faster decision-making and more scalable operations" are Ryde's narrative text, not Dolli's words |
+| 7 | FY2025 revenue S$12.5M, net loss S$17.4M | CONFIRMED | Revenue S$12,506K, net loss S$17,449K (Form 20-F filed 24 Apr 2026) |
+| 8 | NPHVA recognised 10 Feb 2026 under the PWA, incl. "dispute resolution" | CONFIRMED | |
+| 9 | 3-year LTA ride-hail operator licence, Dec 2024 | CONFIRMED | Awarded 23 Dec 2024; licences commence 1 Jan 2025 |
+| 10 | Grab advance booking wait counted from pickup time; Bolt from scheduled start | CONFIRMED | The Bolt text is a driver-facing support article |
+| 11 | Grab ERP: excluded from upfront fare (note 02) vs included (note 08) | CORRECTED | Grab SG pages say the upfront price is "excluding tolls and surcharges" and tolls are charged after the trip; note 08's "ERP included in standard fares" is not in its AsiaOne source; Grab's help centre is JavaScript-only and unreadable |
+| 12 | Gojek S$3 per destination edit, S$5 per stop, ERP on top | CONFIRMED | S$3 applies to GoCar; GoCar Premium and Premium XL pay S$5 per edit, plus an adjusted fare if further |
+| 13 | DiDi detour test ≥120% of map distance and ≥3 km, app-navigation exemption; source | CONFIRMED | Source is DiDi itself (an undated driver liability-terms page on DiDi's udache.com domain), not media; the reference is Tencent Maps mileage |
+| 14 | Cleaning caps Grab S$120, TADA S$150 | UNVERIFIABLE (Grab part); TADA CONFIRMED | Grab's S$120 is the driver's description in a 3 Jun 2026 MustShareNews story, not a Grab-published cap |
+| 15 | Lyft cut resolution time 87%; Grab SOP agents automate 87% of ATO investigations | CONFIRMED | Lyft's figure is average customer-service resolution time, not disputes specifically; Grab's is an internal Account Takeover Investigations bot |
+| 16 | Amsterdam Court of Appeal (2023) rejected Uber's token human review | CONFIRMED | ECLI:NL:GHAMS:2023:793 (4 Apr 2023); the remedy in that ruling was an order to disclose Art 15(1)(h) GDPR information |
+| 17 | CodeBuddy and WorkBuddy share credits; multipliers 0.06x to 0.95x (China); codebuddy.ca unrelated | CONFIRMED (third-party sources for the credit facts) | Both credit facts rest on third-party China-edition articles; the same list puts Hy3 at 0.00x (a free promotion per note 03) |
+| 18 | ADP international Free plan: one-time, 30 days, 10,000 credits | CONFIRMED | Also 1 GB knowledge base; the pricing page dates eligibility from 3 Feb 2026, the purchase guide from 13 Feb 2026 |
+| 19 | ADP v2 Chat API streams thought and tool-call messages tagged with the agent name | CONFIRMED | Message Type values include "thought" and "tool_call"; agent name is in `ExtraInfo.AgentName` |
+| 20 | EdgeOne Pages: permanent free plan; Python 3.10 / FastAPI; 120 s cap; SSE status | CONFIRMED; SSE UNVERIFIABLE | 120 s is the configurable maximum for Cloud Functions (default 30 s); streaming or SSE is not documented anywhere checked |
+| 21 | Hy3 via TokenHub, OpenAI-compatible, about US$0.08 / US$0.33 per M tokens, tool calling | CORRECTED | TokenHub's official Hy3 price is US$0.132 per M input and US$0.528 per M output (cache US$0.033); US$0.0825 / US$0.33 is OpenRouter's displayed average paid price; the international endpoint is tokenhub-intl.tencentcloudmaas.com |
+| 22 | IMDA agentic AI framework launched 22 Jan 2026, updated May 2026 | CONFIRMED | Update date (20 May 2026, "Version 1.5") comes from two law-firm sources; IMDA's updated document was not retrieved |
+| 23 | CSA agentic AI addendum finalised 17 Jun 2026 | CONFIRMED | The CSA-published PDF reads "Official publication of Addendum", Version 1.0, 17 Jun 2026 |
+| 24 | "Shortest and most direct route" offence, r 23(1)(c), S$100, 3 points | CONFIRMED (private hire) | Verified on LTA's PDVL (private-hire) offence list dated 1 Apr 2023; the taxi (TDVL) list was not retrievable |
+| 25 | Small Claims Tribunals S$20,000, or S$30,000 with consent | CONFIRMED | |
+| 26 | EU AI Act high-risk obligations from 2 Dec 2027 | CONFIRMED | Applies to Annex III systems; Annex I (product-embedded) systems from 2 Aug 2028 |
+| 27 | Rival repos (RydeResolve-Agent, Mirra-AI, RAA-Tech): URLs, commits, dates, stack, models, eval, accuracy, runtime, Mirra features | CORRECTED (details) | RydeResolve-Agent's first commit was 18 Sep (not 21 Sep), it has 4 author identities, and a side branch runs to 4 Oct with 92.6% (25/27) and 29/33 results; 170 s was only the 25 Sep baseline (91 s p50 on 30 Sep); Mirra-AI has side-branch commits to 5 Oct |
+| 28 | Khan et al. 2024: 76% and 88% vs 48% and 60% | CONFIRMED | |
+| 29 | AAA-ICDR AI Arbitrator, Nov 2025, human arbitrator issues every award | CONFIRMED | |
+| 30 | Spotlighting / datamarking: attack success about 50% to under 3% | CONFIRMED (scoped) | The "under 3%" figure is datamarking on GPT-3.5-Turbo summarization; on Q&A with GPT-3.5-Turbo it fell only to 8.0% |
+
+Totals: 25 CONFIRMED (claims 17, 20 and 30 with stated caveats), 4 CORRECTED (6, 11, 21, 27), 1 UNVERIFIABLE (14, Grab part only; its TADA part is confirmed). No claim is a pure CONFLICT, but two sub-points are: Ryde's own driver pages disagree on the driver waiting fee (claim 1), and the two ADP pages give different eligibility start dates (claim 18). Claim 1 also corrects note 06.
+
+---
+
+## Ryde policy and company
+
+### Claim 1. Rider cancellation and no-show policy; S$6.61 vs S$5; driver S$4.50
+
+Verdict: CONFIRMED for every element as described in note 01. Note 06's wording is CORRECTED. Ryde's own driver pages CONFLICT on the driver-side waiting fee.
+
+Rider policy, "Cancellation and Waiting Fee" (created 30 Sep 2023, edited 26 Feb 2026): https://help.rydesharing.com/hc/en-us/articles/23534478435353-Cancellation-and-Waiting-Fee
+- On-demand: "All cancellations made within 3 minutes of matching are not chargeable."
+- "Rider will be charged a Cancellation Fee of $6.61* if: Rider cancels after 3 minutes of matching OR The driver presses "I'm Here", waits for > 3 minutes for the rider to arrive at the pick-up point and cancels the trip (Rider NO SHOW and no trip completion)"
+- "Riders may be charged a Waiting Time Fee of $5 at the end of the trip if: The driver presses "I'm Here", waits for > 3 minutes for the rider to board, and continues the trip (Rider boards and driver completes trip)."
+- Advance: "All cancellations made > 15 minutes before the scheduled trip time are not chargeable." "If the advanced trip request is accepted only after 5:45 PM, riders will have a 3 minute grace period". "Rider will be charged a Cancellation Fee of $6.61* if: Rider cancels after the cancellation window (< Scheduled - 15mins OR Matched) OR The driver cancels the trip after waiting for > 3 minutes for the Rider to arrive at the pick-up point (Rider NO SHOW and no trip completion)"
+
+GPS condition, "What if my driver hasn't arrived, but has indicated that he/she arrived?" (edited 26 Feb 2026): https://help.rydesharing.com/hc/en-us/articles/4407754403353
+- "Drivers are only allowed to indicate arrival and impose the Waiting Time Fee only if he/she: 1. Is at the pick-up location according to GPS data AND 2. Has waited for more than 3 mins. Otherwise, you will not be charged the $6.61 Waiting Time Fee if any of the above are not fulfilled."
+- Note: this article calls S$6.61 a "Waiting Time Fee", which is inconsistent with the main policy's labels.
+
+Fee goes to the driver:
+- Driver policy, "Cancellation and Waiting Time Policy" (created 3 Jul 2023, edited 23 Apr 2024): https://help.rydesharing.com/hc/en-us/articles/20244064619161-Cancellation-and-Waiting-Time-Policy : "A Cancellation Fee compensates drivers for the time and effort they spend getting to the rider's location." "A Waiting Time Fee allows our drivers to be compensated by riders for the time spent waiting at a pickup location."
+- Cash trips (edited 4 May 2023): https://help.rydesharing.com/hc/en-us/articles/4408070775193 : "the Cancellation or Waiting Time Fee will be deducted from your RydeCoins wallet and credited directly to the driver's wallet."
+
+Driver amounts:
+- Same driver policy (edited 23 Apr 2024): "Driver will receive a Cancellation Fee of $4.50* if: 1. Rider cancels after 3 minutes of matching". "Driver may charge a Waiting Time Fee of $4.50 at the end of the trip if: 1. The driver pressed "I'm Here", waits for > 3 minutes for rider to arrive at pick-up point and cancels the trip (Rider NO SHOW and no trip completion), OR 2. The driver pressed "I'm Here", waits for > 3 minutes for rider to board, and continues the trip".
+- "How Does the Cancellation Fee Work?" (edited 25 Sep 2026, so the S$4.50 figure is not only on 2024 pages): https://help.rydesharing.com/hc/en-us/articles/4408070838297 : "Drivers will receive a $4.50 cancellation fee automatically if they cancel after >3 minutes of waiting."
+- "How Does the Waiting Fee Work?" (edited 25 Sep 2026): https://help.rydesharing.com/hc/en-us/articles/4408071347993 : "Drivers are required to tap on the $5* Waiting Time Fee button upon Drop-off (if applicable)."
+
+Resolution for the report:
+- What the rider pays: S$6.61 when the rider cancels more than 3 minutes after matching (or after the advance-booking window), or when the driver cancels as a no-show after pressing "I'm Here", being at the pickup per GPS and waiting more than 3 minutes. S$5 only as a waiting fee when the driver waited more than 3 minutes and the rider then boarded and the trip was completed.
+- What the driver receives: driver pages say S$4.50 for a cancellation (2024 policy and the 25 Sep 2026 article). For the waiting fee the driver pages CONFLICT: S$4.50 in the 2024 policy versus a "$5*" button in the 25 Sep 2026 article.
+- Note 06 (lines 28, 91 and its rule profile `NO_SHOW_FEE_SGD: 4.50`) takes "$4.50 after 3 minutes" from the driver policy and calls it "current ... no date shown". That page was last edited 23 Apr 2024, and S$4.50 is the driver-side amount, not the rider charge. For the rider charge use S$6.61 (no-show or late cancel) and S$5 (waiting fee).
+
+### Claim 2. Fixed fares, route choice, manual ERP, RydeTAXI, destination fee, Dec 2025 article
+
+Verdict: CONFIRMED.
+
+- "Can I suggest my preferred route to the driver?" (edited 1 Oct 2024): https://help.rydesharing.com/hc/en-us/articles/4412121982745 : "The trip fare is fixed based on pick-up and drop-off points, hence the driver may decide to take the most efficient route according to GPS. If you have a preferred route, you may recommend this to your driver and reach a mutual agreement before you go."
+- "Why should I use RydeX?" (edited 8 Oct 2024): https://help.rydesharing.com/hc/en-us/articles/360004075214 : "All fares are fixed at the time of booking but does not include toll charges such as ERP."
+- "I was overcharged for ERP/toll" (edited 17 Jul 2025): https://help.rydesharing.com/hc/en-us/articles/30741244296217 : "Fares quoted for our services are generally fixed, except for RydeTAXI. However, please note that there may be additional charges such as tolls that could occur during your trip."
+- "Which trips do I need to include ERP?" (edited 2 Sep 2026): https://help.rydesharing.com/hc/en-us/articles/115001438614 : "The fares for RydeSEND include ERP." "The fares for RydeFLASH / RydePET / RydeX / RydeXL / RydeLUXE / RydeTAXI exclude ERP." "Please key in ERP based on the ERP gantry you passed during the journey." "Please bear in mind that if an additional/excessive amount is keyed in, this will be considered fraudulent and drivers will be liable for permanent suspension."
+- "How to add ERP to my trip fare?" (edited 25 Jun 2023): https://help.rydesharing.com/hc/en-us/articles/900005170163 : "2. Tap on Drop Off. 3. Enter the amount in the box next to Toll (ERP)."
+- RydeTAXI, rider page: https://rydesharing.com/rider/ : "Pay based on standard metered taxi fares".
+- Destination fee (created and edited 10 Oct 2025): https://help.rydesharing.com/hc/en-us/articles/51399796192921 : "If the driver accepts your edit destination request, a $3.00 add/edit destination fee will apply."
+
+December 2025 article: "Pickup Distance Upgraded" (created and edited 2 Dec 2025), section "Accepting a Ryde" (id 115000217394) in category "Driver" (id 900000276366): https://help.rydesharing.com/hc/en-us/articles/52948811893145-Pickup-Distance-Upgraded
+- Question "3. Will this affect my earnings?" Answer: "No. Fares are calculated from actual driven distance and time, so you are always paid correctly for the route you take. This change only improves visibility before you accept a job."
+- Scope: a driver-facing article about a change in how pickup distance is displayed. The sentence is about driver earnings; it says nothing about what riders are charged. It does sit awkwardly beside the rider pages' "fixed" wording, so the rule base should treat the rider fare (fixed, except RydeTAXI, ERP or tolls, and accepted destination edits) and driver pay as separate quantities.
+
+### Claim 3. Cleaning-fee caps and claim conditions
+
+Verdict: CONFIRMED, with one nuance on the payment guarantee.
+
+Driver article "My Rider Made a Mess" (edited 9 Apr 2026): https://help.rydesharing.com/hc/en-us/articles/900004381243-My-Rider-Made-a-Mess
+- Caps: food, drink or grocery spillage, food crumbs, sand "Up to $40"; human or pet bodily fluids ("*Pet fur & saliva not claimable") and stains "Up to S$120"; vomit "Up to S$200".
+- "1. Your vehicle must be professionally cleaned within 24 hours from the incident 2. Submit your claim via the driver app within 48 hours from the affected trip"
+- "At least one photo must show the vehicle's car plate number to verify the vehicle"
+- Receipt must show "Company's name, contact number, address", "Cleaning date", "Car plate number", "Authorised personnel's signature and company stamp".
+- "If your claim is approved, your reimbursement will be credited to you promptly after approval. The reimbursement is guaranteed and is not dependent on the rider completing payment, as Ryde will manage the recovery process separately."
+- "All claims are subject to review. Ryde reserves the sole discretion to approve, deny, and decide on a fair reimbursement amount." "You can appeal within 24 hours if you disagree with the outcome of your claim".
+
+Rider article "I made a mess in my driver's vehicle" (edited 8 Apr 2026) lists the same three caps: https://help.rydesharing.com/hc/en-us/articles/900003466206
+
+### Claim 4. Driver thresholds, fraud definition, dashcam rule
+
+Verdict: CONFIRMED.
+
+Thresholds, "Driver Performance and Community Standards": Popular Topics version (edited 22 May 2026) https://help.rydesharing.com/hc/en-us/articles/20244107265689 and Community Guidelines version (edited 10 Apr 2026) https://help.rydesharing.com/hc/en-us/articles/33362721809049. Both have, under "Conditions, where driver accounts will be temporarily disabled": "Driver Rating (DR) | < 4.80" and "Cancellation Rate (CR) | > 17.5%".
+
+Fraud definition (Community Guidelines version only, section 5 list): "5. Remaining stationary and uncontactable after accepting a ride to trigger cancellation or waiting fees". The same list includes "8. Abuse of Cancellation and Waiting Fee Policy". The Popular Topics version (22 May 2026) does not contain this list.
+
+Dashcam and IVRD rule:
+- Driver article "What if I have an In-Vehicle Recording Device (IVRD) including Dashcam?" (edited 19 Sep 2025): https://help.rydesharing.com/hc/en-us/articles/360036735393 : "We do not allow IVRDs on the Ryde platform at this moment." "If you have IVRDs/Dashcams installed in your vehicle, you are required to remove them immediately." "Unauthorised installation of inward-facing IVRD/Dashcams may result in 21 demerit points and suspension from our platform." The matter "may also be reported to the Land Transport Authority (LTA)".
+- Community Guidelines version, section 4A: "in-vehicle recording devices (IVRDs) are not allowed on the Ryde platform."
+- Rider article (created 24 Oct 2025): https://help.rydesharing.com/hc/en-us/articles/51812996696217 : "No. Ryde does not allow drivers to use IVRDs or dashcams at this time."
+- Scope: a Ryde platform rule for drivers, covering IVRDs and dashcams generally (the removal instruction is not limited to inward-facing devices), stated as current ("at this moment", "at this time"). It is a platform policy, not a statement of Singapore law. The 21-demerit-point consequence is stated only for "Unauthorised installation of inward-facing" devices.
+
+### Claim 5. Fee waivers, voucher refunds, Terms of Use
+
+Verdict: CONFIRMED.
+
+- "Cancellation Fee Waiver Request" (edited 26 Feb 2026): https://help.rydesharing.com/hc/en-us/articles/18229758389017 : "you may submit a fee waiver request via RydeHELP in our app within 30 days of the trip*". "we will issue you a voucher** with a unique code worth $6.61 as a refund for the incurred Cancellation Charges. Please be mindful to top up your Ryde wallet using the voucher code". "**This voucher is non-refundable and cannot be exchanged for cash in part or in full." "The increase is due to the platform fee changes effective 17 Feb 2026."
+- "Waiting Fee Waiver Request" (edited 25 Sep 2026): https://help.rydesharing.com/hc/en-us/articles/27085468660505 : same wording, voucher "worth $5.00".
+- Terms of Use: https://rydesharing.com/terms-of-use/ : "Last modified: 6th April 2022". Clause 7.2 (as numbered on the page): "Ryde reserves its absolute discretion to any refunds to you and such refunds may be credited to the payment card you used for the journey, or to your RydeCoins wallet or by such other method as is deemed reasonable by Ryde." Clause 23: "These Terms of Service shall be governed by Singapore law"; disputes "shall be referred to the Singapore International Arbitration Centre ("SIAC")" "by a sole arbitrator"; "The seat and venue of the arbitration shall be Singapore"; "if you are a Partner, you may choose to submit a Dispute for mediation at the Singapore Mediation Centre and/or Small Claims Tribunal".
+- Nuance: the voucher practice is the help centre's fee-waiver process; the ToU permit refunds to the card as well.
+
+### Claim 6. Ryde's 16 Sep 2026 hackathon press release
+
+Verdict: CORRECTED (attribution only). The release, the CTO quote, "fair and explainable" and the assessment areas are all confirmed.
+
+Primary: ACCESS Newswire, "Wednesday, 16 September 2026 06:30 AM", dateline "SINGAPORE, SG / September 16, 2026": https://www.accessnewswire.com/newsroom/en/computers-technology-and-internet/ryde-explores-agentic-ai-to-reimagine-ride-hailing-dispute-resolu-1221070 (reprint cited in the notes: https://www.stocktitan.net/news/RYDE/ryde-explores-agentic-ai-to-reimagine-ride-hailing-dispute-yl4u2sexyoxr.html).
+- Inside Nitin Dolli's quotation (Chief Technology Officer): "We see Agentic AI as an important evolution from AI that simply generates responses towards systems capable of reasoning, coordinating and executing increasingly complex workflows". "By bringing a real-world ride-hailing challenge to the developer community, we want to explore how specialised AI agents can work together to evaluate evidence, apply policies and resolve disputes in a fair and explainable manner." His quotation also contains "support the scalability of our differentiated 0% commission model".
+- Ryde narrative, not in quotation marks: "explore how autonomous AI agents could gather evidence, evaluate rider and driver perspectives, apply company policies and support fair and transparent dispute outcomes". "For Ryde, this also presents an opportunity to explore how emerging AI architectures could support greater automation, faster decision-making and more scalable operations as the platform grows".
+- Assessment: "Solutions will be assessed on areas including multi-agent architecture, evidence gathering, fairness and transparency, business impact and scalability."
+- Challenge "RydeResolve: Multi-Agent Autonomous Dispute Resolution System"; track "AI Agent Digital Native Track at the AI CAN DO IT Tencent Cloud Hackathon Singapore 2026"; Demo Day "3 November 2026". No specific Tencent product (ADP, CodeBuddy, Hunyuan) is named. Bluefin Jiannan Zhao (Tencent Cloud) is also quoted.
+- Correction: note 01's takeaway ("Its CTO stressed "fair and explainable" and "fair and transparent" outcomes, faster decisions...") and its list of "CTO Nitin Dolli (fragments)" put two narrative phrases in Dolli's mouth. Attribute "fair and explainable" and the 0% commission scalability line to Dolli; attribute "fair and transparent dispute outcomes" and "greater automation, faster decision-making and more scalable operations" to the release.
+
+### Claim 7. FY2025 revenue and net loss
+
+Verdict: CONFIRMED.
+
+SEC XBRL R4, "Consolidated Statements of Operations and Comprehensive Loss", in thousands: https://www.sec.gov/Archives/edgar/data/1971115/000149315226018829/R4.htm
+- FY ended 31 Dec 2025: Revenues S$12,506 (US$9,725 convenience translation); Net loss S$(17,449) (US$(13,570)); share-based compensation S$(11,099). FY2024: revenues S$8,950, net loss S$(18,675).
+- Filing index: https://www.sec.gov/Archives/edgar/data/1971115/000149315226018829/ : Form 20-F, filed 24 Apr 2026, period of report 31 Dec 2025.
+
+### Claim 8. NPHVA recognition, 10 Feb 2026
+
+Verdict: CONFIRMED.
+
+ACCESS Newswire, "SINGAPORE, SG / ACCESS Newswire / February 10, 2026": https://www.accessnewswire.com/newsroom/en/computers-technology-and-internet/ryde-officially-recognises-nphva-to-represent-platform-workers-to-1135476
+- Ryde "signed a Memorandum of Understanding ('MOU') with the National Private Hire Vehicles Association ('NPHVA')".
+- "Ryde will officially recognise NPHVA to represent its platform workers under the Platform Workers Act".
+- NPHVA may "represent and negotiate on behalf of Ryde's driver-partners on work-related matters", which the Stock Titan reprint renders as "including earnings, working conditions, and dispute resolution" (https://www.stocktitan.net/news/RYDE/ryde-officially-recognises-nphva-to-represent-platform-workers-to-0hotcfrizof7.html).
+- Ryde spokesperson: Subashini Thanakodi, "Associate Director (Operations) of Ryde".
+
+### Claim 9. LTA ride-hail operator licence
+
+Verdict: CONFIRMED.
+
+LTA news release, 23 Dec 2024, "Award of Operator Licences and Implementation of Phase 1 of the Point-to-Point Transport Regulatory Framework Review": https://www.lta.gov.sg/content/ltagov/en/newsroom/2024/12/news-releases/award_of_operator_licences_and_implementation_of_phase_1.html
+- Ride-Hail Service Operator Licences (RSOL) to "GrabCar Pte Ltd, Ryde Technologies Pte Ltd, Tada Mobility (Singapore) Pte Ltd, Velox Digital Singapore Pte Ltd (Gojek), CDG Zig Pte Ltd", with "RSOL - 3-year validity".
+- "All awarded P2P licences will commence from 1 January 2025."
+- The one-year provisional RSOLs went to "Geo Lah Pte Ltd and Trans-cab Services Pte Ltd", not to Ryde.
+
+---
+
+## Industry benchmarks
+
+### Claim 10. Scheduled-ride waiting anchors (Grab, Bolt)
+
+Verdict: CONFIRMED.
+
+- Grab SG Advance Booking: https://www.grab.com/sg/transport/advance-booking/ : "Your driver will arrive early and wait for you for up to 15 minutes starting from the indicated pickup time." "No, our drivers arrive early so that you can board the vehicle at the pick up time. Late fee is chargeable only if you arrive more than 15 minutes after the scheduled pick up time."
+- Bolt, "How to handle scheduled rides | For Drivers": https://bolt.eu/en/support/articles/7769413257746/ : "The scheduled wait time of 5 minutes will be counted only from the scheduled start of the ride." "In case you arrive earlier, the extra time spent waiting is not compensated."
+
+### Claim 11. Grab ERP and tolls on GrabCar fixed fares (note 02 vs note 08)
+
+Verdict: CORRECTED. Note 02 is right; note 08 is wrong.
+
+- Grab SG GrabCar page https://www.grab.com/sg/transport/car/ and transport page https://www.grab.com/sg/transport/ (undated, read 5 Oct 2026): "Know how much your trip will cost (excluding tolls and surcharges) before you book."
+- Note 08's source, AsiaOne, 22 May 2023: https://www.asiaone.com/singapore/go-take-mrt-grab-driver-threatens-kick-passenger-ride-after-she-asks-choose-route-erp . No sentence in it says ERP is included in standard fares. It says (reporter's text): "When it comes to extra charges, Grab passengers are automatically charged for tolls in the app after the trip is completed". Grab on GrabHitch: "ERP fees are not included in the fare and they will typically be borne by the driver". On GrabShare: "passengers will need to pay ERP charges when the car passes through the gantry". On routes: "the driver has the right to take the fastest or shortest route available as recommended by a global positioning system."
+- Grab Engineering, 31 Jul 2019: https://engineering.grab.com/automated-erp-charges : drivers previously had to enter ERP after trips and "would have had to bear the cost of the ERP fares" when they forgot; Grab introduced "automated ERP fare calculation". This fits ERP being added to the fare, not built into it.
+- Grab SG Terms of Service ("Last modified: 30 July 2026"): https://www.grab.com/sg/terms-policies/transport-delivery-logistics/ : "Consumer Charges" include "any applicable tolls, taxes and any other fees or charges".
+- Grab's help centre (https://help.grab.com/passenger/en-sg/) returned only "Oops! Something went wrong" (JavaScript required), so the help-centre wording itself is UNVERIFIABLE.
+- Fix for the report: GrabCar upfront fares exclude tolls (ERP); tolls are added automatically after the trip. Drop note 08's inference "On Grab, ERP is inside the fixed fare, so this channel does not exist there."
+
+### Claim 12. Gojek Singapore destination edit, extra stop, ERP
+
+Verdict: CONFIRMED, with a tier nuance.
+
+- Gojek SG Help, "Are there any other charges?" (undated, read 5 Oct 2026): https://www.gojek.com/sg/help/customer/fares-and-charges/are-there-any-other-charges : "Any ERP charges incurred during the trip - from pick-up to drop-off - are borne by the customer." "This amount is not included in the upfront pricing/base fare, and will instead be added at the end of the trip by your driver-partner." Editing the destination: "$3 for GoCar / $5 GoCar Premium / GoCar Premium XL + Adjusted fare if distance is further".
+- Gojek blog, 22 Feb 2024 (addressed to drivers): https://www.gojek.com/sg/blog/dp-news-gojek-car-multi-destination-driver-singapore : "Customers can add up to 2 additional stops before completing the trip at the final location. (Total 3 stops)" "Each extra stop comes with a surcharge of $5 (subject to 15% service fee)" "The fare of a multi-destination trip will be based on the total distance + surcharge per stop ($5)".
+
+### Claim 13. DiDi detour (绕路) criterion and its source
+
+Verdict: CONFIRMED. The source is DiDi itself, not media.
+
+- Page: https://dpubstatic.udache.com/static/dpubimg/dpub2_project_10967/index_10967.html , title "网约车司机违约责任条款" (ride-hailing driver breach-of-contract liability terms). The page shows no issuer name, date or version.
+- Article 13 (第十三条): "实际行驶里程÷腾讯地图里程 ≥120% 且 绕路里程≥3 公里，则判定为绕路" (a detour is found when actual mileage ÷ Tencent Maps mileage ≥120% and the detour mileage ≥3 km).
+- Exemption: "司机采用 App 导航，导致的乘客投诉绕路，视为司机履约，不承担违约责任" (a detour complaint caused by the driver using the app's navigation counts as performance; no liability).
+- Penalty: 100 yuan for individual drivers; 300 yuan plus 50 yuan for the rental-company case.
+- Who publishes it: RDAP for udache.com (https://rdap.verisign.com/com/v1/domain/udache.com) shows registration on 26 May 2014 and nameservers NS1, NS3, NS4, NS6, NS7 and NS8.DIDIWUXIAN.COM, i.e. DiDi's own DNS. So this is a DiDi-hosted page. Because it is undated, whether it is the current rule is not verified.
+- Note 02's statement that no numeric DiDi detour threshold was found is superseded. The June 2025 Tencent News item note 02 relies on (media) describes the rule only qualitatively.
+
+### Claim 14. Cleaning caps: Grab S$120, TADA S$150
+
+Verdict: TADA CONFIRMED (secondary); Grab UNVERIFIABLE as a Grab-published cap.
+
+- TADA: Mothership, "March 12, 2026": https://mothership.sg/2026/03/tada-cancellation-cleaning-fee/ : "Tada will also increase the cap for cleaning fee compensation to S$150", effective 18 Mar 2026; announced by NPHVA in a Facebook post on 11 Mar relaying TADA management; the previous cap is not stated.
+- Grab: MustShareNews, "3 Jun 2026" (incident on "the evening of 17 May"): https://mustsharenews.com/grab-driver-reimbursement/ : "The driver said he subsequently submitted a claim for the maximum S$120 reimbursement under Grab's cleaning fee policy." Grab's only statement: it "offers a cleaning reimbursement fee for such incidents when the required documentation is provided." No Grab page stating a cap could be read (the help centre is JavaScript-only).
+- Fix for the report: present Grab's S$120 as "reported by a driver as Grab's maximum (MustShareNews, Jun 2026)", not as a published cap. Note 02 dates the story May 2026; the incident was in May and the article is dated 3 Jun 2026.
+
+### Claim 15. Lyft 87%; Grab SOP agents 87%
+
+Verdict: CONFIRMED, with context.
+
+- Lyft blog, "Feb 6, 2025": https://www.lyft.com/blog/posts/lyft-and-anthropic-team-up-to-redefine-customer-obsessed-ai : "Lyft's customer care AI assistant has reduced the average customer service resolution time by 87%". It delivers "fast responses to the most common support issues" and directs customers "to a human specialist when more hands-on assistance is required". This is support resolution time in general, not dispute adjudication specifically.
+- Grab Engineering, "25 Apr 2025": https://engineering.grab.com/introducing-the-sop-drive-llm-agent-framework : "the Account Takeover Investigations (ATI) bot, which achieved a 0 false rate while reducing investigation time from 23 minutes to just 3, automating 87% of cases." "Initial evaluations have shown remarkable results, with over 99.8% accuracy in real-world use cases." These are internal investigation workflows, not rider-driver rulings.
+
+### Claim 16. Amsterdam Court of Appeal (2023) and Uber's human review
+
+Verdict: CONFIRMED (primary source checked).
+
+- Primary: Gerechtshof Amsterdam, decision of 4 April 2023, ECLI:NL:GHAMS:2023:793, case 200.295.742/01, four Uber drivers against Uber B.V.; requests under Art 15(1)(h) GDPR after their accounts were deactivated for alleged fraud: https://data.rechtspraak.nl/uitspraken/content?id=ECLI:NL:GHAMS:2023:793
+- Rov. 3.23 cites EDPB guidance that oversight must be meaningful: "zinvol is, en niet slechts een symbolische handeling vormt". Rov. 3.24 states "maar ze tonen geenszins aan dat die handeling veel meer is geweest dan een louter" (but they in no way show that the act was much more than a mere [symbolic act]; the fetch tool truncated the sentence there) and concludes: "Van daadwerkelijke menselijke tussenkomst is dus onvoldoende gebleken." (Genuine human intervention was not sufficiently shown.)
+- Outcome: for three of the four drivers the deactivations were treated as decisions based solely on automated processing under Art 22 GDPR (Uber showed a prior conversation with the fourth). Uber was ordered to provide the Art 15(1)(h) information within one month, with a penalty of EUR 4,000 per day.
+- Secondary (party to the case): Worker Info Exchange, published 4 Apr 2023, updated 23 May 2024: https://www.workerinfoexchange.org/post/historic-digital-rights-win-for-wie-and-the-adcu-over-uber-and-ola-at-amsterdam-court-of-appeal : "limited human intervention in Uber's automated decisions to dismiss workers was not 'much more than a purely symbolic act'". It lists ECLI:NL:GHAMS:2023:793, :796 and :804. (:796 is the Uber data-access case on matching, pricing and ratings.)
+- Precision note: the ruling was about access to information. It found the human review token and therefore treated the decisions as automated. It did not, in this ruling, order reinstatement.
+
+---
+
+## Tencent toolchain
+
+### Claim 17. CodeBuddy and WorkBuddy credits; multipliers; codebuddy.ca
+
+Verdict: CONFIRMED, but the two credit facts rest on third-party sources about the China edition.
+
+- Shared credits: Tencent News self-media column (author "AI设计小华", 15 Sep 2026): https://news.qq.com/rain/a/20260915A03KHY00 : "WorkBuddy和CodeBuddy共用一套积分，免费体验版一个月500积分，标准版99块4000积分。" (WorkBuddy and CodeBuddy share one credit system; the free trial gets 500 credits a month, the standard plan 4,000 credits for 99 yuan.) The yuan pricing shows this is the China edition. Also: "不同模型的消耗倍率，能差几十倍" (multipliers can differ by tens of times). The official international CodeBuddy pricing docs (build 30 Sep 2026, https://www.codebuddy.ai/docs/ide/Account/pricing) say nothing about sharing with WorkBuddy.
+- Multipliers: xmsumi.com, "WorkBuddy 内置 9 款模型比价" (about Aug 2026): https://xmsumi.com/detail/3860 : Hy3 0.00×, DeepSeek-V4-Flash 0.06×, DeepSeek-V4-Pro 0.16×, MiniMax-M3 0.25×, Kimi-K2.6 0.52×, Kimi-K2.7-Code 0.57×, GLM-5.2 0.79×, GLM-5.1 0.79×, GLM-5v-Turbo 0.95×. The article does not name the edition, but its models match the official China-edition list. Official China docs (build 30 Sep 2026): https://www.workbuddy.cn/docs/workbuddyapp/features/Model : "每个模型名称下方会标注相应的积分倍率（如 x0.80、x1.00 等），数字越低消耗越少。" (each model shows its multiplier, e.g. x0.80 or x1.00; lower costs less). No per-model numbers are given there. So "0.06x to 0.95x" holds for the non-zero rates in that article; counting Hy3 (0.00×, which note 03 describes as a limited-time free offer) the floor was 0.00x.
+- codebuddy.ca: VS Marketplace https://marketplace.visualstudio.com/items?itemName=CodebuddyAI.codebuddy-ai : display name "Codebuddy", publisher "Codebuddy AI Inc.", version 1.7.0, "77,562 installs", website codebuddy.ca, no mention of Tencent. https://www.codebuddy.ca/ shows Tencent only in a "Used by developers at" logo list. It is a separate company's product.
+
+### Claim 18. ADP international Free plan
+
+Verdict: CONFIRMED.
+
+- Pricing page: https://adp.tencentcloud.com/pricing : "Try core features instantly. Get a 30-day free plan upon registration". "Each user who activates the product for the first time starting from February 3, 2026 may manually claim the Free Plan during activation by following the system guidance." "1 Credit = 0.001 USD".
+- Purchase Guide PDF (last updated 13 Feb 2026): https://staticintl.cloudcachetci.com/doc/pdf/product/pdf/1254_69900_en.pdf : Free plan row: price 0, "10,000" credits per month, "1 GB" knowledge base, "Each account can claim only once, with a trial period of 1 month". Also: "each new user (users who activate the product for the first time from February 13, 2026) can claim it only once".
+- Minor CONFLICT: 3 Feb 2026 (pricing page) vs 13 Feb 2026 (purchase guide) as the eligibility start. It does not affect a new account activated in Oct 2026.
+
+### Claim 19. ADP v2 Chat API event and field names
+
+Verdict: CONFIRMED.
+
+"Chat API Documentation (HTTP SSE)", last updated 15 Jul 2026: https://intl.cloud.tencent.com/document/product/1254/81449
+- Endpoint: POST `https://wss.lke.tencentcloud.com/adp/v2/chat`.
+- SSE events: `request_ack`, `response.created`, `response.processing`, `message.added`, `message.processing`, `content.added`, `text.delta`, `text.replace`, `message.done`, `response.completed`, `quote_info.added`, `reference.added`, `error`, `done`.
+- Message Type values: "reply", "thought", "tool_call", "task_execution", "recommendation", "notice".
+- `ExtraInfo.AgentName`: "Intelligent Agent name for output message".
+- `response.completed` carries "Procedures", each with an "Agent" field ("Intelligent Agent execution details").
+- Caveat: the page does not say whether "thought" messages are emitted for non-reasoning models.
+
+### Claim 20. EdgeOne Pages (EdgeOne Makers)
+
+Verdict: CONFIRMED for the free plan, Python 3.10 / FastAPI and the 120 s cap. SSE support is UNVERIFIABLE (not documented).
+
+- Pricing: https://pages.edgeone.ai/pricing : "$0/mon"; "our Free plan is here to stay and will be available permanently!"; "More pricing options designed for individuals and enterprises are coming soon."
+- Cloud Functions: https://pages.edgeone.ai/document/cloud-functions : "Node.js v20.x", "Python version 3.10", "Go version 1.26"; "Offers native support for mainstream Web frameworks such as Flask, FastAPI, Django, and Sanic."; overseas region "Singapore | ap-singapore".
+- Limits: https://pages.edgeone.ai/document/limits-and-quotas : Cloud Functions "Default: 30 seconds, configurable up to 120 seconds." "Quotas for the free edition are enforced more leniently before the commercial edition officially launches."
+- SSE: no mention of streaming responses, SSE, `text/event-stream` or WebSocket in limits-and-quotas, cloud-functions, node-functions, release-notes or FAQs (all read 5 Oct 2026). Edge Functions (https://pages.edgeone.ai/document/edge-functions) list the Web-standard "ReadableStream" runtime API and a 200 ms CPU time slice per execution, but say nothing about SSE. Treat SSE as untested until the team tries it.
+
+### Claim 21. Hy3 via TokenHub: API, price, tool calling
+
+Verdict: CORRECTED (price and endpoint). OpenAI compatibility and tool calling are confirmed from Tencent's own docs.
+
+- TokenHub international "API Usage Instructions" (last updated 24 Sep 2026): https://intl.cloud.tencent.com/document/product/1300/78941 : base URL "https://tokenhub-intl.tencentcloudmaas.com" (Singapore region, global scheduling); "The large model service platform TokenHub is compatible with OpenAI API and Anthropic API protocols"; model ID "hy3".
+- "Model pricing" (last updated 3 Oct 2026): https://intl.cloud.tencent.com/document/product/1300/78937 : Hy3 input US$0.132 per million tokens, output US$0.528 per million, cache US$0.033 per million; token-based postpaid billing.
+- "Model list" (last updated 25 Sep 2026): https://intl.cloud.tencent.com/document/product/1300/78934 : hy3, "256k" context, "128k" maximum output, capabilities "Deep Reasoning (Preserved Thinking) Structured Output Function Calling Caching".
+- Where US$0.08 / US$0.33 comes from: OpenRouter https://openrouter.ai/tencent/hy3 shows "$0.0825 / $0.33 per 1M". The Tencent Cloud provider row shows "$0.132" next to "$0.0825" (input) and "$0.528" next to "$0.33" (output), and the page explains it shows "The average price customers actually pay for this model, next to the prices providers post." OpenRouter's endpoints API (https://openrouter.ai/api/v1/models/tencent/hy3/endpoints) gives the Tencent endpoint "0.000000132" per prompt token and "0.000000528" per completion token, discount "0", and supported parameters including "tools, tool_choice" and "response_format". Tencent's own release of 5 Aug 2026 says "Hy3 API access on OpenRouter is now listed starting at US$0.1288 per million input tokens and US$0.5336 per million output tokens" (https://www.tencent.com/tencent-hy3-now-available-globally-extending-practical-ai-across-products-workflows-and-cloud-services/).
+- Endpoint: note 03 gives `https://tokenhub.tencentmaas.com/v1` (from Mastra). RAA-Tech's README calls that the "China-site Guangzhou" endpoint, uses `https://tokenhub-intl.tencentcloudmaas.com/v1` as "the international-site Singapore endpoint", and warns "keys are not interchangeable between sites".
+- Fix for the report: Hy3 on TokenHub costs US$0.132 per M input and US$0.528 per M output (cache US$0.033), is OpenAI-compatible and supports function calling; use the international endpoint with an international-site key. At these prices a case of about 30K input and 5K output tokens still costs under US$0.01 (own arithmetic).
+
+---
+
+## Regulation and governance
+
+### Claim 22. IMDA Model AI Governance Framework for Agentic AI
+
+Verdict: CONFIRMED. The May 2026 update is confirmed by two law firms; IMDA's updated text was not retrieved.
+
+- MDDI press release, 22 Jan 2026: https://www.mddi.gov.sg/newsroom/singapore-launches-new-model-ai-governance-framework-for-agentic-ai--/ : "22 January 2026 - Minister for Digital Development and Information, Mrs Josephine Teo, announced the launch of the new Model AI Governance Framework for Agentic AI, at the World Economic Forum (WEF) today." Dimensions include "Assessing and bounding the risks upfront by selecting appropriate agentic use cases and placing limits on agents' powers such as agents' autonomy and access to tools and data" and "Making humans meaningfully accountable for agents by defining significant checkpoints at which human approval is required". "This is a living document".
+- IMDA PDF: https://www.imda.gov.sg/-/media/imda/files/about/emerging-tech-and-research/artificial-intelligence/mgf-for-agentic-ai.pdf : "Version 1.0 | Published 22 January 2026". "Organisations should define significant checkpoints or action boundaries that require human approval, especially before sensitive actions are executed." "Define similar SOPs for agentic workflows that an agent is constrained to follow, rather than giving the agent the freedom to define every step of the workflow."
+- Update: Baker McKenzie, 23 Jun 2026: https://www.bakermckenzie.com/en/insight/publications/2026/06/singapore-imda-updates-model-ai-governance-framework-for-agentic-ai : "On 20 May 2026, the Infocomm Media Development Authority (IMDA) updated the Model AI Governance Framework"; it added "safety and reliability components, including access controls, guardrails, human approvals, logging", "risks arising from multi-agent systems" and automation-bias guidance "(e.g., monitoring human override rates and response times)". Latham & Watkins, 8 Jul 2026: https://www.lw.com/en/insights/singapore-ai-guidance-governance-data-protection-and-legal-responsibility : "Model AI Governance Framework for Agentic AI (Version 1.5), published on 20 May 2026 and updated on 5 June 2026"; "Organisations should define human approval checkpoints for higher-risk or irreversible actions".
+- Caveat: the IMDA PDF URL that Baker McKenzie links still served Version 1.0 on 5 Oct 2026.
+
+### Claim 23. CSA addendum on securing agentic AI
+
+Verdict: CONFIRMED (CSA's own document).
+
+- CSA PDF (linked from Baker McKenzie): https://isomer-user-content.by.gov.sg/36/9f94d260-ea28-4b12-bf59-cc77cbc0a421/Securing%20Agentic%20AI%E2%80%93An%20Addendum%20to%20the%20Guidelines%20and%20Companion%20Guide%20on%20Securing%20AI%20Systems%20(20.pdf : title "SECURING AGENTIC AI: AN ADDENDUM ON SECURING AI SYSTEMS"; "Official publication of Addendum" (Version 1.0, 17 Jun 2026); "This document is published by the CSA, in collaboration with partners"; "This document is intended for informational purposes only and is not mandatory, prescriptive nor exhaustive."
+- Baker McKenzie, 29 Jul 2026: https://www.bakermckenzie.com/en/insight/publications/2026/07/singapore-csas-addendum-on-securing-agentic-ai-systems : "On 17 June 2026, the Cyber Security Agency of Singapore (CSA) announced its release of the finalised Addendum to the Guidelines and Companion Guide on Securing AI Systems". "The two primary risks arising from agentic AI systems are rogue actions and sensitive data disclosure."
+- Draft history: CSA, 22 Oct 2025: https://www.csa.gov.sg/news-events/press-releases/csa-releases-an-addendum-to-support-system-owners-in-securing-agentic-ai-system/ : "public consultation on the Addendum will run from 22 Oct 2025 to 31 Dec 2025".
+- Note: CSA's press-release list for May to Jul 2026 shows no 17 Jun item, and CSA's 30 Jun 2026 release still mentions only "a discussion paper on securing agentic AI systems in October 2025". The PDF's own version line is the controlling evidence.
+
+### Claim 24. "Shortest and most direct route" offence
+
+Verdict: CONFIRMED for private-hire (PDVL) drivers. Not verified for taxi (TDVL) drivers.
+
+- LTA, offences for PDVL holders ("Information contained herein is accurate as at 1st Apr 2023"): https://www.lta.gov.sg/content/dam/ltagov/industry_innovations/industry_matters/regulations_licensing/taxis_private_hire_cars/private_hire_car_licence/pdf/PDVL_holders_Offences.pdf : "Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct route | Rule 23(1)(c) PSVC | $100 | 3".
+- "PSVC" = "Road Traffic (Public Service Vehicles)(Vocational Licences and Conduct of Drivers, Conductors, Trishaw Riders and Passengers) Rules".
+- No taxi (TDVL) offence list could be located: a guessed TDVL equivalent of the PDVL URL returned HTTP 404, and no WebSearch was available to find the real one. The "or taxi" part is therefore unverified here.
+
+### Claim 25. Small Claims Tribunals limits
+
+Verdict: CONFIRMED.
+
+- Singapore Judiciary, "A Guide to Small Claims" (information correct as of 1 Dec 2022): https://www.judiciary.gov.sg/docs/default-source/civil-docs/sct_guide_to_small_claims.pdf?sfvrsn=ccfb1879_4 : "$20,000 OR $30,000*", with "*If both parties consent by uploading a memorandum of consent in such format as prescribed by the Registrar". "All claims must be filed within two years after the date the cause of action accrued."
+- CCS FAQ: https://www.ccs.gov.sg/resources/faqs/consumer-protection/ : "claims of up to $20,000 (or $30,000 should both parties agree)".
+
+### Claim 26. EU AI Act high-risk timing
+
+Verdict: CONFIRMED (for Annex III).
+
+European Commission, 27 Jul 2026, "AI Omnibus enters into force": https://digital-strategy.ec.europa.eu/en/news/ai-omnibus-enters-force
+- "On 27 July 2026, the AI Omnibus enters into force across the EU"
+- "High-risk AI systems in Annex III: Rules apply starting 2 December 2027"
+- "High-risk AI embedded in physical products (machinery, toys, lifts, etc.) in Annex I: Rules apply starting 2 August 2028"
+- The employment and worker-management use case cited in note 07 is an Annex III category, so 2 Dec 2027 is the relevant date.
+
+---
+
+## Rival teams and methods
+
+### Claim 27. Rival public repos for this track
+
+Verdict: CORRECTED (several details). Most of note 04 holds for each repo's main branch as of 1 to 3 Oct, but the first-commit date, author count, runtime figure and "latest activity" need updating.
+
+Method: `git clone` of each repo on 5 Oct 2026, about 09:37 SGT. Counts are for the default branch `main` unless stated; other branches were checked with `git for-each-ref`.
+
+RydeResolve-Agent
+- URL and owner: https://github.com/FENGFANCHEN-012/RydeResolve-Agent , owner FENGFANCHEN-012.
+- Commits on main: 93 (16 merges). First commit a45030d on 18 Sep 2026 15:34 +08:00 by billy (note 04 says 21 Sept). Last commit on main f9a91e5 on 1 Oct 2026 17:49 +08:00, "docs: rewrite the development journal as a dated development report" (matches note 04).
+- Author identities: billy (42), Zhilin-sp (41, two emails), Yunfeng Guang (5), yangggshuo (5). Note 04 lists three.
+- Newer work: branch `policy-official-rebuild` has 11 commits not in main, the latest on 4 Oct 2026 08:38 +08:00 ("feat: Judge prompt states four general reasoning principles ...").
+- Stack: Python, FastAPI, LangGraph (`langgraph==0.3.0`), Qdrant (`qdrant-client`), `google-generativeai`, `openai` client; plain HTML, JS and CSS frontend. The README still claims "Tencent Hunyuan" (stale).
+- Models: `src/core/llm_client.py`: "Chat completions through Google Gemini (default) or Groq", plus a Cerebras path; model strings in the code are `gemini-3.6-flash`, `gemini-embedding-2` and `openai/gpt-oss-120b`.
+- Evaluation harness: yes (`scripts/eval.py`, `tests/test_eval_scoring.py`, labelled cases with answer keys).
+- Accuracy on main: 25 Sep baseline "0.23 (3/13)" end to end (`docs/07_EVAL_BASELINE.md`); 30 Sep 14-case run "86%"; 30 Sep 27-case run 74% overall (dev 14: 86%, held-out 13: 62%); 1 Oct run "verdict accuracy 63% (17/27)" with a projected 25/27 (`docs/08_DESIGN_DECISIONS.md`, D6 and D15). So note 04's "63% to 86% on 14 to 27 cases" is right for main.
+- Accuracy on the side branch (not merged): "Confirming run 20261001-203206 (all 27 cases, Cerebras, final code): verdict accuracy 92.6% (25/27), refund accuracy 90.9% (20/22)"; a stability run "24/24"; six new held-out cases "Verdict 3/6"; D17 (dated 4 Oct): "verdict 29/33 (87.9%)", with the team's own caveat "Part of the earlier 92.6% rested on one side being silent".
+- Runtime: "Latency p50 / p95 | 170 s / 199 s (74% is rate-limit waiting)" is from the 25 Sep 13-case baseline only. The 30 Sep 27-case run records "p50 end to end / compute | 91 s / 12 s". "About 170 s per dispute" is out of date.
+
+Mirra-AI
+- URL and owner: https://github.com/astridya11/Mirra-AI , owner astridya11.
+- Commits on main: 71 (14 merges). First commit 22 Sep 2026 09:29 +08:00; last 3 Oct 2026 00:48 +08:00, "Merge pull request #8 from astridya11/audrey" (matches note 04).
+- Identities: jiaji06 (27), CTMX-Zhen (20) plus "Connie TMX" (1, same GitHub account), astridya11 (20, two emails), blablabla06 (3).
+- Newer work: branch `minmin` has 10 commits not in main, the latest on 5 Oct 2026 06:36 +08:00 ("remove cleaning_fee issue from rider side"). They add dynamic dispute-case creation, login and signup, photo upload, and remove the DISP-003 cleaning case from the mock data.
+- Stack: Next.js ^16.3.8, React 19.2.8, Tailwind ^4, TypeScript ^5; FastAPI 0.141.1, sse-starlette, SQLAlchemy 2.1.1, Alembic, psycopg2-binary, pillow 12.3.0.
+- Model: `backend/shared/llm_client.py`, "Shared async DeepSeek LLM client used by all agents", default model "deepseek-flash", base `https://api.deepseek.com/v1/chat/completions`.
+- Features from note 04, all found in code: courtroom UI (README "模拟法庭 UI"; pages `/tribunal/[caseId]`, `/verdict/[caseId]`, `/review/[caseId]`); prosecutor agent (`backend/agents/prosecutor_agent.py`, `prosecutor_questions.py`); EXIF time checks and recycled-image detection (`backend/app/services/verification/image_analysis.py`: "Deterministic checks (timestamp/GPS consistency, recycled-image detection)"); a 64-bit dHash (`backend/shared/photo_evidence.py`); fraud scoring (`verification/fraud.py`, `fraud_risk_score`); escalation gates (`verification/escalation.py`); feedback loop (`apply_human_review` in `backend/orchestrator/state_machine.py`).
+- Evaluation harness: none found (no accuracy, benchmark or golden-set files); unit tests only (`backend/tests`). No accuracy or runtime figures are reported.
+
+RAA-Tech
+- URL and owner: https://github.com/ryannteo/RAA-Tech , owner ryannteo.
+- Commits: 4, from 21 Sep 2026 22:01 +08:00 (affiq2213) to 24 Sep 2026 20:25 +08:00 (Aadharsh1, "Implement Driver Agent"); identities ryannteo (2), affiq2213 (1), Aadharsh1 (1). No branch has newer commits.
+- Stack: FastAPI, Pydantic 2, LangGraph, `openai` client; React 18, Vite 6, Tailwind 3, TypeScript.
+- Model: Hy3 via TokenHub (config default `llm_model = "hy3"`; README: "The Rider Advocate uses Tencent TokenHub / Hy3 for real structured output"; example base URL `https://tokenhub-intl.tencentcloudmaas.com/v1`).
+- The README says "The Driver Advocate and Judge remain typed stubs", but the last commit adds `driver_agent.py`, `driver_prompt.py` and a 222-line test file, so the Driver Agent is at least partly implemented. The README is stale on this point.
+- Evaluation: unit tests only; no accuracy or runtime figures.
+
+### Claim 28. Khan et al. 2024, "Debating with More Persuasive LLMs Leads to More Truthful Answers"
+
+Verdict: CONFIRMED.
+
+- arXiv 2402.06782 (v1 9 Feb 2024; revised 15 Feb, 30 May and 25 Jul 2024): https://arxiv.org/abs/2402.06782 : "debate consistently helps both non-expert models and humans answer questions, achieving 76% and 88% accuracy respectively (naive baselines obtain 48% and 60%)".
+- Full text: https://arxiv.org/html/2402.06782 : questions from QuALITY (long science-fiction stories); "Expert models possess full access to the underlying text while judges have no access to the text."
+- What each figure means: 76% is the accuracy of non-expert LLM judges with debate and 88% that of human judges with debate; 48% and 60% are the respective naive baselines.
+- ICML 2024 awards page: https://icml.cc/virtual/2024/awards_detail lists it under "Best Paper".
+
+### Claim 29. AAA-ICDR AI Arbitrator
+
+Verdict: CONFIRMED.
+
+AAA-ICDR press release, "NEW YORK (Nov. 3, 2025)": https://www.adr.org/press-releases/aaa-icdr-ai-arbitrator-now-available/
+- Scope: "two-party, documents-only construction cases".
+- "Parties serve as the first level of human oversight, reviewing and validating the AI's understanding of their submissions."
+- "human arbitrators oversee, revise (if needed), confirm, and authorize each outcome before they finalize and issue an award".
+- "Participation is voluntary and fully opt-in".
+
+### Claim 30. Spotlighting and datamarking (Hines et al. 2024)
+
+Verdict: CONFIRMED, within the scope below.
+
+- Hines et al. (Microsoft), "Defending Against Indirect Prompt Injection Attacks With Spotlighting", arXiv 2403.14720, submitted 20 Mar 2024 (preprint): https://arxiv.org/abs/2403.14720 . Abstract: "spotlighting reduces the attack success rate from greater than 50% to below 2% in our experiments with minimal impact on task efficacy."
+- Full text: https://arxiv.org/html/2403.14720 . Datamarking, summarization: "With GPT-3.5Turbo, ASR is reduced from approximately 50% to below 3%". Datamarking, Q&A: "With GPT3.5-Turbo, ASR is reduced to 8.0%; with GPT-4 ASR is reduced to 1.0%". Delimiting: a GPT-3.5-Turbo baseline "around 60%" that specialized delimiters "can reduce ... by half". Base64 encoding with GPT-3.5-Turbo: 0.0% (summarization) and 1.8% (Q&A).
+- Scope: "about 50% to under 3%" is the datamarking result on GPT-3.5-Turbo summarization, not a general result. Cite the abstract's ">50% to <2%" for spotlighting overall.

@@ -1,0 +1,36 @@
+{
+ "rule_id": "CW-F02B",
+ "name": "Wait anchor for advance bookings when the driver is early",
+ "family": "CW",
+ "type": "fact",
+ "applies_to": [
+  "CW-NOSHOW",
+  "CW-WAITING"
+ ],
+ "mode": "HARD",
+ "statement": "Ryde profile only. For an ADVANCE booking, the wait starts at the later of the driver's arrival and scheduled_time. Ryde's rider policy does not say where the wait starts when the driver is early; an older driver article counts from arrival, which read literally would allow a fee before the scheduled time. FairRyde follows Grab and Bolt and records the conflict.",
+ "params": [],
+ "produces": null,
+ "produces_finding": "F-WAIT-ANCHOR",
+ "sources": [
+  {
+   "type": "INDUSTRY",
+   "doc": "IND-GRAB-ADVANCE",
+   "quote": "Your driver will arrive early and wait for you for up to 15 minutes starting from the indicated pickup time.",
+   "source_file": "packs/sources/IND-GRAB-ADVANCE.txt"
+  },
+  {
+   "type": "INDUSTRY",
+   "doc": "IND-BOLT-SCHEDULED",
+   "quote": "The scheduled wait time of 5 minutes will be counted only from the scheduled start of the ride.",
+   "source_file": "packs/sources/IND-BOLT-SCHEDULED.txt"
+  },
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-23575142762393",
+   "quote": "You arrived at the pickup location and the customer was not present within 3 minutes of your arrival.",
+   "source_file": "packs/sources/RYDE-23575142762393.txt"
+  }
+ ],
+ "set": "random"
+}

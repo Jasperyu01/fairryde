@@ -1,0 +1,24 @@
+{
+ "item_id": "O07",
+ "stratum": "role",
+ "item": {
+  "code": "PAYEE",
+  "played_by": "ENT-ACCOUNT or ENT-PLATFORM",
+  "in": "ENT-CHARGE or Remedy",
+  "source": "cancellation_policy.fee_goes_to",
+  "example_DISP002": "D-2398 (driver_compensation)"
+ },
+ "context": {
+  "role_notes": [
+   "The same account can be CLAIMANT in one ticket and RESPONDENT in another (a driver files cleaning claims but defends no-show disputes).",
+   "PAYER and PAYEE flip under a remedy: if a no-show fee is waived, the voucher is issued by the platform (Ryde's remedy form) while the driver's earlier credit is a separate decision (open decision D7).",
+   "ToU s.10 says complaints between Partners and Users are taken up directly and s.20 says Ryde is not a party to their disputes, yet Ryde runs fee waivers and cleaning claims through RydeHELP. FairRyde models Ryde as REFUND_DECIDER for charges Ryde collected, not as a court between the parties."
+  ]
+ },
+ "source_files": [
+  "packs/sources/ORG-DISP002.txt",
+  "packs/sources/RYDE-TOU.txt",
+  "packs/sources/ORG-HANDBOOK.txt",
+  "packs/policy/ryde_articles/ (index: packs/policy/ryde_articles_index.tsv)"
+ ]
+}

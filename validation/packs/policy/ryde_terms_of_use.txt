@@ -1,0 +1,154 @@
+DOCUMENT RYDE-TOU
+TITLE: Ryde Terms of Use (Section A Terms of Service; Section B)
+TYPE: RYDE_TOU
+URL: https://rydesharing.com/terms-of-use/
+DATE: last modified 6 Apr 2022 (contains later content, such as the S$200 cleaning cap)
+[Section A, 1. Introduction] (Agreement comprises the Terms of Service and the Ryde Policies)
+These Terms of Service and the Ryde Policies (as defined below) constitute a legally binding agreement ("Agreement") between you and Ryde (as defined below). The Agreement applies to your use of the Service provided by Ryde.
+
+[Section A, 1. Introduction] (Amendment of the Terms without prior notice)
+Ryde may amend the Terms of Service without prior notice at any given time. Such amendments shall be effective once they are posted on https://rydesharing.com/ or on the Ryde application ("Ryde app"). It is your responsibility to review the Terms of Service and Ryde Policies regularly. Your continued use of the Service after any such amendments, whether or not reviewed by you, shall constitute your agreement to be bound by such amendments.
+
+[Section A, 1. Introduction] (Ryde's role: technology company / platform that merely links Users with Partners; not responsible for Partners; Partners not agents of Ryde)
+Ryde is a technology company which provides a Platform (as defined below) for Users (as defined below) to obtain the Service provided by Ryde. Where the Services are provided by a Partner (as defined below), Ryde's role is merely to link the User with such Partners. Ryde is not responsible for the acts and/or omissions of any Partner. Partners are not, and shall not hold themselves out to be, an agent, employee or staff of Ryde and the Services (as defined below) provided by Partners shall not be deemed to be provided by Ryde.
+
+[Section A, 2. Definitions ("Service")] (Ryde's role: definition of the "Service" Ryde provides (linking))
+"Service" means the linking of Users to Partners or other Users to facilitate the Services
+
+[Section A, 2. Definitions ("Services")] (Definition of the transport and other Services provided by Partners)
+"Services" means the transportation, logistics, and/or other products and services which are made available to Users through the following offerings: RydePOOL; RydeX; RydeXL; RydeTAXI; RydeFLASH; RydeHIRE; RydeLUXE; RydePET; Ryde+; RydeSEND; and Any such other offerings which Ryde may make available from time to time
+
+[Section A, 2. Definitions ("Partner")] (Definition of Partner (independent third-party driver/delivery partners))
+"Partner" means the independent third parties who provide the relevant Services to Users through the Service, including driver-partners and delivery-partners
+
+[Section A, 2. Definitions ("Users")] (Definition of Users)
+"Users" means any end-user who accesses or uses the Platform to obtain the Services
+
+[Section A, 2. Definitions ("User Charges")] (User charges (includes tolls, taxes and other fees))
+"User Charges" means charges incurred by Users for the Services obtained through the use of the Service, including any applicable tolls, taxes and any other fees or charges that may be due for a particular use of the Service or Services
+
+[Section A, 2. Definitions ("Ryde" / "we")] (Contracting entity)
+"Ryde" / "we" means Ryde Technologies Pte Ltd
+
+[Section A, 2. Definitions ("Platform")] (Definition of Platform)
+"Platform" means the Application, Software and any other platform, portal or website which Ryde owns, operates or otherwise makes available to Users and/or Partners for the purposes of or in connection with the Service and/or Services
+
+[Section A, 2. Definitions ("Ryde Policies")] (Ryde Policies (incorporated into the Agreement) include the Code of Conduct, Driver Performance and Community Standards, FAQs and in-app/website descriptions)
+"Ryde Policies" means the following: the Privacy Policy; Code of Conduct; Driver Performance and Community Standards; and all other forms, policies, notices, guidelines, frequently asked questions (FAQs), in-app or website product/service descriptions and information cards, or agreements provided to or entered into by you from time to time
+
+[Section A, 2. Definitions ("You")] (Definition of You (Partner and/or User))
+"You" refers to the Partner and/or User of the Service and/or Platform as may be applicable
+
+[Section A, 3. Representations, Warranties and Undertakings] (User conduct: no damage to Partner or Partner's property)
+You shall not intentionally or unintentionally cause or attempt to cause damage to the Partner or any property of the Partner
+
+[Section A, 3. Representations, Warranties and Undertakings] (User conduct: no nuisance or disrespectful behaviour)
+You will not use the Platform to cause nuisance or behave in an inappropriate or disrespectful manner towards Ryde or any third party
+
+[Section A, 3. Representations, Warranties and Undertakings] (User liability for loss or damage caused by breach)
+You agree to assume full responsibility and liability for all loss or damage suffered by yourself, Ryde or any other party as a result of your breach of this Agreement
+
+[Section A, 6. Payments, 6.1 Payment Terms for Partners (paragraph 1)] (Partner Service Fee (up to 20% of User Charges), non-refundable)
+Ryde charges a fee for your use of the Service ("Service Fee"). The Service Fee may be up to 20% of the User Charges unless otherwise communicated to and accepted by you before you commence provision of the Solution(s). The Service Fees are payable by you immediately and are non-refundable. This no-refund policy shall apply at all times regardless of your decision to terminate your access to the Platform, our decision to terminate or suspend your access to the Platform, disruption caused to the Service whether planned, accidental or intentional, or any reason whatsoever.
+
+[Section A, 6. Payments, 6.1 Payment Terms for Partners (paragraph 2)] (Ryde's role: collection agent for User Charges due to Partners)
+You acknowledge and confirm that Ryde may administer and act as your collection agent to pay to you the total amount of User Charges due to you in respect of your provision of the Solution.
+
+[Section A, 6. Payments, 6.1 Payment Terms for Partners (paragraph 3)] (Suspension of suspected fraudulent transactions; withholding or forfeiture of payments to Partners)
+Ryde retains the right to suspend the processing of any transaction where it reasonably believes that the transaction may be fraudulent, illegal or involves any criminal activity or where you and/or the User have breached any of the Terms in this Agreement. In such an event, you shall not hold Ryde liable for any withholding of, delay in, suspension, forfeiture or cancellation of, any payment(s) to you.
+
+[Section A, 6. Payments, 6.1 Payment Terms for Partners (paragraph 4)] (Promotional offers binding on Partners; Service Fee changes)
+Ryde may, at its sole discretion, make promotional offers with different features and different rates on the Services to any of the Users whereby these promotional offers shall accordingly be honored by you. Ryde may change the Service Fee at any time at its sole discretion.
+
+[Section A, 6. Payments, 6.2 Payment Terms for Users (paragraph 1)] (User charges: full payment by method selected at booking; payments non-refundable and irrevocable)
+Users are required to make full payment of the User Charges for all services offered in the Application by the method selected at the time of booking, which may be cash, or one of the automated payment methods available to you on the Application. Any payment pursuant to such selection is non-refundable and irrevocable.
+
+[Section A, 6. Payments, 6.2 Payment Terms for Users (paragraph 2)] (Automated payments; authorization holds; card disputes are the user's own responsibility)
+Automated payment may be made by credit card and or debit card, by Apple Pay, by RydeCoins, or where available by such other methods as are made available in the Application. The terms of these non-cash payments made by you through the Application will be governed by the Terms of Service. You agree that We may verify and authorize Your card details when you first register the card with us as well as when you are using the Service. You agree that we may issue a reasonable authorization hold, which is not an actual charge against your card, in order to verify Your payment method via card. The authorization hold may appear in Your statement as "pending". The authorization hold is issued as a preventive measure against any unauthorized or fraudulent usage of your card. You shall be responsible to resolve any disputes with your card company on your own.
+
+[Section A, 6. Payments, 6.2 Payment Terms for Users (paragraph 4)] (Tips included in User Charges)
+If the tipping feature is available, you may have the option to select a "tip" amount of your choosing when you register for the Service. This will automatically be included in the User Charges after the Solution has been provided and given to the Partner unless you choose to remove the tip.
+
+[Section A, 7. Cancellation, 7.1 Cancellation Terms for Partners (paragraph 1)] (Partner cancellations impair Users' experience)
+Users rely on you for delivery or provision of the Services. You agree that high and/or frequent cancellation rates will impair the Users' experience and negatively impact the reputation and branding of Ryde.
+
+[Section A, 7. Cancellation, 7.1 Cancellation Terms for Partners (paragraph 2)] (Partner cancellations must use acceptable cancellation reasons; may count towards temporary suspension)
+While you may cancel a booking, the cancellation shall be based on acceptable cancellation reasons as shown in the Application. Ryde reserves the right to amend the acceptable cancellation reasons from time to time. A cancellation that is not based on one of the acceptable reasons or ignoring a booking may be counted in determining if your access to the Service will be temporarily suspended.
+
+[Section A, 7. Cancellation, 7.1 Cancellation Terms for Partners (paragraph 3)] (Partner appeal against unfair ratings caused by fees imposed on riders)
+If you feel that you have been unfairly rated due to the additional fees imposed on riders, please write in to [email protected] to submit your appeal. Based on our Ratings and Review Moderation Policy, the team will review your appeal and consider removing ratings that are irrelevant to the driver's quality of service.
+
+[Section A, 7. Cancellation, 7.2 Cancellation Terms for Users (paragraph 1)] (User may cancel at any time before the ride commences)
+Unless otherwise stated in any Ryde Policy, you may cancel your request for transportation and delivery services at any time before you commence your ride with the Partner that has been matched with you by the Service.
+
+[Section A, 7. Cancellation, 7.2 Cancellation Terms for Users (paragraph 2)] (Cancellation Fee for user cancellation or no-show, amount per the Cancellation and Waiting Time Policy)
+If you decide to cancel your ride booking or do not show up at the designated location, you may be charged a Cancellation Fee or such other Cancellation Fee as Ryde may notify from time to time via the Cancellation and Waiting Time Policy on Ryde's website.
+
+[Section A, 7. Cancellation, 7.2 Cancellation Terms for Users (paragraph 3)] (Incorrectly charged Cancellation Fee; refunds at Ryde's absolute discretion (card, RydeCoins wallet or other method))
+If you feel you were incorrectly charged a Cancellation Fee, you may contact Ryde in writing at [email protected] for assistance. Ryde reserves its absolute discretion to any refunds to you and such refunds may be credited to the payment card you used for the journey, or to your RydeCoins wallet or by such other method as is deemed reasonable by Ryde.
+
+[Section A, 9. Ratings (paragraph 1)] (Mutual ratings; Ryde may suspend use of the Service without notice or compensation)
+Users and Partners may be allowed to rate each other in respect of Services provided. Every rating will be automatically logged onto Ryde's system and Ryde may analyze all ratings received. Ryde may take all appropriate actions including suspending your use of the Service without any notice or compensation to you.
+
+[Section A, 9. Ratings (paragraph 2)] (Driver rating calculated on last 100 trips)
+The driver's rating is calculated based on his/her last 100 trips to ensure that it reflects the driver's recent performance. If the Driver received less than 100 ratings, the system will calculate the average based on all the ratings received till date.
+
+[Section A, 10. Complaints] (Complaints between Partners and Users to be taken up directly with each other)
+Any complaints between Partners and Users must be taken up with each other directly.
+
+[Section A, 11. Repair and Cleaning Fees for Users (paragraph 1)] (User responsible for repair/cleaning costs from misuse or breach)
+Where applicable, you shall be responsible for the cost of repairing any damage to or necessary cleaning of the Partner's property as a result of your misuse of the Service or breach of the Terms of Use.
+
+[Section A, 11. Repair and Cleaning Fees for Users (paragraph 2)] (Ryde reimburses driver after verification under the Vehicle Contamination Policy and recovers from rider)
+Ryde may, subject to verification under its Vehicle Contamination Policy, reimburse the driver for the applicable cleaning costs and separately recover the amount from the rider.
+
+[Section A, 11. Repair and Cleaning Fees for Users (paragraph 3)] (Rider cleaning fee up to S$200; non-payment may lead to suspension or deactivation)
+Riders may be subject to a cleaning fee of up to S$200 for incidents requiring professional cleaning (e.g. stains, bodily fluids, vomit). Non-payment of verified cleaning fees may result in temporary suspension or permanent deactivation.
+
+[Section A, 16. Third Party Interactions (paragraph 1)] (Dealings with third parties are strictly between the user and the third party; Ryde not liable)
+During use of the Service, you may enter into correspondence or transactions with third parties who display or offer their goods and/or service through the Platform. Any such communication or agreement is strictly between you and the applicable third party and Ryde and its licensors shall have no liability or obligation for any such communication or agreement. Neither Ryde nor any of its affiliate companies endorses any applications or sites on the Internet that are linked through the Platform, and in no event shall Ryde, its licensors or its affiliate companies be responsible for any content, products, services or other materials on or available from such sites or third parties. Certain third parties may require your agreement to additional or different terms of use and privacy policies prior to your use of or access to such goods or services, and Ryde is not a party to and disclaims any and all responsibility and/or liability arising from such agreements between you and the third parties. You acknowledge that such additional or different terms of use and privacy policies may apply to your use of such third party services. Ryde is not liable for any information that you provide to or authorize us to provide to a third party, or for such third party's collection, use and disclosure of such information.
+
+[Section A, 18. Disclaimer of Warranties] (No representation or warranty in respect of Services provided by Partners)
+Ryde makes no representation or warranty of any kind whatsoever, express or implied, in respect of Services provided by Partners
+
+[Section A, 20. Limitation of Liability] (Liability cap: claims against Ryde limited to amounts paid/due for the Service during the event)
+any claims against Ryde by you shall be limited to the aggregate amount of all amounts actually paid by and/or due from you in utilising the Service during the event giving rise to such claims.
+
+[Section A, 20. Limitation of Liability] (Ryde not a party to disputes between users and partners)
+Ryde will not be a party to disputes or negotiations of disputes between you and Users or Partners
+
+[Section A, 23. Dispute Resolution (paragraph 1)] (Governing law: Singapore)
+These Terms of Service shall be governed by Singapore law, without regard to the choice or conflicts of law provisions of any jurisdiction.
+
+[Section A, 23. Dispute Resolution (paragraph 2)] (SIAC arbitration, sole arbitrator, seat Singapore, English, fees shared)
+Any disputes, actions, claims or causes of action arising out of or in connection with these Terms of Service ("Disputes") or the Service shall be referred to the Singapore International Arbitration Centre ("SIAC"), in accordance with the Rules of the SIAC as modified or amended from time to time (the "Rules") by a sole arbitrator appointed by the mutual agreement of you and Ryde (the "Arbitrator"). If you and Ryde are unable to agree on an arbitrator, the Arbitrator shall be appointed by the President of SIAC in accordance with the Rules. The seat and venue of the arbitration shall be Singapore, in the English language and the fees of the Arbitrator shall be borne equally by you and Ryde, provided that the Arbitrator may require that such fees be borne in such other manner as the Arbitrator determines is required in order for this arbitration clause to be enforceable under applicable law.
+
+[Section A, 23. Dispute Resolution (paragraph 3)] (Partners may choose Singapore Mediation Centre mediation and/or Small Claims Tribunal)
+Notwithstanding the above, if you are a Partner, you may choose to submit a Dispute for mediation at the Singapore Mediation Centre and/or Small Claims Tribunal, subject to their respective rules and guidelines.
+
+[Section A, 24. Relationship] (Ryde's role: no agency, partnership or joint enterprise)
+Nothing contained in these Terms of Service shall be construed as creating any agency, partnership, or other form of joint enterprise with Ryde.
+
+[Section A, 28. Suspension and Termination; Modification of Platform Content (a)-(c)] (Suspension or termination of access/accounts at any time, without notice, for any reason)
+You agree that we may do any of the following, at any time, without notice:
+(a) modify, suspend or terminate operation of or access to the Platform, or any portion of the Platform (including access to your account and/or the availability of any products or services), for any reason;
+(b) modify or change any applicable policies or terms; and
+(c) interrupt the operation of the Platform or any portion of the Platform (including access to your account and/or the availability of any products or services), as necessary to perform routine or non-routine maintenance, error correction, or other changes.
+
+[Section A, 28. Suspension and Termination; Modification of Platform Content] (No compensation for modification, suspension or termination)
+We shall not be required to compensate you for any modification, suspension or termination.
+
+[Section A, 28. Suspension and Termination; Modification of Platform Content] (Pricing/content errors: Rectification Measure, including cancelling affected orders)
+Without prejudice to any other provisions, we may vary, modify or remove the Platform's content without notice (including without limitation information relating to the availability of a product or service, product or service descriptions, pricing, promotions, offers, product shipping charges and transit time). In the event any Platform content contains any typographical errors, inaccuracies, omissions or otherwise violates Ryde Policies, we reserve the right to (but shall not be obliged to, save to the extent where mandated by applicable laws) carry out any such measures as Ryde deems appropriate (collectively, "Rectification Measure") including without limitation (i) correcting the said errors, inaccuracies or omissions, (ii) changing or updating information; and/or (iii) where applicable, canceling the affected orders at any time without prior notice (including without limitation after an order has been submitted).
+
+[Section B, 3. RydeCoins - Singapore Only] (RydeCoins (refund destination) are non-refundable and not convertible to cash)
+RydeCoins are solely intended for use within our Platform and are non-refundable, and cannot be redeemed, exchanged, transferred or converted into cash or utilized for any transactions outside of our services.
+
+[Section B, 3. RydeCoins - Singapore Only] (RydeCoins validity six months from last transaction)
+The RydeCoins will only be valid for six (6) months from the date of the last transaction.
+
+[Section B, 3. RydeCoins - Singapore Only] (RydeCoins not redeemable for cash nor refundable)
+The RydeCoins are not redeemable for cash nor refundable under any circumstances.
+
+[Section B, 3. RydeCoins - Singapore Only] (RydeCoins non-refundable including on account closure)
+For the avoidance of doubt, RydeCoins are non-refundable and not redeemable, exchanged or transferred for cash value under any circumstances - including the closing down of one's own user account.

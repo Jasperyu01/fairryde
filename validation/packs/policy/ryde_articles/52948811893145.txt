@@ -1,0 +1,62 @@
+RYDE HELP CENTRE ARTICLE 52948811893145
+TITLE: Pickup Distance Upgraded
+AUDIENCE: Driver
+SECTION: Accepting a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/52948811893145-Pickup-Distance-Upgraded
+EDITED: 2025-12-02
+
+You spoke, we listened.
+
+We've updated how distances are shown so you can make faster, clearer and more confident decisions before accepting a job.
+
+1. What does "actual route distance" mean?
+
+You now see the real driving distance you'll take, no surprises, no hidden detours.
+
+Instead of a straight-line distance, the app now follows actual road routes from your location to the pickup and drop-off points.
+
+2. Why was this change made?
+
+To help you avoid unexpected long pickups and make your trips more predictable and fair.
+
+By showing the actual route, you can better judge if a job is worth your time before committing.
+
+3. Will this affect my earnings?
+
+No. Fares are calculated from actual driven distance and time, so you are always paid correctly for the route you take. This change only improves visibility before you accept a job.
+
+4. Why do some jobs still display straight-line distance?
+
+During peak load or brief system congestion, the app may temporarily show straight-line distance. This doesn't affect your earnings or acceptance; you can still choose the jobs you're comfortable with.
+
+5. Why does it sometimes differ from Google Maps or Waze?
+
+Small variations are normal but your Ryde distance remains accurate for the job.
+
+Different apps may show slightly different distances because each platform uses its own map data and routing logic.
+
+6. Why do some pickup distances appear much farther now?
+
+You're seeing the actual distance, so you can decide with full clarity.
+
+Actual route distance includes one-way roads, turns, and expressway entries that straight-line calculations never showed before. What you see now reflects what you'll really drive.
+
+7. Will I still receive jobs that are far away?
+
+Yes, Allocation still uses straight-line distance for now, so some jobs may appear further on the new calculation. You can freely accept or decline, no penalties. We're improving this gradually so job lists become even more accurate over time.
+
+8. What about traffic or road closures?
+
+Your route updates automatically, helping you stay efficient.
+
+The system recalculates in real time to keep your distance and ETA as accurate as possible.
+
+9. What if I notice discrepancies?
+
+We want your feedback; it helps us refine the system.
+
+GPS or map glitches may happen occasionally. Simply report it to support via Rydehelp so we can improve accuracy.
+
+10. Why is this update important?
+
+Because it gives you clearer information, better control, and more accurate job decisions while protecting your efficiency and earnings.

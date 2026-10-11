@@ -1,0 +1,196 @@
+# FairRyde Knowledge Base - Rules layer, part 2: REFERENCE DATA (参考数据表)
+# ChordX ONT.10b: facts the model must not guess are fixed here with value, unit, source, date and note.
+# Code answers from these tables and says where the value came from. If a value is missing, the model may estimate,
+# but must label the answer as an estimate (一般估算).
+
+meta:
+  kb: FairRyde Knowledge Base
+  layer: Rules / reference data
+  version: 0.1.0
+  status: draft
+  updated: 2026-10-05
+  owner: Jasper
+  how_profiles_work: >-
+    A case is evaluated under exactly one profile (rule META-01). Profile parameters override shared parameters.
+    Shared parameters are FairRyde assumptions (credibility C or D) that apply to every profile unless overridden.
+  not_live_integration: >-
+    These tables are expert-maintained lookups (values read by a person from an authoritative page or tool on the
+    retrieved date). They are not live integrations with Ryde, OneMap or LTA and must never be described as connected.
+  fields:
+    value: The value used by the code.
+    unit: Unit of the value.
+    source_type: One of TX-SOURCE-TYPE.
+    source: Where the value comes from (document id and quoted words where possible).
+    source_date: Date of the source document (Ryde article edited date, organizer file date, table effective date).
+    retrieved: Date a person read the value.
+    credibility: A to D (rules.yaml credibility_scale).
+    plausible_range: "For C and D numeric parameters only: the range of values the team considers reasonable. Used by the AUTH-02 sensitivity test: if the outcome changes inside this range, the rule using the parameter is decisive and the case needs human approval."
+    flag_only: "True when the parameter only adds a flag or lowers confidence and can never change an outcome."
+
+# =====================================================================
+profiles:
+
+  organizer_case:
+    applies_when: The case embeds its own cancellation_policy object (organizer cases such as DISP-002).
+    built_from_case: >-
+      At run time the engine reads the case's own cancellation_policy object through ontology.yaml disp002_mapping (field,
+      parameter, scale): the four case_fields below come only from the case. Anything the object does not carry, and every
+      other parameter not listed under params, falls back to the fallback_profile (META-01), and the trace says so.
+      case_example_DISP002 documents DISP-002's values; the code never reads them, so a case without a field cannot silently
+      inherit DISP-002's value.
+    effective_from: case-specific
+    fallback_profile: ryde_2026
+    case_fields: {FREE_WAIT_S: cancellation_policy.free_wait_time_min, NO_SHOW_THRESHOLD_S: cancellation_policy.no_show_threshold_min, NO_SHOW_FEE_SGD: cancellation_policy.cancellation_fee_after_wait, FEE_PAYEE: cancellation_policy.fee_goes_to}
+    case_example_DISP002:
+      FREE_WAIT_S: {value: 300, unit: s, source_type: ORGANIZER, source: "DISP-002 cancellation_policy.free_wait_time_min = 5", source_date: 2026-09, retrieved: 2026-10-04, credibility: A}
+      NO_SHOW_THRESHOLD_S: {value: 480, unit: s, source_type: ORGANIZER, source: "DISP-002 cancellation_policy.no_show_threshold_min = 8", source_date: 2026-09, retrieved: 2026-10-04, credibility: A}
+      NO_SHOW_FEE_SGD: {value: 5.00, unit: SGD, source_type: ORGANIZER, source: "DISP-002 cancellation_policy.cancellation_fee_after_wait = 5.00", source_date: 2026-09, retrieved: 2026-10-04, credibility: A}
+      FEE_PAYEE: {value: DRIVER, source_type: ORGANIZER, source: "DISP-002 cancellation_policy.fee_goes_to = driver_compensation", source_date: 2026-09, retrieved: 2026-10-04, credibility: A}
+    params:
+      THRESHOLD_COMPARISON: {value: at_least, source_type: ORGANIZER, source: "DISP-002 app event 08:51:00 'No-show threshold (8 min) reached.' logged exactly 8:00 after driver_wait_start", source_date: 2026-09, retrieved: 2026-10-04, credibility: A}
+      WAIT_ANCHOR_FIELD: {value: trip_data.driver_wait_start, source_type: ORGANIZER, source: "DISP-002 trip_data.driver_wait_start", source_date: 2026-09, retrieved: 2026-10-04, credibility: A}
+      REMEDY_FORM: {value: WALLET_VOUCHER, source_type: FAIRRYDE, source: "Organizer data does not say how refunds are paid; Ryde's voucher form assumed", source_date: 2026-10-05, retrieved: 2026-10-05, credibility: D, note: "Changes only the form of a remedy, never the outcome."}
+
+  ryde_2026:
+    applies_when: No embedded policy object and the trip date is on or after effective_from (META-02). Values from the Ryde Help Centre as read on 2026-10-05.
+    effective_from: 2026-02-17
+    effective_note: "Platform fee change effective 17 Feb 2026 (RYDE-18229758389017). Values before that date are not loaded; earlier trips are escalated as a policy gap (META-02, GEN-R07)."
+    params:
+      FREE_CANCEL_WINDOW_S: {value: 180, unit: s, source_type: RYDE_POLICY, source: "RYDE-23534478435353: 'All cancellations made within 3 minutes of matching are not chargeable.'", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      ADVANCE_FREE_BEFORE_S: {value: 900, unit: s, source_type: RYDE_POLICY, source: "RYDE-23534478435353: '> 15 minutes before the scheduled trip time'", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      ADVANCE_GRACE_S: {value: 180, unit: s, source_type: RYDE_POLICY, source: "RYDE-23534478435353: '3 minute grace period'", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      FREE_WAIT_S: {value: 180, unit: s, source_type: RYDE_POLICY, source: "RYDE-23534478435353: 'waits for > 3 minutes'", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      NO_SHOW_THRESHOLD_S: {value: 180, unit: s, source_type: RYDE_POLICY, source: "RYDE-4407754403353: 'Has waited for more than 3 mins'", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      THRESHOLD_COMPARISON: {value: more_than, source_type: RYDE_POLICY, source: "RYDE-23534478435353: '> 3 minutes'", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      NO_SHOW_FEE_SGD: {value: 6.61, unit: SGD, source_type: RYDE_POLICY, source: "RYDE-23534478435353: 'Cancellation Fee of $6.61*'", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      RIDER_CANCEL_FEE_SGD: {value: 6.61, unit: SGD, source_type: RYDE_POLICY, source: "RYDE-23534478435353", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      WAITING_FEE_SGD: {value: 5.00, unit: SGD, source_type: RYDE_POLICY, source: "RYDE-23534478435353: 'Waiting Time Fee of $5'", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      DRIVER_CANCEL_PAYOUT_SGD: {value: 4.50, unit: SGD, source_type: RYDE_POLICY, source: "RYDE-4408070838297: 'Drivers will receive a $4.50 cancellation fee automatically if they cancel after >3 minutes of waiting.'", source_date: 2026-09-25, retrieved: 2026-10-05, credibility: A, note: "What the driver receives, not what the rider pays (S$6.61)."}
+      DRIVER_WAITING_PAYOUT_SGD: {value: 5.00, unit: SGD, source_type: RYDE_POLICY, source: "RYDE-4408071347993: '$5* Waiting Time Fee button'", source_date: 2026-09-25, retrieved: 2026-10-05, credibility: B, conflict: "RYDE-20244064619161 (edited 2024-04-23) says $4.50. Rule META-04 applies."}
+      FEE_PAYEE: {value: DRIVER, source_type: RYDE_POLICY, source: "RYDE-4408070838297: 'Drivers will receive a $4.50 cancellation fee automatically'; RYDE-4407761228825: 'Cancellation Fees compensate drivers'", source_date: 2026-09-25, retrieved: 2026-10-05, credibility: A}
+      WAIT_ANCHOR_FIELD: {value: "driver_arrived event ('I'm Here') with GPS at pickup", source_type: RYDE_POLICY, source: "RYDE-23534478435353 and RYDE-4407754403353", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      WAIVER_WINDOW_DAYS: {value: 30, unit: days, source_type: RYDE_POLICY, source: "RYDE-18229758389017: 'within 30 days of the trip'", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      REMEDY_FORM: {value: WALLET_VOUCHER, source_type: RYDE_POLICY, source: "RYDE-18229758389017: 'a voucher** with a unique code worth $6.61'", source_date: 2026-02-26, retrieved: 2026-10-05, credibility: A}
+      DEST_EDIT_FEE_SGD: {value: 3.00, unit: SGD, source_type: RYDE_POLICY, source: "RYDE-51399796192921", source_date: 2025-10-10, retrieved: 2026-10-05, credibility: A}
+      CLEAN_WITHIN_H: {value: 24, unit: h, source_type: RYDE_POLICY, source: "RYDE-900004381243", source_date: 2026-04-09, retrieved: 2026-10-05, credibility: A}
+      CLAIM_WITHIN_H: {value: 48, unit: h, source_type: RYDE_POLICY, source: "RYDE-900004381243", source_date: 2026-04-09, retrieved: 2026-10-05, credibility: A}
+      CLEANING_APPEAL_H: {value: 24, unit: h, source_type: RYDE_POLICY, source: "RYDE-900004381243", source_date: 2026-04-09, retrieved: 2026-10-05, credibility: A}
+      CLEANING_CAP_SPILL_SGD: {value: 40, unit: SGD, source_type: RYDE_POLICY, source: "RYDE-900004381243: 'Up to $40'", source_date: 2026-04-09, retrieved: 2026-10-05, credibility: A}
+      CLEANING_CAP_FLUID_SGD: {value: 120, unit: SGD, source_type: RYDE_POLICY, source: "RYDE-900004381243: 'Up to S$120'", source_date: 2026-04-09, retrieved: 2026-10-05, credibility: A}
+      CLEANING_CAP_VOMIT_SGD: {value: 200, unit: SGD, source_type: RYDE_POLICY, source: "RYDE-900004381243: 'Up to S$200'", source_date: 2026-04-09, retrieved: 2026-10-05, credibility: A}
+      DRIVER_RATING_MIN: {value: 4.80, source_type: RYDE_POLICY, source: "RYDE-33362721809049: 'Driver Rating (DR) | < 4.80'", source_date: 2026-04-10, retrieved: 2026-10-05, credibility: A, note: "Ops threshold for temporary disabling; FairRyde never applies it (GEN-R06)."}
+      DRIVER_CANCEL_RATE_MAX: {value: 0.175, source_type: RYDE_POLICY, source: "RYDE-33362721809049: 'Cancellation Rate (CR) | > 17.5%'", source_date: 2026-04-10, retrieved: 2026-10-05, credibility: A, note: "Ops threshold; never applied by FairRyde."}
+      ACCIDENT_REPORT_H: {value: 1, unit: h, source_type: RYDE_POLICY, source: "RYDE-900003838386: 'within 1 hour'", source_date: 2023-09-19, retrieved: 2026-10-05, credibility: B}
+
+# =====================================================================
+shared_params:
+  BOUNDARY_BAND_S: {value: 30, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [10, 60], flag_only: true, retrieved: 2026-10-05, note: "Adds the BOUNDARY_MARGIN flag and sets the margin term M of the confidence score."}
+  TS_TOLERANCE_S: {value: 30, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [5, 60], retrieved: 2026-10-05, note: "Prior: server components usually log the same moment within a few seconds. DISP-002 shows 5 to 10 s lags; the range was not set from DISP-002."}
+  ARRIVAL_GEOFENCE_M: {value: 50, unit: m, source_type: FAIRRYDE, credibility: D, plausible_range: [10, 100], retrieved: 2026-10-05, note: "The organizer's own auto-arrival check uses 10 m (lower end); 50 m allows for GPS error near tall buildings."}
+  LEFT_MIN_OUTSIDE_S: {value: 60, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [30, 120], retrieved: 2026-10-05, note: "CW-F04 and CW-R06: an outside stretch shorter than this, measured from its first to its last ping, is a GPS outlier when the driver is seen inside again after it (a single such ping included). A stretch with no later inside ping, and the approach before the driver is first seen inside, are never outliers on duration. Measured in time, not in pings, so it means the same at 5-second and at 3-minute sampling."}
+  PING_MAX_GAP_S: {value: 300, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [60, 420], retrieved: 2026-10-05, note: "Also the look-back window for the moment ping of CW-R06 (the last ping up to this long before the arrival event). Honest history: the only organizer telemetry is DISP-002 (gaps 120 to 240 s), and the value was chosen with it in view, so it is not independent of that case. The plausible range is a prior instead: from one ping a minute (sparse for real apps, which ping every few seconds) up to just below the 480 s organizer threshold. With this range DISP-002's presence finding is sensitive and the case needs human approval."}
+  PIN_VENUE_MAX_M: {value: 200, unit: m, source_type: FAIRRYDE, credibility: D, plausible_range: [100, 500], retrieved: 2026-10-05}
+  CONTACT_MIN_CALLS: {value: 1, source_type: FAIRRYDE, credibility: D, plausible_range: [1, 2], retrieved: 2026-10-05, note: "Ryde asks drivers to try to contact the rider (RYDE-115001438754, edited 2021); the count is FairRyde's."}
+  CONTACT_MIN_MESSAGES: {value: 2, source_type: FAIRRYDE, credibility: D, plausible_range: [1, 3], retrieved: 2026-10-05}
+  BOOKING_INFER_MATCH_S: {value: 60, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [30, 120], retrieved: 2026-10-05}
+  BOOKING_INFER_ETA_S: {value: 120, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [60, 300], retrieved: 2026-10-05}
+  DRIVER_LATE_GRACE_S: {value: 180, unit: s, source_type: INDUSTRY, credibility: C, plausible_range: [120, 300], retrieved: 2026-10-05, note: "Grab uses ETA + 3 min and Gojek ETA + 5 min (research note 02)."}
+  DETOUR_RATIO_MIN: {value: 1.20, source_type: INDUSTRY, credibility: C, plausible_range: [1.10, 1.30], retrieved: 2026-10-05, note: "DiDi: actual / Tencent Maps distance >= 120% (IND-DIDI-DETOUR)."}
+  DETOUR_EXTRA_KM_MIN: {value: 3.0, unit: km, source_type: INDUSTRY, credibility: C, plausible_range: [1.5, 5.0], retrieved: 2026-10-05, note: "DiDi: detour >= 3 km."}
+  BORDERLINE_RATIO_MIN: {value: 1.10, source_type: FAIRRYDE, credibility: D, plausible_range: [1.05, 1.15], retrieved: 2026-10-05}
+  BORDERLINE_EXTRA_KM_MIN: {value: 1.5, unit: km, source_type: FAIRRYDE, credibility: D, plausible_range: [1.0, 2.0], retrieved: 2026-10-05}
+  CORRIDOR_HALF_WIDTH_M: {value: 100, unit: m, source_type: FAIRRYDE, credibility: D, plausible_range: [50, 200], retrieved: 2026-10-05}
+  CORRIDOR_MIN_CONSEC_PINGS: {value: 2, source_type: FAIRRYDE, credibility: D, plausible_range: [2, 3], retrieved: 2026-10-05}
+  ENDPOINT_EXCLUSION_M: {value: 500, unit: m, source_type: FAIRRYDE, credibility: D, plausible_range: [200, 800], retrieved: 2026-10-05}
+  MIN_REFUND_SGD: {value: 0.50, unit: SGD, source_type: FAIRRYDE, credibility: D, plausible_range: [0.10, 1.00], retrieved: 2026-10-05}
+  TOLL_TOLERANCE_SGD: {value: 0.00, unit: SGD, source_type: FAIRRYDE, credibility: D, plausible_range: [0.00, 0.50], retrieved: 2026-10-05}
+  MONEY_TOLERANCE_SGD: {value: 0.01, unit: SGD, source_type: FAIRRYDE, credibility: D, plausible_range: [0.00, 0.05], retrieved: 2026-10-05, note: "Rounding tolerance for fare arithmetic and fee amounts."}
+  SOFT_FLAG_PENALTY: {value: 0.10, source_type: FAIRRYDE, credibility: D, plausible_range: [0.05, 0.20], flag_only: true, retrieved: 2026-10-05, note: "AUTH-05: subtracted from E for each soft data flag. Same as the 4 Oct report."}
+  SPEED_RATIO_SOFT: {value: 3.0, source_type: FAIRRYDE, credibility: D, plausible_range: [2.0, 5.0], flag_only: true, retrieved: 2026-10-05}
+  SPEED_MAX_KMH: {value: 120, unit: km/h, source_type: FAIRRYDE, credibility: D, plausible_range: [100, 150], retrieved: 2026-10-05}
+  SG_BBOX: {value: [1.15, 103.59, 1.48, 104.10], note: "lat_min, lng_min, lat_max, lng_max", source_type: FAIRRYDE, credibility: D, retrieved: 2026-10-05}
+  RIDER_ABUSE_MIN_DISPUTES: {value: 3, source_type: FAIRRYDE, credibility: D, plausible_range: [2, 5], retrieved: 2026-10-05, note: "FRD-02. Affects the approval tier only."}
+  RIDER_ABUSE_REJECT_SHARE_MIN: {value: 0.5, source_type: FAIRRYDE, credibility: D, plausible_range: [0.4, 0.8], retrieved: 2026-10-05, note: "FRD-02. Affects the approval tier only."}
+  AUTO_LIMIT_SGD: {value: 10.00, unit: SGD, source_type: FAIRRYDE, credibility: D, plausible_range: [5, 20], retrieved: 2026-10-05, note: "To confirm with the organizer or Ryde. Affects the approval tier only."}
+  TAU: {value: 0.60, source_type: FAIRRYDE, credibility: D, plausible_range: [0.50, 0.80], retrieved: 2026-10-05, note: "Calibrate on the dev set: the lowest value at which no wrong ruling is auto-resolved. Affects the approval tier only."}
+  CONFIDENCE_WEIGHTS: {value: {A_run_agreement: 0.35, M_threshold_margin: 0.25, E_evidence_completeness: 0.25, R_rules_engine_agreement: 0.15}, source_type: FAIRRYDE, credibility: D, retrieved: 2026-10-05, note: "Rule AUTH-05."}
+  PROFILE: {value: "organizer_case (built from the case's own policy object) if the case embeds one, else the Ryde profile in force on the trip date", source_type: FAIRRYDE, credibility: D, retrieved: 2026-10-05}
+
+# =====================================================================
+tables:
+
+  PLATFORM_FEE_TIERS:
+    source: "RYDE-22836370596377 'Platform Fee'; effective 17 Feb 2026 per RYDE-18229758389017"
+    source_date: 2026-02-26
+    retrieved: 2026-10-05
+    credibility: A
+    rows:
+      - {fare_up_to_sgd: 18.00, fee_sgd_incl_gst: 1.25}
+      - {fare_above_sgd: 18.00, fee_sgd_incl_gst: 1.47}
+
+  TRANSACTION_FEE_LOCAL:
+    source: "RYDE-52594357168281 'Transaction Fee'"
+    source_date: 2025-11-23
+    retrieved: 2026-10-05
+    credibility: A
+    value: {percent: 1.96, fixed_sgd: 0.24, applies_to: "Local Visa, Mastercard, RydeCoins"}
+
+  TRANSACTION_FEE_FOREIGN:
+    source: "RYDE-52594357168281"
+    source_date: 2025-11-23
+    retrieved: 2026-10-05
+    credibility: A
+    value: {percent: 3.3, fixed_sgd: 0.50, applies_to: "AMEX, foreign cards and other cards; plus 3% for foreign cards and Alipay"}
+
+  CANCELLATION_FEE_DECOMPOSITION:
+    source: "RYDE-23534478435353 footnote ('a flat fee of $1.15 (exclusive of GST)' for fares up to $18, 'included in the base fare') and the fee tables above"
+    source_date: 2026-02-26
+    retrieved: 2026-10-05
+    credibility: B
+    note: "S$6.61 = S$5.00 + platform fee S$1.25 (S$1.15 + 9% GST) + transaction fee S$0.36 (1.96% x S$6.25 + S$0.24). The footnote states the platform fee is included; the decomposition itself is FairRyde's arithmetic. The driver receives S$4.50 (RYDE-4408070838297), so S$0.50 of the S$5.00 base is not explained by the articles read (open decision D7)."
+
+  TAXI_TARIFF:
+    source: "ComfortDelGro taxi fares page (research note 08), used for RydeTAXI metered recomputation"
+    source_date: unknown
+    retrieved: 2026-10-05
+    credibility: C
+    note: "RydeTAXI pays 'standard metered taxi fares'; which operator's meter applies per trip is not recorded in organizer data."
+    value:
+      flag_down_first_km_sgd: {standard_hybrid: 4.60, ev_or_sienta: 4.80, noah: 5.20, limousine: 5.50}
+      increment_sgd: 0.27
+      increment_distance_up_to_10km_m: 400
+      increment_distance_after_10km_m: 350
+      increment_waiting_s: 45
+      peak_surcharge_pct: 25
+      late_night_surcharge_pct: 50
+      booking_fee_peak_sgd: 3.30
+      booking_fee_offpeak_sgd: 2.30
+      peak_booking_windows: "Mon to Fri 06:00 to 09:29; daily 17:00 to 23:59; Sat to Sun 10:00 to 13:59"
+
+  ERP_RATE_TABLE:
+    source: "LTA ERP rate table, with effect from 23 Mar 2026 (onemotoring.lta.gov.sg ERP Rates PDF), per research note 08"
+    source_date: 2026-03-23
+    retrieved: 2026-10-05
+    credibility: A
+    status: "Partial. Load the full table for synthetic cases; a newer table effective 7 Sep 2026 is reported by a secondary site and must be checked."
+    vehicle_class: "passenger cars, taxis and light goods vehicles"
+    rows:
+      - {gantry: "CTE after Braddell Road", window: "08:35-08:55", rate_sgd: 6.00}
+      - {gantry: "MCE eastbound", window: "08:35-08:55", rate_sgd: 5.00}
+      - {gantry: "AYE citybound", window: "08:00-08:05", rate_sgd: 4.50}
+      - {gantry: "PIE eastbound", window: "17:35-17:55", rate_sgd: 4.00}
+      - {gantry: "ECP city", window: "09:00-09:05", rate_sgd: 4.00}
+      - {gantry: "Orchard Road (gantry 13)", window: "08:35-08:55", rate_sgd: 3.00}
+      - {gantry: "KPE southbound", window: "08:00-08:05", rate_sgd: 3.00}
+      - {gantry: "Victoria Street", window: "07:30-07:35", rate_sgd: 2.00}
+
+  VENUES:
+    source: "OneMap search API (Singapore Land Authority), looked up by hand"
+    source_date: 2026-10-04
+    retrieved: 2026-10-04
+    credibility: A
+    note: "Every synthetic case must use OneMap coordinates for named places. Lookups are done by a person and stored here; FairRyde does not call OneMap at run time in v0.1."
+    rows:
+      - {name: Tiong Bahru Plaza, address: "302 TIONG BAHRU ROAD SINGAPORE 168732", lat: 1.286458894728254, lng: 103.8270152561934}
+      - {name: VivoCity, address: "1 HARBOURFRONT WALK SINGAPORE 098585", lat: 1.26429316783973, lng: 103.82230469365}
+      - {name: VivoCity Station (S1), address: "83 TELOK BLANGAH ROAD SINGAPORE 098886", lat: 1.2650508426276, lng: 103.821624580393}

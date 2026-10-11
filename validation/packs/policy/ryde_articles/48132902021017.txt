@@ -1,0 +1,8 @@
+RYDE HELP CENTRE ARTICLE 48132902021017
+TITLE: Why was a 5-star rating submitted even though I didn't rate the trip?
+AUDIENCE: Rider
+SECTION: Ryde Experience
+URL: https://help.rydesharing.com/hc/en-us/articles/48132902021017-Why-was-a-5-star-rating-submitted-even-though-I-didn-t-rate-the-trip
+EDITED: 2025-06-20
+
+If no rating is provided within a certain time after the trip ends, our system automatically assigns a 5-star rating. This is part of our standard process to ensure timely closure of trips.

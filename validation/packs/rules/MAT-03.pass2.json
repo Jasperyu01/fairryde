@@ -1,0 +1,12 @@
+{
+ "rule_id": "MAT-03",
+ "credibility": "D",
+ "credibility_note": "Checkpoints are official guidance (B) and Ryde has appeal routes (A); sending every appeal of an automatic ruling to a human is FairRyde's design (D).",
+ "status": "draft",
+ "fairryde_sources_and_source_notes": [
+  {
+   "doc": "RYDE-900004381243",
+   "note": "Ryde already lets drivers appeal cleaning-claim outcomes."
+  }
+ ]
+}

@@ -1,0 +1,118 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E08",
+    "trip_id": "TRIP-2026-34480",
+    "filed_by": "rider",
+    "dispute_type": "waiting_fee",
+    "description": "The app told me my driver had arrived so I went straight down, but he wasn't there. The map showed him still driving around Edgefield Plains. He turned up about 2 minutes later and I got in within a minute or two. Then at the end he added a $5 waiting fee. I was the one waiting for him, not the other way round. Please refund the $5.",
+    "filed_at": "2026-09-16T21:30:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-6675",
+    "name": "Chloe Tan Shu Ting",
+    "account_age_days": 1210,
+    "total_trips": 260,
+    "avg_rating": 4.9,
+    "dispute_history": {
+      "total_disputes": 0,
+      "upheld": 0,
+      "rejected": 0
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "RydeCoins"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-7731",
+    "name": "Ismail bin Yusof",
+    "account_age_days": 300,
+    "total_trips": 960,
+    "avg_rating": 4.82,
+    "dispute_history": {
+      "total_disputes": 3,
+      "upheld_against": 2,
+      "rejected": 1
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Corolla Altis (SKY 9046 P)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-34480",
+    "rider_id": "R-6675",
+    "driver_id": "D-7731",
+    "service_type": "RydeX",
+    "booking_type": "on_demand",
+    "pickup_location": {
+      "name": "Blk 670 Edgefield Plains (drop-off porch)",
+      "lat": 1.3951,
+      "lng": 103.9128
+    },
+    "dropoff_location": {
+      "name": "The Seletar Mall",
+      "lat": 1.3916,
+      "lng": 103.8763
+    },
+    "scheduled_time": "2026-09-16T20:37:00+08:00",
+    "driver_arrival_time": "2026-09-16T20:35:10+08:00",
+    "driver_wait_start": "2026-09-16T20:35:10+08:00",
+    "driver_gps_at_pickup_time": "2026-09-16T20:37:20+08:00",
+    "rider_boarded_time": "2026-09-16T20:38:50+08:00",
+    "dropoff_time": "2026-09-16T20:52:30+08:00",
+    "cancellation_time": null,
+    "cancellation_fee": null,
+    "cancellation_reason": null,
+    "quoted_fare": 11.40
+  },
+
+  "fare_breakdown": {
+    "base_fare": 11.40,
+    "platform_fee_included_in_base_fare": 1.25,
+    "waiting_time_fee": 5.00,
+    "erp_toll": 0.00,
+    "subtotal": 16.40,
+    "transaction_fee": 0.56,
+    "transaction_fee_basis": "1.96% + $0.24 (RydeCoins) on subtotal",
+    "total_charged": 16.96,
+    "payment_method": "RydeCoins"
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-16T20:32:00+08:00", "lat": 1.4030, "lng": 103.9230, "speed_kmh": 45, "status": "en_route"},
+    {"timestamp": "2026-09-16T20:34:00+08:00", "lat": 1.3995, "lng": 103.9172, "speed_kmh": 38, "status": "en_route"},
+    {"timestamp": "2026-09-16T20:35:10+08:00", "lat": 1.3976, "lng": 103.9150, "speed_kmh": 24, "status": "arrived"},
+    {"timestamp": "2026-09-16T20:36:00+08:00", "lat": 1.3968, "lng": 103.9142, "speed_kmh": 18, "status": "arrived"},
+    {"timestamp": "2026-09-16T20:36:50+08:00", "lat": 1.3958, "lng": 103.9133, "speed_kmh": 9, "status": "arrived"},
+    {"timestamp": "2026-09-16T20:37:20+08:00", "lat": 1.3951, "lng": 103.9128, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-16T20:38:00+08:00", "lat": 1.3951, "lng": 103.9128, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-16T20:38:50+08:00", "lat": 1.3951, "lng": 103.9128, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-16T20:43:00+08:00", "lat": 1.3968, "lng": 103.9010, "speed_kmh": 48, "status": "on_trip"},
+    {"timestamp": "2026-09-16T20:48:00+08:00", "lat": 1.3940, "lng": 103.8860, "speed_kmh": 50, "status": "on_trip"},
+    {"timestamp": "2026-09-16T20:52:30+08:00", "lat": 1.3916, "lng": 103.8763, "speed_kmh": 0, "status": "completed"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-16T20:35:40+08:00", "sender": "rider", "type": "message", "content": "I'm downstairs at the porch, don't see you?"},
+    {"timestamp": "2026-09-16T20:36:10+08:00", "sender": "driver", "type": "message", "content": "coming coming, 1 min"}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-16T20:30:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-6675 booked on-demand RydeX trip TRIP-2026-34480 from Blk 670 Edgefield Plains to The Seletar Mall. Fixed fare quoted $11.40. Payment: RydeCoins."},
+    {"timestamp": "2026-09-16T20:30:20+08:00", "event_type": "driver_assigned", "details": "Driver D-7731 (Ismail bin Yusof, Toyota Corolla Altis SKY 9046 P) assigned. ETA 7 min."},
+    {"timestamp": "2026-09-16T20:30:25+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-16T20:35:10+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS 370m from pickup point. Speed 24 km/h. Arrival not auto-confirmed (outside pickup geofence)."},
+    {"timestamp": "2026-09-16T20:35:10+08:00", "event_type": "wait_timer_started", "details": "Free wait timer started at 'I'm Here' tap. 3 min free wait period ends at 20:38:10."},
+    {"timestamp": "2026-09-16T20:35:15+08:00", "event_type": "rider_notified", "details": "Push notification + in-app alert sent to rider: 'Your driver has arrived.'"},
+    {"timestamp": "2026-09-16T20:37:20+08:00", "event_type": "driver_reached_pickup", "details": "Driver GPS within 10m of pickup point (geofence entered). Speed 0 km/h."},
+    {"timestamp": "2026-09-16T20:38:10+08:00", "event_type": "wait_timer_expired", "details": "Free 3-min wait period expired (timer counted from 'I'm Here' tap). Rider had not boarded."},
+    {"timestamp": "2026-09-16T20:38:50+08:00", "event_type": "rider_picked_up", "details": "Driver tapped PICK UP. Rider boarded 3 min 40 s after 'I'm Here' and 1 min 30 s after the driver reached the pickup point."},
+    {"timestamp": "2026-09-16T20:38:55+08:00", "event_type": "trip_started", "details": "Trip started. Navigation to The Seletar Mall."},
+    {"timestamp": "2026-09-16T20:52:30+08:00", "event_type": "rider_dropped_off", "details": "Driver tapped DROP OFF at The Seletar Mall."},
+    {"timestamp": "2026-09-16T20:52:35+08:00", "event_type": "waiting_fee_added", "details": "Driver tapped the Waiting Time Fee button at drop-off: $5.00 added."},
+    {"timestamp": "2026-09-16T20:52:45+08:00", "event_type": "trip_completed", "details": "Trip completed. Toll (ERP) entered: $0.00."},
+    {"timestamp": "2026-09-16T20:52:50+08:00", "event_type": "payment_charged", "details": "$16.96 deducted from rider RydeCoins (base fare $11.40 + waiting time fee $5.00 + transaction fee $0.56)."}
+  ]
+}

@@ -1,0 +1,18 @@
+RYDE HELP CENTRE ARTICLE 34883561600025
+TITLE: How to accept destination change requests
+AUDIENCE: Driver
+SECTION: Accepting a Ryde
+URL: https://help.rydesharing.com/hc/en-us/articles/34883561600025-How-to-accept-destination-change-requests
+EDITED: 2025-09-18
+
+Riders should inform the driver in advance of any change in destination and/or add an additional stop on the trip. Riders will be able to request the change after drivers have started the trip.
+
+You will receive a notification or a request pop up on your Ryde Driver app when riders request to change the drop-off and/or add an additional drop-off stop. Drivers will approximately have 60 seconds to accept/decline the request.
+
+Your rider won't be able to request the change of drop-off location and/or add an additional stop for:
+
+- Multiple stop requests
+- RydePOOL booking
+- RydeTAXI booking
+
+*This feature is currently in a pilot phase and is not yet a full-scale release.

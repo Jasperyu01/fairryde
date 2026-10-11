@@ -1,0 +1,10 @@
+RYDE HELP CENTRE ARTICLE 900005170043
+TITLE: How are the trip fares calculated?
+AUDIENCE: Driver
+SECTION: Fares & Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/900005170043-How-are-the-trip-fares-calculated
+EDITED: 2024-03-13
+
+Fares are calculated based on the distance covered between your pickup and drop off locations. Fares vary depending on the service type and are affected by surges.
+
+The flag-down fare and regular booking fees inclusive of platform fees are applicable. The actual charges vary among different taxi companies. For more information on taxi fares, click here.

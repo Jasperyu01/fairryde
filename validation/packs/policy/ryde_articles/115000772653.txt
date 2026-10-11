@@ -1,0 +1,12 @@
+RYDE HELP CENTRE ARTICLE 115000772653
+TITLE: Do I need to pay ERP charges?
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/115000772653-Do-I-need-to-pay-ERP-charges
+EDITED: 2024-04-19
+
+If a rider passes through an active ERP gantry, the toll charge will be applicable to the rider.
+
+For all services apart from RydeSEND, ERP charges are excluded from the fares.
+
+*RydeSEND fares include ERP charges.

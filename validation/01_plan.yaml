@@ -1,0 +1,97 @@
+# FairRyde KB v0.1: independent validation plan (pre-registered)
+# Written on 2026-10-07 before any validation result existed. Thresholds and definitions are not changed after results come in;
+# any deviation is logged in run_log.jsonl with the reason.
+
+meta:
+  kb_version: 0.1.0
+  kb_freeze: 00_freeze.json        # SHA-256 of every KB file; checked again at the end (51_integrity.json)
+  owner: Jasper
+  method: >-
+    ChordX style: one primitive does one thing, with explicit input and output, evidence, a verdict and a saved result.
+    D = decision (judgment by a reviewer), E = execution (deterministic script). Reviewers are fresh agents that did not build
+    the KB, see only the packet for their step, write only to validation/, and never edit the KB.
+  time_box: "about 60 minutes of wall time for the small-sample round; a layer is expanded only if a systematic issue appears"
+
+data_gap: >-
+  The organizer has published one case (DISP-002), and it was used to build the KB, so it cannot test generalization.
+  V1 therefore uses real public complaint texts (news, forums, app-store or review sites), and V4 uses cases written by an
+  agent that reads only Ryde's own texts, labeled independently by a second agent that also cannot see the KB.
+  AI reference labels are not gold (ONT.5): every disagreement is listed for Jasper and Prof. Cao to settle.
+
+primitives:
+  - {id: P0, dep: E, do: "Freeze the KB (hashes)", out: 00_freeze.json}
+  - {id: P1, dep: E, do: "Pre-register this plan", out: 01_plan.yaml}
+  - {id: P2, dep: E, do: "Draw seeded stratified samples and build the packets", out: "V2_ontology/20_sample.json, V3_rules/30_sample.json, packs/"}
+  - {id: V1.1, dep: D, actor: collector, do: "Collect 20 real complaint texts by a fixed search protocol", out: V1_taxonomy/10_cases.jsonl}
+  - {id: V1.2, dep: D, actor: kb_classifier, sees: "taxonomy packet only", do: "Classify each text with the KB taxonomy", out: V1_taxonomy/11_labels_kb.jsonl}
+  - {id: V1.3, dep: D, actor: taxonomy_judge, sees: "taxonomy packet; the KB labels only after writing its own", do: "Blind label, then verdict per text", out: "V1_taxonomy/12_labels_judge_blind.jsonl, 13_verdicts.jsonl"}
+  - {id: V2.1, dep: D, actor: ontology_reviewer, sees: "item packets and source texts", do: "Find evidence for each sampled item", out: V2_ontology/21_verdicts.jsonl}
+  - {id: V3.1, dep: D, actor: "rule_reviewer_a, rule_reviewer_b", sees: "rule packets without credibility labels or builder notes (pass 1), then the labels (pass 2)", do: "Check each rule against its full cited sources", out: "V3_rules/32_verdicts_a.jsonl, 32_verdicts_b.jsonl"}
+  - {id: V4.1, dep: D, actor: case_writer, sees: "policy pack only (Ryde articles, Terms of Use, handbook, DISP-002 as a format example)", do: "Write 15 cases with an intended outcome and its policy basis", out: "V4_e2e/cases/*.json, 40_intended.jsonl"}
+  - {id: V4.2, dep: D, actor: policy_labeler, sees: "policy pack and the cases, not the intended outcomes, not the KB", do: "Label each case from policy text only", out: V4_e2e/41_labels_policy.jsonl}
+  - {id: V4.3, dep: E, do: "Settle reference labels: writer and labeler agree on the outcome", out: V4_e2e/42_reference.jsonl}
+  - {id: V4.4, dep: E, do: "KB decision for no-show cases with the reference engine", out: V4_e2e/43_kb_engine.jsonl}
+  - {id: V4.5, dep: D, actor: kb_applier, sees: "KB pack only (taxonomy, ontology, rules, reference data, playbooks) and the cases", do: "Decide each other case with the KB, citing rule IDs", out: V4_e2e/43_kb_applier.jsonl}
+  - {id: V4.6, dep: E, do: "Compare KB decisions with reference labels", out: V4_e2e/44_comparison.jsonl}
+  - {id: V4.7, dep: D, actor: adjudicator, sees: "case, both labels, KB decision, policy pack and KB", do: "Explain every mismatch and settle contested references", out: V4_e2e/45_adjudication.jsonl}
+  - {id: V5.0, dep: E, do: "Check that every quoted evidence string exists in the cited source", out: V5_scorecard/50_evidence_check.json}
+  - {id: V5.1, dep: E, do: "Compute the five metrics, intervals, thresholds and the verdict", out: V5_scorecard/51_scorecard.json}
+  - {id: V5.2, dep: E, do: "Check the KB hashes again", out: V5_scorecard/52_integrity.json}
+
+sampling:
+  seed: 20261007
+  rules:
+    population: 87 rules
+    strata_by_credibility: {A: {population: 27, sample: 6}, B: {population: 11, sample: 4}, C: {population: 6, sample: 3}, D: {population: 43, sample: 7}}
+    note: "Simple random within each stratum. KB-level rates are post-stratified with weights population/sample; the unweighted sample rate is also reported."
+    critical_path: "Rules listed in decision-table row R8 (the row that decided DISP-002) that the random draw missed are checked as a separate set, reported apart from the random metric."
+  ontology:
+    strata: {entity_business: 3, entity_case: 1, role: 3, relation: 3, event: 4}
+  taxonomy: {cases: 20, source: "real public complaint texts in order of the fixed search protocol, no cherry-picking; skipped candidates are logged with the reason"}
+  end_to_end:
+    cases: 15
+    mix: {CW-NOSHOW: 4, CW-RIDERCANCEL: 2, CW-WAITING: 2, FC-ROUTE: 2, FC-TOLL: 1, DM-CLEANING: 1, safety: 1, no_charge_contested: 2}
+    note: "The mix names the situation the writer must cover; the KB code names are not shown to the writer."
+
+verdicts:
+  taxonomy: {PASS: "the KB label (primary claim type) is the right leaf", WRONG_CLASS: "another existing leaf is right", UNCOVERED: "no leaf fits except a catch-all OTHER, or the text needs a type the taxonomy lacks"}
+  ontology: {PASS: "the source shows the item as defined (existence, attributes, direction, actor, target, state change)", UNSUPPORTED: "no source evidence, or the cited source does not say it", WRONG_RELATION: "the source shows a different relation, direction, actor, target or state change"}
+  rules:
+    PASS: "every element the rule attributes to a source is in that source; anything beyond it is openly labeled a FairRyde or industry assumption; no exception in the source is left out"
+    UNSUPPORTED: "a cited source does not say what the rule attributes to it, or an element has no source and no assumption label"
+    OVERGENERALIZED: "the source supports a narrower rule and the widening is not labeled"
+    MISSING_EXCEPTION: "the source states an exception or condition the rule omits"
+    CONFLICT: "the rule contradicts a source or another rule, and the KB does not record the conflict"
+  end_to_end: {CORRECT: "KB outcome equals the settled reference outcome (amount within S$0.05 where one is given)", INCORRECT: "otherwise; the adjudicator names the cause"}
+  mismatch_causes: [KB_RULE_WRONG, KB_GAP, KB_AMBIGUOUS, APPLIER_ERROR, ENGINE_ERROR, REFERENCE_WRONG, CASE_UNDERSPECIFIED]
+  severity: {CRITICAL: "would change an outcome, an amount or the automatic-versus-human decision in an in-scope type", MAJOR: "wrong, but outcome-neutral in the current scope, or affects an out-of-scope type", MINOR: "wording, labeling or missing detail"}
+
+evidence_rule: >-
+  Every verdict carries a verbatim evidence quote and its location (file and article ID, Terms of Use clause, or JSON path).
+  An UNSUPPORTED verdict states what was searched. V5.0 checks every quote mechanically against the cited source.
+
+metrics:
+  M1_taxonomy_accuracy: {formula: "PASS / cases", also: "coverage = 1 - UNCOVERED/cases; agreement between the KB classifier and the blind judge"}
+  M2_ontology_grounding_rate: {formula: "PASS / ontology items"}
+  M3_rule_grounding_rate: {formula: "PASS / sampled rules", also: "post-stratified KB-level estimate; critical-path rules reported apart"}
+  M4_conflict_unsupported_rate: {formula: "(UNSUPPORTED + CONFLICT verdicts on rules and ontology items) / (rules + ontology items)", direction: lower_is_better}
+  M5_heldout_decision_accuracy: {formula: "CORRECT / cases with a settled reference", also: "strict accuracy also requires the same automatic-versus-human route; safety cases must all reach a human"}
+  intervals: "Wilson 95% interval for every rate (small samples are wide; a rate is judged together with its interval)"
+
+thresholds:
+  M1_taxonomy_accuracy: {good: ">= 0.90", acceptable: ">= 0.80", bad: "< 0.80"}
+  M2_ontology_grounding_rate: {good: ">= 0.90", acceptable: ">= 0.80", bad: "< 0.80"}
+  M3_rule_grounding_rate: {good: ">= 0.85", acceptable: ">= 0.70", bad: "< 0.70"}
+  M4_conflict_unsupported_rate: {good: "<= 0.05", acceptable: "<= 0.10", bad: "> 0.10"}
+  M5_heldout_decision_accuracy: {good: ">= 0.85", acceptable: ">= 0.70", bad: "< 0.70"}
+
+decision_rule:
+  GO: "all five metrics at least acceptable, at least three good, no CRITICAL finding on the DISP-002 critical path, and no systematic issue (the same failure pattern twice or more in one layer)"
+  CONDITIONAL_GO: "at most one metric below acceptable, or CRITICAL findings that have a listed fix; agent building may start on the parts not affected, and the affected layer is re-validated after the fix"
+  NO_GO: "two or more metrics bad, or a systematic CRITICAL issue"
+  expand: "If a metric's interval reaches below its bad line, or a systematic issue appears, double the sample for that layer in the next round"
+
+out_of_scope_this_round:
+  - "Changing the KB (findings are reported, not fixed)"
+  - "Parameter values in reference_data.yaml (they are tested case by case by the sensitivity test)"
+  - "Explanation wording and the confidence score"

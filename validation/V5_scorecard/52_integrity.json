@@ -1,0 +1,11 @@
+{
+ "checked_at": "2026-10-07T20:24:30+08:00",
+ "kb_frozen_at": "2026-10-07T18:28:45",
+ "kb_files_checked": 35,
+ "kb_unchanged": true,
+ "changed": [],
+ "added": [],
+ "plan_unchanged_since_preregistration": true,
+ "plan_sha256": "cd4d67fb771a34dac61af2234c5da725a896b908a7c331b2440832d5d1550223",
+ "note": "Reviewers wrote only under validation/. The hash check, not file permissions, is the guarantee (root ignores read-only bits)."
+}

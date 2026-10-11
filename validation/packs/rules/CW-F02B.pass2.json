@@ -1,0 +1,12 @@
+{
+ "rule_id": "CW-F02B",
+ "credibility": "C",
+ "status": "draft",
+ "open_question": "Ask the organizer whether DISP-002 was an advance booking (question O3).",
+ "fairryde_sources_and_source_notes": [
+  {
+   "doc": "RYDE-23575142762393",
+   "note": "Driver article (2023), not specific to advance bookings; conflicts with the rule above for early drivers."
+  }
+ ]
+}

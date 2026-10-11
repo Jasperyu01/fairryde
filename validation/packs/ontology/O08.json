@@ -1,0 +1,33 @@
+{
+ "item_id": "O08",
+ "stratum": "relation",
+ "item": {
+  "subject": "ENT-TRIP",
+  "predicate": "has_dropoff",
+  "object": "ENT-PLACE",
+  "cardinality": "1:1",
+  "source": "trip_data.dropoff_location"
+ },
+ "context": {
+  "entity_definitions": {
+   "ENT-TRIP": {
+    "name": "Trip",
+    "kind": "business",
+    "definition": "One booking from request to completion or cancellation. Booking and trip are one entity in v0.1 (minimum sufficient).",
+    "source": "DISP-002 trip_data"
+   },
+   "ENT-PLACE": {
+    "name": "Place",
+    "kind": "business",
+    "definition": null,
+    "source": "DISP-002 trip_data.pickup_location / dropoff_location; reference coordinates from OneMap (Singapore Land Authority)"
+   }
+  }
+ },
+ "source_files": [
+  "packs/sources/ORG-DISP002.txt",
+  "packs/sources/RYDE-TOU.txt",
+  "packs/sources/ORG-HANDBOOK.txt",
+  "packs/policy/ryde_articles/ (index: packs/policy/ryde_articles_index.tsv)"
+ ]
+}

@@ -1,0 +1,11 @@
+RYDE HELP CENTRE ARTICLE 4408072421785
+TITLE: Are surcharges included in the base fee?
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/4408072421785-Are-surcharges-included-in-the-base-fee
+EDITED: 2023-04-13
+
+Surcharges such as toll charges, overtime fees and valet parking fees* are excluded from the base fare. You will be charged for such additional fees at the end of the trip, on top of your base fee.
+
+*Toll charges are already included in RydeHIRE and RydeSEND trip fares.
+*Overtime fees and valet parking fees are applicable for RydeHIRE trips only.

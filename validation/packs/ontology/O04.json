@@ -1,0 +1,70 @@
+{
+ "item_id": "O04",
+ "stratum": "entity_case",
+ "item": {
+  "id": "ENT-TICKET",
+  "name": "DisputeTicket",
+  "zh": "争议工单",
+  "kind": "case",
+  "identity": "dispute_id",
+  "source": "DISP-002 dispute_ticket",
+  "attributes": [
+   {
+    "name": "dispute_id",
+    "type": "string",
+    "source_field": "dispute_ticket.dispute_id",
+    "required": true
+   },
+   {
+    "name": "trip",
+    "type": "ref ENT-TRIP",
+    "source_field": "dispute_ticket.trip_id"
+   },
+   {
+    "name": "filed_by_role",
+    "type": "enum TX-ROLE",
+    "source_field": "dispute_ticket.filed_by"
+   },
+   {
+    "name": "dispute_type_raw",
+    "type": "string",
+    "source_field": "dispute_ticket.dispute_type",
+    "note": "Organizer code, mapped to TX-CASE via organizer_code."
+   },
+   {
+    "name": "description",
+    "type": "string",
+    "source_field": "dispute_ticket.description",
+    "untrusted_text": true
+   },
+   {
+    "name": "filed_at",
+    "type": "datetime",
+    "source_field": "dispute_ticket.filed_at"
+   },
+   {
+    "name": "status",
+    "type": "enum (state machine SM-TICKET)",
+    "source_field": "dispute_ticket.status"
+   },
+   {
+    "name": "related_ticket",
+    "type": "ref ENT-TICKET",
+    "data_gap": true,
+    "note": "Set by Matching (rule MAT-02)."
+   },
+   {
+    "name": "relation_type",
+    "type": "enum TX-RELATION",
+    "data_gap": true
+   }
+  ]
+ },
+ "context": {},
+ "source_files": [
+  "packs/sources/ORG-DISP002.txt",
+  "packs/sources/RYDE-TOU.txt",
+  "packs/sources/ORG-HANDBOOK.txt",
+  "packs/policy/ryde_articles/ (index: packs/policy/ryde_articles_index.tsv)"
+ ]
+}

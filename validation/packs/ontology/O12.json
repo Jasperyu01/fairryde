@@ -1,0 +1,34 @@
+{
+ "item_id": "O12",
+ "stratum": "event",
+ "item": {
+  "code": "rider_cancelled",
+  "actor": "RIDER",
+  "target": "PLATFORM",
+  "changes": "SM-TRIP: any pre-pickup state -> CANCELLED_BY_RIDER"
+ },
+ "context": {
+  "state_machine": {
+   "SM-TRIP": [
+    "REQUESTED",
+    "MATCHED",
+    "EN_ROUTE",
+    "ARRIVED",
+    "WAITING_FREE",
+    "WAITING_CHARGEABLE",
+    "ONBOARD",
+    "COMPLETED",
+    "CANCELLED_BY_RIDER",
+    "CANCELLED_NO_SHOW",
+    "CANCELLED_BY_DRIVER",
+    "TERMINATED_MID_TRIP"
+   ]
+  }
+ },
+ "source_files": [
+  "packs/sources/ORG-DISP002.txt",
+  "packs/sources/RYDE-TOU.txt",
+  "packs/sources/ORG-HANDBOOK.txt",
+  "packs/policy/ryde_articles/ (index: packs/policy/ryde_articles_index.tsv)"
+ ]
+}

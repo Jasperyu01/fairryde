@@ -1,0 +1,120 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E07",
+    "trip_id": "TRIP-2026-32054",
+    "filed_by": "rider",
+    "dispute_type": "waiting_fee",
+    "description": "I was only a few minutes late coming down and the driver never told me there would be an extra charge. At the end of the trip I saw a $5 'waiting fee' on my receipt. Nobody warned me. Other drivers have waited for me before without charging anything. I want the $5 back.",
+    "filed_at": "2026-09-10T12:20:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-3318",
+    "name": "Benjamin Ong",
+    "account_age_days": 640,
+    "total_trips": 88,
+    "avg_rating": 4.4,
+    "dispute_history": {
+      "total_disputes": 3,
+      "upheld": 1,
+      "rejected": 2
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "card"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-5120",
+    "name": "Yeo Hui Min",
+    "account_age_days": 1500,
+    "total_trips": 5100,
+    "avg_rating": 4.91,
+    "dispute_history": {
+      "total_disputes": 2,
+      "upheld_against": 0,
+      "rejected": 2
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Camry Hybrid (SLB 3412 G)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-32054",
+    "rider_id": "R-3318",
+    "driver_id": "D-5120",
+    "service_type": "RydeX",
+    "booking_type": "on_demand",
+    "pickup_location": {
+      "name": "Blk 532 Bedok North Street 3 (drop-off porch)",
+      "lat": 1.3330,
+      "lng": 103.9283
+    },
+    "dropoff_location": {
+      "name": "Paya Lebar Quarter (mall entrance)",
+      "lat": 1.3170,
+      "lng": 103.8925
+    },
+    "scheduled_time": "2026-09-10T10:13:50+08:00",
+    "driver_arrival_time": "2026-09-10T10:14:30+08:00",
+    "driver_wait_start": "2026-09-10T10:14:30+08:00",
+    "rider_boarded_time": "2026-09-10T10:21:10+08:00",
+    "dropoff_time": "2026-09-10T10:39:40+08:00",
+    "cancellation_time": null,
+    "cancellation_fee": null,
+    "cancellation_reason": null,
+    "quoted_fare": 12.20
+  },
+
+  "fare_breakdown": {
+    "base_fare": 12.20,
+    "platform_fee_included_in_base_fare": 1.25,
+    "waiting_time_fee": 5.00,
+    "erp_toll": 0.00,
+    "subtotal": 17.20,
+    "transaction_fee": 0.58,
+    "transaction_fee_basis": "1.96% + $0.24 (local Visa/Mastercard) on subtotal",
+    "total_charged": 17.78,
+    "payment_method": "card"
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-10T10:08:00+08:00", "lat": 1.3391, "lng": 103.9365, "speed_kmh": 40, "status": "en_route"},
+    {"timestamp": "2026-09-10T10:11:00+08:00", "lat": 1.3362, "lng": 103.9322, "speed_kmh": 34, "status": "en_route"},
+    {"timestamp": "2026-09-10T10:13:30+08:00", "lat": 1.3338, "lng": 103.9292, "speed_kmh": 16, "status": "en_route"},
+    {"timestamp": "2026-09-10T10:14:30+08:00", "lat": 1.3330, "lng": 103.9283, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-10T10:16:00+08:00", "lat": 1.3330, "lng": 103.9283, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-10T10:18:30+08:00", "lat": 1.3330, "lng": 103.9283, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-10T10:20:30+08:00", "lat": 1.3330, "lng": 103.9283, "speed_kmh": 0, "status": "waiting"},
+    {"timestamp": "2026-09-10T10:21:10+08:00", "lat": 1.3330, "lng": 103.9283, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-10T10:26:00+08:00", "lat": 1.3283, "lng": 103.9150, "speed_kmh": 52, "status": "on_trip"},
+    {"timestamp": "2026-09-10T10:32:00+08:00", "lat": 1.3221, "lng": 103.9020, "speed_kmh": 47, "status": "on_trip"},
+    {"timestamp": "2026-09-10T10:37:00+08:00", "lat": 1.3185, "lng": 103.8955, "speed_kmh": 22, "status": "on_trip"},
+    {"timestamp": "2026-09-10T10:39:40+08:00", "lat": 1.3170, "lng": 103.8925, "speed_kmh": 0, "status": "completed"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-10T10:14:50+08:00", "sender": "driver", "type": "message", "content": "Hi, I'm at the porch of Blk 532, grey Camry SLB 3412 G."},
+    {"timestamp": "2026-09-10T10:16:40+08:00", "sender": "driver", "type": "call", "content": "Outgoing call to rider — not answered (rang 20s, no response)."},
+    {"timestamp": "2026-09-10T10:18:20+08:00", "sender": "rider", "type": "message", "content": "coming down, 2 min"},
+    {"timestamp": "2026-09-10T10:19:30+08:00", "sender": "driver", "type": "message", "content": "Ok, I'm still at the porch."}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-10T10:05:30+08:00", "event_type": "booking_confirmed", "details": "Rider R-3318 booked on-demand RydeX trip TRIP-2026-32054 from Blk 532 Bedok North Street 3 to Paya Lebar Quarter. Fixed fare quoted $12.20. Payment: card."},
+    {"timestamp": "2026-09-10T10:05:50+08:00", "event_type": "driver_assigned", "details": "Driver D-5120 (Yeo Hui Min, Toyota Camry Hybrid SLB 3412 G) assigned. ETA 8 min."},
+    {"timestamp": "2026-09-10T10:05:55+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-10T10:14:30+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS within 7m of pickup point. Speed 0 km/h. Arrival confirmed."},
+    {"timestamp": "2026-09-10T10:14:30+08:00", "event_type": "wait_timer_started", "details": "Free wait timer started. 3 min free wait period ends at 10:17:30."},
+    {"timestamp": "2026-09-10T10:14:35+08:00", "event_type": "rider_notified", "details": "Push notification + in-app alert sent to rider: 'Your driver has arrived.'"},
+    {"timestamp": "2026-09-10T10:16:40+08:00", "event_type": "driver_called_rider", "details": "Driver initiated in-app call to rider. Call rang 20s, no answer."},
+    {"timestamp": "2026-09-10T10:17:30+08:00", "event_type": "wait_timer_expired", "details": "Free 3-min wait period expired. Rider had not boarded. Waiting Time Fee applicable if the trip continues."},
+    {"timestamp": "2026-09-10T10:21:10+08:00", "event_type": "rider_picked_up", "details": "Driver tapped PICK UP. Rider boarded 6 min 40 s after 'I'm Here'."},
+    {"timestamp": "2026-09-10T10:21:15+08:00", "event_type": "trip_started", "details": "Trip started. Navigation to Paya Lebar Quarter."},
+    {"timestamp": "2026-09-10T10:39:40+08:00", "event_type": "rider_dropped_off", "details": "Driver tapped DROP OFF at Paya Lebar Quarter."},
+    {"timestamp": "2026-09-10T10:39:45+08:00", "event_type": "waiting_fee_added", "details": "Driver tapped the Waiting Time Fee button at drop-off: $5.00 added."},
+    {"timestamp": "2026-09-10T10:39:55+08:00", "event_type": "trip_completed", "details": "Trip completed. Toll (ERP) entered: $0.00."},
+    {"timestamp": "2026-09-10T10:40:00+08:00", "event_type": "payment_charged", "details": "$17.78 charged to rider card (base fare $12.20 + waiting time fee $5.00 + transaction fee $0.58)."}
+  ]
+}

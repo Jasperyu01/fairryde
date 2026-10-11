@@ -1,0 +1,18 @@
+RYDE HELP CENTRE ARTICLE 18230620209049
+TITLE: How do I tip my driver?
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/18230620209049-How-do-I-tip-my-driver
+EDITED: 2026-09-10
+
+Tipping is currently available within 2 hours after the trip is completed. If the tipping window has closed, the "Tip" option will no longer be available.
+
+For future trips, you can tip your driver during or at the end of the trip through Trip Details.
+
+1. Open Trip Details - Tap or swipe up on the bottom sheet while your trip is active or after it ends.
+
+2. Tap "Tip" - Scroll to the section at the bottom of the Trip Details card and select Tip.
+
+3. Select an Amount - Choose a preset tip or enter a custom amount.
+
+4. Confirm - Tap Confirm to complete the transaction.

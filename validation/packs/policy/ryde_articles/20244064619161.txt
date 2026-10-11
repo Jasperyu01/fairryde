@@ -1,0 +1,48 @@
+RYDE HELP CENTRE ARTICLE 20244064619161
+TITLE: Cancellation and Waiting Time Policy
+AUDIENCE: Driver
+SECTION: Popular Topics
+URL: https://help.rydesharing.com/hc/en-us/articles/20244064619161-Cancellation-and-Waiting-Time-Policy
+EDITED: 2024-04-23
+
+On-Demand Trip
+
+A Cancellation Fee compensates drivers for the time and effort they spend getting to the rider's location.
+
+A Waiting Time Fee allows our drivers to be compensated by riders for the time spent waiting at a pickup location.
+
+All cancellations made within 3 minutes of matching are not chargeable.
+
+Driver will receive a Cancellation Fee of $4.50* if:
+
+1. Rider cancels after 3 minutes of matching
+
+Driver may charge a Waiting Time Fee of $4.50 at the end of the trip if:
+
+1. The driver pressed "I'm Here", waits for > 3 minutes for rider to arrive at pick-up point and cancels the trip (Rider NO SHOW and no trip completion), OR
+
+2. The driver pressed "I'm Here", waits for > 3 minutes for rider to board, and continues the trip (Rider boards and driver completes trip).
+
+Advanced Trip
+
+All cancellations made more than 15 minutes before scheduled trip time are not chargeable.
+
+For example:
+
+If the scheduled trip is at 6PM, any cancellation made before 5:45PM is not chargeable.
+
+If the advanced trip request is accepted only after 5:45PM, riders will have a 3 minutes grace period.
+
+Driver will receive a Cancellation Fee of $4.50 if:
+
+1. Rider cancels after the cancellation window (< Scheduled - 15mins OR Matched).
+
+Driver may charge a Waiting Time Fee of $4.50 at the end of the trip if:
+
+1. The driver pressed "I'm Here", waits for > 3 minutes for rider to arrive at the pick-up point and cancels the trip (Rider NO SHOW and no trip completion), OR
+
+2. The driver pressed "I'm Here", waits for > 3 minutes for rider to board, and continues the trip (Rider boards and driver completes trip).
+
+This Policy applies for all Service Types **.
+
+**Please refer to the Ryde app for the comprehensive list of service options.

@@ -1,0 +1,11 @@
+{
+ "rule_id": "EXP-01",
+ "credibility": "B",
+ "status": "draft",
+ "fairryde_sources_and_source_notes": [
+  {
+   "doc": "GOV-MGF2",
+   "note": "Model Framework paras 3.48, 3.51 and 3.54 (explanations and requests for review); PDPC AI guidelines para 9.5 (research note 07)."
+  }
+ ]
+}

@@ -1,0 +1,132 @@
+{
+ "item_id": "O01",
+ "stratum": "entity_business",
+ "item": {
+  "id": "ENT-TRIP",
+  "name": "Trip",
+  "zh": "行程（订单）",
+  "kind": "business",
+  "identity": "trip_id",
+  "definition": "One booking from request to completion or cancellation. Booking and trip are one entity in v0.1 (minimum sufficient).",
+  "source": "DISP-002 trip_data",
+  "attributes": [
+   {
+    "name": "trip_id",
+    "type": "string",
+    "source_field": "trip_data.trip_id",
+    "required": true
+   },
+   {
+    "name": "rider_account",
+    "type": "ref ENT-ACCOUNT",
+    "source_field": "trip_data.rider_id"
+   },
+   {
+    "name": "driver_account",
+    "type": "ref ENT-ACCOUNT",
+    "source_field": "trip_data.driver_id"
+   },
+   {
+    "name": "pickup",
+    "type": "ref ENT-PLACE",
+    "source_field": "trip_data.pickup_location"
+   },
+   {
+    "name": "dropoff",
+    "type": "ref ENT-PLACE",
+    "source_field": "trip_data.dropoff_location"
+   },
+   {
+    "name": "scheduled_time",
+    "type": "datetime",
+    "source_field": "trip_data.scheduled_time"
+   },
+   {
+    "name": "driver_arrival_time",
+    "type": "datetime",
+    "source_field": "trip_data.driver_arrival_time"
+   },
+   {
+    "name": "driver_wait_start",
+    "type": "datetime",
+    "source_field": "trip_data.driver_wait_start",
+    "note": "Organizer-provided canonical start of waiting (rule CW-F02)."
+   },
+   {
+    "name": "cancellation_time",
+    "type": "datetime",
+    "source_field": "trip_data.cancellation_time"
+   },
+   {
+    "name": "cancellation_reason",
+    "type": "enum TX-CANCELREASON",
+    "source_field": "trip_data.cancellation_reason"
+   },
+   {
+    "name": "booking_type",
+    "type": "enum TX-BOOKING",
+    "data_gap": true,
+    "note": "Not in DISP-002; inferred by rule CW-F01."
+   },
+   {
+    "name": "service_type",
+    "type": "enum TX-SERVICE",
+    "data_gap": true
+   },
+   {
+    "name": "pricing_mode",
+    "type": "enum TX-PRICING",
+    "data_gap": true
+   },
+   {
+    "name": "matched_at",
+    "type": "datetime",
+    "data_gap": true,
+    "note": "DISP-002 gives it only as the driver_assigned event time."
+   },
+   {
+    "name": "picked_up_at",
+    "type": "datetime",
+    "data_gap": true
+   },
+   {
+    "name": "completed_at",
+    "type": "datetime",
+    "data_gap": true
+   },
+   {
+    "name": "quoted_fare",
+    "type": "money",
+    "data_gap": true
+   },
+   {
+    "name": "charged_total",
+    "type": "money",
+    "data_gap": true
+   },
+   {
+    "name": "recorded_distance_km",
+    "type": "number",
+    "data_gap": true,
+    "note": "Needed for route deviation (rule FC-F02)."
+   },
+   {
+    "name": "recommended_route",
+    "type": "polyline",
+    "data_gap": true,
+    "note": "Precomputed at booking for demo reliability."
+   },
+   {
+    "name": "status",
+    "type": "enum (state machine SM-TRIP)"
+   }
+  ]
+ },
+ "context": {},
+ "source_files": [
+  "packs/sources/ORG-DISP002.txt",
+  "packs/sources/RYDE-TOU.txt",
+  "packs/sources/ORG-HANDBOOK.txt",
+  "packs/policy/ryde_articles/ (index: packs/policy/ryde_articles_index.tsv)"
+ ]
+}

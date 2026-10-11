@@ -1,0 +1,8 @@
+RYDE HELP CENTRE ARTICLE 52595834493593
+TITLE: Is there a fee for cashless transactions on Ryde?
+AUDIENCE: Rider
+SECTION: Fares and Charges
+URL: https://help.rydesharing.com/hc/en-us/articles/52595834493593-Is-there-a-fee-for-cashless-transactions-on-Ryde
+EDITED: 2025-11-23
+
+Yes. A Transaction Fee applies to all cashless payments (e.g., cards, digital wallets, RydeCoins) to cover payment processing costs. Cash payments are not subject to this fee.

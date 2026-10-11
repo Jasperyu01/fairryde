@@ -1,0 +1,30 @@
+{
+ "rule_id": "GEN-R06",
+ "name": "FairRyde never sanctions accounts",
+ "family": "GEN",
+ "type": "authority",
+ "applies_to": [
+  "ALL"
+ ],
+ "mode": "HARD",
+ "statement": "FairRyde never suspends, holds or deactivates an account; it may only recommend a human review.",
+ "params": [],
+ "produces": null,
+ "produces_finding": null,
+ "sources": [
+  {
+   "type": "RYDE_TOU",
+   "doc": "RYDE-TOU",
+   "clause": "Section A s.28",
+   "quote": "modify, suspend or terminate operation of or access to the Platform, or any portion of the Platform (including access to your account and/or the availability of any products or services), for any reason",
+   "source_file": "packs/sources/RYDE-TOU.txt"
+  },
+  {
+   "type": "GOV_GUIDANCE",
+   "doc": "GOV-IMDA-AGENTIC",
+   "quote": "Organisations should define significant checkpoints or action boundaries that require human approval, especially before sensitive actions are executed.",
+   "source_file": "packs/sources/GOV-IMDA-AGENTIC.txt"
+  }
+ ],
+ "set": "random"
+}

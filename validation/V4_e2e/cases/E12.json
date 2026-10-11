@@ -1,0 +1,153 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E12",
+    "trip_id": "TRIP-2026-39960",
+    "filed_by": "driver",
+    "dispute_type": "cleaning_fee",
+    "description": "My rider vomited in my car on the way to Punggol around 2am. I had to stop at a bus bay along Punggol Central for him. He got it on the back seat and soaked the floor mat. I took photos right after drop-off, and the car was professionally cleaned this morning at ShineWorks (receipt $240 attached). I couldn't drive this morning while the car was being cleaned. Please reimburse the cleaning cost.",
+    "filed_at": "2026-09-26T13:20:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-8867",
+    "name": "Jonathan Sim",
+    "account_age_days": 260,
+    "total_trips": 30,
+    "avg_rating": 4.6,
+    "dispute_history": {
+      "total_disputes": 0,
+      "upheld": 0,
+      "rejected": 0
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "card"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-9014",
+    "name": "Wong Mei Fong",
+    "account_age_days": 1900,
+    "total_trips": 6400,
+    "avg_rating": 4.92,
+    "dispute_history": {
+      "total_disputes": 2,
+      "upheld_against": 0,
+      "rejected": 2
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Sienta (SNF 7730 U)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-39960",
+    "rider_id": "R-8867",
+    "driver_id": "D-9014",
+    "service_type": "RydeX",
+    "booking_type": "on_demand",
+    "pickup_location": {
+      "name": "Clarke Quay (River Valley Road pick-up point)",
+      "lat": 1.2906,
+      "lng": 103.8465
+    },
+    "dropoff_location": {
+      "name": "Blk 208C Punggol Field",
+      "lat": 1.3985,
+      "lng": 103.9072
+    },
+    "scheduled_time": "2026-09-26T01:39:00+08:00",
+    "driver_arrival_time": "2026-09-26T01:39:30+08:00",
+    "driver_wait_start": "2026-09-26T01:39:30+08:00",
+    "rider_boarded_time": "2026-09-26T01:40:10+08:00",
+    "dropoff_time": "2026-09-26T02:07:00+08:00",
+    "cancellation_time": null,
+    "cancellation_fee": null,
+    "cancellation_reason": null,
+    "quoted_fare": 26.60
+  },
+
+  "fare_breakdown": {
+    "base_fare": 26.60,
+    "platform_fee_included_in_base_fare": 1.47,
+    "waiting_time_fee": 0.00,
+    "erp_toll": 0.00,
+    "subtotal": 26.60,
+    "transaction_fee": 0.76,
+    "transaction_fee_basis": "1.96% + $0.24 (local Visa/Mastercard) on subtotal",
+    "total_charged": 27.36,
+    "payment_method": "card"
+  },
+
+  "cleaning_claim": {
+    "claimed_by": "driver",
+    "mess_type": "vomit",
+    "incident_time": "2026-09-26T02:01:00+08:00",
+    "claim_submitted_at": "2026-09-26T13:20:00+08:00",
+    "claim_channel": "driver app",
+    "amount_claimed_sgd": 240.00,
+    "professional_cleaning": {
+      "company": "ShineWorks Auto Grooming Pte Ltd",
+      "address": "21 Kaki Bukit Avenue 1, #01-15, Singapore 417943",
+      "contact_number": "6741 2290",
+      "receipt_no": "SW-260926-118",
+      "cleaning_date": "2026-09-26",
+      "cleaning_time": "10:30",
+      "car_plate_on_receipt": "SNF 7730 U",
+      "items": [
+        {"description": "Rear seat deep shampoo and extraction", "amount_sgd": 150.00},
+        {"description": "Rear floor mat replacement", "amount_sgd": 55.00},
+        {"description": "Odour treatment (ozone)", "amount_sgd": 35.00}
+      ],
+      "total_sgd": 240.00,
+      "authorised_signature": true,
+      "company_stamp": true
+    }
+  },
+
+  "evidence_attachments": [
+    {"file": "IMG_0926_0210.jpg", "type": "photo", "taken_at": "2026-09-26T02:10:12+08:00", "photo_gps": {"lat": 1.3985, "lng": 103.9072}, "description": "Rear passenger seat, right side: vomit on the edge of the seat cushion running down into the footwell; rear floor mat soaked."},
+    {"file": "IMG_0926_0210b.jpg", "type": "photo", "taken_at": "2026-09-26T02:10:40+08:00", "photo_gps": {"lat": 1.3985, "lng": 103.9072}, "description": "Rear of the vehicle with the right rear door open; licence plate SNF 7730 U clearly visible; vomit visible on the seat through the open door."},
+    {"file": "IMG_0926_0211.jpg", "type": "photo", "taken_at": "2026-09-26T02:11:05+08:00", "photo_gps": {"lat": 1.3985, "lng": 103.9072}, "description": "Close-up of the rear floor mat covered in vomit."},
+    {"file": "IMG_0926_1028.jpg", "type": "photo", "taken_at": "2026-09-26T10:28:30+08:00", "photo_gps": {"lat": 1.3352, "lng": 103.9041}, "description": "Vehicle in a ShineWorks cleaning bay before cleaning, rear door open, same stains on the seat and mat."},
+    {"file": "receipt_SW-260926-118.pdf", "type": "receipt", "taken_at": "2026-09-26T12:05:00+08:00", "description": "ShineWorks Auto Grooming Pte Ltd tax invoice SW-260926-118 dated 26 Sep 2026: company name, address, contact number, car plate SNF 7730 U, three line items totalling $240.00, signature of authorised staff and company stamp."}
+  ],
+
+  "rider_statement": {
+    "submitted_at": "2026-09-26T19:45:00+08:00",
+    "content": "I admit I was sick after drinks with friends and I apologised to the driver. But it was mostly on the floor mat, not the seat, and $240 is ridiculous for cleaning a mat. I'm not paying that."
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-26T01:37:00+08:00", "lat": 1.2925, "lng": 103.8440, "speed_kmh": 28, "status": "en_route"},
+    {"timestamp": "2026-09-26T01:39:30+08:00", "lat": 1.2906, "lng": 103.8465, "speed_kmh": 0, "status": "arrived"},
+    {"timestamp": "2026-09-26T01:40:10+08:00", "lat": 1.2906, "lng": 103.8465, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-26T01:46:00+08:00", "lat": 1.3150, "lng": 103.8600, "speed_kmh": 72, "status": "on_trip"},
+    {"timestamp": "2026-09-26T01:52:00+08:00", "lat": 1.3500, "lng": 103.8800, "speed_kmh": 80, "status": "on_trip"},
+    {"timestamp": "2026-09-26T01:57:00+08:00", "lat": 1.3800, "lng": 103.8950, "speed_kmh": 70, "status": "on_trip"},
+    {"timestamp": "2026-09-26T02:01:10+08:00", "lat": 1.3960, "lng": 103.9040, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-26T02:03:50+08:00", "lat": 1.3960, "lng": 103.9040, "speed_kmh": 0, "status": "on_trip"},
+    {"timestamp": "2026-09-26T02:05:00+08:00", "lat": 1.3972, "lng": 103.9058, "speed_kmh": 25, "status": "on_trip"},
+    {"timestamp": "2026-09-26T02:07:00+08:00", "lat": 1.3985, "lng": 103.9072, "speed_kmh": 0, "status": "completed"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-26T01:39:40+08:00", "sender": "driver", "type": "message", "content": "I'm at the River Valley Road pick-up point, white Sienta SNF 7730 U."},
+    {"timestamp": "2026-09-26T02:09:00+08:00", "sender": "driver", "type": "message", "content": "Hi, you vomited on the back seat and the floor mat. I have to send the car for professional cleaning tomorrow and will report to Ryde."},
+    {"timestamp": "2026-09-26T02:15:20+08:00", "sender": "rider", "type": "message", "content": "Sorry auntie. I think it was only a bit on the mat. Very sorry."}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-26T01:35:00+08:00", "event_type": "booking_confirmed", "details": "Rider R-8867 booked on-demand RydeX trip TRIP-2026-39960 from Clarke Quay to Blk 208C Punggol Field. Fixed fare quoted $26.60. Payment: card."},
+    {"timestamp": "2026-09-26T01:35:20+08:00", "event_type": "driver_assigned", "details": "Driver D-9014 (Wong Mei Fong, Toyota Sienta SNF 7730 U) assigned. ETA 4 min."},
+    {"timestamp": "2026-09-26T01:35:25+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-26T01:39:30+08:00", "event_type": "driver_arrived", "details": "Driver tapped 'I'm Here'. Driver GPS within 8m of pickup point. Speed 0 km/h. Arrival confirmed."},
+    {"timestamp": "2026-09-26T01:40:10+08:00", "event_type": "rider_picked_up", "details": "Driver tapped PICK UP. Rider boarded 40 s after 'I'm Here'."},
+    {"timestamp": "2026-09-26T01:40:15+08:00", "event_type": "trip_started", "details": "Trip started. Navigation to Blk 208C Punggol Field."},
+    {"timestamp": "2026-09-26T02:01:10+08:00", "event_type": "trip_stop_detected", "details": "Vehicle stationary for 2 min 40 s at a bus bay along Punggol Central during the trip."},
+    {"timestamp": "2026-09-26T02:07:00+08:00", "event_type": "rider_dropped_off", "details": "Driver tapped DROP OFF at Blk 208C Punggol Field."},
+    {"timestamp": "2026-09-26T02:07:10+08:00", "event_type": "trip_completed", "details": "Trip completed. Toll (ERP) entered: $0.00. No waiting time fee."},
+    {"timestamp": "2026-09-26T02:07:15+08:00", "event_type": "payment_charged", "details": "$27.36 charged to rider card (fixed fare $26.60 + transaction fee $0.76)."},
+    {"timestamp": "2026-09-26T13:20:00+08:00", "event_type": "cleaning_claim_submitted", "details": "Driver submitted vehicle contamination claim via driver app: vomit; 4 photos and cleaning receipt SW-260926-118 ($240.00) attached."}
+  ]
+}

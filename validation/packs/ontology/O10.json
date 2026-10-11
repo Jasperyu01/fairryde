@@ -1,0 +1,26 @@
+{
+ "item_id": "O10",
+ "stratum": "relation",
+ "item": {
+  "subject": "ENT-ARGUMENT",
+  "predicate": "rebuts",
+  "object": "ENT-ARGUMENT",
+  "cardinality": "N:N"
+ },
+ "context": {
+  "entity_definitions": {
+   "ENT-ARGUMENT": {
+    "name": "Argument",
+    "kind": "system_artifact",
+    "definition": "A Rider or Driver Advocate's claim with premises. Logged and shown in the UI; never treated as evidence (tier D at most).",
+    "source": null
+   }
+  }
+ },
+ "source_files": [
+  "packs/sources/ORG-DISP002.txt",
+  "packs/sources/RYDE-TOU.txt",
+  "packs/sources/ORG-HANDBOOK.txt",
+  "packs/policy/ryde_articles/ (index: packs/policy/ryde_articles_index.tsv)"
+ ]
+}

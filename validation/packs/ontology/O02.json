@@ -1,0 +1,52 @@
+{
+ "item_id": "O02",
+ "stratum": "entity_business",
+ "item": {
+  "id": "ENT-PLACE",
+  "name": "Place",
+  "zh": "地点",
+  "kind": "business",
+  "source": "DISP-002 trip_data.pickup_location / dropoff_location; reference coordinates from OneMap (Singapore Land Authority)",
+  "attributes": [
+   {
+    "name": "name",
+    "type": "string",
+    "source_field": "*.name"
+   },
+   {
+    "name": "pin_lat",
+    "type": "number",
+    "source_field": "*.lat"
+   },
+   {
+    "name": "pin_lng",
+    "type": "number",
+    "source_field": "*.lng"
+   },
+   {
+    "name": "venue_lat",
+    "type": "number",
+    "data_gap": true,
+    "note": "From OneMap search by name (reference data)."
+   },
+   {
+    "name": "venue_lng",
+    "type": "number",
+    "data_gap": true
+   },
+   {
+    "name": "pin_venue_distance_m",
+    "type": "number",
+    "derived": true,
+    "note": "Finding F-PIN-VENUE (rule CW-F07)."
+   }
+  ]
+ },
+ "context": {},
+ "source_files": [
+  "packs/sources/ORG-DISP002.txt",
+  "packs/sources/RYDE-TOU.txt",
+  "packs/sources/ORG-HANDBOOK.txt",
+  "packs/policy/ryde_articles/ (index: packs/policy/ryde_articles_index.tsv)"
+ ]
+}

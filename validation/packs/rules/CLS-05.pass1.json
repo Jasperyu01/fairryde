@@ -1,0 +1,23 @@
+{
+ "rule_id": "CLS-05",
+ "name": "Organizer dispute codes",
+ "family": "CLS",
+ "type": "classification",
+ "applies_to": [
+  "ALL"
+ ],
+ "mode": "HARD",
+ "statement": "Map dispute_ticket.dispute_type through organizer_code (no_show_charge -> CW-NOSHOW). Contradictions between the code and the free text are handled by CLS-02.",
+ "params": [],
+ "produces": null,
+ "produces_finding": null,
+ "sources": [
+  {
+   "type": "ORGANIZER",
+   "doc": "ORG-DISP002",
+   "quote": "\"dispute_type\": \"no_show_charge\"",
+   "source_file": "packs/sources/ORG-DISP002.txt"
+  }
+ ],
+ "set": "random"
+}

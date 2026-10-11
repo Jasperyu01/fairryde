@@ -1,0 +1,19 @@
+DOCUMENT RYDE-4407754403353
+TITLE: What if my driver hasn't arrived, but has indicated that he/she arrived?
+TYPE: RYDE_POLICY
+URL: https://help.rydesharing.com/hc/en-us/articles/4407754403353-What-if-my-driver-hasn-t-arrived-but-has-indicated-that-he-she-arrived
+DATE: 2026-02-26
+AUDIENCE: Rider
+SECTION: Ryde Experience
+EDITED: 2026-02-26
+
+What if my driver hasn't arrived, but has indicated that he/she arrived?
+
+Drivers are only allowed to indicate arrival and impose the Waiting Time Fee only if he/she:
+
+1. Is at the pick-up location according to GPS data AND
+2. Has waited for more than 3 mins
+
+Otherwise, you will not be charged the $6.61 Waiting Time Fee if any of the above are not fulfilled.
+
+Nonetheless, do reach out to us if you feel you have been charged unfairly or wrongly, and we'll be happy to assist you.

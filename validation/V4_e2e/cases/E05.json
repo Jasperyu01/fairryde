@@ -1,0 +1,100 @@
+{
+  "dispute_ticket": {
+    "dispute_id": "E05",
+    "trip_id": "TRIP-2026-30277",
+    "filed_by": "rider",
+    "dispute_type": "cancellation_fee",
+    "description": "When I booked, the app said a driver was 4 minutes away, then it gave me a driver 9 minutes away coming all the way from Jurong East. I cancelled almost immediately, within 3 minutes, and booked another car, but I still got charged $6.61. I shouldn't pay for a ride I never took when the app misled me about the wait. Please refund.",
+    "filed_at": "2026-09-04T08:30:00+08:00",
+    "status": "open"
+  },
+
+  "rider_profile": {
+    "rider_id": "R-4486",
+    "name": "Marcus Teo",
+    "account_age_days": 95,
+    "total_trips": 12,
+    "avg_rating": 4.5,
+    "dispute_history": {
+      "total_disputes": 0,
+      "upheld": 0,
+      "rejected": 0
+    },
+    "fraud_flags": 0,
+    "fraud_flag_details": null,
+    "payment_method": "card"
+  },
+
+  "driver_profile": {
+    "driver_id": "D-7093",
+    "name": "Goh Chee Meng",
+    "account_age_days": 2200,
+    "total_trips": 8030,
+    "avg_rating": 4.9,
+    "dispute_history": {
+      "total_disputes": 4,
+      "upheld_against": 0,
+      "rejected": 4
+    },
+    "fraud_flags": 0,
+    "vehicle": "Toyota Corolla Cross (SMX 3190 L)"
+  },
+
+  "trip_data": {
+    "trip_id": "TRIP-2026-30277",
+    "rider_id": "R-4486",
+    "driver_id": "D-7093",
+    "service_type": "RydeX",
+    "booking_type": "on_demand",
+    "pickup_location": {
+      "name": "Clementi Mall (Commonwealth Avenue West pick-up point)",
+      "lat": 1.3150,
+      "lng": 103.7643
+    },
+    "dropoff_location": {
+      "name": "Singapore Polytechnic (Dover Road main gate)",
+      "lat": 1.3099,
+      "lng": 103.7775
+    },
+    "booked_time": "2026-09-04T08:02:10+08:00",
+    "matched_time": "2026-09-04T08:02:40+08:00",
+    "scheduled_time": "2026-09-04T08:11:40+08:00",
+    "driver_arrival_time": null,
+    "driver_wait_start": null,
+    "cancelled_by": "rider",
+    "cancellation_time": "2026-09-04T08:06:00+08:00",
+    "cancellation_fee": 6.61,
+    "cancellation_reason": "rider_cancelled_eta_too_long",
+    "quoted_fare": 10.80
+  },
+
+  "fare_breakdown": {
+    "trip_fare": 0.00,
+    "cancellation_fee": 6.61,
+    "total_charged": 6.61,
+    "payment_method": "card",
+    "note": "Trip cancelled before pickup; only the cancellation fee was charged."
+  },
+
+  "gps_telemetry": [
+    {"timestamp": "2026-09-04T08:03:00+08:00", "lat": 1.3289, "lng": 103.7524, "speed_kmh": 42, "status": "en_route"},
+    {"timestamp": "2026-09-04T08:04:30+08:00", "lat": 1.3262, "lng": 103.7558, "speed_kmh": 39, "status": "en_route"},
+    {"timestamp": "2026-09-04T08:05:30+08:00", "lat": 1.3240, "lng": 103.7581, "speed_kmh": 35, "status": "en_route"},
+    {"timestamp": "2026-09-04T08:06:00+08:00", "lat": 1.3233, "lng": 103.7590, "speed_kmh": 30, "status": "cancelled"}
+  ],
+
+  "chat_logs": [
+    {"timestamp": "2026-09-04T08:03:10+08:00", "sender": "driver", "type": "message", "content": "Hi, on the way, coming from Jurong East, about 8 min."},
+    {"timestamp": "2026-09-04T08:06:00+08:00", "sender": "system", "type": "system", "content": "Trip cancelled by rider. Cancellation fee of $6.61 applied."}
+  ],
+
+  "app_events": [
+    {"timestamp": "2026-09-04T08:02:10+08:00", "event_type": "booking_confirmed", "details": "Rider R-4486 booked on-demand RydeX trip TRIP-2026-30277 from Clementi Mall to Singapore Polytechnic. Booking screen showed nearest driver about 4 min away. Fixed fare quoted $10.80. Payment: card."},
+    {"timestamp": "2026-09-04T08:02:40+08:00", "event_type": "driver_assigned", "details": "Driver D-7093 (Goh Chee Meng, Toyota Corolla Cross SMX 3190 L) matched. ETA 9 min."},
+    {"timestamp": "2026-09-04T08:02:45+08:00", "event_type": "driver_en_route", "details": "Driver started navigating to pickup location. Live tracking enabled."},
+    {"timestamp": "2026-09-04T08:04:30+08:00", "event_type": "eta_updated", "details": "ETA to pickup updated: 6 min."},
+    {"timestamp": "2026-09-04T08:06:00+08:00", "event_type": "rider_cancelled", "details": "Rider cancelled 3 min 20 s after driver match (match at 08:02:40). Reason selected: 'Driver too far / ETA too long'."},
+    {"timestamp": "2026-09-04T08:06:00+08:00", "event_type": "cancellation_fee_applied", "details": "Rider cancellation after the 3-min free cancellation window. $6.61 cancellation fee charged to rider payment method (card)."},
+    {"timestamp": "2026-09-04T08:06:05+08:00", "event_type": "driver_released", "details": "Driver D-7093 released from trip. Trip status: cancelled (rider)."}
+  ]
+}

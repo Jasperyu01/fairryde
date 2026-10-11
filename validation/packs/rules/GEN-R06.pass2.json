@@ -1,0 +1,11 @@
+{
+ "rule_id": "GEN-R06",
+ "credibility": "B",
+ "status": "draft",
+ "fairryde_sources_and_source_notes": [
+  {
+   "doc": "RYDE-TOU",
+   "note": "Account suspension is Ryde's power under the contract, not FairRyde's."
+  }
+ ]
+}

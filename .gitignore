@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.env
+*.env
+*appkey*
+*AppKey*
+kb/private/
+private/
+*_mapping*.csv
+*_mapping*.xlsx
+.DS_Store

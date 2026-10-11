@@ -1,0 +1,11 @@
+{
+ "rule_id": "CW-R08",
+ "credibility": "C",
+ "status": "draft",
+ "fairryde_sources_and_source_notes": [
+  {
+   "doc": "IND-BENCHMARK-NOTES",
+   "note": "Grab: a late driver (ETA + 3 min) forfeits the fee; Gojek ETA + 5 min (research note 02)."
+  }
+ ]
+}

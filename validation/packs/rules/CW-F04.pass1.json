@@ -1,0 +1,56 @@
+{
+ "rule_id": "CW-F04",
+ "name": "Driver presence at the pick-up point",
+ "family": "CW",
+ "type": "fact",
+ "applies_to": [
+  "CW-NOSHOW",
+  "CW-WAITING"
+ ],
+ "mode": "HARD",
+ "statement": "Window = the waiting the fee pays for: from the confirmed wait start (CW-F03) until the threshold is reached, or until the cancellation (or boarding) if that comes first; leaving after the threshold is reached does not count (Ryde: the driver \"waits for > 3 minutes ... and cancels\"). Pings are sorted by time. An outside stretch = consecutive pings more than ARRIVAL_GEOFENCE_M from the pick-up pin, after the driver was first seen inside the area. It is a GPS outlier, set aside and flagged GPS_OUTLIER, if the driver is seen inside again after it and it lasts less than LEFT_MIN_OUTSIDE_S from its first to its last ping (a single such ping included). A stretch with no later inside ping is never an outlier on duration, because nothing shows it was brief. A stretch the driver would have had to enter or leave faster than SPEED_MAX_KMH is a data error: set aside and flagged GPS_OUTLIER and GPS_DATA_ERROR (DQ-02). Pings before the driver was first seen inside are the approach: never outliers on duration (an impossible jump into the area is still a data error). UNKNOWN if the window has no length or no ping falls inside it. LEFT if an outside stretch that is not set aside is seen outside (from its first to its last ping) at some time inside the window at least TS_TOLERANCE_S before the window end (for the approach, also more than TS_TOLERANCE_S after the window start), because records of the same moment can differ by that much; outside pings closer to the edges of the window are reported but do not count as leaving. Otherwise SPARSE if the longest part of the window between its start, the inside pings and its end exceeds PING_MAX_GAP_S, else CONSISTENT; but when CW-R06 did not confirm the arrival (any value other than TRUE) the window start is not a point at the pick-up, so with no inside ping in the window the value is UNKNOWN. Only pings inside the window decide the value; pings outside it only show where a stretch begins and whether the driver came back. CONSISTENT means the pings agree with presence; it does not mean the driver was observed continuously. GPS_AMBIGUOUS (approval, AUTH-02) is added when the pings cannot settle the question: a stretch set aside on duration although the inside pings around it are more than LEFT_MIN_OUTSIDE_S apart, when it is first seen by TS_TOLERANCE_S after the window end and the inside ping before it is more than TS_TOLERANCE_S before the window end; a stretch that is not set aside and does not count, first seen outside between the window start and TS_TOLERANCE_S after the window end, while the last inside ping before it is more than TS_TOLERANCE_S before the window end; a departure, or a FALSE arrival (CW-R06), that rests on a single ping. The value itself does not change.",
+ "params": [
+  {
+   "name": "ARRIVAL_GEOFENCE_M",
+   "value": 50,
+   "unit": "m"
+  },
+  {
+   "name": "PING_MAX_GAP_S",
+   "value": 300,
+   "unit": "s"
+  },
+  {
+   "name": "LEFT_MIN_OUTSIDE_S",
+   "value": 60,
+   "unit": "s"
+  },
+  {
+   "name": "SPEED_MAX_KMH",
+   "value": 120,
+   "unit": "km/h"
+  },
+  {
+   "name": "TS_TOLERANCE_S",
+   "value": 30,
+   "unit": "s"
+  }
+ ],
+ "produces": null,
+ "produces_finding": "F-PRESENCE",
+ "sources": [
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-4407754403353",
+   "quote": "Is at the pick-up location according to GPS data",
+   "source_file": "packs/sources/RYDE-4407754403353.txt"
+  },
+  {
+   "type": "ORGANIZER",
+   "doc": "ORG-DISP002",
+   "quote": "Driver GPS within 10m of pickup point.",
+   "source_file": "packs/sources/ORG-DISP002.txt"
+  }
+ ],
+ "set": "random"
+}

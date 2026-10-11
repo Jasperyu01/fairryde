@@ -1,0 +1,92 @@
+{
+ "seed": "20261007-ontology",
+ "strata": {
+  "entity_business": 3,
+  "entity_case": 1,
+  "role": 3,
+  "relation": 3,
+  "event": 4
+ },
+ "sample": {
+  "entity_business": [
+   {
+    "item_id": "O01",
+    "index_in_pool": 3,
+    "label": "ENT-TRIP"
+   },
+   {
+    "item_id": "O02",
+    "index_in_pool": 4,
+    "label": "ENT-PLACE"
+   },
+   {
+    "item_id": "O03",
+    "index_in_pool": 7,
+    "label": "ENT-COMM"
+   }
+  ],
+  "entity_case": [
+   {
+    "item_id": "O04",
+    "index_in_pool": 0,
+    "label": "ENT-TICKET"
+   }
+  ],
+  "role": [
+   {
+    "item_id": "O05",
+    "index_in_pool": 1,
+    "label": "DRIVER"
+   },
+   {
+    "item_id": "O06",
+    "index_in_pool": 2,
+    "label": "CLAIMANT"
+   },
+   {
+    "item_id": "O07",
+    "index_in_pool": 5,
+    "label": "PAYEE"
+   }
+  ],
+  "relation": [
+   {
+    "item_id": "O08",
+    "index_in_pool": 3,
+    "label": "ENT-TRIP has_dropoff ENT-PLACE"
+   },
+   {
+    "item_id": "O09",
+    "index_in_pool": 13,
+    "label": "ENT-EVIDENCE wraps any business record"
+   },
+   {
+    "item_id": "O10",
+    "index_in_pool": 21,
+    "label": "ENT-ARGUMENT rebuts ENT-ARGUMENT"
+   }
+  ],
+  "event": [
+   {
+    "item_id": "O11",
+    "index_in_pool": 0,
+    "label": "booking_confirmed"
+   },
+   {
+    "item_id": "O12",
+    "index_in_pool": 10,
+    "label": "rider_cancelled"
+   },
+   {
+    "item_id": "O13",
+    "index_in_pool": 14,
+    "label": "rider_picked_up"
+   },
+   {
+    "item_id": "O14",
+    "index_in_pool": 30,
+    "label": "human_review_completed"
+   }
+  ]
+ }
+}

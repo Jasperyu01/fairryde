@@ -1,0 +1,29 @@
+{
+ "rule_id": "FC-F04",
+ "name": "Expected ERP",
+ "family": "FC",
+ "type": "fact",
+ "applies_to": [
+  "FC-TOLL"
+ ],
+ "mode": "HARD",
+ "statement": "Expected ERP = sum of the rates of the active gantries the trip actually passed, at their time-of-day rates (LTA rate table).",
+ "params": [
+  {
+   "name": "ERP_RATE_TABLE",
+   "value": null,
+   "unit": null
+  }
+ ],
+ "produces": null,
+ "produces_finding": "F-ERP-EXPECTED",
+ "sources": [
+  {
+   "type": "RYDE_POLICY",
+   "doc": "RYDE-115001438614",
+   "quote": "Please key in ERP based on the ERP gantry you passed during the journey.",
+   "source_file": "packs/sources/RYDE-115001438614.txt"
+  }
+ ],
+ "set": "random"
+}
