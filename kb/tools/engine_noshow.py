@@ -48,7 +48,7 @@ RIDER_SELF_PLACE_PHRASES = [                                    # the rider says
     rf"\b{_FP}\s+(?:already\s+|alr\s+|still\s+|now\s+|standing\s+|waiting\s+)?(?:here\s+)?(?:at|by|near|outside|in front of|beside)\b[^.?!,]*\b{_SPOT}\b",
     rf"(?<!almost )(?<!nearly )(?<!not )(?<!be )(?<!to )\b(?:at|outside|near|in front of|beside|by)\s+(?:the\s+|d\s+)?{_SPOT}\b(?!\s+(?:soon|later|in\b))",
     r"(?<!belum )(?<!nak )(?<!hampir )\b(?:here|reach|reached|arrived|downstairs|outside|sampai|dao le)\s+(?:already|alr|liao|le|lah|leh|now|edy)\b",
-    r"(?<!coming )(?<!come )(?<!going )\bdown\s+(?:already|alr|liao|le|lah|leh|edy)\b",
+    r"(?<!coming )(?<!come )(?<!going )(?<!way )(?<!otw )(?<!omw )(?<!walking )(?<!heading )(?<!rushing )(?<!running )\bdown\s+(?:already|alr|liao|le|lah|leh|edy)\b",
     r"\b(?:already|alr|dah|sudah)\s+(?:here|there|downstairs|outside|at|reach|reached|sampai)\b",
     rf"\b(?:i|we)\s+(?:reach|reached|arrived|am here|have arrived|have reached|here|there|at|kat|downstairs)\b{_NOT_YET}",
     rf"^\W*(?:reach|reached|here+|arrived|imhere|downstairs)\b{_NOT_YET}", r"\bimhere\b", r"📍",
@@ -269,33 +269,45 @@ def rider_contact_reading(c: dict) -> str:
 
 
 _PLACE_WORDS = rf"(?<!to )(?<!to the )(?<!towards )\b(?:here|reach|reached|arrived|downstairs|outside|{_SPOT}|location|address)\b"
-_PICKUP_INSTRUCTION = (r"\b(?:pick\s+(?:me\s+)?up|meet(?:\s+me)?|wait(?:\s+for\s+me)?|stop|park|come|drop\s+me)\s+"
+_PICKUP_INSTRUCTION = (r"(?:^|[.,!?;]\s*|\b(?:pls|please|plz|can you|could you|can u|pls can|then)\s+)"   # imperative position only
+                       r"(?:pick\s+(?:me\s+)?up|meet(?:\s+me)?|wait(?:\s+for\s+me)?|stop|park|come|drop\s+me)\s+"
                        r"(?:at|near|outside|by|beside|in front of|opposite)\b[^.!?,]*")
-_FIRST_PERSON = r"\b(?:i|i'm|me|my|we|us|our|saya|aku)\b|我"
+_LEFTOVER = (r"\b(?:are|r|is|am|was|you|u|ur|your|yours|uncle|aunty|driver|did|do|does|can|could|will|would|how|what|when|which|"
+             r"who|why|where|wer|whr|mana|car|a|an|of|on|yet|not|no|lah|ya)\b|[我你吗呢了的啊吧呀]")      # question and filler words
+_FUTURE = r"\b(?:i'll|i will|will be|i'm going to|gonna|meet you|meet u|see you|see u|later|tomorrow|tmr)\b"
 
 
-def before_arrival_reading(c: dict, place_names: list[str]) -> str | None:
-    """D30 proxy: does a rider message sent before the arrival indication count? PLACES (it clearly places the rider at the
-    pick-up), UNCLEAR (it may: a place or arrival cue the lists cannot settle; the reading test applies) or None (it does
-    not count: a call, an admission, an acknowledgment, a question about the driver or a pick-up instruction). Fail-safe like
-    rider_contact_reading: a place cue keeps a message in, and only known non-placements are dropped."""
+def _asks_driver(text: str | None) -> bool:
+    """A driver message that asks the rider something (a question mark anywhere, ASCII or full-width)."""
+    return "?" in (text or "").replace("\uff1f", "?")
+
+
+def before_arrival_reading(c: dict, place_names: list[str], answers_question: bool = False) -> str | None:
+    """D30 proxy: does a rider message sent before the wait count? PLACES (it clearly places the rider at the pick-up now),
+    UNCLEAR (it may; the reading test applies) or None (it does not count). Fail-safe by construction: a message is dropped
+    only when it is positively known not to be a placement: a call, an admission, an acknowledgment that answers no driver
+    question, or nothing but questions about the driver, contests, pick-up instructions, admissions and filler. Anything
+    else counts, including words the lists do not know."""
     if c["type"] != "message":
         return None
     r = rider_contact_reading(c)
-    if r in ("LATE", "NEUTRAL"):
+    if r == "NEUTRAL":
+        return "UNCLEAR" if answers_question else None
+    if r == "LATE":
         return None
     t = _rider_text(c.get("content"))
-    if t.rstrip().endswith("?") and not re.search(_FIRST_PERSON, t):
-        return None                                # "u reach already?", "到了吗?": a question about the driver
-    rest = re.sub(_PICKUP_INSTRUCTION, " ", t)
-    for p_ in RIDER_QUESTION_PHRASES:
+    qrest = re.sub(_PICKUP_INSTRUCTION, " ", t)       # what is left once instructions and questions about the driver are set aside
+    for p_ in RIDER_QUESTION_PHRASES + RIDER_CONTEST_PHRASES:
+        qrest = re.sub(p_, " ", qrest)
+    if any(re.search(p_, qrest) for p_ in RIDER_SELF_PLACE_PHRASES):
+        return "PLACES" if r == "PLACES" and not re.search(_FUTURE, t) else "UNCLEAR"
+    rest = qrest
+    for p_ in [RIDER_WAIT_REQUEST] + RIDER_LATE_CORE:
         rest = re.sub(p_, " ", rest)
-    self_place = any(re.search(p_, rest) for p_ in RIDER_SELF_PLACE_PHRASES)
-    if self_place and r == "PLACES":
-        return "PLACES"
-    if self_place or re.search(_PLACE_WORDS, rest) or any(n and n in rest for n in place_names):
-        return "UNCLEAR"
-    return None
+    rest = re.sub(_FILLER, " ", rest)
+    rest = re.sub(_LEFTOVER, " ", rest)
+    rest = re.sub(r"[\s.,!?~\u2026'\"()\-:;]+", "", rest)
+    return "UNCLEAR" if (rest or any(n and n in t for n in place_names)) else None
 
 
 def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | None = None,
@@ -431,8 +443,8 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     infer_match, infer_eta = P("BOOKING_INFER_MATCH_S"), P("BOOKING_INFER_ETA_S")
     if recorded:
         btype, bnote = kb.resolve("TX-BOOKING", recorded), "recorded"
-    elif match_s is None or not t.get("scheduled_time"):   # nothing to infer from: a person checks the records
-        btype, bnote = "ON_DEMAND", "not recorded and not inferable (booking or assignment record missing); treated as on-demand"
+    elif match_s is None or not t.get("scheduled_time"):   # nothing to infer from: CW-F01's "otherwise ADVANCE", and a person checks
+        btype, bnote = "ADVANCE", "not recorded and not inferable (booking or assignment record missing); ADVANCE as CW-F01 says, records missing"
         tr.flag("BOOKING_TYPE_INFERRED")
         tr.flag("RECORDS_MISSING")
     else:
@@ -763,7 +775,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     venue = venue_for(kb, case)
     strong = []
     pvmax = P("PIN_VENUE_MAX_M")
-    for g in rider_gps:                  # the same window as the rider's calls and messages: arrival indication to cancellation
+    for g in rider_gps:                  # the same window as the rider's calls and messages: from TS_TOLERANCE_S before the arrival indication to the cancellation
         if t_arr - timedelta(seconds=tol) <= T(g["timestamp"]) <= end:
             if hav(g["lat"], g["lng"], *pin) <= gf:
                 strong.append("rider GPS at the pin")
@@ -772,17 +784,20 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     if any(re.search(r"fail|not delivered|undelivered", a["details"], re.I) for a in ev if a["event_type"] == "rider_notified"):
         strong.append("notification failure log")
     records_strong = bool(strong)
-    # READ part on the rider's own calls and messages during the wait (from the arrival indication to the cancellation)
+    # READ part on the rider's own calls and messages during the wait (from TS_TOLERANCE_S before the arrival indication to the cancellation)
     cid = lambda c: _ev_id("E-CHT", case, "chat_logs", lambda x: x is c)[0]
     w_start = t_arr - timedelta(seconds=tol)      # records of the arrival can differ by TS_TOLERANCE_S (DQ-01)
     contacts06 = [c for c in chat if c["sender"] == "rider" and c["type"] in ("call", "message") and w_start <= T(c["timestamp"]) <= end]
 
+    def answers_question(c):                    # the driver's last message before c (in time order) asks something
+        prev = sorted((x for x in chat if x["sender"] == "driver" and x["type"] == "message" and T(x["timestamp"]) <= T(c["timestamp"])),
+                      key=lambda x: x["timestamp"])
+        return bool(prev) and _asks_driver(prev[-1].get("content"))
+
     def read06(c):
         r_ = rider_contact_reading(c)
-        if r_ == "NEUTRAL":                       # "ok" or a thumbs-up answering the driver's question is not neutral
-            prev = [x for x in chat if x["sender"] == "driver" and x["type"] == "message" and T(x["timestamp"]) <= T(c["timestamp"]) and x is not c]
-            if prev and (prev[-1].get("content") or "").rstrip().endswith("?"):
-                return "UNCLEAR"
+        if r_ == "NEUTRAL" and answers_question(c):   # "ok" or a thumbs-up answering the driver's question reads like a bare "yes"
+            return "UNCLEAR"
         return r_
     readings = {cid(c): read06(c) for c in contacts06}
     by = {k: [i for i, r in readings.items() if r == k] for k in ("PLACES", "LATE", "NEUTRAL", "UNCLEAR")}
@@ -792,13 +807,17 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
         strong.append("an unclear rider call or message during the wait, read as placing the rider at the pick-up (other reading)")
     # D30: before the arrival indication (from the driver's assignment), a rider message that places the rider at the pick-up,
     # or rider GPS at the pin or venue, counts too: at least WEAK, with STRONG as its other reading in the reading test.
-    # Questions about the driver sent before the arrival indication do not count: the driver had not arrived yet.
+    # Questions about the driver, pick-up instructions, admissions and calls before the wait do not count: the wait had not started.
     starts = [T(a["timestamp"]) for a in ev if a["event_type"] == "driver_assigned"] or \
              [T(a["timestamp"]) for a in ev if a["event_type"] == "booking_confirmed"]
     d30_from = min(starts) if starts else None     # the earliest assignment (else the booking); none recorded: no lower bound
+    if d30_from is not None and d30_from >= w_start:  # assignment stamped after the arrival: a data error, so a person checks
+        booked_at = [T(a["timestamp"]) for a in ev if a["event_type"] == "booking_confirmed" and T(a["timestamp"]) < w_start]
+        d30_from = min(booked_at) if booked_at else None
+        tr.flag("RECORDS_MISSING")
     before = lambda ts: (d30_from is None or d30_from <= T(ts)) and T(ts) < w_start
     place_names = [n.lower().split("(")[0].strip() for n in ((venue or {}).get("name"), t["pickup_location"].get("name")) if n]
-    pre_read = {cid(c): before_arrival_reading(c, place_names) for c in chat if c["sender"] == "rider" and before(c["timestamp"])}
+    pre_read = {cid(c): before_arrival_reading(c, place_names, answers_question(c)) for c in chat if c["sender"] == "rider" and before(c["timestamp"])}
     pre_ids = [i for i, r_ in pre_read.items() if r_]
     pre_clear = [i for i, r_ in pre_read.items() if r_ == "PLACES"]
     pre_gps, pre_gps_where = [], {}
@@ -823,7 +842,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     tr.rider_contests = contested if not force_reading else (force_reading == "WEAK")
     tr.rider_at_venue_claim = bool(venue and venue["name"].lower() in (tk.get("description", "") or "").lower() and tr.rider_contests)
     tr.finding("F-RIDER-EVIDENCE", rider_ev, basis=["E-TKT-01"] + (["E-RGPS-*"] if rider_gps else []) + list(readings) + pre_ids + pre_gps, rule="CW-F06",
-               params=["ARRIVAL_GEOFENCE_M", "PIN_VENUE_MAX_M"], status="established" if records_strong else "read")
+               params=["ARRIVAL_GEOFENCE_M", "PIN_VENUE_MAX_M", "TS_TOLERANCE_S"], status="established" if records_strong else "read")
     tr.path("CW-F06")
     contact_words = "; ".join(f"{i} {r}" for i, r in readings.items())
     pre_words = (f"the rider's message or GPS before the arrival indication ({', '.join(pre_ids + pre_gps)}) places or may place the rider"
@@ -944,14 +963,15 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     M = min(1.0, abs(margin) / (2 * band)) if band else 1.0
     req = {
         "E-TKT-01": True, "E-TRP-01": True,
-        "E-APP-* (driver_assigned, driver_arrived, wait_timer_started, cancellation_fee_applied)":
+        "E-APP-* (" + ", ".join([x for x in ("driver_assigned", "driver_arrived", "wait_timer_started", "cancellation_fee_applied")
+                                 if not any(a["event_type"] == x for a in ev)] or ["driver_assigned", "driver_arrived", "wait_timer_started", "cancellation_fee_applied"]) + ")":
             all(any(a["event_type"] == x for a in ev) for x in ("driver_assigned", "driver_arrived", "wait_timer_started", "cancellation_fee_applied")),
         "E-GPS-* during the wait": bool(win),
         "E-CHT-* (calls and messages)": "chat_logs" in case,
         "E-POL-01 (policy object or profile)": True,
     }
     if tr.rider_contests:
-        req["rider-side records (required because the rider contests presence)"] = bool(rider_gps) or bool(rider_contacts)
+        req["rider-side records (required because the rider contests presence)"] = bool(rider_gps) or bool(rider_contacts) or bool(tr.rider_contact_detail.get("before_arrival_ids"))
     soft_flags = [f for f in tr.flags if f in SOFT_FLAGS]
     E_ = max(0.0, sum(req.values()) / len(req) - penalty * len(soft_flags))
     A_, R_ = 1.0, 1.0

@@ -161,7 +161,7 @@ def main(argv):
         print(f"DISP-002 [{prof}]: {t.outcome} via {t.dt_row}, reasons {t.reasons}, flags {t.flags}, C={t.confidence['C']}, tier {r['tier']['tier']}")
     print(f"DT-CW-NOSHOW enumeration: {dt_enum}")
     print(f"engine self-test: {sum(t['ok'] for t in tests)}/{len(tests)} variants pass; rows decided by self-tests: {sorted(decided, key=lambda s: int(s[1:]))}")
-    n_read = len(selftest.READING_CASES) + len(selftest.reading_corpus())
+    n_read = len(selftest.READING_CASES) + len(selftest.BEFORE_ARRIVAL_CASES) + len(selftest.reading_corpus())
     print(f"CW-F06 message readings: {n_read - len(reading_bad)}/{n_read} pass (exact cases and the reviewers' corpus)")
     if fuzz:
         print(f"GPS fuzz (seed 7): {fuzz[0]} random cases, {fuzz[1]} automatic, {fuzz[2]} crashes, {len(fuzz[3])} findings")

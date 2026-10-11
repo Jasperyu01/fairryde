@@ -78,7 +78,8 @@ What the step had to do:
 ${A.task || '(see docs/NEXT_STEPS.md)'}
 Project rules that apply (CLAUDE.md): every rule element needs a source or an open FairRyde label; a rule's credibility is its weakest essential element and a Ryde condition extended by FairRyde is D; docs and messages use no em dashes or en dashes and American spelling; names, plates, phone numbers and account IDs never appear in new test data. The build (python3 kb/build_kb.py --no-xlsx) must end ERROR 0 | WARN 0.
 ${SEVERITY}
-Report only real problems you can show with evidence. Do not report style preferences as MAJOR. If you find nothing wrong in an area, say so in checked_ok.`
+Report only real problems you can show with evidence. Do not report style preferences as MAJOR. If you find nothing wrong in an area, say so in checked_ok.
+The reading of rider calls and messages (CW-F06's READ part, rider_contact_reading and before_arrival_reading in kb/tools/engine_noshow.py) is frozen by the owner (kb/open_items.yaml D34): do not attack or review it unless this step changed it; if you see a gap there, report it as MINOR with the note "frozen area (D34)".`
 
 const DIMENSIONS = [
   { key: 'fidelity', prompt: `Dimension: FIX FIDELITY AND SCOPE. Check that the change does everything the step asked, exactly as the owner decided, and nothing else: compare each changed rule card with its version at ${A.base} (git show ${A.base}:kb/rules.yaml) and say whether any rule's meaning changed beyond what the task covers. Check that the self-tests in kb/tools/selftest.py really test the new behavior (and would fail without it). Run python3 kb/build_kb.py --no-xlsx, python3 kb/tools/selftest.py and python3 validation/tools/rerun_engine.py ${SCRATCH}rerun.json E01 E02 E03 E04 and report the result lines. ${FOCUS.fidelity || ''}` },

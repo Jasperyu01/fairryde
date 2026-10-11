@@ -782,7 +782,8 @@ def _auto_inputs(kb, case):
         start = max(x for x in (arr, datetime.fromisoformat(t["scheduled_time"])) if x)
     else:
         start = arr or end
-    assigned_at = min([datetime.fromisoformat(a["timestamp"]) for a in case["app_events"] if a["event_type"] == "driver_assigned"] or [start])
+    assigned_at = min([datetime.fromisoformat(a["timestamp"]) for a in case["app_events"] if a["event_type"] == "driver_assigned"]
+                      or [datetime.fromisoformat(a["timestamp"]) for a in case["app_events"] if a["event_type"] == "booking_confirmed"] or [start])
     from_assignment = lambda ts: assigned_at <= datetime.fromisoformat(ts) <= end      # CW-F06 with D30: placements before arrival count
     thr = pol["no_show_threshold_min"] * 60 if "no_show_threshold_min" in pol else kb.pval("NO_SHOW_THRESHOLD_S", "ryde_2026")
     fee = pol.get("cancellation_fee_after_wait", kb.pval("NO_SHOW_FEE_SGD", "ryde_2026"))

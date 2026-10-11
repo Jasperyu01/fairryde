@@ -22,6 +22,7 @@ Tencent Cloud x AI Singapore hackathon 2026, Ryde track: multi-agent resolution 
 - Stop rules: a D step has a 30-minute time box; a layer gets at most two review rounds; whatever is left goes to `kb/open_items.yaml`; a round that finds only MINOR issues ends that layer.
 - Validators never edit the KB. Freeze it first (`validation/tools/freeze.py`) and check the hashes at the end.
 - Every v0.2 build step is checked exactly as A1 was: engine rerun, fresh KB appliers on the affected cases, four reviewers each with a skeptic, a second round only if needed (see "How each step is checked" in `docs/NEXT_STEPS.md`; workflow `.claude/workflows/kb-step-check.js`).
+- The reading of rider calls and messages (CW-F06's READ part and `rider_contact_reading` / `before_arrival_reading` in `kb/tools/engine_noshow.py`) is frozen (Jasper, 11 Oct, D34): do not extend it in later steps; record gaps in `kb/open_items.yaml`.
 - Every rule element needs a source or an open FairRyde label. A rule's credibility is its weakest essential element: a Ryde condition extended by FairRyde is D.
 - Writing style in docs and messages: no em dashes or en dashes; American spelling.
 

@@ -13,7 +13,7 @@ Status: A1 done (11 Oct 2026, see `validation/build_checks/A1/` and decisions D2
    - fresh KB appliers re-decide the affected round 1 cases from the KB alone;
    - four reviewers each check one dimension: fix fidelity and scope; sources and credibility; an adversarial test of the changed logic; consistency across files and party-facing text;
    - each reviewer is followed by a skeptic that tries to refute every finding.
-3. Fix what the skeptics confirm. Run a second round only if the first had CRITICAL or MAJOR findings; never more than two rounds (CLAUDE.md stop rules). Whatever is left goes to `kb/open_items.yaml`.
+3. Fix what the skeptics confirm. Exception (D34): the rider-message reading in CW-F06 and its engine proxy are frozen; reviewers do not attack it unless the step changed it, and any gap found there goes to `kb/open_items.yaml` without a fix. Run a second round only if the first had CRITICAL or MAJOR findings; never more than two rounds (CLAUDE.md stop rules). Whatever is left goes to `kb/open_items.yaml`.
 4. Save the appliers' decisions, the reviews and a per-finding disposition in `validation/build_checks/<step>/`, log every step with `validation/tools/vlog.py`, and open a pull request for Jasper.
 
 ## A. Build v0.2 (fixes from `validation/V5_scorecard/54_fix_list.json`)
@@ -38,4 +38,5 @@ Run in a fresh session that did not make the fixes: "Read CLAUDE.md and validati
 - Ask the organizer whether Ryde defines how GPS presence at the pick-up is checked (radius, ping gap). An answer lifts part of CW-F04 from D.
 - Decided by Jasper (11 Oct, D29): every uphold that rests on FairRyde's own GPS presence logic needs human approval; worth confirming with Prof. Cao.
 - Decided by Jasper (11 Oct): D27 accepted (credibility D; readings that cannot be settled go to a person), D30 rider messages before the driver marks arrival that place the rider at the pick-up count (at least approval), D31 known limitation of v0.2 (no waiting-fee decision table or engine path).
-- Open for Jasper: D33 (rider GPS before the arrival indication counted like a message; A1b's extension of D30). Organizer questions O13 (are rider call contents recorded?) and O14 (RydeTAXI detour refunds).
+- Decided by Jasper (11 Oct): D33 kept (rider GPS before the wait counts like a message); D34 the rider-message reading is frozen: no later step extends it, gaps go to `kb/open_items.yaml` (known limitations listed under D34).
+- Open: organizer questions O13 (are rider call contents recorded?) and O14 (RydeTAXI detour refunds).

@@ -69,7 +69,7 @@ playbooks:
       - {n: 8, do: COMPUTE, rule: "CW-F03, CW-F03B", note: "Elapsed wait and margin, counted from the confirmed wait start (CW-F03B moves the start to the GPS confirmation)"}
       - {n: 9, do: COMPUTE, rule: CW-F04, note: "Driver presence over the waiting the fee pays for: CONSISTENT, SPARSE, LEFT or UNKNOWN"}
       - {n: 10, do: COMPUTE, rule: CW-F05, note: "Contact attempts"}
-      - {n: 11, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the cancellation, to see whether they place the rider at the pick-up or contest presence, timing or place; also the rider's own messages and phone GPS from the driver's assignment to the arrival indication that place or may place the rider at the pick-up (D30, D33; questions, instructions, admissions and calls before arrival do not count)"}
+      - {n: 11, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the cancellation, to see whether they place the rider at the pick-up or contest presence, timing or place; the wait starts TS_TOLERANCE_S before the arrival indication; before it, from the driver's assignment, the rider's messages count unless they are only questions about the driver, contests, pick-up instructions, admissions or acknowledgments, and calls do not count; rider phone GPS at the pick-up before the wait counts (D30, D33)"}
       - {n: 12, do: COMPUTE, rule: CW-F07, note: "Pin versus venue"}
       - {n: 13, do: GET, rule: GEN-R05, note: "Both advocates' briefs (Rider Advocate, Driver Advocate), citing findings and evidence IDs only"}
       - {n: 14, do: DECIDE, table: DT-CW-NOSHOW, note: "Then the overrides: a policy gap (PB-INTAKE step 8 or step 3 here) escalates (GEN-R07); a request outside the window keeps the fee (MAT-04)"}
@@ -116,7 +116,7 @@ playbooks:
       - {n: 4, do: COMPUTE, rule: "CW-F03, CW-F03B", note: "Use boarding time instead of cancellation time, and FREE_WAIT_S as the threshold"}
       - {n: 5, do: COMPUTE, rule: CW-F04}
       - {n: 6, do: CHECK, rule: CW-R05}
-      - {n: 7, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the end of CW-F04's window (the free wait, or boarding if earlier); also the rider's own messages and phone GPS from the driver's assignment to the arrival indication that place or may place the rider at the pick-up (D30, D33)"}
+      - {n: 7, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the end of CW-F04's window (the free wait, or boarding if earlier); the wait starts TS_TOLERANCE_S before the arrival indication; before it, from the driver's assignment, the rider's messages count unless they are only questions about the driver, contests, pick-up instructions, admissions or acknowledgments, and calls do not count; rider phone GPS at the pick-up before the wait counts (D30, D33)"}
       - {n: 8, do: GET, rule: GEN-R05, note: "Both advocates' briefs"}
       - {n: 9, do: CHECK, rule: "CW-R12, DQ-06, CW-R10"}
       - {n: 10, do: ESCALATE_IF, rule: "AUTH-05, AUTH-01 to AUTH-04, AUTH-06"}

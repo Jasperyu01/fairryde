@@ -285,20 +285,21 @@ def noshow(kb, run: dict) -> dict:
             rider_records += (f" Your {'message' if one else 'messages'} ({_ids(unclear_msgs)}) {'does' if one else 'do'} not clearly say"
                               " whether you were at the pick-up point.")
         merits = not (t.reasons and t.reasons[0] in ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP"))
+        when = "before the driver marked arrival" if (t.arrival_detail or {}).get("t_arr") else "before the wait started"
         clear = rcd.get("before_arrival_clear_ids") or []
         maybe = [i for i in rcd.get("before_arrival_ids") or [] if i not in clear]
         if clear and merits:
             one = len(clear) == 1
-            rider_records += (f" Your {'message' if one else 'messages'} sent before the driver marked arrival ({_ids(clear)})"
+            rider_records += (f" Your {'message' if one else 'messages'} sent {when} ({_ids(clear)})"
                               f" {'says' if one else 'say'} you were already at the pick-up point; this was counted as evidence for your side.")
         if maybe and merits:
             one = len(maybe) == 1
-            rider_records += (f" Your {'message' if one else 'messages'} sent before the driver marked arrival ({_ids(maybe)})"
+            rider_records += (f" Your {'message' if one else 'messages'} sent {when} ({_ids(maybe)})"
                               f" may show where you were; {'it was' if one else 'they were'} counted as evidence for your side.")
         gw = rcd.get("before_arrival_gps_where") or {}
         if gw and merits:
             places = sorted({"the pick-up pin" if w == "pin" else f"{t.venue_name}" for w in gw.values()})
-            rider_records += (f" Your phone's GPS shows you at {' and '.join(places)} before the driver marked arrival"
+            rider_records += (f" Your phone's GPS shows you at {' and '.join(places)} {when}"
                               f" ({_ids(list(gw))}); this was counted as evidence for your side.")
         if outside_ids:
             one = len(outside_ids) == 1
@@ -327,7 +328,7 @@ def noshow(kb, run: dict) -> dict:
             elif "rider's call, message or GPS" in why:
                 what = ("calls, messages and phone GPS" if "E-RGPS" in why and "E-CHT" in why else
                         "phone GPS" if "E-RGPS" in why else "calls or messages")
-                items.append(f"how the rider's {what} were read ({rid})")
+                items.append(f"how the rider's {what} {'was' if what == 'phone GPS' else 'were'} read ({rid})")
             elif "reading" in why:
                 items.append(f"how the rider's statement was read ({rid})")
         generic = " Part of this decision rests on assumptions FairRyde made where Ryde has published nothing: " + "; ".join(dict.fromkeys(items)) + "."

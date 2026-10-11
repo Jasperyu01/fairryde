@@ -50,7 +50,7 @@ Findings:
 | F-PRESENCE | CONSISTENT |  | established | CW-F04 | E-GPS-05, E-GPS-06, E-GPS-07, E-GPS-08 | ARRIVAL_GEOFENCE_M, PING_MAX_GAP_S, LEFT_MIN_OUTSIDE_S, SPEED_MAX_KMH, TS_TOLERANCE_S |
 | F-SPEED-CONSISTENCY | {'soft_segments': 0, 'hard_segments': 0, 'data_error_stretches': 0, 'window': 'wait'} |  | established | DQ-02 | E-GPS-* | SPEED_RATIO_SOFT, SPEED_MAX_KMH |
 | F-CONTACT | ADEQUATE |  | established | CW-F05 | E-CHT-01, E-CHT-02, E-CHT-03, E-CHT-04, E-CHT-05 | CONTACT_MIN_CALLS, CONTACT_MIN_MESSAGES |
-| F-RIDER-EVIDENCE | WEAK |  | read | CW-F06 | E-TKT-01 | ARRIVAL_GEOFENCE_M, PIN_VENUE_MAX_M |
+| F-RIDER-EVIDENCE | WEAK |  | read | CW-F06 | E-TKT-01 | ARRIVAL_GEOFENCE_M, PIN_VENUE_MAX_M, TS_TOLERANCE_S |
 | F-PIN-VENUE | 1259 | m | established | CW-F07 | E-TRP-01.pickup_location, E-GEO-01 | PIN_VENUE_MAX_M |
 | F-CHARGE-AMOUNT | {'charged': 5.0, 'policy': 5.0, 'status': 'equal'} | SGD | established | DQ-06 | E-TRP-01.cancellation_fee, E-POL-01 | NO_SHOW_FEE_SGD, MONEY_TOLERANCE_SGD |
 
@@ -138,7 +138,7 @@ Findings:
 | F-PRESENCE | CONSISTENT |  | established | CW-F04 | E-GPS-05, E-GPS-06 | ARRIVAL_GEOFENCE_M, PING_MAX_GAP_S, LEFT_MIN_OUTSIDE_S, SPEED_MAX_KMH, TS_TOLERANCE_S |
 | F-SPEED-CONSISTENCY | {'soft_segments': 0, 'hard_segments': 0, 'data_error_stretches': 0, 'window': 'wait'} |  | established | DQ-02 | E-GPS-* | SPEED_RATIO_SOFT, SPEED_MAX_KMH |
 | F-CONTACT | ADEQUATE |  | established | CW-F05 | E-CHT-01, E-CHT-02, E-CHT-03, E-CHT-04, E-CHT-05 | CONTACT_MIN_CALLS, CONTACT_MIN_MESSAGES |
-| F-RIDER-EVIDENCE | WEAK |  | read | CW-F06 | E-TKT-01 | ARRIVAL_GEOFENCE_M, PIN_VENUE_MAX_M |
+| F-RIDER-EVIDENCE | WEAK |  | read | CW-F06 | E-TKT-01 | ARRIVAL_GEOFENCE_M, PIN_VENUE_MAX_M, TS_TOLERANCE_S |
 | F-PIN-VENUE | 1259 | m | established | CW-F07 | E-TRP-01.pickup_location, E-GEO-01 | PIN_VENUE_MAX_M |
 | F-CHARGE-AMOUNT | {'charged': 5.0, 'policy': 6.61, 'status': 'undercharged'} | SGD | established | DQ-06 | E-TRP-01.cancellation_fee, E-POL-01 | NO_SHOW_FEE_SGD, MONEY_TOLERANCE_SGD |
 
