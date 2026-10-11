@@ -75,7 +75,7 @@ groups:
       - {name: secondary_types, fill: HUMAN, vocab: "TX-CASE (leaf codes)", multi: true, example: ""}
       - {name: other_type_text, fill: HUMAN, note: free text when OTHER is used, example: ""}
       - {name: relation_type, fill: HUMAN, vocab: TX-RELATION, example: NEW}
-      - {name: outcome, fill: HUMAN, vocab: TX-OUTCOME, example: WAIVE_FEE}
+      - {name: outcome, fill: HUMAN, vocab: TX-OUTCOME, example: WAIVE_FEE, note: "Outcome of the primary claim. A route ticket on a fixed fare charged as quoted has a secondary FC-TOLL claim when the longer route passed ERP gantries the recommended route avoids (FC-R01); label the primary claim here and write the secondary claim's outcome and amount in basis_other_text."}
       - {name: remedy_amount_sgd, fill: HUMAN, example: 6.61}
       - {name: remedy_payer, fill: HUMAN, vocab: TX-ROLE, example: PLATFORM}
       - {name: remedy_payee, fill: HUMAN, vocab: TX-ROLE, example: RIDER}

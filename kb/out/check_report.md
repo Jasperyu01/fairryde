@@ -3,13 +3,13 @@
 Generated from the YAML source files (knowledge base dated 2026-10-05).
 
 * Rules: 88; vocabularies: 22; TX-CASE leaves: 33; entities: 20; events: 35; playbooks: 11
-* Rule sources: 154; VERIFIED 120, NO_QUOTE (design assumption) 27, PARAPHRASE 7
+* Rule sources: 158; VERIFIED 124, NO_QUOTE (design assumption) 27, PARAPHRASE 7
 * Credibility: A 27, B 11, C 5, D 45; modes: HARD 74, HARD+READ 6, READ 8
 * DISP-002 fields mapped: 59 of 59 leaf paths
 * DT-CW-NOSHOW enumeration: {'combinations': 96, 'unique': 96, 'gaps': 0, 'overlaps': 0}
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
 * Engine self-test: 99/99 variants pass
-* ERP rules self-test: 27 ERP cases, the FC-R01 split, gate G3 and the A2 rule-card checks: all pass
+* ERP rules self-test: 39 ERP cases, the FC-R01 split, gate G3 and the A2 rule-card checks: all pass
 * Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
 * Annotation workbook: workbooks skipped (--no-xlsx)
@@ -252,7 +252,8 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | FC-R01 | 1 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | The trip fare is fixed based on pick-up and drop-off points, hence the driver may decide to take the most effi |  |
 | FC-R01 | 2 | RYDE_POLICY | RYDE-30741244296217 | 2025-07-17 |  | VERIFIED | corpus body | Fares quoted for our services are generally fixed, except for RydeTAXI. | [clause is one side of a META-04 known conflict: does not count toward A] |
 | FC-R01 | 3 | RYDE_POLICY | RYDE-360004075214 | 2024-10-08 |  | VERIFIED | corpus body | All fares are fixed at the time of booking but does not include toll charges such as ERP. |  |
-| FC-R01 | 4 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Opening the FC-TOLL claim without the rider naming the ERP is FairRyde's design (open item |
+| FC-R01 | 4 | RYDE_POLICY | RYDE-115000772653 | 2024-04-19 |  | VERIFIED | corpus body | For all services apart from RydeSEND, ERP charges are excluded from the fares. |  |
+| FC-R01 | 5 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Opening the FC-TOLL claim without the rider naming the ERP is FairRyde's design (open item |
 | FC-R02 | 1 | RYDE_POLICY | RYDE-4412122016153 | 2023-06-16 |  | VERIFIED | corpus body | So you may decide to take the fastest or most efficient route based on your GPS. |  |
 | FC-R02 | 2 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | If you have a preferred route, you may recommend this to your driver and reach a mutual agreement before you g |  |
 | FC-R03 | 1 | REGULATION | LTA-PDVL-OFFENCES | 2023-04-01 |  | VERIFIED | sources/research/09_fact_check.md | Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct  |  |
@@ -260,8 +261,11 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | FC-R04 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  |  |
 | FC-R05 | 1 | INDUSTRY | IND-BENCHMARK-NOTES | 2026-10-05 |  | PARAPHRASE |  |  | DiDi charges only the estimated fare when a detour is found (research notes 02 and 08). |
 | FC-R06 | 1 | RYDE_POLICY | RYDE-115000772653 | 2024-04-19 |  | VERIFIED | corpus body | If a rider passes through an active ERP gantry, the toll charge will be applicable to the rider. |  |
-| FC-R06 | 2 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The fares for RydeSEND include ERP. |  |
-| FC-R06 | 3 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%. |  |
+| FC-R06 | 2 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The fares for RydeFLASH / RydePET / RydeX / RydeXL / RydeLUXE / RydeTAXI exclude ERP. |  |
+| FC-R06 | 3 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The fares for RydeSEND include ERP. |  |
+| FC-R06 | 4 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%. |  |
+| FC-R06 | 5 | RYDE_POLICY | RYDE-33363192453785 | 2026-09-02 |  | VERIFIED | corpus body | The tolls for RydePOOL are split equally between riders for a shared trip, with each paying 50% of the total t | Not used to set a share: it documents why RydePOOL has none (it contradicts the 2023 pages |
+| FC-R06 | 6 | RYDE_POLICY | RYDE-23575142762393 | 2023-10-02 |  | VERIFIED | corpus body | Note: RydePOOL, RydeHIRE and RydeSEND include ERP. | 2023 driver page, not used to set a share: it documents the disagreement for RydePOOL and  |
 | FC-R07 | 1 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | Please bear in mind that if an additional/excessive amount is keyed in, this will be considered fraudulent and |  |
 | FC-R07 | 2 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The fares for RydeSEND include ERP. |  |
 | FC-R07 | 3 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%. |  |
@@ -372,7 +376,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | FC-R03 | outcome | C | HARD+READ | C | INDUSTRY, REGULATION | The duty to take the shortest route is in Singapore regulation (B); the numeric thresholds are DiDi's published values u |
 | FC-R04 | outcome | D | HARD | D | FAIRRYDE |  |
 | FC-R05 | remedy | D | HARD | D | INDUSTRY |  |
-| FC-R06 | eligibility | A | HARD | A | RYDE_POLICY | Every share is Ryde text in a driver article edited 2026-09-02 (A). The order of application and the pointers to GEN-R07 |
+| FC-R06 | eligibility | A | HARD | A | RYDE_POLICY | Every share is Ryde text in a driver article edited 2026-09-02 (A). The order of application, the default for an unrecor |
 | FC-R07 | outcome | A | HARD+READ | D | FAIRRYDE, RYDE_POLICY | The overstatement rule and its fraud consequence are Ryde's (A), with the rider's share from FC-R06 (A). Refunding the d |
 | FC-R08 | outcome | D | HARD+READ | A | FAIRRYDE, REGULATION | The route duty is regulatory (B) and verified for PDVL drivers only; turning it into a platform-computed ERP refund is F |
 | FC-R09 | eligibility | A | HARD | A | RYDE_POLICY |  |

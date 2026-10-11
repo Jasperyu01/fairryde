@@ -609,7 +609,7 @@ vocabularies:
       - {code: FC-R-DETOUR-BORDERLINE, label: Detour near the threshold, outcome: ESCALATE_HUMAN}
       - {code: FC-R-TOLL-OVERSTATED, label: "ERP charged to the rider exceeds the rider's share of the gantries passed (FC-R06)", outcome: TOLL_REFUND}
       - {code: FC-R-TOLL-FROM-DETOUR, label: ERP incurred only because of an unjustified detour, outcome: TOLL_REFUND}
-      - {code: FC-R-TOLL-VALID, label: "ERP charged to the rider matches the rider's share of the gantries passed (FC-R06), and no refund is due for a detour", outcome: UPHOLD}
+      - {code: FC-R-TOLL-VALID, label: "ERP charged to the rider stands: it does not exceed the rider's share of the gantries passed (FC-R06) and no detour refund is due", outcome: UPHOLD}
       - {code: FC-R-DEST-FEE-VALID, label: Destination edit was accepted by the driver; fee and recalculated fare stand, outcome: UPHOLD}
       - {code: FC-R-DEST-FEE-INVALID, label: Destination fee charged without an accepted edit or on a service that cannot edit, outcome: PARTIAL_REFUND}
       - {code: FC-R-NOPICKUP-CONFIRMED, label: Trip completed without the rider onboard, outcome: FULL_REFUND}

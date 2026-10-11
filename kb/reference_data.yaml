@@ -190,7 +190,7 @@ tables:
     retrieved: 2026-10-11
     credibility: A
     value: {RYDEFLASH: 1.0, RYDEPET: 1.0, RYDEX: 1.0, RYDEXL: 1.0, RYDELUXE: 1.0, RYDETAXI: 1.0, RYDESEND: 0.0, CARPOOL: 0.5}
-    note: "The rider's share of the ERP of the gantries passed, by service type (rule FC-R06; applied by FC-F04, FC-R07 and FC-R08). Only the services that article names have a share. There is no share, so GEN-R07 applies, for (1) every other service: RydePOOL (RYDE-33363192453785 and RYDE-19671307820825, 2026-09-02: its tolls are split equally between riders, each paying 50%; but RYDE-23575142762393 and RYDE-20244103989529, 2023: RydePOOL, RydeHIRE and RydeSEND include ERP), RydeHIRE (the 2023 pages only), Ryde X GO and Ryde+; (2) a trip that is both RydeSEND and carpool; and (3) a trip whose service type is not recorded (FC-R12, RECORDS_MISSING). Open item D35."
+    note: "The rider's share of the ERP of the gantries passed, by service type (rule FC-R06; applied by FC-F04, FC-R07 and FC-R08). Only the services that article names have a share. There is no share, so GEN-R07 applies, for (1) every other service: RydePOOL (RYDE-33363192453785 and RYDE-19671307820825, 2026-09-02: its tolls are split equally between riders, each paying 50%; but RYDE-23575142762393 and RYDE-20244103989529, 2023: RydePOOL, RydeHIRE and RydeSEND include ERP), RydeHIRE (2023 pages: fares include ERP; but the rider page RYDE-115000772653, 2024-04-19, says ERP is excluded for every service but RydeSEND), Ryde X GO and Ryde+, alone or flagged as carpool; (2) a trip that is both RydeSEND and carpool; and (3) a trip whose service type is not recorded (FC-R12, RECORDS_MISSING). Open item D35."
 
   VENUES:
     source: "OneMap search API (Singapore Land Authority), looked up by hand"

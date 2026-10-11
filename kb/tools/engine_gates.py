@@ -24,6 +24,8 @@ def resolve_g3(kb: KB, blind: dict, aware: dict | None = None, fraud_check_disag
     differs = bool(aware) and (aware.get("outcome") != blind.get("outcome") or aware.get("amount") != blind.get("amount"))
     fired = differs or fraud_check_disagrees
     tier = blind["tier"]
+    if tier not in _ORDER and not str(tier).startswith("n/a"):       # "n/a (reclassified to ...)" is what decide_tier writes for a case that is not ruled
+        raise ValueError(f"unknown tier {tier!r}: expected AUTO, APPROVE or HUMAN")
     if fired:
         if blind["outcome"] == "ESCALATE_HUMAN" or blind["outcome"] is None:
             tier = "HUMAN"
