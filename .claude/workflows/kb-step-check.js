@@ -15,14 +15,18 @@ export const meta = {
 //   apply_cases: ['E07'],                     // round 1 cases (validation/V4_e2e/cases) a fresh KB applier re-decides
 //   focus: { fidelity: '...', grounding: '...', adversarial: '...', consistency: '...' },   // step-specific checks
 //   prior: 'validation/build_checks/<step>/...disposition.jsonl or null (round 2: what round 1 found and how it was handled)',
+//   model: 'sonnet',                           // optional: model for EVERY agent (appliers, reviewers, skeptics); omit to inherit the session model
 // }
 // The engine reruns (validation/tools/rerun_engine.py) and the build are E steps the builder runs outside this workflow.
-const A = args || {}
+// args can arrive as a JSON string (the Workflow tool stringified it in A2 round 1, which silently skipped the appliers): parse it, and refuse to run without the essentials
+const A = typeof args === 'string' ? JSON.parse(args) : (args || {})
+if (!A.step || !A.base || !A.head || !A.task) throw new Error('kb-step-check needs args.step, args.base, args.head and args.task (got ' + JSON.stringify(Object.keys(A)) + ')')
 const REPO = '/home/user/fairryde'
 const STEP = A.step || 'step'
 const ROUND = A.round || 1
 const SCRATCH = `/tmp/${STEP.toLowerCase()}check${ROUND}/`
 const FOCUS = A.focus || {}
+const withModel = (o) => (A.model ? { ...o, model: A.model } : o)
 const SEVERITY = 'Severity: CRITICAL = would change an outcome, an amount or the automatic-versus-human decision (tier) in an in-scope type; MAJOR = wrong, but outcome-neutral in the current scope, or affects an out-of-scope type; MINOR = wording, labeling or missing detail.'
 const READONLY = `You did not write this change and you never edit anything: do not modify, create or delete any file under ${REPO} (no git commands that change state either). Put scratch scripts under ${SCRATCH} only. Your structured output is your only deliverable.`
 
@@ -82,7 +86,7 @@ Report only real problems you can show with evidence. Do not report style prefer
 The reading of rider calls and messages (CW-F06's READ part, rider_contact_reading and before_arrival_reading in kb/tools/engine_noshow.py) is frozen by the owner (kb/open_items.yaml D34): do not attack or review it unless this step changed it; if you see a gap there, report it as MINOR with the note "frozen area (D34)".`
 
 const DIMENSIONS = [
-  { key: 'fidelity', prompt: `Dimension: FIX FIDELITY AND SCOPE. Check that the change does everything the step asked, exactly as the owner decided, and nothing else: compare each changed rule card with its version at ${A.base} (git show ${A.base}:kb/rules.yaml) and say whether any rule's meaning changed beyond what the task covers. Check that the self-tests in kb/tools/selftest.py really test the new behavior (and would fail without it). Run python3 kb/build_kb.py --no-xlsx, python3 kb/tools/selftest.py and python3 validation/tools/rerun_engine.py ${SCRATCH}rerun.json E01 E02 E03 E04 and report the result lines. ${FOCUS.fidelity || ''}` },
+  { key: 'fidelity', prompt: `Dimension: FIX FIDELITY AND SCOPE. Check that the change does everything the step asked, exactly as the owner decided, and nothing else: compare each changed rule card with its version at ${A.base} (git show ${A.base}:kb/rules.yaml) and say whether any rule's meaning changed beyond what the task covers. Check that the self-tests in kb/tools/selftest.py really test the new behavior (and would fail without it). Run python3 kb/build_kb.py --no-xlsx, python3 kb/tools/selftest.py and python3 validation/tools/rerun_engine.py ${SCRATCH}rerun.json E01 E02 E03 E04 E11 and report the result lines. ${FOCUS.fidelity || ''}` },
   { key: 'grounding', prompt: `Dimension: SOURCE GROUNDING AND CREDIBILITY of every new or changed rule element. For each: does it have a source or an explicit FairRyde label (or a recorded owner decision in kb/open_items.yaml); does every quoted source say what the rule uses it for (Ryde articles are in kb/sources/ryde_policy_corpus.json under articles, keyed by id, with body_text; the Terms of Use under terms_of_use); is the rule's credibility its weakest essential element under the credibility_principle at the top of kb/rules.yaml; is anything overgeneralized beyond its source or missing an exception the source states; do the zh texts say the same as the English (meaning, not style). ${FOCUS.grounding || ''}` },
   { key: 'adversarial', prompt: `Dimension: ADVERSARIAL TEST OF THE CHANGED LOGIC. Try hard to break what the step changed, in kb/tools/engine_noshow.py and in the rule text as an LLM would apply it. Write scratch scripts under ${SCRATCH} that import the engine (sys.path.insert(0, '${REPO}/kb/tools'); from kbload import KB; import engine_noshow as E; the self-test baseline is selftest.clean on copy.deepcopy(KB().disp002); see kb/tools/selftest.py for how variants change a case). Build at least 30 realistic edge cases aimed at the change (window edges, missing or reordered events, mixed evidence, advance bookings, organizer and Ryde profiles) and run the full engine (E.run) on each. The unsafe error is a case that should go to a person (escalation or approval) but is decided automatically (tier AUTO), or a fee upheld that the rules waive; report each with the exact case change, outcome and tier. Safe-direction errors that send routine cases to a person matter less; report the frequent ones. Severity: an unsafe error in a common pattern is CRITICAL, in a rare pattern MAJOR. ${FOCUS.adversarial || ''}` },
   { key: 'consistency', prompt: `Dimension: CONSISTENCY ACROSS FILES AND PARTY-FACING TEXT. Check that every consumer of the changed rules agrees with them: kb/tools/explain.py (run E.run and explain.noshow on the self-test variants the step added and on validation/V4_e2e/cases/E01.json and E03.json, and read every sentence of the rider and driver explanations against the case facts: nothing false, nothing misleading), kb/tools/make_xlsx.py and kb/tools/report_md.py, kb/annotation_schema.yaml, kb/playbooks.yaml, kb/taxonomy.yaml, kb/ontology.yaml, kb/scope.yaml, kb/open_items.yaml (are the decisions recorded accurately and consistently with the rules?) and docs/NEXT_STEPS.md. Grep kb/ (excluding kb/sources) for wording that still describes the old behavior. Check the changed text for em dashes or en dashes and British spellings, and new test data for names, plates, phone numbers or account IDs. ${FOCUS.consistency || ''}` },
@@ -100,15 +104,15 @@ const VERDICT_SCHEMA = {
 
 phase('Apply')
 const applied = parallel((A.apply_cases || []).map(cid => () =>
-  agent(applyPrompt(cid), { label: `apply:${cid}`, phase: 'Apply', schema: APPLY_SCHEMA })))
+  agent(applyPrompt(cid), withModel({ label: `apply:${cid}`, phase: 'Apply', schema: APPLY_SCHEMA }))))
 
 const reviewed = pipeline(
   DIMENSIONS,
-  d => agent(`${CONTEXT}\n\n${READONLY}\n\n${d.prompt}`, { label: `review:${d.key}`, phase: 'Review', schema: FINDINGS_SCHEMA }),
+  d => agent(`${CONTEXT}\n\n${READONLY}\n\n${d.prompt}`, withModel({ label: `review:${d.key}`, phase: 'Review', schema: FINDINGS_SCHEMA })),
   (rev, d) => {
     if (!rev || !rev.findings || rev.findings.length === 0) return { dimension: d.key, review: rev, verify: { verdicts: [] } }
     return agent(`${CONTEXT}\n\n${READONLY}\n\nYou are a skeptic. Another reviewer reported the findings below about step ${STEP} (dimension: ${d.key}). For EACH finding, try to refute it: re-read the cited files and lines yourself, re-run any command or scratch script needed (scratch only under ${SCRATCH}), and check whether the failure scenario really happens and whether the severity is right under the definitions above. Default to REFUTED if the evidence does not hold up; CONFIRMED only if you reproduced it or read it yourself; UNCERTAIN if it depends on a judgment the KB owner must make. Give severity_after_check (NONE if refuted).\n\nFindings:\n${JSON.stringify(rev.findings, null, 1)}`,
-      { label: `verify:${d.key}`, phase: 'Verify', schema: VERDICT_SCHEMA })
+      withModel({ label: `verify:${d.key}`, phase: 'Verify', schema: VERDICT_SCHEMA }))
       .then(v => ({ dimension: d.key, review: rev, verify: v }))
   },
 )

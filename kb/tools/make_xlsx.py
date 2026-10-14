@@ -242,7 +242,7 @@ def s_readme(wb, kb, st, runs, rep, tests, ann_status, dt_enum, out_scan=None):
         ("15_DISP-002三层视图", "同一份单据在三层里的样子（ONT.2），推演过程、敏感性测试、读法测试、给双方的解释"),
         ("16_引擎自测", f"{len(tests)} 个单因素变体，检验规则卡与参考引擎一致（不是标准答案）"),
         ("17_标注方案", "标注表的列设计、验证方案、实体覆盖（标注本身在 FairRyde_Annotation_v0.1.xlsx）"),
-        ("18_待决问题", "待决定事项 D1 到 D23、给曹老师和组织方的问题"),
+        ("18_待决问题", f"待决定事项 D1 到 D{len(kb.y['open_items']['decisions'])}、给曹老师和组织方的问题"),
     ]
     table(ws, r, ["页", "内容"], pages, widths=[22, 120])
     finish(ws, freeze=None)
@@ -525,20 +525,22 @@ def s_auth(wb, kb):
     lim = kb.pval("AUTO_LIMIT_SGD", "organizer_case")
     tiers = [("AUTO 自动执行", f"AUTH-01 全部满足：没有决定性的需读原文规则、C/D 级参数或 C/D 级决策表行；金额不超过 S${lim:.0f}；置信度不低于 τ={tau}；不触发人工批准条件和升级门；不是申诉",
               "抽检；双方都可申请人工复核"),
-             ("APPROVE 人工批准", "FairRyde 已给出裁决，且 AUTH-02 任一触发或 AUTH-04 任一升级门触发；或类型范围是 ADJUDICATE_WITH_APPROVAL（改目的地费、未接到乘客、清洁费）",
+             ("APPROVE 人工批准", "FairRyde 已给出裁决，且 AUTH-02 任一触发或 AUTH-04 中等级为 APPROVE 的升级门（G1、G3、G5、G6、G7）触发；或类型范围是 ADJUDICATE_WITH_APPROVAL（改目的地费、未接到乘客、清洁费）",
               "AI 给出暂定裁决和一页摘要，人确认、修改或驳回，写入 HumanReview 日志；10% 独立审计（复核人先自己判，再看 AI 建议）；确认率异常偏高时审计"),
-             ("HUMAN 人工裁决", "AUTH-03：安全、可能涉刑、任何账户处罚；AUTH-06：结果为 ESCALATE_HUMAN（事实有争议、乘客强反证、无成文规则），没有可批准的 AI 裁决", "AI 只分类、保全证据、写中立摘要和规则决定不了的那一点，不认定过错")]
+             ("HUMAN 人工裁决", "AUTH-03：安全、可能涉刑、任何账户处罚；AUTH-04 中等级为 HUMAN 的升级门（G2、G4、G8）；AUTH-06：结果为 ESCALATE_HUMAN（事实有争议、乘客强反证、无成文规则），没有可批准的 AI 裁决", "AI 只分类、保全证据、写中立摘要和规则决定不了的那一点，不认定过错")]
     r = table(ws, r, ["等级", "条件", "执行方式"], tiers, cols=[1, 3, 4])
     rows = [(rid, kb.rules[rid]["name"], kb.rules[rid].get("zh", ""), kb.rules[rid]["statement"], kb.rules[rid]["credibility"])
             for rid in kb.rule_order if kb.rules[rid]["family"] == "AUTH"]
     r = heading(ws, r, "审批相关规则原文")
     r = table(ws, r, ["规则", "名称", "中文", "规则（英文）", "可信度"], rows, widths=[10, 30, 60, 80, 7])
     gates = [("G1", "A/B 级来源互相矛盾超出容差", "离线参考引擎检查"), ("G2", "规则冲突", "运行时"),
-             ("G3", "看历史的 Judge 或欺诈检查与不看历史的结论不同", "运行时"), ("G4", "出现安全内容", "离线参考引擎检查"),
+             ("G3", "看历史的 Judge 或欺诈检查与不看历史的结论不同：保留不看历史的裁决作为暂定裁决（APPROVE），把分歧展示给复核人，不改变结果", "运行时检测；处理方式见 AUTH-04 和离线检查"), ("G4", "出现安全内容", "离线参考引擎检查"),
              ("G5", "置信度低于 τ", "离线参考引擎检查（A、R 两项按 1.0 计）"), ("G6", "金额超过自动上限", "离线参考引擎检查"),
              ("G7", "引用或数字校验重试一次仍失败", "运行时（离线解释草稿已做数字核对 EXP-03）"), ("G8", "Judge 多次运行之间或与规则引擎不一致", "运行时")]
     r = heading(ws, r, "升级门（AUTH-04，任一触发即转人工并附暂定裁决）")
-    r = table(ws, r, ["门", "条件", "在哪里检查"], gates)
+    gt = kb.rules["AUTH-04"].get("gate_tiers", {})
+    gates = [(g, c, w, gt.get(g, "")) for g, c, w in gates]
+    r = table(ws, r, ["门", "条件", "在哪里检查", "等级（AUTH-04 gate_tiers）"], gates)
     r = heading(ws, r, "FairRyde 永远不做的事")
     table(ws, r, ["#", "内容"], [(i + 1, x) for i, x in enumerate(kb.y["scope"]["decision_goal"]["never_decided_by_fairryde"])])
     finish(ws, freeze=None)

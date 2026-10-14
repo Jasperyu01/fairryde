@@ -70,6 +70,8 @@ RIDER_CONTEST_PHRASES = [                                       # the rider cont
 RIDER_PLACE_PHRASES = RIDER_QUESTION_PHRASES + RIDER_SELF_PLACE_PHRASES + RIDER_CONTEST_PHRASES
 RIDER_FAULT_PHRASES = [r"\bmy\s+(?:bad|mistake|fault)\b", r"\b(?:i|we|i'?ve|i have)\s+(?:put|set|entered|chose|selected|keyed in|pinned|went to|walked to|was at|were at|booked)\s+(?:the\s+|a\s+)?wrong\b",
                        r"\bsorry\b[^.?!]*\bwrong\b", r"\bwrong\b[^.?!]*\bsorry\b"]
+# A2 (D34 item 1, an exception to the freeze decided by Jasper on 2026-10-11): a mall, market, clinic, gym, kopitiam, ATM or MRT
+# station is a place the pick-up may be, so "I'm at the mall already" is not an admission of lateness; it is UNCLEAR (approval).
 RIDER_LATE_CORE = [                                             # first-person admissions of lateness or of still being on the way
     r"(?<!you )(?<!u )(?<!not )(?<!uncle )(?<!driver )\b(?:coming|comin|cming)(?:\s+(?:down|out|over|now|already|liao|soon))*\b(?!\s*\?)",
     r"\b(?:on\s+(?:my|the|da)\s+way|omw|otw)(?:\s+(?:down|out|over|now|already|liao))*\b(?!\s*\?)", r"\bgetting\s+ready\b", r"\brunning\s+late\b",
@@ -81,7 +83,7 @@ RIDER_LATE_CORE = [                                             # first-person a
     r"\b(?:i'?ll|i will|will|i'?m going to|gonna)\s+be\s+(?:right\s+)?(?:down|there|out)\b", r"^\W*be\s+(?:there|down|out)\b",
     r"\bleaving\s+(?:now|the house|my house|home|office|work)\b", r"\bjust\s+left\b",
     r"\bstill\s+(?:at home|at work|upstairs|getting|inside|packing|showering|bathing|eating)\b",
-    r"\b(?:still\s+)?(?:in|at)\s+(?:the\s+|my\s+)?(?:lift|elevator|toilet|shower|bathroom|office|house|room|train|bus(?!\s+stop)|mrt(?!\s+exit)|mall|market|clinic|meeting|traffic|jam|gym|kopitiam|atm)\b", rf"\b{_FP}\s+(?:still\s+)?(?:at\s+)?(?:home|work)\b(?:\s+still)?",
+    r"\b(?:still\s+)?(?:in|at)\s+(?:the\s+|my\s+)?(?:lift|elevator|toilet|shower|bathroom|office|house|room|train|bus(?!\s+stop)|meeting|traffic|jam)\b", rf"\b{_FP}\s+(?:still\s+)?(?:at\s+)?(?:home|work)\b(?:\s+still)?",
     r"\b(?:waiting|wait)\s+for\s+(?:the\s+|my\s+)?(?:lift|elevator)\b", r"\b(?:lift|elevator)\s+(?:very\s+|so\s+|damn\s+)?(?:slow|spoil|broken)\b",
     r"\b(?:in|taking|take|took)\s+(?:the\s+)?(?:lift|elevator)\b", r"\bstuck\s+in\s+(?:the\s+)?(?:jam|traffic|lift)\b", r"\bwalking\s+down\s+the\s+stairs\b",
     r"\bgive\s+me\s+(?:a\s+)?(?:\d+|few|a few|one|two|five)\b", r"\bgimme\b", r"\bneed\s+(?:\d+|a few|few)\s+(?:more\s+)?(?:min|mins|minutes?)\b",

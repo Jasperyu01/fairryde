@@ -1,0 +1,846 @@
+{
+ "note": "Check round 2 of A2 (workflow run wf_722fa6b0-99c, commit dda592c with the brief in round2_brief.md, base da4c329). All 11 agents (3 appliers, 4 reviewers, 4 skeptics) ran on claude-sonnet-5-5. Two earlier launches of round 2 failed on argument passing and produced no result (see run_log.jsonl).",
+ "reviews": {
+  "Grounding: source grounding and credibility of every new or changed rule element (A2 round 2)": {
+   "dimension": "Grounding: source grounding and credibility of every new or changed rule element (A2 round 2)",
+   "checked_ok": [
+    "Every new or changed Ryde quote in FC-F03, FC-F04, FC-R01, FC-R06, FC-R07 and FC-R08 is an exact substring of its article, and the edit dates quoted in the credibility notes match the corpus (115001438614 2026-09-02; 4412121982745 2024-10-01; 4412122016153 2023-06-16; 360004075214 2024-10-08; 30741244296217 2025-07-17).",
+    "ERP_RIDER_SHARE values (six services 1.0, RydeSEND 0.0, CARPOOL 0.5) are each stated in 115001438614, edited 2026-09-02, inside the A cutoff (2025-10-05), and no other Ryde page contradicts those eight shares (4408072421785, 4408072389913, 115000772653, 360004075214 are consistent for them), so the A rating of the table holds.",
+    "The services left without a share (RydePOOL, RydeHIRE, Ryde X GO, Ryde+) match the corpus: RydePOOL pages disagree (33363192453785 and 19671307820825 say riders pay 50%; 23575142762393 and 20244103989529 say RydePOOL includes ERP), RydeHIRE appears only in older pages, and the two RydeX GO articles (62530390907545, 62530417385753) say nothing on ERP. No TX-SERVICE code is missing from the share-or-gap logic.",
+    "FC-R08's PDVL-only note matches research note 09 item 24 ('Verified on LTA's PDVL (private-hire) offence list dated 1 Apr 2023; the taxi (TDVL) list was not retrievable'); the statement, credibility_note and source note all say it; credibility D follows the credibility_principle (regulatory duty B, platform-computed ERP refund and the metered exclusion are FairRyde extensions); v0.1 had C (confirmed by git).",
+    "FC-R08 metered exclusion is labeled as FairRyde's choice (FAIRRYDE source note, D32), is in line with FC-R00's reasoning, and FC-R00 is untouched; the PDVL-only wording is not overstated.",
+    "FC-F03: the GPS justification has two Ryde sources (rider 4412121982745, driver 4412122016153), both correctly dated as older than 12 months so B; the navigation-record requirement is labeled as FairRyde's evidence rule with a FAIRRYDE source (D36); the zh text says the same as the English (including GEN-R04 and GEN-R01 pointers). FC-F03 staying C is a recorded item for Jasper (D35 item 4), not reported.",
+    "FC-R07: the FairRyde source note correctly says the refund of the difference is FairRyde's remedy (AUTH-00 exists); A rating left for Jasper (D35 item 5), not reported. FC-R01: the new FAIRRYDE source labels the unasked FC-TOLL claim; the rating B reasoning is stated; left for Jasper (D35 item 2).",
+    "AUTH-04 / G3: the G3 text (history-blind ruling stays provisional at APPROVE, ESCALATE_HUMAN stays HUMAN, G3 over G8), gate_tiers data, FRD-02 pointer and engine_gates.py agree; the zh text of AUTH-04, FRD-02, FC-F04, FC-R06, FC-R08 and FC-R01 says the same as the English; D37 matches the rule.",
+    "CW-F06 source note: the D38 exception is accurate; rider_contact_reading returns UNCLEAR for 'I'm at the mall already', market, clinic, gym, kopitiam, ATM and MRT messages, and office/home/lift still read LATE exactly as D38(a) records. D38's counts (nine reading cases, three before-arrival cases, V92, V93) match the selftest diff.",
+    "D32, D35, D36, D37, D38 and the NEXT_STEPS 'rated B or C' count (16 now, 17 in v0.1) were checked against the rules and git: all consistent except the O15 text (see G7). No em dashes, en dashes or British spellings in the added prose (checked the whole diff outside validation/build_checks); all quotes and the 27 ERP cases, V1 to V93, 561 readings pass when run on a scratch copy of HEAD.",
+    "Randomized check of 20000 ERP cases: whenever ERP(recommended) is at most ERP(actual), the engine's total refund never exceeds ERP charged minus ERP(recommended), is never AUTO with a refund, and never pairs a fraud signal with UPHOLD."
+   ],
+   "findings": [
+    {
+     "id": "G1",
+     "severity": "MAJOR",
+     "file": "kb/rules.yaml",
+     "line": 1146,
+     "claim": "FC-R06 / ERP_RIDER_SHARE give RydeFLASH the full share 1.0 whenever the carpool status is not recorded, although Ryde's own article ties RydeFLASH to carpool drivers, for whom the rider owes only 50%. The ontology declares is_carpool a data gap (absent from the organizer record), so the default applies to every RydeFLASH case. The missing exception is silent: nothing sends an unrecorded carpool status for this service to FC-R12 or GEN-R07, unlike an unrecorded service type.",
+     "evidence": "33363192453785: 'RydeFLASH (Up to 4 pax)** Available to Carpool, Private Hire and Taxi drivers'; 360003567993: '* A 10% service fee applies to Carpool Drivers'; ontology.yaml line 102: '{name: is_carpool, type: boolean, data_gap: true ...'; engine_toll.py line 50: 'carpool = code == \"CARPOOL\" or trip.get(\"is_carpool\") is True'. Probe: RydeFLASH, gantries S$2.50 + S$4.00, no is_carpool, S$6.50 charged -> UPHOLD, amount 0.0, tier AUTO, reasons ['FC-R-TOLL-VALID'].",
+     "failure_scenario": "A RydeFLASH trip served by a carpool driver, case record without is_carpool, rider charged the full S$6.50 ERP. If the trip is a carpool trip the rider owes S$3.25, so the right result is TOLL_REFUND S$3.25 with a driver fraud signal at APPROVE; the KB upholds the charge at AUTO. It would be CRITICAL for every RydeFLASH carpool trip if the case data never carries the flag (the ontology says it does not).",
+     "suggested_fix": "In FC-R06, the ontology note and rider_share(): for RYDEFLASH (the one service the corpus ties to carpool drivers) a carpool status that is not recorded (is_carpool absent or None) is insufficient data (FC-R12, RECORDS_MISSING) or GEN-R07, not share 1.0; only an explicit is_carpool False gives 1.0. Add a test and note it in D35."
+    },
+    {
+     "id": "G2",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 50,
+     "claim": "The rule card and the engine disagree on a carpool-flagged trip of a service that has no share. FC-R06 says Ryde sets no share for RydePOOL, RydeHIRE, Ryde X GO and Ryde+ (GEN-R07, tier HUMAN) and names only RydeSEND+carpool as undefined; the ontology note names only RYDESEND too. rider_share() applies 0.5 to any service except RydeSEND when is_carpool is True, so those services get a ruling, a refund and a driver FRAUD_SIGNAL at tier APPROVE and the RydePOOL source conflict is resolved silently (META-04 forbids that). T05 even expects RydeX+carpool to be 0.5, while Ryde's article says RydeX is 'No sharing'.",
+     "evidence": "rules.yaml FC-R06: 'Ryde's articles set no share for any other service (RydePOOL, whose 2026 and 2023 driver pages disagree, RydeHIRE, Ryde X GO, Ryde+) and none for a trip that is both RydeSEND and carpool: no rule covers it and GEN-R07 applies.' Engine: 'if carpool: return {\"share\": float(table[\"CARPOOL\"]), ...}' after only the RYDESEND check. Probe (S$2.50 + S$4.00 gantries, S$6.50 charged, is_carpool True): RydePOOL, RydeHIRE, Ryde X GO, Other and RydeTAXI all give TOLL_REFUND 3.25, fraud ['DRIVER'], tier APPROVE, reasons ['FC-R-TOLL-OVERSTATED'], where the card says ESCALATE_HUMAN / HUMAN / GEN-R-POLICY-GAP. 33363192453785: 'RydeX (up to 4 pax)** Private Hire Bookings. ... No sharing.'",
+     "failure_scenario": "A RydeHIRE trip (2023 pages: fares include ERP, share 0) or RydePOOL trip (sources conflict) with is_carpool true and the full ERP charged: the KB proposes a S$3.25 refund and marks the driver as having overstated ERP, instead of sending the share question to a person. A driver who charged what Ryde's other page allows gets a fraud signal.",
+     "suggested_fix": "Decide and write it in FC-R06 and the ontology note: either a carpool flag on a service with no share goes to GEN-R07 (change rider_share() so only services with a share row, or CARPOOL itself, take 0.5; add tests for RydePOOL/RydeHIRE/Ryde X GO/Ryde+/Other with is_carpool True), or state in the card that the carpool exception overrides the service list and drop the claim that those services have no share. Re-examine T05."
+    },
+    {
+     "id": "G3",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 87,
+     "claim": "run() never sets GENERIC_ASSUMPTION_USED although META-05 requires it whenever a C or D rule or parameter is decisive. FC-F03 (C) is recorded as decisive for every detour refund and TOLL_TOLERANCE_SGD (D) for the tolerance case, and the refund formula itself is FC-R08 (D); the engine_noshow tier logic sets the flag for exactly these cases. The party-facing label that tells the parties the point is a FairRyde assumption is therefore lost on every FC-R08 refund.",
+     "evidence": "META-05: 'Whenever a credibility C or D rule is decisive (decisive_definition above), add flag GENERIC_ASSUMPTION_USED'. engine_noshow.py: 'generic = [r for r, _ in decisive if ... kb.rules.get(r, {}).get(\"credibility\") in (\"C\", \"D\") ...]; if generic: tr.flag(\"GENERIC_ASSUMPTION_USED\")'. Probe on T09 (detour, no justification): flags [] with decisive [('FC-F03', 'reading the justification the other way would change the amount')], tier APPROVE.",
+     "failure_scenario": "A detour ERP refund of S$4.00 is proposed on FC-R08 (D) and FC-F03 (C) with no GENERIC_ASSUMPTION_USED flag, so the explanation (EXP-01 / META-05) does not tell rider and driver that Ryde has not published this point.",
+     "suggested_fix": "In engine_toll.finish(), add GENERIC_ASSUMPTION_USED when decisive holds a rule with credibility C or D or a parameter; add the flag to T09, T10, T11 and T18 expectations."
+    },
+    {
+     "id": "G4",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1289,
+     "claim": "FC-R06 and FC-F04 send an unrecorded service type to FC-R12 and the credibility note of FC-R06 says the pointers 'add no norm', but FC-R12's card does not list a missing service type (nor the engine's other FC-R12 uses: no gantry log, a gantry without a rate, a negative ERP line). The card was not updated, so the pointer extends a D rule beyond its text.",
+     "evidence": "FC-R12 statement: 'If the recorded distance, a usable road-matched path, the fare breakdown or the recommended route is missing, or pings are too sparse to locate the deviation, make no adverse finding against either party and escalate.' FC-R06: 'A trip whose service type is not recorded is insufficient data (FC-R12).' FC-R06 credibility_note: 'The order of application and the pointers to GEN-R07 and FC-R12 state how the knowledge base uses the text; they add no norm.'",
+     "failure_scenario": "A reader or Judge applying FC-R12 from its card does not escalate a missing service type; the engine does (RECORDS_MISSING). The 'no new norm' statement is not true for this element.",
+     "suggested_fix": "Add service type, the gantry log with rates and a usable ERP line to the FC-R12 statement (en and zh), or reword the FC-R06 note so the FC-R12 pointer is labeled as FairRyde design (D)."
+    },
+    {
+     "id": "G5",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1146,
+     "claim": "The description of why RydePOOL and RydeHIRE have no share is inaccurate and uses the wrong label. FC-R06 says Ryde's articles 'set no share' for RydePOOL, but the 2026 articles do set one (riders pay 50%); the real situation is a Ryde source conflict, which META-04 handles with SOURCE_CONFLICT / GEN-R-SOURCE-CONFLICT, not GEN-R07 'no written rule' (party-facing reason GEN-R-POLICY-GAP says Ryde has no rule). The conflict is not in META-04 known_conflicts. The record is also incomplete: 4408072389913 (driver, 2023-12-31) agrees with the 2026 RydePOOL text and so contradicts the other 2023 driver pages; and RydeHIRE is not 'the 2023 pages only': rider page 115000772653 (2024-04-19) says all services except RydeSEND exclude ERP, against rider page 4408072421785 (2023-04-13).",
+     "evidence": "4408072389913: '*For shared RydePOOL trips, each rider pays 50% of the total ERP charges.' (edited 2023-12-31); 4408072421785: '*Toll charges are already included in RydeHIRE and RydeSEND trip fares.'; 115000772653: 'For all services apart from RydeSEND, ERP charges are excluded from the fares.'; reference_data.yaml ERP_RIDER_SHARE note: 'RydeHIRE (the 2023 pages only)'; D35: '2023 driver pages: RydePOOL, RydeHIRE and RydeSEND fares include ERP'. Engine T19 reasons: ['GEN-R-POLICY-GAP'], no SOURCE_CONFLICT flag.",
+     "failure_scenario": "Outcome is the same (HUMAN). The reviewer and the parties are told 'Ryde has no written rule' for RydePOOL when Ryde has two conflicting ones, and the later rider-facing page that META-04 prefers for rider charges is not mentioned for RydeHIRE.",
+     "suggested_fix": "Reword FC-R06, the table note and D35: RydePOOL and RydeHIRE are source conflicts (list all pages including 4408072389913, 4408072421785 and 115000772653), add them to META-04 known_conflicts, and have the engine add SOURCE_CONFLICT (reason GEN-R-SOURCE-CONFLICT) for them; keep GEN-R07 for Ryde X GO, Ryde+ and RydeSEND+carpool."
+    },
+    {
+     "id": "G6",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1212,
+     "claim": "FC-R08 says FC-R07's refund and FC-R08's refund 'together refund at most the ERP charged minus ERP(recommended)', which is false when the recommended route carries more ERP than the actual path. FC-R07 refunds charged minus ERP(actual), and the engine pays it (correctly under FC-R07), exceeding the card's stated ceiling. The en and zh sentences both overgeneralize.",
+     "evidence": "FC-R08: 'FC-R07's refund of an overstated ERP line comes on top, so together they refund at most the ERP charged minus ERP(recommended), never a negative amount.' Probe: RydeX, actual path CTE S$2.50, recommended route PIE S$4.00, S$8.50 charged -> TOLL_REFUND amount 6.00 (reasons ['FC-R-TOLL-OVERSTATED']); charged minus ERP(recommended) = 4.50.",
+     "failure_scenario": "A reviewer or test built from the sentence expects at most S$4.50 and sees S$6.00; or someone 'fixes' the engine to the sentence and leaves the rider paying S$4.00 ERP for a path that cost S$2.50.",
+     "suggested_fix": "Qualify the sentence in en and zh: the ceiling holds when ERP(recommended) is at most ERP(actual); otherwise FC-R07 refunds the whole overstatement (charged minus ERP(actual)) and FC-R08 refunds nothing. Add a test."
+    },
+    {
+     "id": "G7",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 75,
+     "claim": "Open question O15 does not ask what D35 item 1 and NEXT_STEPS say it asks. D35 (1) and NEXT_STEPS attribute to O15 the open question of the ERP share for RydePOOL, RydeHIRE, Ryde X GO and Ryde+, but O15's text covers only the carpool key-in and the split among several passengers. The question that would close the no-share services is never put to the organizer.",
+     "evidence": "open_items.yaml O15: 'For carpool trips, does the driver key the total ERP or only the passenger's half, and how is the passenger's half divided among several passengers?'; D35 (1): 'organizer or Ryde, question O15: RydePOOL (2026 driver pages: ...), RydeHIRE, Ryde X GO and Ryde+, and on a carpool trip whether the driver keys the total ERP ...'; NEXT_STEPS: 'O15 (ERP for RydePOOL, RydeHIRE, Ryde X GO, Ryde+ and carpool: ...)'.",
+     "failure_scenario": "Jasper sends the list of organizer questions as written; the share for RydePOOL, RydeHIRE, Ryde X GO and Ryde+ stays unasked and FC-TOLL on those services escalates indefinitely.",
+     "suggested_fix": "Add the RydePOOL / RydeHIRE / Ryde X GO / Ryde+ share question to O15 (or add O17) and make D35 and NEXT_STEPS point to the right number."
+    },
+    {
+     "id": "G8",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1183,
+     "claim": "The FC-R07 zh text and the English differ at the tolerance boundary. English refunds when the ERP charged exceeds the expected ERP 'by more than' TOLL_TOLERANCE_SGD (strict, as the engine does); zh says 'exceeds ... 达 TOLL_TOLERANCE_SGD 以上', which means by that amount or more. The tolerance has a plausible range up to S$0.50, so the two texts give different answers when the excess equals the tolerance.",
+     "evidence": "EN: 'exceeds F-ERP-EXPECTED (...) by more than TOLL_TOLERANCE_SGD, refund the difference'; ZH: '实收乘客的 ERP 超过 F-ERP-EXPECTED（...）达 TOLL_TOLERANCE_SGD 以上，退差额'; reference_data TOLL_TOLERANCE_SGD plausible_range [0.00, 0.50]; engine: 'charged - actual > tol + 1e-9'.",
+     "failure_scenario": "With the tolerance at S$0.50 and an ERP line exactly S$0.50 over, the English and the engine do not refund, the zh text does.",
+     "suggested_fix": "Change zh to '超过 ... 且超出部分大于 TOLL_TOLERANCE_SGD' (strictly greater)."
+    },
+    {
+     "id": "G9",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 28,
+     "claim": "service_code() does not recognize the vocabulary's own labels 'Carpooling' (code CARPOOL) and 'Ryde+' (code RYDEPLUS). Both are treated as 'service type not recorded', so the reason is FC-R-INSUFFICIENT-DATA with a false RECORDS_MISSING flag instead of share 0.5 (carpool) or GEN-R-POLICY-GAP (Ryde+). Outcome is HUMAN either way, so only the reason and flag are wrong.",
+     "evidence": "taxonomy.yaml TX-SERVICE: '{code: CARPOOL, label: Carpooling}', '{code: RYDEPLUS, label: Ryde+}'. Probe: service 'Carpooling' and 'Ryde+' -> ESCALATE_HUMAN, HUMAN, reasons ['FC-R-INSUFFICIENT-DATA'], flags ['RECORDS_MISSING'], step 'service type not recorded (FC-R12)'. 'Carpool', 'Car pool', 'Ryde Plus' resolve.",
+     "failure_scenario": "A case whose service_type is the label 'Carpooling' is escalated as missing records, and the explanation tells the parties the records are missing when they are not.",
+     "suggested_fix": "Resolve labels as well as codes (and a '+' to 'PLUS') in service_code(); add 'Carpooling' and 'Ryde+' to the tests."
+    },
+    {
+     "id": "G10",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1048,
+     "claim": "FC-R01 uses a RydeX-only article for a general statement. The new exception says 'a fixed fare does not include ERP' for every fixed fare, citing 'Why should I use RydeX?'; the article speaks about RydeX fares. The article that states it for all services (115000772653) and the 2026 driver article are not cited in FC-R01, and for RydeHIRE and RydePOOL older Ryde pages say the fare includes ERP.",
+     "evidence": "FC-R01 statement: 'a fixed fare does not include ERP (FC-F01; RydeSEND fares do, FC-R06)'; source: 'RYDE-360004075214, quote: All fares are fixed at the time of booking but does not include toll charges such as ERP.' (article 'Why should I use RydeX?', 2024-10-08); 115000772653: 'For all services apart from RydeSEND, ERP charges are excluded from the fares.'",
+     "failure_scenario": "No outcome change (RydeHIRE/RydePOOL end in GEN-R07 through FC-R06). The cited source supports a narrower statement than the rule makes, so the credibility note's 'Ryde text' claim for the general statement is not backed by the quote.",
+     "suggested_fix": "Cite 115001438614 / 115000772653 for the general statement, keep 360004075214 for RydeX, and say 'except RydeSEND, and services Ryde's pages disagree on (FC-R06)'."
+    },
+    {
+     "id": "G11",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 44,
+     "claim": "D32 says FC-R08 is excluded on a metered fare for reasons 'as for FC-R00' (Ryde publishes no rule for refunding any part of a metered fare; fees follow the taxi company; payment is cash only) and in the same entry keeps FC-R07's platform-computed refund of the difference on a metered fare. Those reasons apply equally to FC-R07's refund, and the keep is the builder's reading, not recorded as Jasper's decision (his prompt covers FC-R08 only). T14 pays a S$6.00 refund on a cash RydeTAXI trip.",
+     "evidence": "D32: 'Reasons, as for FC-R00: Ryde publishes no rule for refunding any part of a metered fare, the fees follow the taxi company and payment is in cash only' and 'FC-R07 ... still applies to a metered fare: it rests on Ryde's driver article, which covers RydeTAXI'; selftest T14: RydeTAXI, S$8.50 charged for one S$2.50 gantry -> TOLL_REFUND 6.00.",
+     "failure_scenario": "No unsafe tier (a fraud signal makes it APPROVE), but the KB is internally inconsistent about refunds on metered fares and Jasper has not been asked about this one.",
+     "suggested_fix": "Add the metered application of FC-R07's refund to the items for Jasper (D35 item 5), or apply D32's reasoning to it and send it to GEN-R07 as well."
+    }
+   ]
+  },
+  "Fix fidelity and scope": {
+   "dimension": "Fix fidelity and scope",
+   "checked_ok": [
+    "Build (run in a scratch copy under /tmp/a2check2/fid/repo so kb/out in the repo stayed untouched; outputs were byte-identical to the committed kb/out): 'engine self-test: 99/99 variants pass', 'ERP rules self-test: 27 ERP cases, the FC-R01 split, gate G3 and the A2 rule-card checks: all pass', 'CW-F06 message readings: 561/561 pass (exact cases and the reviewers' corpus)', 'GPS fuzz (seed 7): 150 random cases, 25 automatic, 0 crashes, 0 findings', 'ERROR 0 | WARN 0 | INFO 5'. A full build with the workbooks also ended 'ERROR 0 | WARN 0'.",
+    "python3 kb/tools/selftest.py: '99 / 99', '561 / 561 message readings', '27 ERP cases, FC-R01 split, gate G3 and rule-card checks: all pass'.",
+    "python3 validation/tools/rerun_engine.py /tmp/a2check2/rerun.json E01 E02 E03 E04 E11: 'OK E01 UPHOLD -> UPHOLD R8 APPROVE', 'OK E02 WAIVE_FEE -> WAIVE_FEE R1 APPROVE', 'OK E03 UPHOLD -> UPHOLD R8 APPROVE', 'OK E04 WAIVE_FEE -> WAIVE_FEE R6 AUTO', 'OK E11 TOLL_REFUND -> TOLL_REFUND None APPROVE', '5/5 outcomes match' (E11 amount 6.00 equals the reference). The result equals validation/build_checks/A2/01_engine_rerun.json field for field.",
+    "Rule-card diff da4c329..dda592c: only CW-F06 (source note), FC-F03, FC-F04, FC-R01, FC-R06, FC-R07, FC-R08, FRD-02 and AUTH-04 changed in kb/rules.yaml; FC-R00, FC-R05, FC-R12, GEN-R03, GEN-R07, AUTH-02, AUTH-06 are untouched. FC-R00 is untouched as the brief says; FC-R08's metered exclusion (D32) is written in FC-R08, FC-F04, the RydeTAXI vocabulary note, PB-FC-TOLL step 5 and D32 and agrees with engine_toll.run (T13, T27).",
+    "FX3 asks are all present: FC-R06 share table applied in FC-F04, FC-R07 and FC-R08 through one computation with the order recorded (FC-F04 statement, FC-R06 statement, PB-FC-TOLL step 1); FC-R08 credibility D with the PDVL-only scope (statement, source note, credibility_note, D32, D35 item 3; matches research note 09 item 24: 'CONFIRMED (private hire) ... the taxi (TDVL) list was not retrievable'); FC-F03 has the GPS most-efficient-route justification with two Ryde quotes verified by the build; FC-R01 sends detour ERP to its own FC-TOLL claim (fc_r01 and R1 to R6); E11 reruns TOLL_REFUND S$6.00; carpool and RydeSEND ERP cases exist (T03 to T08, T11, T12).",
+    "FX5 asks are present: AUTH-04 keeps G3 in the APPROVE sentence, the provisional ruling is the history-blind pass's, ESCALATE_HUMAN stays HUMAN, G2/G4/G8 stay HUMAN, G3 over G8 is written, FRD-02 points to it; engine_gates.resolve_g3 reads the tier from gate_tiers. I ran the flagged/unflagged pair for a win and a loss: win clean WAIVE_FEE APPROVE, win flagged WAIVE_FEE APPROVE (FRD-02 RIDER), loss clean UPHOLD AUTO, loss flagged UPHOLD APPROVE; the outcome is identical within each pair.",
+    "FC-R08 refund formula against engine_toll.run: refund = over + max(0, min(actual, charged) - rec) when the detour is unjustified; a 6000-case random invariant run (all TX-SERVICE spellings, is_carpool, inactive and repeated gantries, metered, with and without a recommended route, justification on and off) found 0 crashes, no refund above the ERP line charged, no refund without a share, no AUTO tier with a refund or a fraud signal, no escalation below tier HUMAN, no FROM-DETOUR reason on a metered fare, and a RydeSEND refund always equal to the ERP line.",
+    "engine_noshow.py changed only in comment lines and in the one RIDER_LATE_CORE regex (the seven place words removed from the in/at list). I compared the base and new reader on 928 messages (the 428 reviewers' corpus messages plus 500 generated place/admission templates): 93 readings changed, every one contains a listed place word, none became LATE or NEUTRAL (77 LATE to UNCLEAR, 16 UNCLEAR to PLACES). All 97 base self-test variants V01 to V91 plus the others give identical outcome, row and tier at base and now; only V92 and V93 are new.",
+    "Mutation runs on scratch copies (never the repo), 66 mutants: each of these is caught by a failing test: share table values (SEND, TAXI, POOL added), carpool share 1, other-service share 1, unrecorded service share 1, RydeSEND plus carpool gap removed, refund cap removed, metered exclusion removed and its attach fields, FC-R07 fraud signal and approval trigger removed, FC-F03 decisive removed, justification ignored, FC-R01 claim removed or set-difference instead of Counter, FC-R12 branch of fc_r01, negative ERP line, rounding, rec share, FC-R08 credibility C, FC-R06/FC-R07/FC-R08 card text changes, AUTH-04 gate_tiers G3 HUMAN, AUTH-04 prose moving G3 back, G3 outcome swapped for the aware pass, G3 tier ignored, fraud-check disagreement ignored, and restoring the old lateness regex (V92, V93, nine reading cases). The surviving mutants are in findings F4 and F5.",
+    "Changes not asked for in the step prompt, each labeled or recorded, and judged needed or harmless: (a) share table limited to the services Ryde's 2026-09-02 article names, others and an unrecorded service type escalate (round 1 MAJOR fix, D35 item 1; needed to avoid auto-deciding RydePOOL); (b) FC-R08 cap min(ERP(actual), charged) minus ERP(recommended) (round 1 CRITICAL fix, D35); (c) FC-F03 navigation-record requirement (FairRyde evidence rule, D36, source entry present; stricter than Ryde's text, FC-F03 stays C, left for A3); (d) FC-R01 opens the FC-TOLL claim only for a fixed fare charged as quoted (D35 item 2, FX3 said 'always'; recorded for Jasper); (e) AUTH-04 additions (G3 over G8, blind ESCALATE_HUMAN stays HUMAN, gate_tiers field), allowed by FX5's 'or record the precedence'; (f) kb-step-check.js argument parsing and model option, make_xlsx gate tier column, report_md test line, build_kb wiring, ontology is_carpool, taxonomy reason labels: tooling and consumers, needed. Nothing else in kb/rules.yaml changed.",
+    "NEXT_STEPS 'rules rated B or C' count: 16 in the current rules.yaml (CLS-01, CW-F02B, CW-F04, CW-R00, CW-R06, CW-R08, FC-F01, FC-F03, FC-R01, FC-R02, FC-R03, SE-R02, SE-R04, GEN-R06, AUTH-03, EXP-01), as the text now says. No em or en dashes and no British spellings in the added lines (offense, not offence, except in the id LTA-PDVL-OFFENCES). The Chinese texts of FC-F04, FC-R06, FC-R08 and AUTH-04 say the same as the English apart from the minor points in the findings."
+   ],
+   "findings": [
+    {
+     "id": "F1",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 50,
+     "claim": "is_carpool=True overrides FC-R06's 'no share' services. The engine gives a carpool share of 0.5 to RydePOOL, RydeHIRE, Ryde X GO, Ryde+ and OTHER (and RydeTAXI) and decides at tier AUTO, although FC-R06, FC-F04, the share-table note and D35 say these services have no share and go to GEN-R07. RydePOOL is the very service for which round 1 added the escalation (A2-F1); a RydePOOL trip flagged as a pooled trip bypasses it. The ontology note for is_carpool singles out only RYDESEND ('Together with RYDESEND the share is undefined (GEN-R07)'), and no test combines is_carpool with another service.",
+     "evidence": "engine_toll.py: `carpool = code == \"CARPOOL\" or trip.get(\"is_carpool\") is True` then `if code == \"RYDESEND\" and carpool: ... NO_RULE` then `if carpool: return {\"share\": float(table[\"CARPOOL\"]), ...}` before `if code in table`. FC-R06: 'Ryde's articles set no share for any other service (RydePOOL, whose 2026 and 2023 driver pages disagree, RydeHIRE, Ryde X GO, Ryde+)'. Run: case(service=X, gantries=(CTE 2.50, PIE 4.00), charged=3.25, is_carpool=True) gives UPHOLD amt=0.0 tier=AUTO reasons=['FC-R-TOLL-VALID'] for RydePOOL, RydeHIRE, Ryde X GO, Ryde Plus, OTHER and RydeTAXI; the same RydePOOL case charged 6.50 gives TOLL_REFUND 3.25 with a FRAUD_SIGNAL on the driver, and charged 0.0 (the 2023 pages' 'RydePOOL ... include ERP') gives UPHOLD AUTO.",
+     "failure_scenario": "A RydePOOL ERP dispute whose trip record carries is_carpool=True (the natural flag for a pooled trip): the rider charged the half is upheld automatically on a share that the KB itself says two Ryde sources contradict; charged the full amount, the driver gets a fraud signal on the same unsettled share. Rare combination and an out-of-scope or conflicted service, so MAJOR not CRITICAL.",
+     "suggested_fix": "In rider_share, apply the carpool share only when the service code is CARPOOL, or when the code is one of the six named services; for every other recognized code with is_carpool=True return gap NO_RULE (GEN-R07). Say the same in FC-R06 and the ontology note, and add one test per service with is_carpool=True."
+    },
+    {
+     "id": "F2",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1212,
+     "claim": "The FC-R08 sentence 'together they refund at most the ERP charged minus ERP(recommended)' (and the same sentence in the zh text, and the bound given in the round 2 brief) is false when ERP(actual) is lower than ERP(recommended). The engine then refunds only FC-R07's overstatement, which is correct (the rider owes only ERP(actual)), but it exceeds charged minus ERP(recommended). Reviewers who test the bound literally will report a correct refund as over-refund.",
+     "evidence": "FC-R08: 'FC-R07's refund of an overstated ERP line comes on top, so together they refund at most the ERP charged minus ERP(recommended), never a negative amount.' Run: case(gantries=(CTE,), charged=6.50, recommended=[CTE, PIE]) gives TOLL_REFUND amt=4.0 reasons=['FC-R-TOLL-OVERSTATED']; charged minus ERP(recommended) = 6.50 - 6.50 = 0.",
+     "failure_scenario": "Driver took a cheaper route than the recommended one (ERP(actual) 2.50, ERP(recommended) 6.50) and keyed 6.50: the refund is 4.00, which the sentence says cannot happen.",
+     "suggested_fix": "Word it as: when FC-R08 applies (ERP(actual) above ERP(recommended)), together they refund at most the ERP charged minus ERP(recommended); otherwise only FC-R07's refund (charged minus ERP(actual)) applies. Fix the zh text and the brief wording the same way."
+    },
+    {
+     "id": "F3",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 28,
+     "claim": "service_code normalizes spelling variants against the TX-SERVICE codes only, not their labels, so two vocabulary labels do not resolve: 'Carpooling' (label of CARPOOL) and 'Ryde+' (label of RYDEPLUS). They fall into 'service type not recorded': ESCALATE_HUMAN with FC-R-INSUFFICIENT-DATA and RECORDS_MISSING, instead of the carpool share 0.5 and instead of GEN-R-POLICY-GAP. Tier stays HUMAN, so outcome-neutral, but the reason and flag are wrong, and a real carpool trip labeled with the vocabulary's own label can never be decided.",
+     "evidence": "TX-SERVICE values `{code: CARPOOL, label: Carpooling}` and `{code: RYDEPLUS, label: Ryde+}`; service_code('Carpooling') = None, service_code('carpooling') = None, service_code('Ryde+') = None, while 'Carpool', 'Car pool', 'Ryde Plus', 'RydePlus' resolve. rider_share gives gap='UNRECORDED' for the first three.",
+     "failure_scenario": "A trip record with service_type 'Carpooling' and the full ERP line: reason FC-R-INSUFFICIENT-DATA with RECORDS_MISSING although the service is recorded.",
+     "suggested_fix": "Also match the lower-cased label and the label with non-alphanumerics removed (treat '+' as 'plus'), and add 'Carpooling' and 'Ryde+' to T22."
+    },
+    {
+     "id": "F4",
+     "severity": "MINOR",
+     "file": "kb/tools/selftest.py",
+     "line": 792,
+     "claim": "Test T17 ('a gantry that was not active is not counted') does not test that. With the inactive gantry wrongly counted the expected ERP becomes 6.50, the rider was charged 2.50, so the case is still UPHOLD, VALID, AUTO and the test passes.",
+     "evidence": "T17: `_erp_case(gantries=(CTE, (\"PIE (eastbound)\", 4.00, False)), charged=2.50)` expecting `valid`. Mutation of engine_toll.erp_of: `if g.get(\"active\", True) is False:\\n            continue` replaced by `if False:\\n            continue`; selftest.py output shows no FAIL and 'all pass'.",
+     "failure_scenario": "A regression that counts inactive gantries (so a rider charged only the active ones looks undercharged and an overstated line looks valid) would pass the build.",
+     "suggested_fix": "Charge 6.50 in T17: correct engine gives TOLL_REFUND 4.00 with a fraud signal, the regressed engine gives UPHOLD."
+    },
+    {
+     "id": "F5",
+     "severity": "MINOR",
+     "file": "kb/tools/selftest.py",
+     "line": 914,
+     "claim": "Several A2 behaviors and round 1 fixes still pass the build when removed (mutation survivors). rule_card_check and erp_cases do not pin: (a) the precedence sentence in FC-F04 (the test checks only that the words 'precedence' and 'FC-R08' occur, which the unrelated sentence 'FC-R00's reasoning (D32) takes precedence over FC-R08' satisfies); (b) the AUTH-04 sentence 'If one disagreement fits both G3 and G8 ... G3 applies' (round 1 F12); (c) the RydeSEND exception in FC-R01's text (round 1 A2-F5); (d) the RECALCULATED half of fc_r01's FC-F01 check (destination_edit_accepted; R3 only changes base_fare); (e) the 'recommended route has a gantry with no rate' branch of run; (f) the guards for a missing ERP line and a missing gantry log; (g) the 'PDVL' check is a bare substring that survives deleting the 'verified for private-hire (PDVL) drivers only' sentence. All the engine paths are correct today; they are unprotected.",
+     "evidence": "Mutants that ended with no FAIL line: FC-F04 sentence '(it takes precedence over the plain gantry sum)' and the whole 'applied in this order' sentence removed; AUTH-04 'If one\\n      disagreement fits both G3 and G8 ..., G3 applies. ' removed; FC-R01 '(FC-F01; RydeSEND fares do, FC-R06)' changed to '(FC-F01)'; fc_r01 `(not is_metered(kb, trip) and not recalculated and` changed to drop `not recalculated`; run `if rec is None: ... return finish(\"ESCALATE_HUMAN\")` replaced by `rec = 0.0`; `or charged is None or` removed (crash); `actual = erp_of(kb, gantries, share) if gantries is not None else None` replaced by `erp_of(kb, gantries or [], share)`. selftest.py line 934: `need(\"FC-F04\", \"precedence\" in R[\"FC-F04\"][\"statement\"] and \"FC-R08\" in R[\"FC-F04\"][\"statement\"], ...)`.",
+     "failure_scenario": "With the recommended route's rate missing, a regressed engine would price ERP(recommended) at 0 and propose a TOLL_REFUND of the whole ERP(actual); with no gantry log it would raise a driver fraud signal. The build would stay green.",
+     "suggested_fix": "Add: T-case with an unrated gantry on the recommended route (expect FC-R12 HUMAN), a case with erp_charges absent, an R-case with destination_edit_accepted=True, an R-case for RydeSEND with extra gantries; test the FC-F04 order sentence by its own words ('FC-R06 first'), and the AUTH-04 'G3 applies' sentence."
+    },
+    {
+     "id": "F6",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 50,
+     "claim": "D38 (and the CW-F06 source note) record only two effects of the D34 item 1 change: such a message reads UNCLEAR, and a place plus an explicit admission also reads UNCLEAR. They omit a third, larger effect on the outcome: a message that names a listed place together with a placement or a question about the driver ('I'm at the mall entrance', 'I'm at the mall now. where r u') used to read UNCLEAR (LATE and PLACES together) and now reads PLACES, so the claim moves from UPHOLD at tier APPROVE to ESCALATE_HUMAN at tier HUMAN with F-RIDER-EVIDENCE STRONG. Safe direction and consistent with CW-F06, but it changes an outcome and tier in an in-scope type and no test pins it. (The step changed the reader, so this is not under the D34 freeze.)",
+     "evidence": "Base vs now on DISP-002 with the message at 08:47:00 during the wait: \"I'm at the mall entrance\" base=('UPHOLD','APPROVE','WEAK','R8') new=('ESCALATE_HUMAN','HUMAN','STRONG','R7'); \"I'm at the mall now. where r u\" base=('UPHOLD','APPROVE','WEAK','R8') new=('ESCALATE_HUMAN','HUMAN','STRONG','R7'). Reader comparison on 928 messages: Counter({('LATE','UNCLEAR'): 77, ('UNCLEAR','PLACES'): 16}). D38: 'Such a message now reads UNCLEAR ... Side effect, safe direction: a message that names one of those places together with an admission ... now also reads UNCLEAR'.",
+     "failure_scenario": "Jasper reads D38 and expects only LATE to UNCLEAR moves (approval instead of AUTO); routine rider placements at a mall now go to a person instead of approval, and he is not told.",
+     "suggested_fix": "Add the UNCLEAR-to-PLACES side effect to D38 (and one reading case, for example \"I'm at the mall entrance\": P), so Jasper can accept it with the rest of D38 item (b)."
+    },
+    {
+     "id": "F7",
+     "severity": "MINOR",
+     "file": "kb/reference_data.yaml",
+     "line": 187,
+     "claim": "The record of why Ryde X GO, Ryde+ (and RydeHIRE) have no share is one-sided. The rider article that FC-R06 itself cites, RYDE-115000772653, also says 'For all services apart from RydeSEND, ERP charges are excluded from the fares', which covers those services (edited 2024-04-19, so B, and older than the 2026 article). Neither the table note, FC-R06, FC-F04 nor D35 mentions it, yet each says 'Ryde's articles set no share for any other service'. The narrowing from the v0.1 rule (every service except RydeSEND pays) moves these services, and every FC-TOLL case without a service type, from a possible APPROVE to tier HUMAN; that is a design choice, but the record should show the sentence that argues the other way, so that Jasper decides with both.",
+     "evidence": "Corpus article 115000772653 body_text: 'If a rider passes through an active ERP gantry, the toll charge will be applicable to the rider. For all services apart from RydeSEND, ERP charges are excluded from the fares. *RydeSEND fares include ERP charges.' FC-R06 source list includes this article; FC-R06 statement: 'Ryde's articles set no share for any other service (RydePOOL ..., RydeHIRE, Ryde X GO, Ryde+)'. ERP_RIDER_SHARE note lists only the 2026 and 2023 RydePOOL/RydeHIRE/RydeSEND pages.",
+     "failure_scenario": "A Ryde X GO ERP dispute goes to a person on the stated ground that no article sets a share, while a cited Ryde article says the fare excludes ERP; Jasper (D35 item 1) and the organizer (O15) are asked without that sentence.",
+     "suggested_fix": "Add this sentence and its date to the ERP_RIDER_SHARE note, to FC-R06's credibility_note and to D35 item 1 and O15, and reword 'set no share' to 'set no share in the 2026 driver article (the 2024 rider article says only that ERP is excluded from the fares)'."
+    },
+    {
+     "id": "F8",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1289,
+     "claim": "FC-R06, FC-F04, PB-FC-TOLL and the engine send a trip with no recorded service type to FC-R12 ('insufficient data'), but FC-R12 (unchanged in A2) lists what is missing as 'the recorded distance, a usable road-matched path, the fare breakdown or the recommended route', pings, and does not name the service type or the gantry log. The new rule element therefore rests on a card that does not state it.",
+     "evidence": "FC-R12: 'If the recorded distance, a usable road-matched path, the fare breakdown or the recommended route is missing, or pings are too sparse to locate the deviation, make no adverse finding against either party and escalate.' FC-F04: 'with no service type recorded, FC-R12 applies'. engine_toll: `steps.append((\"FC-R12\", \"no gantry log, a gantry without a rate, or no usable ERP line charged\"))`.",
+     "failure_scenario": "A reviewer or LLM following FC-R12 alone finds no condition for a missing service type or gantry log, and decides at the default share, which is what FC-R06 wanted to prevent.",
+     "suggested_fix": "Add 'the service type or the ERP gantry log of an ERP claim' to FC-R12's list (a D card), or word FC-R06 and FC-F04 as GEN-R07 'a decision point not covered' instead of FC-R12."
+    },
+    {
+     "id": "F9",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 175,
+     "claim": "The rule cards and the engine disagree on what opens the FC-TOLL claim when the longer route passes a gantry the recommended route also passes. FC-R01 and FC-R08 say 'gantries that the recommended route avoids'; fc_r01 and run also count a second pass of the same gantry (a Counter difference; test R6 'the longer route passes the same gantry again: the extra pass opens the claim'). The interpretation lives only in code and a test, with no card text, source or FairRyde label.",
+     "evidence": "FC-R01: 'Whenever the actual path passed active gantries that the recommended route avoids, FC-R01 sends that ERP to its own FC-TOLL claim'. engine_toll.fc_r01: `extra = sorted((actual - Counter(g[\"gantry\"] for g in rg)).elements())`. selftest R6: `loop = T.fc_r01(kb, _erp_case(gantries=(CTE, CTE), charged=5.00, recommended=[CTE]))` expects extra_gantries == [CTE[0]] and a claim of 2.50.",
+     "failure_scenario": "A reviewer applying the card by its words does not open a claim for a looped route that passes the same gantry twice; the engine does and proposes a 2.50 refund.",
+     "suggested_fix": "Add 'or passed again' to FC-R01 and FC-R08 ('passed gantries, or passed them more often, than the recommended route') and mark it as FairRyde's reading of the ERP difference."
+    }
+   ]
+  },
+  "ADVERSARIAL TEST OF THE CHANGED LOGIC (engine_toll.py, engine_gates.py, FC-R06/F04/R07/R08/F03/R01, AUTH-04, and the D34 item 1 change in engine_noshow.py)": {
+   "dimension": "ADVERSARIAL TEST OF THE CHANGED LOGIC (engine_toll.py, engine_gates.py, FC-R06/F04/R07/R08/F03/R01, AUTH-04, and the D34 item 1 change in engine_noshow.py)",
+   "checked_ok": [
+    "Ran about 170 new ERP edge cases through T.run (scripts in /tmp/a2check2/erp_adv.py, codes.py, prop.py), 29 through T.fc_r01 (r01_g3_adv.py), 24 through G.resolve_g3, and 99 variants x flagged/unflagged rider through E.run (g3_pairs.py). The repo was not modified (git status clean after rerun_engine.py wrote to /tmp).",
+    "Baseline: python3 kb/tools/selftest.py passes (99/99 variants, 561/561 readings, 27 ERP cases). rerun_engine.py E01 E02 E03 E04 E11 gives 5/5, E11 TOLL_REFUND S$6.00 at APPROVE.",
+    "Every TX-SERVICE code with is_carpool None and True, plus the spelling variants 'ryde-send', 'RYDE SEND', 'Ryde_Send', ' RydeSEND ', 'Ryde X GO', 'ryde-x-go', 'RydeX' with a zero-width space: share and gap are as FC-R06 says (RydePOOL, RydeHIRE, Ryde X GO, Ryde+ and OTHER without carpool flag -> GEN-R07 at HUMAN; UNKNOWN/None/blank/7 -> FC-R12 at HUMAN; RydeSEND+carpool -> GEN-R07). The unrecognized strings 'Send', 'Delivery', 'Pool', 'Taxi', 'RydeX (carpool)' fail safe to FC-R12 at HUMAN.",
+    "Refund arithmetic: in 60,000 random cases (6 services, random actual and recommended gantry sets, random charged amounts) the refund never exceeded the ERP charged, was never negative, was never at tier AUTO, and the rider was never left paying less than min(ERP(actual), ERP(recommended)). Charged at, just above, below ERP(recommended) and ERP(actual), carpool halves, RydeSEND, exact S$10.00 limit and S$10.01 all behave as FC-R07/FC-R08 state (D04, D05, D06, D18, D19, D20). Only the 'at most charged minus ERP(recommended)' sentence of FC-R08 fails (finding A2R2-04).",
+    "Tier logic of engine_toll.run: every TOLL_REFUND is APPROVE (a fraud trigger or decisive FC-F03 always fires), every ESCALATE_HUMAN is HUMAN, UPHOLD at AUTO only arises with no overcharge, no potential detour refund, no tolerance sensitivity. Justification variants ('', ' ', 'none', 'no', 'false', 'N/A', 'driver says GPS', False, 0, []) can never produce AUTO when a detour could change the amount: a truthy justification gives UPHOLD at APPROVE (decisive FC-F03). Metered detour with and without justification, with charged equal to ERP(recommended), with an FC-R07 overstatement (T01, T02, T07, T08, T10) behave as D32 and T27 state.",
+    "Tolerance edges and rounding: charged 2.504 -> valid, 2.505 -> S$0.01 refund with fraud signal (tol 0.00 by design, flagged decisive); with TOLL_TOLERANCE_SGD moved to 0.30 (in-memory copy) over 0.30 -> UPHOLD at APPROVE (decisive), over 0.31 -> refund 0.31; carpool 1.125 and 1.375 expected values round half up and do not misfire (R04 to R08).",
+    "Gate G3 (engine_gates.resolve_g3): blind WAIVE_FEE/UPHOLD/TOLL_REFUND at AUTO with a differing aware pass -> APPROVE with the blind outcome and amount unchanged; blind ESCALATE_HUMAN or outcome None -> HUMAN; blind tier HUMAN (for example G4) is never lowered (max); fraud_check_disagrees alone fires G3; no disagreement leaves the tier untouched. Across all 99 variants a flagged and an unflagged rider got identical outcomes and amounts, and the flagged rider's tier was never lower and never AUTO (FX5 holds beyond the 2 pairs in g3_check).",
+    "engine_noshow.py changed only in a comment and in the one alternation of RIDER_LATE_CORE (git diff): confirmed.",
+    "D34 item 1: a grid of 24,038 messages (29 place words including mall, market, clinic, gym, kopitiam, ATM, MRT, 'MRT station', 'Mall', 'my gym', 'd mall' x 7 article forms x 100+ templates such as 'I'm at X already', 'still at X, coming', 'at X, 5 min', 'otw. at X', 'in X lift', 'X liao') and a 172,764-message random composition fuzz (placements mixed with admissions, fillers and separators): no message that places or may place the rider reads LATE or NEUTRAL in the wait. The only LATE readings are 'coming/walking/heading/going/otw/on my way to or from X', which are genuine on-the-way admissions. Chinese and Malay variants ('我在商场', 'saya di mall', 'masih di mall') read UNCLEAR.",
+    "D34 item 1 through E.run: 'I'm at the mall already' (and 49 other mall/MRT/market/clinic/gym/kopitiam/ATM messages) at every window edge (08:30:14 vs 08:30:15, 08:42:59 to 08:52:00), on DISP-002 as given (organizer profile), on a Ryde advance booking at 08:37, 08:40, 08:44:30, 08:46, 08:48, with a preceding or following 'coming down', with rider GPS at the pin: all APPROVE (or HUMAN when also contesting); the only AUTO uphold are the genuine admissions ('walking from the MRT', 'otw to the mall', 'heading to the mall'). Curly apostrophes, padding, upper case and 'Im' forms read the same."
+   ],
+   "findings": [
+    {
+     "id": "A2R2-01",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 50,
+     "claim": "is_carpool=True overrides FC-R06's 'no share' list: RydePOOL, RydeHIRE, Ryde X GO and OTHER with the carpool flag get share 0.5 and are decided without GEN-R07, even at tier AUTO. Only RydeSEND+carpool is refused. FC-R06 and the ERP_RIDER_SHARE note say these services have no share (RydePOOL's 2026 and 2023 pages contradict each other), and T19/T20 expect GEN-R07 for them.",
+     "evidence": "line 50: carpool = code == \"CARPOOL\" or trip.get(\"is_carpool\") is True; only line 53 refuses RYDESEND. Run (service, is_carpool=True, gantries CTE 2.50 + PIE 4.00): RYDEPOOL charged 3.25 -> UPHOLD amt 0.0 tier AUTO reasons ['FC-R-TOLL-VALID']; RYDEHIRE, RYDEX_GO, OTHER the same; with charged 6.50 -> TOLL_REFUND 3.25 + FRAUD_SIGNAL DRIVER. Same trip without the flag: RYDEPOOL -> ESCALATE_HUMAN GEN-R-POLICY-GAP tier HUMAN (case CP-X2).",
+     "failure_scenario": "A RydePOOL trip (a pooled ride) that the case data marks is_carpool=true, ERP line S$3.25 on S$6.50 of gantries: the engine upholds the charge automatically at 0.5. If the 2023 RydePOOL pages are right (fares include ERP) the rider owes 0 and S$3.25 should be refunded; the source conflict never reaches a person. With a S$6.50 line the engine also raises a FRAUD_SIGNAL against the driver on the 50% reading that the KB itself says is undefined.",
+     "suggested_fix": "In rider_share, apply the carpool share only when code is one of the six named services or CARPOOL (or UNKNOWN is handled earlier); for any other code, with or without the flag, return gap NO_RULE (GEN-R07). Add selftest cases for RydePOOL, RydeHIRE and OTHER with is_carpool=True. Also state in FC-R06 what a carpool flag on a service with no share does."
+    },
+    {
+     "id": "A2R2-02",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 134,
+     "claim": "run() decides a case at tier AUTO (UPHOLD, FC-R-TOLL-VALID) when route_review is present but the recommended route's gantries are missing, although FC-R12 says a missing recommended route means no finding and escalation. fc_r01 treats the same input as FC-R12 (escalate), so the two functions disagree. A detour ERP claim that cannot be checked is upheld automatically.",
+     "evidence": "line 134: if review.get(\"recommended_gantries\") is not None and actual > 0: (else the detour step is silently skipped). Case gantries CTE+PIE, charged 6.50, route_review {'justification': None} or {'recommended_gantries': None}: T.run -> UPHOLD tier AUTO ['FC-R-TOLL-VALID']; T.fc_r01 on the same case -> escalate 'FC-R12'. FC-R12: 'If ... the recommended route is missing ... make no adverse finding against either party and escalate.' PB-FC-TOLL step 5: CHECK FC-R08, FC-R12.",
+     "failure_scenario": "The routing step fails to return the recommended route for a rider's 'the driver took the PIE to charge me more ERP' claim; the case carries route_review with recommended_gantries null. The engine compares charged 6.50 with the logged 6.50, finds nothing, and upholds the ERP at AUTO instead of escalating for insufficient data.",
+     "suggested_fix": "If route_review is present (a detour question was raised or opened by FC-R01) and recommended_gantries is None, return ESCALATE_HUMAN with FC-R-INSUFFICIENT-DATA (as fc_r01 does). Add the case to erp_cases."
+    },
+    {
+     "id": "A2R2-03",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 78,
+     "claim": "Booleans are taken literally: is_carpool is honored only when it is exactly True, and a gantry is skipped only when active is exactly False. A carpool trip flagged 'true', 'yes' or 1 is treated as non-carpool (full ERP charge upheld at AUTO); a gantry with active 'false', 0 or null is counted as active. fc_r01 uses truthiness instead (g.get('active', True)), so the two functions also disagree on active=None.",
+     "evidence": "Gantries CTE 2.50 + PIE 4.00, RydeX, charged 6.50: is_carpool=True -> TOLL_REFUND 3.25 APPROVE; is_carpool='true' / 1 / 'yes' -> UPHOLD 0.0 tier AUTO. One gantry 2.50, charged 2.50: active=False -> TOLL_REFUND 2.50 + DRIVER fraud signal; active='false', 0, None -> UPHOLD tier AUTO. fc_r01 with active=None on the extra gantry: extra=[] and no claim, while run() counts it.",
+     "failure_scenario": "The ontology marks is_carpool as a data_gap field that an extractor fills; it writes \"true\". The rider is charged the driver's full ERP on a carpool trip and the engine upholds it automatically instead of refunding half and flagging the driver.",
+     "suggested_fix": "Coerce with one helper (True/'true'/'yes'/1 and the false forms) used by rider_share, erp_of and fc_r01, and send an unparseable value to FC-R12. Add cases for 'true', 1, 'false', 0."
+    },
+    {
+     "id": "A2R2-04",
+     "severity": "MAJOR",
+     "file": "kb/rules.yaml",
+     "line": 1212,
+     "claim": "The FC-R08 card says FC-R07's refund 'comes on top, so together they refund at most the ERP charged minus ERP(recommended)'. That is false whenever ERP(recommended) is higher than ERP(actual) while the path still passed a gantry the recommended route avoids (and for any overstated line on a route cheaper than the recommended one). The engine refunds the full FC-R07 difference, more than the stated cap, so the card and the engine give different amounts.",
+     "evidence": "Card: 'refund of an overstated ERP line comes on top, so together they refund at most the ERP charged minus ERP(recommended), never a negative amount.' Run D08: actual CTE+PIE = 6.50, recommended CTE+MCE = 7.50, charged 12.00 -> TOLL_REFUND amt 5.50 (cap by the card: 12.00 - 7.50 = 4.50). D07: actual CTE 2.50, recommended CTE+PIE 6.50, charged 8.50 -> 6.00 (cap 2.00). Random search (60,000 cases) found 2,989 cases above the card's cap, all with ERP(recommended) > ERP(actual).",
+     "failure_scenario": "A reviewer or an LLM applier that follows the card caps the refund at S$4.50 in D08 while the engine says S$5.50; the rider is left paying S$7.50, more than the S$6.50 of ERP the trip actually cost. The engine's amount follows FC-R07 and is the fairer one.",
+     "suggested_fix": "Reword: 'together they refund at most the ERP charged minus the smaller of ERP(actual) and ERP(recommended)'. Add one erp_case with ERP(recommended) above ERP(actual) and an overstated line."
+    },
+    {
+     "id": "A2R2-05",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 114,
+     "claim": "Non-numeric values crash the engines instead of going to FC-R12, and fc_r01 crashes on inputs that run() handles. run(): charged '' or 'abc' and a gantry rate '' raise ValueError. fc_r01: gantry_passes null raises TypeError, a gantry row without 'gantry' raises KeyError, quoted_fare 'S$19.80' raises ValueError. An empty string is what a CSV or form export writes for a missing amount.",
+     "evidence": "T.run(mk(charged='')) -> ValueError: could not convert string to float: ''; same for charged 'abc' and rate ''. T.fc_r01 with erp_charges.gantry_passes = None -> TypeError: 'NoneType' object is not iterable, while T.run on that case returns ESCALATE_HUMAN FC-R-INSUFFICIENT-DATA (M04). fc_r01 with a gantry dict without 'gantry' -> KeyError: 'gantry'.",
+     "failure_scenario": "A ticket whose ERP line was exported as an empty string takes the pipeline down at the toll step instead of reaching a person with 'insufficient data'.",
+     "suggested_fix": "Parse numbers in one helper that returns None on failure and route None to the existing FC-R12 branch; make fc_r01 use the same `(erp_charges or {}).get('gantry_passes') or []` and .get('gantry') handling as run()."
+    },
+    {
+     "id": "A2R2-06",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 117,
+     "claim": "NaN and infinity pass the numeric checks: a NaN rate or NaN ERP line makes every comparison false, so the case ends UPHOLD at AUTO; an infinite line gives a refund of inf.",
+     "evidence": "mk(gantries=((A, nan),), charged=8.50) -> UPHOLD 0.0 AUTO; mk(charged=nan) -> UPHOLD AUTO; mk(charged=inf) -> TOLL_REFUND amount inf APPROVE.",
+     "failure_scenario": "A Python-side NaN from a failed parse hides an S$8.50 charge for a S$2.50 gantry and the case is decided automatically. Not producible from strict JSON.",
+     "suggested_fix": "Use math.isfinite in the same numeric helper as A2R2-05."
+    },
+    {
+     "id": "A2R2-07",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 42,
+     "claim": "is_metered tests 'metered' as a substring of fare_type, so 'Non-metered', 'unmetered' and 'fixed (not metered)' count as METERED. FC-F01 says RydeTAXI is METERED and every other service FIXED_AT_BOOKING. Such a trip is escalated under D32 instead of getting the FC-R08 ruling, and fc_r01 reports applies=False.",
+     "evidence": "RydeX, gantries CTE+PIE, charged 6.50, recommended [CTE], fare_type 'Non-metered fixed' / 'unmetered' / 'fixed (not metered)' -> ESCALATE_HUMAN GEN-R-POLICY-GAP tier HUMAN (a plain 'fixed' gives TOLL_REFUND 4.00 APPROVE). FC-F01: 'RydeTAXI is METERED; every other service is FIXED_AT_BOOKING'.",
+     "failure_scenario": "Safe direction: a routine fixed-fare detour is sent to a person because the free-text fare type contains the word 'metered'.",
+     "suggested_fix": "Match fare_type against the TX-PRICING codes (or word-boundary 'metered' not preceded by 'non-', 'un', 'not'), or drop the fare_type clause and follow FC-F01 (service code only)."
+    },
+    {
+     "id": "A2R2-08",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 118,
+     "claim": "Two trace and evidence gaps: (a) when an FC-R07 overstatement was found and the recommended route's rate is then unknown, the run ends ESCALATE_HUMAN with reasons ['FC-R-TOLL-OVERSTATED', 'FC-R-INSUFFICIENT-DATA'] and the DRIVER fraud signal kept, although FC-R12 says to make no adverse finding when escalating, and erp_code_check's own rule (a reason carries its outcome) is violated; the metered branch resets reasons but this branch does not; (b) identical duplicate rows in gantry_passes are counted as two passes.",
+     "evidence": "(a) mk(charged=8.50, recommended=[('Unlisted', None)]) -> ESCALATE_HUMAN HUMAN reasons ['FC-R-TOLL-OVERSTATED','FC-R-INSUFFICIENT-DATA'] fraud ['DRIVER'] flags ['FRAUD_SIGNAL']; taxonomy: FC-R-TOLL-OVERSTATED belongs to TOLL_REFUND. (b) gantries [CTE, CTE] with the same timestamp, charged 5.00 -> UPHOLD tier AUTO, while one pass would give a S$2.50 refund and a fraud signal.",
+     "failure_scenario": "(a) A reviewer sees a TOLL_REFUND reason on an ESCALATE_HUMAN case. (b) A log that repeats a row (same timestamp and gantry) hides a driver who keyed the ERP twice.",
+     "suggested_fix": "(a) Clear reasons to ['FC-R-INSUFFICIENT-DATA'] (and decide whether the fraud signal stays) at line 137, and add an erp_case for it so erp_code_check covers it. (b) Drop rows identical in timestamp and gantry, or flag them SOURCE_CONFLICT for approval."
+    },
+    {
+     "id": "A2R2-09",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 164,
+     "claim": "fc_r01 decides 'extra gantries' by gantry name only, while run() decides by rate and activity, so FC-R01 can fail to open the FC-TOLL claim that FC-R08 would pay, or open a pointless one. Also the gantry rate fallback ignores the UTC offset of the timestamp.",
+     "evidence": "Same gantry name on both paths with different rates (actual 'CTE (southbound)' 6.00 at a higher band, recommended 2.50): fc_r01 -> extra [] and toll_claim None, while T.run gives TOLL_REFUND 3.50. Recommended lists the extra gantry as inactive: extra [] (run: 4.00 refund). A spelling difference ('cte (southbound)') opens a claim for a gantry both routes pass (UPHOLD AUTO, harmless). gantry_rate slices timestamp[11:16]: '2026-09-09T08:40:00Z' (16:40 in Singapore) is banded as 08:40 and gets 6.00 -> UPHOLD AUTO.",
+     "failure_scenario": "A longer route that moves the pass of the same gantry into a dearer time band is not sent to FC-TOLL; a UTC log time picks the wrong band when the log carries no rate.",
+     "suggested_fix": "Open the claim when ERP(actual) > ERP(recommended) computed as run() does (names only as a pre-filter), and parse the timestamp with its offset into Asia/Singapore before reading HH:MM."
+    },
+    {
+     "id": "A2R2-10",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 129,
+     "claim": "FC-R07 puts the FRAUD_SIGNAL on the driver for any ERP line above expected without checking who entered it. The E11 case carries erp_toll_source ('keyed in by driver at drop-off') and the engine ignores it; an empty gantry log with an ERP line charged also yields refund plus a driver fraud signal without checking that a GPS trace exists to support 'no gantry passed'.",
+     "evidence": "Code reads only fare_breakdown.erp_toll and erp_charges.gantry_passes. mk(gantries=(), charged=2.50) -> TOLL_REFUND 2.50 FRAUD_SIGNAL DRIVER at APPROVE (M01); RydeSEND with any ERP line -> driver fraud signal whatever the source field says. The tier is APPROVE, so a person still decides.",
+     "failure_scenario": "A RydeSEND ERP line added by the platform's fare calculation (erp_toll_source 'system') is booked as a fraud signal against the driver; or a trip with a missing GPS trace and an empty gantry list flags the driver.",
+     "suggested_fix": "Raise the driver signal only when erp_toll_source says the driver keyed it (otherwise refund and flag a platform error), and send an empty gantry list with no usable GPS trace to FC-R12. Note both in FC-R07."
+    },
+    {
+     "id": "A2R2-11",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_gates.py",
+     "line": 31,
+     "claim": "resolve_g3 does not validate its inputs: a blind tier with a stray character or other case ('HUMAN ', 'human') counts as the lowest and is downgraded to APPROVE; an outcome 'escalate_human' in lower case is not recognized as ESCALATE_HUMAN (tier APPROVE instead of HUMAN); a blind ruling without a 'tier' key raises KeyError.",
+     "evidence": "G.resolve_g3(kb, {'outcome':'UPHOLD','amount':None,'tier':'HUMAN '}, {'outcome':'WAIVE_FEE','amount':None}) -> tier APPROVE; {'outcome':'escalate_human','tier':'AUTO'} fired -> tier APPROVE; blind without 'tier' -> KeyError 'tier'. Well-formed inputs behave as AUTH-04 says (all other G3 checks passed).",
+     "failure_scenario": "A mis-typed tier string from the caller turns a HUMAN case into APPROVE. The code comment says an unknown tier counts as lowest on purpose, which is the unsafe side for a malformed HUMAN.",
+     "suggested_fix": "Normalize with str(x).strip().upper(), treat an unknown tier as HUMAN (fail safe) and an unknown or missing outcome as ESCALATE_HUMAN."
+    },
+    {
+     "id": "A2R2-12",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1695,
+     "claim": "AUTH-04's tie-break 'If one disagreement fits both G3 and G8 ..., G3 applies' can be read as letting G3 absorb a separate G8 disagreement: the history-blind pass against the rules engine. When the history-blind pass and the rules engine (both history-free) disagree and the history-aware pass sides with the engine, the blind ruling becomes the provisional ruling at APPROVE although it is the outlier. engine_gates has no G8 input, so the code cannot show which is meant.",
+     "evidence": "Text: 'G8 the Judge passes disagree with each other or with the rules engine' and 'If one disagreement fits both G3 and G8 (the history-aware pass is a Judge pass), G3 applies.' Three-way case: blind = X, aware = Y, engine = Y. The blind-versus-engine disagreement is a G8 only; blind-versus-aware fits both.",
+     "failure_scenario": "An LLM reviewer applies 'G3 applies' to the whole case and keeps the minority blind ruling at APPROVE; before A2 this was HUMAN under G8.",
+     "suggested_fix": "Add: 'The tie-break covers only the disagreement between the history-aware and the history-blind pass; a disagreement between the history-blind pass and the rules engine (or between two history-free passes) stays G8 (HUMAN).' Optionally give resolve_g3 an engine ruling argument."
+    },
+    {
+     "id": "A2R2-13",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 303,
+     "claim": "frozen area (D34): before the arrival, an instruction form 'pls wait at <place> liao' is dropped (None) by before_arrival_reading's pick-up-instruction pattern, although 'liao' (already) can mean the rider is at that place; the same text with 'I'm at <place> liao' is counted. Pre-existing and not caused by the D34 item 1 change: the lobby form behaves the same.",
+     "evidence": "before_arrival_reading('pls wait at the mall liao') -> None; ('pls wait at the lobby liao') -> None; ('I'm at the mall liao') -> UNCLEAR. In the wait the same messages read UNCLEAR and PLACES, so only the pre-arrival window is affected.",
+     "failure_scenario": "A message sent before the driver arrives, 'pls wait at the kopitiam liao', is not counted as a possible placement (D30).",
+     "suggested_fix": "Record in kb/open_items.yaml under D34; do not fix in this step."
+    }
+   ]
+  },
+  "CONSISTENCY ACROSS FILES AND PARTY-FACING TEXT": {
+   "dimension": "CONSISTENCY ACROSS FILES AND PARTY-FACING TEXT",
+   "checked_ok": [
+    "Build in a scratch copy of HEAD (/tmp/a2check2/repo; the repo itself was not touched): python3 kb/build_kb.py --no-xlsx --no-fuzz and the full build both end ERROR 0 | WARN 0; 99/99 variants, 561/561 readings, '27 ERP cases, the FC-R01 split, gate G3 and the A2 rule-card checks: all pass'; privacy_scan clean. The committed kb/out/check_report.md and disp002_trace.md are byte-identical to a fresh build.",
+    "rerun_engine on E01 E02 E03 E04 E11 gives 5/5 and the output is identical to the committed validation/build_checks/A2/01_engine_rerun.json (E11 TOLL_REFUND 6.0, tier APPROVE, DRIVER fraud signal).",
+    "kb/tools/explain.py (no-show only; not changed by A2) run with E.run and explain.noshow on V92, V93, E01, E03 and on every selftest variant that has rider chat rows (V56 to V93): every rider and driver sentence was read against the case facts (pings, gap of 100 s and 80 s, wait of 420 s and 195 s, 15 s margin, driver call and message counts and E-CHT ids, fee S$6.61 and S$5.00, tier text 'provisional decision' for APPROVE). Nothing false or misleading; EXP-03 unmatched numbers empty for all. V92 says 'does not clearly say whether you were at the pick-up point', V93 'may show where you were; it was counted as evidence for your side': both match the reading.",
+    "explain.py and EXP-01..03 contain no ERP text and no G3 text, so A2 added no party-facing ERP or G3 sentence that could be false. The static sentence 'Account history was used only to decide whether a person reviews this case; it did not affect the outcome.' stays true under the new G3 (history-aware result only shown to the reviewer).",
+    "Gate G3 is consistent everywhere it is described: AUTH-04 statement, AUTH-04 zh, gate_tiers {G3: APPROVE; G2, G4, G8: HUMAN}, FRD-02 pointer, D37, engine_gates.resolve_g3, make_xlsx gate table (new tier column from gate_tiers), engine_noshow runtime_only_gates. The only remaining 'G3 gave ESCALATE_HUMAN' text is D37's default_v0_1, which is the history of the old behavior. G4/G1/G5/G6 tiers in engine_noshow.decide_tier match gate_tiers.",
+    "Old-behavior grep over kb/ (excluding sources), docs, validation/tools, .claude: no hit for 'Expected ERP = sum', 'otherwise 1', 'default: 1', 'default 1.0', 'never exceeds the ERP', 'still check ERP', 'sum of the rates' (old), G3 as escalate/HUMAN. 'conduct information only' survives only inside FC-R01 with its ERP exception and inside D35's default_v0_1. Rules rated B or C: 16 now (17 at da4c329), which matches docs/NEXT_STEPS.md in both places.",
+    "ERP_RIDER_SHARE values (six services 1.0, RYDESEND 0.0, CARPOOL 0.5) agree across reference_data.yaml, FC-R06, FC-F04, PB-FC-TOLL step 1, ontology is_carpool note, taxonomy RYDESEND/RYDETAXI notes, selftest rule_card_check and engine_toll. FC-R01, FC-R06, FC-R07, FC-R08, FC-F03, FC-F04, AUTH-04 zh texts say the same as the English except the item in CS-6. FC-ROUTE 'excludes' and the FC-TOLL definition in taxonomy.yaml agree with FC-R01. FC-R12 applies_to includes FC-TOLL so the pointers are valid.",
+    "open_items.yaml D32, D34, D35 (items 1 to 6), D36, D37, D38, O16 checked against the rule cards and the engine: statements about FC-R08 (metered escalation, attach list), FC-R07 on metered fares, PDVL-only scope (research note 09 item 24 says exactly that), E11 rate 6.00 in a later window, test counts (27 ERP cases; 9 reading cases and 3 before-arrival cases for D38), O16 text, and the NEXT_STEPS 'to confirm with Jasper' list are accurate. Only the O15 mismatch (CS-3) and the incomplete D38 side-effect record (CS-12) were found.",
+    "Text hygiene: no em dash or en dash in any of the 668 added lines of the range, nor in the five A2 artifacts under validation/; no British spelling (the only 'cancelled' is a GPS status value in test data that matches existing data); new test data (selftest _erp_case, G3 cases, reading cases) contain no names, plates, phone numbers or account IDs (regex scan clean).",
+    "workflow .claude/workflows/kb-step-check.js, validation/tools/rerun_engine.py docstring and NEXT_STEPS E-step command all add E11 consistently; report_md.check_report new erp_line argument is passed at both call sites; the full build (make_xlsx) renders the new ERP_RIDER_SHARE table and the gate tier column without error.",
+    "The tracked workbooks kb/out/FairRyde_KB_v0.1.xlsx and FairRyde_Annotation_v0.1.xlsx are still the v0.1 build (old G3 row, old FC-R01 text) because A1 and A2 build with --no-xlsx; NEXT_STEPS plans the full build in A5, so I did not count this as a defect."
+   ],
+   "findings": [
+    {
+     "id": "CS-1",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 50,
+     "claim": "The engine lets is_carpool=true override the 'no share' rule for services that FC-R06 sends to GEN-R07. The FC-R06 card and the ontology note do not say which wins, but the card lists RydePOOL, RydeHIRE, Ryde X GO and Ryde+ as having no share and only names RydeSEND plus carpool as the combined case.",
+     "evidence": "engine_toll.rider_share: 'carpool = code == \"CARPOOL\" or trip.get(\"is_carpool\") is True' ... 'if carpool: return {\"share\": float(table[\"CARPOOL\"]), ...}' comes before 'if code in table' and before the NO_RULE return. FC-R06: 'Ryde's articles set no share for any other service (RydePOOL, whose 2026 and 2023 driver pages disagree, RydeHIRE, Ryde X GO, Ryde+) and none for a trip that is both RydeSEND and carpool: no rule covers it and GEN-R07 applies.' ontology is_carpool note: 'Together with RYDESEND the share is undefined (GEN-R07).' Probe with engine_toll.run on gantries CTE 2.50 + PIE 4.00: RydePOOL without the flag, charged 6.50 -> ESCALATE_HUMAN GEN-R-POLICY-GAP HUMAN; RydePOOL + is_carpool, charged 6.50 -> TOLL_REFUND 3.25, tier APPROVE, fraud ['DRIVER']; RydePOOL + is_carpool, charged 3.25 -> UPHOLD 0.0 AUTO FC-R-TOLL-VALID; RydeHIRE + is_carpool, charged 3.25 -> UPHOLD AUTO; service OTHER + is_carpool, charged 3.25 -> UPHOLD AUTO.",
+     "failure_scenario": "A RydePOOL (or RydeHIRE, or an 'OTHER' service) trip arrives with is_carpool=true, which a data producer may well set for a pooled trip. The same trip is HUMAN without the flag and AUTO (or a DRIVER fraud signal plus an automatic refund proposal of S$3.25) with it, although the card says no share is set for that service and GEN-R07 applies. The tier and the amount depend on an undefined flag convention.",
+     "suggested_fix": "Decide the precedence and write it into FC-R06, the ontology note and the engine: either is_carpool applies only to services with a share (RydeX, RydeFLASH, and so on) and every service without a share, flagged or not, goes to GEN-R07; or state explicitly that RydePOOL with the flag takes 0.5 (and add the 4408072389913 / 2026 RydePOOL pages as its source). Add a selftest case for RydePOOL, RydeHIRE and OTHER with the flag."
+    },
+    {
+     "id": "CS-2",
+     "severity": "MAJOR",
+     "file": "kb/scope.yaml",
+     "line": 86,
+     "claim": "scope.yaml keeps 'carpool trips with several riders' in the backlog, but FC-R06, FC-F04 and the engine decide every is_carpool trip with share 0.5, up to tier AUTO, and neither the ontology nor the engine has a rider count to detect the backlog case. GEN-R07 says a BACKLOG type must be escalated, not decided.",
+     "evidence": "scope.yaml backlog: '\"RydePOOL and carpool trips with several riders\"'. GEN-R07: 'If a claim's type has no rule set in this version (scope TRIAGE_TO_HUMAN without its own rules, or BACKLOG), or a decision point is not covered by any rule, do not fill the gap with a generic rule silently: escalate with reason GEN-R-POLICY-GAP'. FC-F04 credibility_note and D35 item 1 only say the division among several passengers is 'a backlog item in scope.yaml'. ontology is_carpool is a bare boolean. selftest T04 expects 'carpool, the same gantries, the rider's half (S$3.25) charged' -> UPHOLD, tier AUTO; probe: service CARPOOL, gantries 6.50, charged 1.63 -> UPHOLD 0.0 AUTO FC-R-TOLL-VALID.",
+     "failure_scenario": "A carpool trip with two passengers: the passenger half of S$3.25 is split, so the rider's own share is below 0.5, but the rider is charged the whole S$3.25 and contests it. The engine finds the charge equal to the 0.5 share and upholds it automatically (AUTO), a loss for the rider in a case type the scope file says is not handled.",
+     "suggested_fix": "Either add a condition to FC-R06 and the ontology (is_carpool means a single-passenger carpool trip; with more than one rider GEN-R07 applies) and an input the engine can test, or change scope.yaml so the backlog line reads only 'RydePOOL' and says how many riders the carpool rule covers. Record the choice in D35."
+    },
+    {
+     "id": "CS-3",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 75,
+     "claim": "Organizer question O15 asks only about carpool trips, but D35 item 1 and docs/NEXT_STEPS.md say O15 also covers RydePOOL, RydeHIRE, Ryde X GO and Ryde+, the four services that FC-R06 sends to GEN-R07. As written, nobody asks the organizer about them.",
+     "evidence": "O15: 'For carpool trips, does the driver key the total ERP or only the passenger's half, and how is the passenger's half divided among several passengers?' D35 decide: '(1) organizer or Ryde, question O15: RydePOOL (2026 driver pages: each rider pays 50% of the total toll; 2023 driver pages: RydePOOL, RydeHIRE and RydeSEND fares include ERP), RydeHIRE, Ryde X GO and Ryde+, and on a carpool trip whether...'. NEXT_STEPS: 'O15 (ERP for RydePOOL, RydeHIRE, Ryde X GO, Ryde+ and carpool: does the driver key the total or the passenger's half, ...)'.",
+     "failure_scenario": "Jasper posts O15 to the track group as written; the answer covers carpool only and the GEN-R07 escalation for the four other services stays unresolved while the records say it was asked.",
+     "suggested_fix": "Extend O15 (or add O17): 'What share of the ERP does a rider pay on RydePOOL, RydeHIRE, Ryde X GO and Ryde+ trips, given that the 2023 and 2026 driver pages differ for RydePOOL and RydeHIRE?'"
+    },
+    {
+     "id": "CS-4",
+     "severity": "MINOR",
+     "file": "kb/playbooks.yaml",
+     "line": 135,
+     "claim": "PB-FC-ROUTE step 2 no longer tells the reader to stop the fare analysis after FC-R01. v0.1 said 'stop'; the new note says only 'do not stop at the ERP'. FC-R04 (step 5) has no pricing-mode condition, so a reader following the steps can escalate a fixed-fare borderline detour as FC-R-DETOUR-BORDERLINE (HUMAN), against FC-R01's 'no fare refund ... driver-conduct information only'.",
+     "evidence": "base: 'Fixed fare and charged = quoted: stop with no fare refund (still check ERP if contested)'. now: 'Fixed fare and charged = quoted: no fare refund, but do not stop at the ERP: ERP the longer route caused goes to its own FC-TOLL claim (PB-FC-TOLL, FC-R08)'. Step 5: 'CHECK FC-R00, FC-R03, FC-R04, GEN-R07'. FC-R04: 'BORDERLINE_RATIO_MIN at or above DR below DETOUR_RATIO_MIN, ... is borderline; escalate with the computed difference shown.' (applies_to FC-ROUTE, no fixed-fare exclusion; the 'computed difference' is FC-R05's, which is for RECALCULATED fares).",
+     "failure_scenario": "A fixed-fare route ticket with a detour ratio just under DETOUR_RATIO_MIN and an extra gantry: the playbook now allows both 'no fare refund, close' (FC-R01) and 'borderline, escalate' (FC-R04), so the route claim can go to HUMAN instead of UPHOLD.",
+     "suggested_fix": "Word step 2 as: 'Fixed fare and charged = quoted: no fare refund; the fare part of the route claim ends here (steps 3 to 7 apply to the other fares). Only the ERP continues, as its own FC-TOLL claim (PB-FC-TOLL, FC-R08).'"
+    },
+    {
+     "id": "CS-5",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1289,
+     "claim": "FC-R06, FC-F04, PB-FC-TOLL step 1 and the engine send three new situations to FC-R12, but the FC-R12 card (English and zh) lists none of them.",
+     "evidence": "FC-R06: 'A trip whose service type is not recorded is insufficient data (FC-R12).' engine_toll step text: 'FC-R12: no gantry log, a gantry without a rate, or no usable ERP line charged'. FC-R12 statement: 'If the recorded distance, a usable road-matched path, the fare breakdown or the recommended route is missing, or pings are too sparse to locate the deviation, make no adverse finding against either party and escalate.' Taxonomy label of its reason: 'Route or fare evidence insufficient'.",
+     "failure_scenario": "An LLM applying FC-R12 from its card has no basis to escalate a missing service type or a gantry with no rate, and a reviewer reading FC-R06's pointer finds nothing behind it.",
+     "suggested_fix": "Add 'the service type, the ERP gantry log or a gantry rate, or the ERP line charged' to the FC-R12 statement and its zh, and update the TX-REASON label."
+    },
+    {
+     "id": "CS-6",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1183,
+     "claim": "FC-R07 zh states the tolerance as 'at or above' while the English and the engine say 'more than'; they differ when the excess equals a non-zero TOLL_TOLERANCE_SGD (introduced by the round 1 fix for SG6).",
+     "evidence": "English: 'exceeds F-ERP-EXPECTED ... by more than TOLL_TOLERANCE_SGD'. zh: '实收乘客的 ERP 超过 F-ERP-EXPECTED（FC-R06 定的乘客份额，由 FC-F04 计算）达 TOLL_TOLERANCE_SGD 以上，退差额...' ('reaches TOLL_TOLERANCE_SGD or more'). engine_toll: 'over = _r2(charged - actual) if charged - actual > tol + 1e-9 else 0.0'.",
+     "failure_scenario": "With a tolerance of S$0.50 and an excess of exactly S$0.50, the zh card reads as overstated (refund plus fraud signal), the English card and the engine as valid.",
+     "suggested_fix": "Write '超过 F-ERP-EXPECTED 且超出部分大于 TOLL_TOLERANCE_SGD' (strictly greater)."
+    },
+    {
+     "id": "CS-7",
+     "severity": "MINOR",
+     "file": "kb/taxonomy.yaml",
+     "line": 612,
+     "claim": "The reworded label of FC-R-TOLL-VALID says the charge 'matches' the rider's share, but the engine and FC-R08 also return this reason when the rider was charged less than the share, or when a justified detour leaves the full charge in place.",
+     "evidence": "label: 'ERP charged to the rider matches the rider's share of the gantries passed (FC-R06), and no refund is due for a detour'. selftest T23: 'detour, but the rider was charged only the ERP of the recommended route (S$2.50)' (actual 6.50) -> reasons ['FC-R-TOLL-VALID']; T25: charged 0.0 on gantries 6.50 -> FC-R-TOLL-VALID. FC-R08: 'If nothing was charged above ERP(recommended), the refund is 0 and the ERP charge stands (FC-R-TOLL-VALID).'",
+     "failure_scenario": "An annotator or a party reading the reason code is told the charge 'matches' when it was lower than the share; the label is false for those cases.",
+     "suggested_fix": "Use 'ERP charged to the rider does not exceed the rider's share of the gantries passed (FC-R06), and no refund is due for a detour'."
+    },
+    {
+     "id": "CS-8",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1146,
+     "claim": "FC-R06 states elements that none of its sources list: the share 1 for the six named services (the 'exclude ERP' sentence) and the RydePOOL pages. The reference_data note and FC-R06 also describe the RydePOOL conflict as '2026 and 2023 pages disagree' without the 2023-12-31 driver page 4408072389913, which agrees with 2026 and is newer than the two 2023 appeal pages.",
+     "evidence": "FC-R06 sources are only 115000772653 ('If a rider passes through an active ERP gantry, the toll charge will be applicable to the rider.'), and 115001438614 ('The fares for RydeSEND include ERP.' and 'The driver bears 50% of the ERP charge...'). The sentence 'The fares for RydeFLASH / RydePET / RydeX / RydeXL / RydeLUXE / RydeTAXI exclude ERP.' appears only in the reference_data.yaml source note, which the build does not quote-check. Corpus article 4408072389913 (edited 2023-12-31, driver): 'For shared RydePOOL trips, each rider pays 50% of the total ERP charges.'; the two 2023 appeal pages (2023-07-15, 2023-10-02) say 'Note: RydePOOL, RydeHIRE and RydeSEND include ERP.'",
+     "failure_scenario": "The quote check reports 120 verified sources but the share-1 element of FC-R06 and FC-F04 is not among them, and a reviewer checking the RydePOOL 'conflict' finds the newest 2023 page on the 2026 side, which under META-04 ('most recently edited page otherwise') would settle RydePOOL at 0.5 rather than at 'no share'.",
+     "suggested_fix": "Add the 'exclude ERP' sentence (115001438614) and the RydePOOL 2026 sentence (33363192453785) as quoted sources of FC-R06/FC-F04, add 4408072389913 to the RydePOOL note and D35 item 1, and say why META-04's recency rule is not applied to RydePOOL."
+    },
+    {
+     "id": "CS-9",
+     "severity": "MINOR",
+     "file": "kb/tools/make_xlsx.py",
+     "line": 528,
+     "claim": "On sheet 13_审批权限 the text next to the new gate_tiers column still says every AUTH-04 gate gives APPROVE and a provisional ruling, while the same sheet's new column shows G2, G4 and G8 as HUMAN (no provisional ruling).",
+     "evidence": "line 528: '(\"APPROVE 人工批准\", \"FairRyde 已给出裁决，且 AUTH-02 任一触发或 AUTH-04 任一升级门触发；...' (any AUTH-04 gate triggers APPROVE). line 540: 'heading(ws, r, \"升级门（AUTH-04，任一触发即转人工并附暂定裁决）\")' (any trigger goes to a person with a provisional ruling). gate_tiers: {G1: APPROVE, G2: HUMAN, G3: APPROVE, G4: HUMAN, G5: APPROVE, G6: APPROVE, G7: APPROVE, G8: HUMAN}.",
+     "failure_scenario": "Prof. Cao reads the workbook: the table above says all gates are APPROVE with a provisional ruling, the gate table below says three are HUMAN.",
+     "suggested_fix": "Change the APPROVE row to 'AUTH-04 的升级门 G1、G3、G5、G6、G7' and the heading to '任一触发即转人工并附一页摘要；G3 等保留暂定裁决，G2、G4、G8 没有暂定裁决'."
+    },
+    {
+     "id": "CS-10",
+     "severity": "MINOR",
+     "file": "kb/tools/make_xlsx.py",
+     "line": 245,
+     "claim": "The generated workbook README says the open-items sheet holds 'D1 到 D23', but open_items.yaml now has D1 to D38 (D35 to D38 added in A2).",
+     "evidence": "make_xlsx.py line 245: '(\"18_待决问题\", \"待决定事项 D1 到 D23、给曹老师和组织方的问题\")'; the generated 00_说明 sheet shows the same text; open_items.yaml decisions end at D38.",
+     "failure_scenario": "A reader of the README concludes that D24 to D38 (including the A2 decisions awaiting Jasper) are not on the sheet.",
+     "suggested_fix": "Generate the range from kb.y['open_items']['decisions'] (first and last id) instead of a literal."
+    },
+    {
+     "id": "CS-11",
+     "severity": "MINOR",
+     "file": "kb/annotation_schema.yaml",
+     "line": 78,
+     "claim": "FC-R01 now makes a two-claim ticket routine (route claim UPHOLD with no fare refund, plus a secondary FC-TOLL claim with TOLL_REFUND), but the annotation schema has one outcome, one remedy amount and one primary reason per case and no instruction for the secondary claim's outcome and amount.",
+     "evidence": "annotation_schema ANSWER columns: 'outcome ... vocab: TX-OUTCOME', 'remedy_amount_sgd', 'reason_code_primary', 'reason_codes_secondary' (multi) and 'secondary_types' (multi), with no per-claim outcome or amount. FC-R01: 'FC-R01 sends that ERP to its own FC-TOLL claim (a secondary claim under CLS-02 ...)'. engine_toll.fc_r01 returns 'fare_refund': 0.0 and a separate 'toll_claim' with its own outcome and amount.",
+     "failure_scenario": "For validation round 2 an annotator labels the S$4.00 ERP refund on a route ticket in the primary outcome (TOLL_REFUND) or leaves it out (UPHOLD); the engine reports both claims, so outcome and amount comparison between labels and engine is ambiguous.",
+     "suggested_fix": "Add a guideline line (and, if needed, secondary_outcome and secondary_amount columns) saying how to label a ticket that has a secondary claim."
+    },
+    {
+     "id": "CS-12",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 50,
+     "claim": "frozen area (D34). D38 records the D34 item 1 change as 'such a message now reads UNCLEAR' plus the 'place plus admission' side effect, but the same edit also moved place messages that place or contest to PLACES (STRONG, tier HUMAN) and made a before-arrival message that was dropped now count. These changes are in the safe direction but not recorded.",
+     "evidence": "Base (da4c329) versus HEAD reader on single messages: \"I'm at the mall, where are you?\" wait UNCLEAR -> PLACES, before-arrival None -> UNCLEAR; \"I'm at the mall waiting for you\" UNCLEAR -> PLACES; \"im at the clinic lobby\" UNCLEAR -> PLACES; \"I'm at the MRT station exit B\" UNCLEAR -> PLACES; 'at kopitiam beside the pin' UNCLEAR -> PLACES. D38 changed: 'Such a message now reads UNCLEAR, in the wait and before the arrival (D30) ... Side effect, safe direction: a message that names one of those places together with an admission ... now also reads UNCLEAR'. No message moved toward LATE or None.",
+     "failure_scenario": "A routine 'I'm at the mall, where are you?' used to go to approval and now goes to HUMAN (ESCALATE_HUMAN); Jasper, reading D38, expects only UNCLEAR.",
+     "suggested_fix": "Add one sentence to D38: 'place words no longer block PLACES, so a place message that also places or contests (where are you, lobby, beside the pin) reads PLACES and the case goes to HUMAN'."
+    },
+    {
+     "id": "CS-13",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1202,
+     "claim": "Rule metadata and the playbook do not match the changed statements: FC-R08 names FC-R-TOLL-VALID as its no-refund result but its produces list omits it; FC-R06 sends cases to GEN-R07 but lists no produces; PB-FC-TOLL step 6 still cites FRD-01 for the ERP fraud signal although FRD-01's conditions do not include ERP overstatement (FC-R07 raises it).",
+     "evidence": "FC-R08 produces: ['FC-R-TOLL-FROM-DETOUR', 'GEN-R-POLICY-GAP']; statement: 'the refund is 0 and the ERP charge stands (FC-R-TOLL-VALID)'. FC-R06 produces: None, statement: '... GEN-R07 applies'. playbooks.yaml:159 '{n: 6, do: CHECK, rule: \"FRD-01, GEN-R06\", note: \"ERP overstatement is a fraud signal; consequences are a human decision\"}'. FRD-01: 'Raise FRAUD_SIGNAL against the driver if: arrival was indicated without GPS presence ...; the driver stayed stationary and uncontactable after accepting; or repeated no-show cancellations occur at the same spot.'",
+     "failure_scenario": "A tool or reader that builds the reason code list per rule from 'produces' misses VALID after FC-R08 and GEN-R-POLICY-GAP after FC-R06; the playbook points to a rule that cannot raise the signal it names.",
+     "suggested_fix": "Add FC-R-TOLL-VALID to FC-R08 produces and GEN-R-POLICY-GAP to FC-R06 produces; change step 6 to 'FC-R07 (fraud signal on the driver), GEN-R06'."
+    },
+    {
+     "id": "CS-14",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 28,
+     "claim": "service_code does not resolve some TX-SERVICE labels, so the trip is treated as 'service type not recorded' (FC-R12, RECORDS_MISSING) instead of the case FC-R06 names: the label 'Ryde+' should reach GEN-R07, and lowercase 'carpooling' should take the carpool share.",
+     "evidence": "Probe: service_code({'service_type': 'Ryde+'}) -> None; 'carpooling' -> None; while 'RYDEPLUS', 'Ryde Plus', 'Carpool', 'Ryde X GO' resolve. TX-SERVICE has label 'Ryde+' (code RYDEPLUS) and label 'Carpooling'. T-run for Ryde+ with is_carpool: ESCALATE_HUMAN reasons ['FC-R-INSUFFICIENT-DATA'].",
+     "failure_scenario": "Same tier (HUMAN), but the reason code and the flag are wrong ('records missing' for a trip whose service type is recorded), so the reviewer and the explanation see the wrong cause.",
+     "suggested_fix": "Strip '+' to 'plus' and compare against labels as well as codes in service_code; add Ryde+ and 'carpooling' to the ERP cases."
+    }
+   ]
+  }
+ },
+ "verdicts": {
+  "a425e19cc141721cc": {
+   "verdicts": [
+    {
+     "id": "G1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Reproduced with a scratch probe under /tmp/a2check2: RydeFLASH, gantries S$2.50+S$4.00, no is_carpool, S$6.50 charged gives UPHOLD 0.0, tier AUTO, FC-R-TOLL-VALID. The same case with is_carpool True gives TOLL_REFUND 3.25 at APPROVE with a driver fraud signal. Read the sources myself. Article 33363192453785 says 'RydeFLASH ... Available to Carpool, Private Hire and Taxi drivers'. Other corpus articles treat Carpool Drivers as a driver category (360003567993 '10% service fee applies to Carpool Drivers'; 46374495669401 and 46489492021401 on cost recovery under the Car Pools Exemption Order). So 'carpool trip' plausibly means a trip by a carpool driver, and a RydeFLASH trip can be one. The RydePET and RydeX articles name private-hire and taxi drivers only, so FLASH is the one service the corpus ties to carpool drivers. ontology.yaml line 102 marks is_carpool data_gap true. Neither FC-R06, FC-F04 nor the ontology says how an unrecorded carpool status is read (the silent default is 'not carpool'), yet PB-FC-TOLL required_evidence lists 'whether the trip is a carpool trip (is_carpool)'. engine_toll.rider_share only escalates an unrecorded service type, not an unrecorded carpool status. Severity: MAJOR is right, not CRITICAL. DISP-002 records no service type (taxonomy TX-SERVICE UNKNOWN), so organizer-format cases already escalate under FC-R12. The failure needs a case that carries service_type RydeFLASH but no carpool flag, and carpool trips with several riders are in the scope.yaml backlog. The remedy (escalate versus default to non-carpool, and whether to add an organizer question) is the owner's decision; at minimum the default must be written in FC-R06 and the ontology."
+    },
+    {
+     "id": "G2",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced the engine behavior (is_carpool True with RydePOOL, RydeHIRE, Ryde X GO, Other, RydeTAXI and RydeX all give TOLL_REFUND 3.25, fraud DRIVER, tier APPROVE; Ryde+ is not recognized, see G9). But 'card and engine disagree' depends on how FC-R06 is read. The card gives '0.5 for a carpool trip' as a trip-level share and names only RydeSEND+carpool as undefined. The ontology note for is_carpool says the same ('Together with RYDESEND the share is undefined'). FC-F04 lists 'another service, or RydeSEND and carpool at once' as the no-share cases, and the playbook lists carpool 0.5 before the services. The engine follows the ontology and T05, so the card's wording is ambiguous (MINOR: say whether the carpool share overrides a no-share service). The reviewer's T05 point is a misreading: article 33363192453785 puts the 'For Carpool trips: ... 50%' paragraph under the RydeX heading itself, and 'No sharing' there is about sharing the ride, not about ERP. One piece has weight. For RydePOOL with is_carpool True the engine silently takes 0.5, while RydePOOL without the flag goes to GEN-R07 because of the 2023 versus 2026 page conflict that META-04 says must be surfaced (SOURCE_CONFLICT). That path is APPROVE with a human deciding the fraud consequence, never AUTO. RydePOOL is backlog-scope, so the impact is small. The owner should state the intended order; I do not rate it MAJOR."
+    },
+    {
+     "id": "G3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced: T09, T10 and T11 return flags [] with decisive FC-F03 (rule credibility C), and T18 returns only FRAUD_SIGNAL with decisive TOLL_TOLERANCE_SGD (D parameter). grep shows GENERIC_ASSUMPTION_USED is set only at engine_noshow.py line 1124, from decisive rules with credibility C or D, parameters and DT rows. engine_toll.py never sets it, and its docstring does not exclude META-05 (it excludes only MAT, DQ, META-02, the AUTH-05 confidence terms and parts of FC-R12). META-05 requires the flag whenever a C or D rule is decisive. The tier is already APPROVE through the decisive list, so no outcome, amount or tier changes; only the party-facing label is lost. Labeling gap in the new reference engine."
+    },
+    {
+     "id": "G4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read FC-R12 (rules.yaml lines 1289-1303, not changed in A2). Its statement lists only distance, road-matched path, fare breakdown, recommended route and sparse pings; service type, gantry log and gantry rates are not named. FC-R06, FC-F04 and PB-FC-TOLL step 1 send an unrecorded service type to FC-R12, and engine_toll uses it for a missing gantry log, a gantry without a rate and a negative ERP line. FC-R06's credibility_note says the FC-R12 pointer 'adds no norm', which is not exactly true. FC-R12 is already D, so there is no rating effect and no outcome effect; the card text is incomplete."
+    },
+    {
+     "id": "G5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Checked the corpus. 4408072389913 (driver, 2023-12-31) says 'For shared RydePOOL trips, each rider pays 50%', so D35's 'RydePOOL ... 2023 driver pages ... fares include ERP' is incomplete (23575142762393 and 20244103989529 do say it). 115000772653 (rider, 2024-04-19) says 'For all services apart from RydeSEND, ERP charges are excluded from the fares', against rider page 4408072421785 (2023-04-13) 'Toll charges are already included in RydeHIRE'. So the reference_data note 'RydeHIRE (the 2023 pages only)' leaves out the later rider page, which META-04 prefers for rider charges and which would give share 1. The META-04 known_conflicts list has only three topics, none about ERP. Engine T19 returns GEN-R-POLICY-GAP with no SOURCE_CONFLICT flag. The outcome is the same (HUMAN), so only the reason code and the record are wrong. The card does mention that the RydePOOL pages disagree, so the 'set no share' wording is loose rather than false."
+    },
+    {
+     "id": "G6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced: RydeX, actual path CTE S$2.50, recommended route PIE S$4.00, S$8.50 charged gives TOLL_REFUND 6.00 (FC-R07 over = 8.50 - 2.50; FC-R08 diff = -1.50, no detour refund), while the FC-R08 sentence 'together they refund at most the ERP charged minus ERP(recommended)' gives 4.50. The ceiling holds only when ERP(recommended) is at most ERP(actual). The engine matches FC-R07 and the FC-R08 formula, so the sentence is the overgeneralization, in both en and zh (rules.yaml 1212 and 1221). It affects only the card's summary sentence, and the corner case is rare."
+    },
+    {
+     "id": "G7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read open_items.yaml. O15 asks only 'For carpool trips, does the driver key the total ERP or only the passenger's half, and how is the passenger's half divided among several passengers?'. D35 item (1) says 'question O15: RydePOOL (...), RydeHIRE, Ryde X GO and Ryde+, and on a carpool trip whether ...', and NEXT_STEPS line 42 describes O15 as 'ERP for RydePOOL, RydeHIRE, Ryde X GO, Ryde+ and carpool'. The no-share-services question is not in the organizer list as written. Documentation mismatch only."
+    },
+    {
+     "id": "G8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read rules.yaml FC-R07. EN: 'by more than TOLL_TOLERANCE_SGD'. zh (line 1183): '超过 F-ERP-EXPECTED ... 达 TOLL_TOLERANCE_SGD 以上', which means by that amount or more and so includes the boundary. The engine uses charged - expected > tol + 1e-9 (strict), and the base commit's zh had no tolerance wording, so A2 introduced the difference. TOLL_TOLERANCE_SGD is currently 0.00 (plausible range 0 to 0.50), so no current outcome differs; wording only."
+    },
+    {
+     "id": "G9",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced. KB.resolve matches only code, aliases and organizer_code, never the label. service_code('Carpooling') and service_code('Ryde+') return None, while 'Carpool', 'Car pool', 'Ryde Plus' and 'RydePlus' resolve. A run with service 'Carpooling' or 'Ryde+' gives ESCALATE_HUMAN, tier HUMAN, FC-R-INSUFFICIENT-DATA and a false RECORDS_MISSING flag. The direction is safe (a person decides); only the reason and flag are wrong, and for 'Carpooling' a ruling at 0.5 would have been the right path."
+    },
+    {
+     "id": "G10",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read the corpus. 360004075214 is titled 'Why should I use RydeX?' and speaks about RydeX fares. FC-R01's new general sentence 'a fixed fare does not include ERP' cites it, and 115000772653 and 115001438614 are not cited in FC-R01. Partial cover: FC-R01 also cites 30741244296217 (same article text: 'there may be additional charges such as tolls'), FC-R01 points to FC-F01 and FC-R06, and FC-R06 cites 115001438614. The chosen quote is therefore narrower than the statement, a citation-completeness nit with no outcome effect."
+    },
+    {
+     "id": "G11",
+     "verdict": "REFUTED",
+     "severity_after_check": "NONE",
+     "reason": "Read D32 and D35 in open_items.yaml, and the FC-R07 source note. D32 does not treat FC-R07 as unexamined. It says FC-R07 'still applies to a metered fare' and gives its own reason (it rests on Ryde's driver article 115001438614, which lists RydeTAXI among the services whose ERP is keyed in, and the overstated amount is a measured fact, not a fare recomputation). D32 then ties the refund remedy to 'the refund of the difference is FairRyde's remedy for every service (item 5 of D35)', which D35 item 5 leaves for Jasper (FC-R07 stays A pending his decision; the brief lists this as left on purpose). The FC-R07 source note repeats 'On a metered fare it is kept (D32)'. So the metered case is already recorded as a pending decision, and there is no internal inconsistency. T14 (S$6.00 on RydeTAXI) is the documented behavior, at tier APPROVE. The only residue is that D32's 'Jasper's step prompt' attribution could be read to cover the FC-R07 keep, which is trivial."
+    }
+   ]
+  },
+  "ad34b2f90328f3f91": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced the behavior: with is_carpool=True and charged 3.25 (CTE 2.50 + PIE 4.00), RydePOOL, RydeHIRE, Ryde X GO, Ryde Plus, OTHER and RydeTAXI all give UPHOLD 0.0 AUTO; charged 6.50 gives TOLL_REFUND 3.25 with a DRIVER fraud signal; charged 0.0 gives UPHOLD AUTO. Only RydeSEND+carpool returns GEN-R-POLICY-GAP. But whether this is wrong is not settled by the cards. Base FC-R06 (da4c329) already treated carpool as a trip attribute across services ('on carpool trips ERP is shared 50/50'). Test T05 deliberately has a RydeX trip flagged as carpool pay 0.5. The ontology note for is_carpool says only RYDESEND is undefined and starts 'True for a carpool trip when the service type does not say so'. The RydeSEND exception exists because two named shares (0 and 0.5) conflict; a no-share service has no competing share, so carpool filling the gap is a coherent reading. The 2026 RydePOOL pages also say 50% per rider, and only the 2023 pages contradict. Nothing in FC-R06, FC-F04, the table note or D35 says whether the carpool flag overrides a 'no share' service. RydePOOL with several riders is in the scope.yaml backlog (out of scope). So this is a missing card sentence and an owner decision (Jasper, D35/O15), not a demonstrated error; MAJOR is not shown. If the owner decides the flag must not override, the fix is as suggested and it would be MAJOR for RydePOOL (out of scope) and CRITICAL for any in-scope service."
+    },
+    {
+     "id": "F2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran case(CTE only, charged 6.50, recommended [CTE, PIE]): TOLL_REFUND 4.0, reasons FC-R-TOLL-OVERSTATED, steps show ERP(actual) 2.50 minus ERP(recommended) 6.50 = -4.00. FC-R08 (rules.yaml, statement and zh) says FC-R07's refund 'comes on top, so together they refund at most the ERP charged minus ERP(recommended)'; here charged minus ERP(recommended) is 0. The engine is right (the rider owes only ERP(actual) and FC-R07 refunds the overstatement); the sentence is false in the corner where ERP(actual) is below ERP(recommended), which also satisfies the card's trigger wording if the actual path passes some gantry the recommended route avoids. When ERP(actual) exceeds ERP(recommended) the bound holds. Wording only, no outcome or amount is wrong."
+    },
+    {
+     "id": "F3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran service_code: 'Carpooling' (label of CARPOOL), 'carpooling' and 'Ryde+' (label of RYDEPLUS) return None, while 'Carpool', 'Car pool', 'Ryde Plus', 'RydePlus', 'Ryde X GO' resolve. kb.resolve (kbload.py lines 96-114) matches codes, aliases and organizer codes, not labels, and engine_toll only strips non-alphanumerics from codes. rider_share then gives gap UNRECORDED: ESCALATE_HUMAN, FC-R-INSUFFICIENT-DATA, RECORDS_MISSING (reproduced with the full ERP line). Tier is HUMAN (safe), so outcome-neutral in tier; the reason and flag are mislabeled for a recorded service. Low impact: no case in the KB records a service type by label."
+    },
+    {
+     "id": "F4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "In a scratch copy of kb/ I replaced the inactive-gantry skip in engine_toll.erp_of with 'if False: continue'. selftest.py still printed 99/99, 561/561 and '27 ERP cases ... all pass'; the full build_kb.py --no-xlsx --no-fuzz in the mutated copy ended ERROR 0 | WARN 0. T17 charges 2.50; counting the inactive PIE would make expected 6.50, which is an undercharge and still UPHOLD VALID AUTO, so the test cannot see the regression. Charging 6.50 would separate them. The repo was not touched (git status clean)."
+    },
+    {
+     "id": "F5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Applied each mutation to a scratch copy and ran selftest.py (and the full build for a, b, c, g): all SURVIVE with no FAIL line. (a) removing the FC-F04 order sentence, and separately the '(it takes precedence ...)' parenthesis (the test only looks for 'precedence' and 'FC-R08', which FC-R00's sentence also supplies); (b) removing AUTH-04's 'If one disagreement fits both G3 and G8 ... G3 applies.'; (c) FC-R01 '(FC-F01; RydeSEND fares do, FC-R06)' changed to '(FC-F01)'; (d) dropping 'not recalculated' in fc_r01; (e) 'if rec is None' branch replaced by rec = 0.0; (f) dropping 'charged is None' from the guard and replacing the gantry-log None handling with 'gantries or []'; (g) deleting the 'verified for private-hire (PDVL) drivers only' sentence (the bare 'PDVL' substring remains elsewhere). Build stays ERROR 0 | WARN 0 each time. Test-coverage gaps only; the current engine paths behave correctly."
+    },
+    {
+     "id": "F6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran DISP-002 with one rider message at 08:47:00 on the base engine (git archive of da4c329 in /tmp) and on the current engine. \"I'm at the mall entrance\": base UNCLEAR, UPHOLD, APPROVE, WEAK, R8; now PLACES, ESCALATE_HUMAN, HUMAN, STRONG, R7. Same for \"I'm at the mall now. where r u\", 'I am at the mall pick up point' and 'waiting at the mall lobby'. This happens because removing the places from RIDER_LATE_CORE leaves only the PLACES match. D38 (open_items.yaml line 50) lists only LATE to UNCLEAR and the place-plus-admission side effect; READING_CASES have no 'at the mall' placement case. The move is in the safe direction and consistent with CW-F06, so this is a record gap, not an unsafe reading. I could not reproduce the exact 928-message counter, but the individual effects reproduce."
+    },
+    {
+     "id": "F7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read the corpus: article 115000772653 (rider, edited 2024-04-19) body says 'For all services apart from RydeSEND, ERP charges are excluded from the fares.' FC-R06 cites this article as a source (for the first sentence only). grep of kb/ (outside sources) finds 'apart from RydeSEND' / 'excluded from the fares' nowhere: not in the ERP_RIDER_SHARE note, FC-R06, FC-F04, D35 or O15. FC-R06's statement says 'Ryde's articles set no share for any other service', which that sentence argues against (it is B, older than the 2026 article). The table note itself is more careful ('Only the services that article names have a share'). The narrowing to GEN-R07 is a safe-direction design choice; the record is one-sided, so Jasper decides without the counter-sentence."
+    },
+    {
+     "id": "F8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "FC-R12 (rules.yaml line 1289, unchanged in A2) lists 'the recorded distance, a usable road-matched path, the fare breakdown or the recommended route' and sparse pings; it names neither the service type nor the ERP gantry log. FC-R06, FC-F04, PB-FC-TOLL step 1 and engine_toll.run (steps 'FC-R12: no gantry log, a gantry without a rate, or no usable ERP line') route those cases to FC-R12. FC-R06 and FC-F04 say explicitly what to do, so a reader following them reaches escalation; the gap is that the pointed-to D card does not state the condition. Missing detail only."
+    },
+    {
+     "id": "F9",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "FC-R01 and FC-R08 say 'gantries that the recommended route avoids'. engine_toll.fc_r01 uses a Counter difference, and test R6 pins it. Ran fc_r01 with gantries (CTE, CTE), charged 5.00, recommended [CTE]: extra_gantries [CTE], toll_claim TOLL_REFUND 2.5 with FC-R-TOLL-FROM-DETOUR; with charged 2.50 it gives UPHOLD VALID. The reading follows the card's intent ('ERP that the longer route caused') and FC-R08's formula ERP(actual) minus ERP(recommended), which counts a second pass, so practical impact is nil; but the repeated-pass interpretation has no card text or label. Wording gap only."
+    }
+   ]
+  },
+  "a55cc5adc92fc406b": {
+   "verdicts": [
+    {
+     "id": "A2R2-01",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MAJOR",
+     "reason": "Behavior reproduced with scratch scripts in /tmp/a2check2: RydePOOL, RydeHIRE, Ryde X GO and OTHER with is_carpool=True get share 0.5 (gantries CTE 2.50 + PIE 4.00, charged 3.25 gives UPHOLD amount 0.0 tier AUTO FC-R-TOLL-VALID; charged 6.50 gives TOLL_REFUND 3.25 plus DRIVER fraud signal at APPROVE). Only RydeSEND+carpool is refused, and the same services without the flag escalate (GEN-R-POLICY-GAP, HUMAN). But no rule card says what a carpool flag does on a no-share service. FC-R06 states '0.5 for a carpool trip' without naming a service and names only RydeSEND+carpool as having no rule. The ontology describes is_carpool as 'True for a carpool trip when the service type does not say so'. The 2026 RydePOOL article says each rider pays 50%. T19 and T20 carry no flag, so they do not contradict the engine. The engine's reading is defensible, and the opposite one is too. Which reading the owner wants is a judgment, and the card has a gap here. RydePOOL is in the scope.yaml backlog (out of scope), so MAJOR at most, not CRITICAL."
+    },
+    {
+     "id": "A2R2-02",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced. With gantries CTE+PIE, charged 6.50 and route_review {'justification': None}, {'recommended_gantries': None}, {} or None plus a justification, T.run returns UPHOLD AUTO FC-R-TOLL-VALID, while T.fc_r01 returns escalate 'FC-R12'. The skip is real (line 134). The severity is overstated. The module docstring says FC-R12 is not applied beyond missing gantry data. run() has no input saying a detour was claimed, so a case with no route_review gets the same UPHOLD AUTO by design. fc_r01's escalate also fires when route_review is absent, because it runs in the route-ticket context. A route_review without recommended_gantries is a shape no KB case produces (E11 has no route_review, and _erp_case adds both keys together). It is a cheap hardening and a doc gap, not a rule error."
+    },
+    {
+     "id": "A2R2-03",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced. is_carpool 'true', 1, 'yes' and 'True' give UPHOLD AUTO, and only True gives the 3.25 refund. active 'false', 0 and None are counted as active; only False is skipped. fc_r01 with active=None on the extra gantry gives extra=[] while run() gives TOLL_REFUND 4.00, so the two functions do disagree. But all of these are off-schema values: the ontology types is_carpool as boolean, and the organizer's E11 uses a real boolean for active. Round 1 finding F10 settled the strict True-only reading of is_carpool as deliberate (04_round1_disposition.jsonl), and the file is a reference harness, not the product engine. Input hardening plus a small run/fc_r01 inconsistency, no wrong rule, so MINOR."
+    },
+    {
+     "id": "A2R2-04",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "The card sentence at kb/rules.yaml:1212 ('together they refund at most the ERP charged minus ERP(recommended)') is false in one configuration. D08 reproduced: actual CTE+PIE 6.50, recommended CTE+MCE 7.50, charged 12.00 gives TOLL_REFUND 5.50 (FC-R07 5.50 plus FC-R08 floored to 0), but the card's cap is 4.50. The engine follows FC-R07 and is right. The finding's D07 example is not valid: there the actual path (CTE only) passes no gantry the recommended route avoids, so FC-R08 does not apply at all. I also derived that the sentence holds whenever ERP(actual) >= ERP(recommended), which is the only case where FC-R08 refunds anything. It fails only when the avoided-gantry path is cheaper in ERP than the recommended one and the line is overstated. That is a corner case, the refund is at tier APPROVE, and the formula and FC-R07 are explicit. So it is a wrong gloss to reword, not a MAJOR."
+    },
+    {
+     "id": "A2R2-05",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced. run() raises ValueError for charged '', 'abc' or 'S$2.50' and for a gantry rate ''. fc_r01 raises TypeError for gantry_passes=None (run() returns ESCALATE_HUMAN FC-R-INSUFFICIENT-DATA there), KeyError for a gantry row without 'gantry', ValueError for quoted_fare 'S$19.80', and TypeError for base_fare None with quoted_fare set. The fc_r01 versus run() inconsistency on null is real, and null for 'missing' is a normal extractor output. Still, each failure is a fail-stop crash, not a silent wrong ruling, and nothing outside selftest calls these functions. Round 1 F10 handled the same kind of input typing as hardening of an invented harness field. MINOR."
+    },
+    {
+     "id": "A2R2-06",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced. A NaN rate (charged 8.50 on one gantry) and charged=nan both give UPHOLD AUTO, and charged=inf gives TOLL_REFUND amount inf. NaN and inf are not producible from strict JSON, as the finding itself says, so MINOR is right. Fix: a math.isfinite check in a shared numeric helper."
+    },
+    {
+     "id": "A2R2-07",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced. On RydeX with gantries CTE+PIE, charged 6.50 and recommended [CTE], fare_type 'Non-metered fixed', 'unmetered' and 'fixed (not metered)' give ESCALATE_HUMAN GEN-R-POLICY-GAP, but 'fixed' and 'FIXED_AT_BOOKING' give TOLL_REFUND 4.00. The substring test is at engine_toll.py line 42. The TX-PRICING codes are FIXED_AT_BOOKING, METERED, RECALCULATED, UNKNOWN and OTHER, so none of these free-text values is a schema value. The error goes to a person, which is the safe direction. MINOR."
+    },
+    {
+     "id": "A2R2-08",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Part (a) reproduced. mk(charged=8.50, recommended=[('Unlisted', None)]) gives ESCALATE_HUMAN HUMAN with reasons ['FC-R-TOLL-OVERSTATED','FC-R-INSUFFICIENT-DATA'], and the DRIVER fraud signal is kept. This is the only escalating return path that leaves a TOLL_REFUND reason in place (line 137, while line 146 resets reasons). It violates the invariant erp_code_check enforces for erp_cases, and no erp_case covers it. The kept fraud signal matches the T27 precedent for the metered escalation, so only the reason list is a label inconsistency. Part (b) is not a defect: the repeated-pass test R6 deliberately counts a gantry passed again as another pass, and two identical rows are indistinguishable from that without a rule. Reproduced: two CTE rows with charged 5.00 give UPHOLD, one row gives a 2.50 refund. Label-level, MINOR."
+    },
+    {
+     "id": "A2R2-09",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced. 'CTE (southbound)' at 6.00 in the actual log and 2.50 in the recommended route: run() gives TOLL_REFUND 3.50, but fc_r01 gives extra=[] and toll_claim None. With the recommended gantry listed inactive, run() gives 4.00 and fc_r01 gives no claim. A spelling difference opens a harmless UPHOLD claim. Two caveats. fc_r01's name-only test follows the FC-R01 and FC-R08 wording literally ('gantries that the recommended route avoids'), so run() is the looser one. The UTC claim is off-format: every organizer timestamp ends +08:00 (disp002 and E11), so the timestamp[11:16] slice is right for the real format. The mismatch is real but small, and the tier is APPROVE. MINOR."
+    },
+    {
+     "id": "A2R2-10",
+     "verdict": "REFUTED",
+     "severity_after_check": "NONE",
+     "reason": "The engine does what the cards say. FC-R07 raises the driver fraud signal whenever the ERP charged to the rider exceeds the expected amount by more than the tolerance, and it explicitly says any ERP line on a RydeSEND trip counts as overstated. FC-F04 defines expected ERP as the share times the gantries passed, so an empty list gives 0. Nothing in any rule, the ontology or the playbook uses erp_toll_source; it exists only in the E11 case file. The finding asks for a new rule element (a source-of-entry condition and a GPS-trace check), which would be a FairRyde extension needing its own source label, and it is not an engine defect. The empty-gantry-list half was already refuted in round 1 (F10). The tier is APPROVE, so a person decides the fraud consequence. FC-R07's rating is a recorded D35 item 5 for Jasper."
+    },
+    {
+     "id": "A2R2-11",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced. resolve_g3 with blind tier 'HUMAN ', 'human' or 'Human' gives tier APPROVE (a downgrade from HUMAN), outcome 'escalate_human' gives APPROVE, and a missing 'tier' key raises KeyError. The comment at line 30 shows the lowest-tier treatment of unknown tiers is intentional. Well-formed input behaves as AUTH-04 says: tier 'HUMAN' stays HUMAN. The callers (g3_check) pass exact vocabulary codes from E.run, and no engine emits a malformed tier. Failing safe on malformed input would be better, but the input is a caller error, so MINOR."
+    },
+    {
+     "id": "A2R2-12",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "I read AUTH-04 (rules.yaml 1694-1706). The tie-break says 'If one disagreement fits both G3 and G8 (the history-aware pass is a Judge pass), G3 applies', and G8 is separately defined as the Judge passes disagreeing 'with each other or with the rules engine'. In the finding's three-way case (blind X, aware Y, engine Y), blind versus aware fits both gates and blind versus engine fits G8 only. The words 'one disagreement' and the parenthetical therefore keep G8 (HUMAN) for the second. The text can be read correctly, so I could not show a defect. The finding rests on a possible misreading, with nothing run, and the one-sentence clarification it proposes is cheap. Whether the owner wants the tie-break to cover the three-way split is an owner judgment. engine_gates.py has no G8 input, so the code cannot settle it."
+    },
+    {
+     "id": "A2R2-13",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced against the current engine_noshow.py. 'pls wait at the mall liao' reads UNCLEAR in the wait and None before arrival; 'pls wait at the lobby liao' reads PLACES and None; \"I'm at the mall liao\" reads UNCLEAR in both. It is pre-existing and not caused by the D34 item 1 change. Running the base commit da4c329 gives the same None before arrival for the mall and lobby instruction forms. The git diff of engine_noshow.py touches only RIDER_LATE_CORE (the removed place words). Frozen area (D34): record in kb/open_items.yaml, do not fix in this step."
+    }
+   ]
+  },
+  "aeebbbf0c39ce4aba": {
+   "verdicts": [
+    {
+     "id": "CS-1",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced with engine_toll.run on gantries CTE 2.50 + PIE 4.00. RydePOOL, RydeHIRE, Ryde X GO and OTHER give ESCALATE_HUMAN (GEN-R-POLICY-GAP) without the flag, but with is_carpool=true they give TOLL_REFUND 3.25 APPROVE (charged 6.50) or UPHOLD AUTO (charged 3.25). RydeSEND plus the flag escalates. The FC-R06 card and the ontology note are silent on this precedence, as claimed. The finding does not show a contradiction, though. The card's literal text says '0.5 for a carpool trip' and lists the no-share cases by service, naming only RydeSEND plus carpool as a combination. The ontology says is_carpool is for 'a carpool trip when the service type does not say so', and selftest T05 deliberately applies the flag to RydeX. The engine matches that literal reading, and for RydePOOL a 0.5 result also matches the three newest driver pages. Whether the flag should override GEN-R07 for the no-share services is the owner's call (is_carpool is a data_gap field, absent from organizer data). If the owner says the flag must not override, the engine is wrong for out-of-scope services and this becomes MAJOR. As it stands it is a missing sentence in FC-R06 and the ontology, plus tests for RydePOOL, RydeHIRE and OTHER with the flag."
+    },
+    {
+     "id": "CS-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I read scope.yaml line 86 (backlog: 'RydePOOL and carpool trips with several riders'). FC-R06 has no single-rider condition, and a grep of the ontology finds no rider-count field. The probe CARPOOL, charged 1.63 or 3.25, gives UPHOLD 0.0 AUTO, and selftest T04 expects the same. So the rules and engine decide a case the scope file calls unsupported, and GEN-R07 covers 'a decision point not covered by any rule'. I lowered the severity for three reasons. The limit is already recorded: the FC-F04 credibility_note, D35 item 1 and O15 all say the division among several passengers is open and 'a backlog item in scope.yaml'. No input exists that the engine could test. And the correct share for several riders is unknown, so the 'loss for the rider' scenario cannot be shown wrong from the sources. The remaining defect is that FC-R06 and the engine do not state that 0.5 holds for one passenger only. The GEN-R07 'BACKLOG type' wording refers to claim types, and FC-TOLL is in scope."
+    },
+    {
+     "id": "CS-3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "open_items.yaml line 75: O15 asks only 'For carpool trips, does the driver key the total ERP or only the passenger's half ... among several passengers?'. D35 'decide' item (1) and docs/NEXT_STEPS.md line 42 say O15 also covers RydePOOL, RydeHIRE, Ryde X GO and Ryde+. The question that would settle the GEN-R07 escalation for those four services is not in the list Jasper will post. This is a record mismatch only; no outcome changes."
+    },
+    {
+     "id": "CS-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "git diff da4c329 dda592c shows the v0.1 step 2 'stop with no fare refund (still check ERP if contested)' became 'no fare refund, but do not stop at the ERP: ...'. The explicit stop is gone. FC-R04 (applies_to FC-ROUTE) has no fixed-fare exclusion, while FC-R03 and FC-R05 say RECALCULATED explicitly. Step 5 still lists FC-R04, so a reader can reach FC-R04's borderline escalation on a fixed-fare ticket that FC-R01 closes with no refund. The wording is ambiguous, not demonstrably wrong, and no engine implements FC-ROUTE. The suggested rewording is sound."
+    },
+    {
+     "id": "CS-5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "FC-R12 was not changed in A2 (applies_to [FC-ROUTE, FC-TOLL]). Its statement lists distance, road-matched path, fare breakdown, recommended route and sparse pings. The TX-REASON label is 'Route or fare evidence insufficient'. engine_toll step text says 'FC-R12: no gantry log, a gantry without a rate, or no usable ERP line charged', and FC-R06, FC-F04 and PB-FC-TOLL step 1 send an unrecorded service type to FC-R12. An unrecorded service type, a missing gantry log and a gantry without a rate appear nowhere in the card. The missing ERP line is only loosely covered by 'fare breakdown'. This is a card-wording gap with no tier effect, since the result is HUMAN either way."
+    },
+    {
+     "id": "CS-6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "The FC-R07 English reads 'by more than TOLL_TOLERANCE_SGD', and engine_toll uses 'charged - actual > tol + 1e-9', which is strict. The zh says '达 TOLL_TOLERANCE_SGD 以上' (reaches the tolerance or more). The base zh had no tolerance, so the round 1 fix for SG6 introduced the mismatch. It matters only when the excess equals a non-zero tolerance. The tolerance is S$0.00 now, so no current outcome changes."
+    },
+    {
+     "id": "CS-7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "taxonomy.yaml line 612 reads 'ERP charged to the rider matches the rider's share ... and no refund is due for a detour'. Selftest T23 (charged 2.50 against 6.50 of gantries, detour) and T25 (charged 0.0) both return FC-R-TOLL-VALID, and FC-R08 says 'the ERP charge stands (FC-R-TOLL-VALID)' when nothing was charged above ERP(recommended). In those cases the charge is below the share, so 'matches' is inaccurate. The v0.1 label ('ERP matches the gantries passed') was already loose. This is a labeling issue only."
+    },
+    {
+     "id": "CS-8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Partly confirmed. The FC-R06 sources quote only 115000772653 ('toll charge will be applicable to the rider'), 'The fares for RydeSEND include ERP.' and the 50% sentence. The sentence naming the six share-1 services ('exclude ERP', 115001438614) appears only in the reference_data ERP_RIDER_SHARE source field. A grep of rules.yaml for 'exclude ERP' finds only statement text, so the credibility_note's 'every share is Ryde text' has no quote behind the share-1 element. Article 4408072389913 (edited 2023-12-31, driver) says 'each rider pays 50% of the total ERP charges' for RydePOOL. It is newer than the two 2023 appeal pages and agrees with the 2026 pages, and neither the note nor D35 mentions it. The failure scenario is overstated. META-04 also says 'escalate if the outcome or the amount depends on the conflict', so GEN-R07 for RydePOOL is consistent with it, and the rider-facing 115000772653 (2024-04-19) says 'all services apart from RydeSEND' exclude ERP. This is incomplete sourcing and conflict description, not a wrong outcome."
+    },
+    {
+     "id": "CS-9",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "make_xlsx.py line 528 says any AUTH-04 gate gives APPROVE and a provisional ruling, and line 540 says 'any trigger goes to a person with a provisional ruling'. The new gate_tiers column in the same sheet shows G2, G4 and G8 as HUMAN. AUTH-04 at the base commit already put G2, G4 and G8 in HUMAN, so the two lines were already loose. A2 did not touch them but made the contradiction visible next to the new column. Workbook wording only."
+    },
+    {
+     "id": "CS-10",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "make_xlsx.py line 245 reads '待决定事项 D1 到 D23'. open_items decisions run D1 to D38. The literal was already stale at the base commit, which had D34, and A2 added D35 to D38. The README text is wrong, but the cause is older than A2."
+    },
+    {
+     "id": "CS-11",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "The ANSWER block of annotation_schema.yaml has one outcome, one remedy_amount_sgd and one reason_code_primary per case. Secondary claims get only 'secondary_types' and 'reason_codes_secondary', and the schema never says the outcome columns describe the primary claim. engine_toll.fc_r01 returns fare_refund 0.0 plus a separate toll_claim with its own outcome and amount. The limitation applies to every multi-claim ticket in v0.1, but A2 makes the two-claim route ticket routine. A missing guideline line, with no wrong text."
+    },
+    {
+     "id": "CS-12",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "frozen area (D34). I ran the base and HEAD readers. In the wait, \"I'm at the mall, where are you?\", \"I'm at the mall waiting for you\", 'im at the clinic lobby', \"I'm at the MRT station exit B\" and 'at kopitiam beside the pin' go UNCLEAR to PLACES. Before the arrival, \"I'm at the mall, where are you?\" goes None to UNCLEAR, and the others go UNCLEAR to PLACES. D38 records only 'such a message now reads UNCLEAR' and the place-plus-admission side effect. I also diffed the readers over the 428-message reading corpus. 7 wait readings changed, all LATE to UNCLEAR (the 'LU' rows), and no message moved toward LATE, NEUTRAL or None. The movement is safe (UNCLEAR to PLACES is more conservative), and D38 is merely incomplete."
+    },
+    {
+     "id": "CS-13",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Confirmed for the playbook point and weak for the other two. PB-FC-TOLL step 6 (unchanged from v0.1) cites 'FRD-01, GEN-R06' for 'ERP overstatement is a fraud signal'. FRD-01's conditions cover arrival without GPS presence, stationary and uncontactable drivers, and repeated no-shows, and FC-R07 is what raises the signal, so the citation is wrong. FC-R06 has no 'produces' although it routes to GEN-R07 and FC-R12. FC-R08's 'produces' omits FC-R-TOLL-VALID, but FC-R07 already lists VALID, and checks.py only warns for outcome rules with no reason code. So the claimed failure of a tool 'missing VALID' does not happen. Metadata and citation hygiene only."
+    },
+    {
+     "id": "CS-14",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced. service_code returns None for 'Ryde+' and 'Carpooling' (the exact TX-SERVICE labels) and for 'carpooling', while 'Ryde Plus', 'RYDEPLUS', 'Carpool' and 'Ryde X GO' resolve. kb.resolve compares only codes, aliases and organizer codes, and the flatten step compares only codes. A 'Ryde+' trip gives ESCALATE_HUMAN with FC-R-INSUFFICIENT-DATA and RECORDS_MISSING, where GEN-R-POLICY-GAP is meant. A 'Carpooling' trip escalates instead of taking the 0.5 share, even with is_carpool=true. The tier stays HUMAN, or errs toward a person, so nothing unsafe results. Only the reason code and flag are wrong, and the carpool share is unreachable by the vocabulary's own label."
+    }
+   ]
+  }
+ }
+}

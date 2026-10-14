@@ -13,7 +13,7 @@ def _tbl(headers, rows):
     return "\n".join(out)
 
 
-def check_report(kb, rep, runs, dt_enum, priv, tests, out_scan=None, ann_status=None) -> str:
+def check_report(kb, rep, runs, dt_enum, priv, tests, out_scan=None, ann_status=None, erp_line=None) -> str:
     lines = ["# FairRyde knowledge base v0.1: check report", "",
              f"Generated from the YAML source files (knowledge base dated {kb.y['rules']['meta']['updated']}).", ""]
     lines.append(f"* Rules: {len(kb.rules)}; vocabularies: {len(kb.vocab)}; TX-CASE leaves: {len(kb.case_leaves)}; "
@@ -27,6 +27,8 @@ def check_report(kb, rep, runs, dt_enum, priv, tests, out_scan=None, ann_status=
     lines.append(f"* DT-CW-NOSHOW enumeration: {dt_enum}")
     lines.append(f"* State machines: {rep.tables.get('state_machines')}")
     lines.append(f"* Engine self-test: {sum(t['ok'] for t in tests)}/{len(tests)} variants pass")
+    if erp_line:
+        lines.append(f"* {erp_line}")
     lines.append(f"* Privacy dry run on DISP-002 (counts only): before {priv['before']}; after {priv['after']}; fragments after {priv['fragments_after']}; clean {priv['clean']}")
     if out_scan is not None:
         lines.append(f"* Leak scan of generated outputs (counts only): {out_scan}")
