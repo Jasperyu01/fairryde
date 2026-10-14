@@ -12,6 +12,7 @@ export const meta = {
 // args: {
 //   step: 'A2', round: 1, base: '<commit before the step>', head: '<commit to check>',
 //   task: 'what the step had to do, quoted from the fix list, NEXT_STEPS and the owner\'s decisions',
+//   case_dir: null, kb_extra: null,           // optional: directory of case files other than the round 1 cases (A6: pseudonymized organizer cases without their answer blocks), and extra KB files an applier may read (A6: precedents.yaml)
 //   apply_cases: ['E07'],                     // round 1 cases (validation/V4_e2e/cases) a fresh KB applier re-decides
 //   focus: { fidelity: '...', grounding: '...', adversarial: '...', consistency: '...' },   // step-specific checks
 //   prior: 'validation/build_checks/<step>/...disposition.jsonl or null (round 2: what round 1 found and how it was handled)',
@@ -50,8 +51,8 @@ const applyPrompt = (cid) => `You decide one dispute case using only a knowledge
 ${READONLY}
 
 Read only:
-- the KB: ${REPO}/kb/taxonomy.yaml, ontology.yaml, rules.yaml, reference_data.yaml, playbooks.yaml
-- the case ${REPO}/validation/V4_e2e/cases/${cid}.json
+- the KB: ${REPO}/kb/taxonomy.yaml, ontology.yaml, rules.yaml, reference_data.yaml, playbooks.yaml${A.kb_extra ? ', ' + A.kb_extra : ''}
+- the case ${A.case_dir || REPO + '/validation/V4_e2e/cases'}/${cid}.json
 Do NOT open anything else: not the Ryde policy pack, not validation/V4_e2e/4*.jsonl, not validation/build_checks, not validation/V5_scorecard, not docs/, not kb/open_items.yaml, not kb/tools, not kb/out, and do not run git log or git diff. The project's CLAUDE.md mentions a fix list; do not open it.
 
 1. Classify the case with the taxonomy and the classification rules (CLS-*), and find its playbook (playbooks.yaml; taxonomy entries name their playbook or scope).
