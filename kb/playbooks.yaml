@@ -93,7 +93,7 @@ playbooks:
       - {n: 2, do: CHECK, rule: CW-R00}
       - {n: 3, do: COMPUTE, rule: CW-F01}
       - {n: 4, do: CHECK, rule: "CW-R01 or CW-R02", note: "Free window by booking type"}
-      - {n: 5, do: CHECK, rule: CW-R08, note: "Driver lateness (generic assumption: other platforms' practice; FairRyde's condition for a driver not moving toward the pick-up and FairRyde's reading of an advance booking's assignment ETA; credibility D)"}
+      - {n: 5, do: CHECK, rule: CW-R08, note: "Driver lateness (generic assumption: other platforms' practice; FairRyde's condition for a driver not moving toward the pick-up and FairRyde's reading of an advance booking's assignment ETA; credibility D); a waiver always needs approval (AUTH-02 trigger 13)"}
       - {n: 6, do: CHECK, rule: CW-R07}
       - {n: 7, do: CHECK, rule: "DQ-06, CW-R10", note: "Charged amount; voucher amount if waived"}
       - {n: 8, do: GET, rule: GEN-R05, note: "Both advocates' briefs"}

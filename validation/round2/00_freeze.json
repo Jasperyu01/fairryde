@@ -1,6 +1,6 @@
 {
  "kb_version": "0.2.0",
- "frozen_at": "2026-10-14T11:55:22",
+ "frozen_at": "2026-10-14T12:06:38",
  "counts": {
   "rules": 90,
   "vocabularies": 22,
@@ -13,21 +13,21 @@
  },
  "files": {
   ".gitignore": "ee44cd10eebf96be8872db0a99a6d863ab14adcdbdbd609203274e2682d506c7",
-  "CHANGELOG.md": "94b6232be4d3997314955863803ba36897e3a5e043f2d60607bd2276ebd2ce22",
+  "CHANGELOG.md": "ba2fff91ac005a33b71fe76a1c8f62a31061ebca795dfd003928b17fd944ea9a",
   "annotation_schema.yaml": "65cef531139a68529dbb19d09a857a0393e738a5a2b1b1aa6a1d9ba889648774",
   "build_kb.py": "d836185686316cb5685655c2d9bc6ae77ea72b524df019d36655c384bce9bea8",
   "inventory.yaml": "50ac2a95278615ec7d8f8d039acc7c22df699c147e9bfd749b1c84062c5752a8",
   "ontology.yaml": "57e1eb29f63302bb72bcc98f6fb970873168dfb55440f645aceb91be52727a63",
-  "open_items.yaml": "11953bbc48352c4d9669e68415d55190f19fe1a7d526b997820a581da5e705b0",
-  "out/FairRyde_Annotation_v0.2.xlsx": "c10e965b4d29964365491226978dc64a5384fa256f579495ee865d5a55ddeac7",
-  "out/FairRyde_KB_v0.2.xlsx": "cafe7c87bfead6cff3f74e925da32ed954909e5596f1857f1a5207af041f0675",
-  "out/check_report.md": "8c563bf667c3a451d3d432bf1a00c9f838fb8446975fc1c2e4137a309003e9cc",
-  "out/disp002_trace.md": "31d94c939b1534733ba77a42c6c55f52138e9e0c56fae716f2821e2e27e02e62",
-  "playbooks.yaml": "5e5729a86d04322ad08eec23c404f116ca764d4129e417312d8b583f9ca15d5c",
+  "open_items.yaml": "80144d0fdb84c6b7c7bfbbb1376be2d0f775978b2573c69fcc200aaa4153e867",
+  "out/FairRyde_Annotation_v0.2.xlsx": "9acb24fb5767e783b3182e882966dc8a90193a737910744f2b8ccfaea307e4d6",
+  "out/FairRyde_KB_v0.2.xlsx": "bcf19849d6338c5ddae9d16303e633e3aee9573467ba19ee7cc83675326bd43f",
+  "out/check_report.md": "e6151d958f096c61a4d78391401de3dddc4e5a5d2a5ac7e27d1240692cce9fc3",
+  "out/disp002_trace.md": "b354c47b8e77bf89f9653a50fec4e7eb121d6ecb7ca8428a164d520b615beb22",
+  "playbooks.yaml": "3ecd0381c7e82448731f8ae679520f6df95887be1c0bde3a8b6c58822cc11708",
   "privacy.yaml": "ebf0c71e43f1acf5d9aa4b2bb0c06558d298baecbf93f0cfe6e3eb93e4f0904c",
   "protocol_gap.yaml": "9c1d17076b300052d15cbd5b4b09c290322475af881cd4b4fc3b792dbe4b9e43",
-  "reference_data.yaml": "eba2281beaa4f0741663a028478c6d4000615a37dc102c87a1546426cef4cbf0",
-  "rules.yaml": "035c26a75391d70e67ff8566a8125e8a339ac90e9ee21cc9dfa66429830bdb6c",
+  "reference_data.yaml": "74ba2c0aaed45aa9adfd1efe1f23f457a1597fec34d2a3f5826395a9efb73884",
+  "rules.yaml": "8f539942bb7ba63cb2ed06e0ee34cf642bac4c14e3f50044c7660c2650ca254a",
   "scope.yaml": "c46a908bd7f2533701a1ed2376c33b8b078c96fd98259f28ae925393c8607185",
   "sources/chordx_knowledge_base.md": "83b5f783dafa6cba00880988c5ff3e9594fc03b659818c6fd5f4146a10014339",
   "sources/organizer/disp002.md": "a11fb5b04672c15b56be01a637726945be192e26e276e3367fe7dc7d80685167",
@@ -49,7 +49,7 @@
   "tools/make_xlsx.py": "467b6b31cce4a00398669f8d94ddfd08b9a88572bd8460a4595b08d0667021c1",
   "tools/privacy_scan.py": "718604a5a7aef6ac2390b20aa5a86d3f8b3034b4c2eb2f53831bc6db94bfe2e2",
   "tools/report_md.py": "e136f2378edca6284de8a4a728a99392260ce9bf1d83ea0e9ca8ff9cafe329dd",
-  "tools/selftest.py": "a94751ac14a0e9ca8f35eabe0d1f78dcc64031a73f6f2422e1b64cf0a251e3f7",
+  "tools/selftest.py": "0f22b4d1a779fcab77adfbd6cf9efb1e4955b925f464a33d5ee304068fd8777f",
   "tools/stats.py": "90b6223152b3ec9267a7eb4353b36248a22e9345f2b59acb5b4404b9e7433f70"
  }
 }

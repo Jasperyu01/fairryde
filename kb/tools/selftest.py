@@ -712,14 +712,19 @@ def variants(base: dict):
     v("V98", "V06 with the driver 150 m away from 08:46 to 08:48, those pings written in UTC: sorted by instant, a departure (R4)", v98,
       {"outcome": "WAIVE_FEE", "row": "R4", "findings": {"F-PRESENCE": "LEFT"}})
 
-    def v99(c):
-        clean(c)
-        jit = (VENUE[0] + 0.000027, VENUE[1])            # about 3 m from the pin
-        _set_wait_pings(c, [(h, *((VENUE[0] + 0.000135, VENUE[1]) if h == "08:47:00" else jit), st) for h, _, _, st in _every_30s()])
-    v("V99", "V06 with pings 3 m from the pin and one 15 m away: inside the 50 m area, but at the radius's 10 m low end it is an outlier, "
-      "so the uphold would rest on FairRyde's logic (D29, radius part): approval", v99,
+    def v99(far):
+        def f(c):
+            clean(c)
+            jit = (VENUE[0] + 0.000027, VENUE[1])            # about 3 m from the pin
+            _set_wait_pings(c, [(h, *((VENUE[0] + far, VENUE[1]) if h == "08:47:00" else jit), st) for h, _, _, st in _every_30s()])
+        return f
+    v("V99", "V06 with pings 3 m from the pin and one 25 m away: inside the 50 m area, but at the radius's 20 m low end it is an outlier, "
+      "so the uphold would rest on FairRyde's logic (D29, radius part): approval", v99(0.000225),
       {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "findings": {"F-GPS-LOGIC": False}, "decisive": ["CW-F04B"],
        "triggers": ["would decide it with ARRIVAL_GEOFENCE_M"]})
+    v("V99B", "as V99 with the far ping 15 m away: ordinary GPS error, inside the radius even at its 20 m low end (Jasper, 2026-10-14, "
+      "D39 (g)), so the uphold rests on the pings alone: automatic", v99(0.000135),
+      {"outcome": "UPHOLD", "row": "R8", "tier": "AUTO", "findings": {"F-GPS-LOGIC": False}, "not_decisive": ["CW-F04B"], "not_triggers": ["D29"]})
 
     def v101(c):
         clean(c, end="08:49:15")
@@ -1308,6 +1313,12 @@ def a4_check(kb) -> list:
               "asked if I had a boyfriend and whether I lived alone", "He was driving dangerously", "He left me at a dark isolated road at night.",
               "He refused to stop the car when I asked.", "We had an accident on the way", "I felt unsafe in the car"):
         need("CLS-01", bool(hit(x)), f"the safety stand-in misses {x!r}")
+    # Jasper's decisions of 2026-10-14 on A3 and A4's open points: the radius's low end above ordinary GPS error (D39 (g)),
+    # and every CW-R08 waiver needs approval (D40 (k))
+    lo = kb.param("ARRIVAL_GEOFENCE_M", "ryde_2026")["plausible_range"][0]
+    need("ARRIVAL_GEOFENCE_M", lo >= 20, f"the radius's plausible range starts at {lo} m, below ordinary phone GPS error (D39 (g): 20 m)")
+    need("AUTH-02", "(13)" in t("AUTH-02") and "CW-R08" in t("AUTH-02"), "AUTH-02 has no trigger for a CW-R08 waiver (D40 (k))")
+    need("CW-R08", "always needs human approval" in t("CW-R08"), "CW-R08 must say a waiver needs approval (D40 (k))")
     import explain as X                     # EXP-03: a number inside a verbatim clause quote is exempt, other quoted numbers are not
     q = X.clause_quotes(kb)
     need("EXP-03", X.exp03_check('Ryde: "Has waited for more than 3 mins".', set(), q) == [], "a number in a verbatim clause quote is not exempt")

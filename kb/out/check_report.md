@@ -8,11 +8,11 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 * DISP-002 fields mapped: 59 of 59 leaf paths
 * DT-CW-NOSHOW enumeration: {'combinations': 192, 'unique': 192, 'gaps': 0, 'overlaps': 0}
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
-* Engine self-test: 125/125 variants pass
+* Engine self-test: 126/126 variants pass
 * ERP rules self-test: 53 ERP cases, the FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: all pass
 * Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
-* Annotation workbook: FairRyde_Annotation_v0.2.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.2.20261014T115338.xlsx
+* Annotation workbook: FairRyde_Annotation_v0.2.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.2.20261014T120616.xlsx
 * Issues: ERROR 0, WARN 0, INFO 3
 
 * DISP-002 under organizer_case: **UPHOLD** (row R8), reasons CW-R-NOSHOW-VALID, CW-R-PIN-AMBIGUOUS, flags BOOKING_TYPE_INFERRED, BOUNDARY_MARGIN, MARGIN_WITHIN_SPREAD, NO_RIDER_EVIDENCE, PIN_VENUE_MISMATCH, FRAUD_SIGNAL, GENERIC_ASSUMPTION_USED, confidence 0.689, tier **APPROVE**
@@ -136,7 +136,8 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | V100 | V96 with the platform's arrival check: an outlier before the indication cannot contradict the check, so automatic | UPHOLD | R8 | AUTO | 0.964 | pass |
 | V97 | Ryde advance booking for 08:45, platform check at 08:38, one 150 m outlier at 08:40:15: it can change neither the arrival nor the wait, so the uphold stays automatic | UPHOLD | R8 | AUTO | 0.964 | pass |
 | V98 | V06 with the driver 150 m away from 08:46 to 08:48, those pings written in UTC: sorted by instant, a departure (R4) | WAIVE_FEE | R4 | AUTO | 1.0 | pass |
-| V99 | V06 with pings 3 m from the pin and one 15 m away: inside the 50 m area, but at the radius's 10 m low end it is an outlier, so the uphold would rest on FairRyde's logic (D29, radius part): approval | UPHOLD | R8 | APPROVE | 0.964 | pass |
+| V99 | V06 with pings 3 m from the pin and one 25 m away: inside the 50 m area, but at the radius's 20 m low end it is an outlier, so the uphold would rest on FairRyde's logic (D29, radius part): approval | UPHOLD | R8 | APPROVE | 0.964 | pass |
+| V99B | as V99 with the far ping 15 m away: ordinary GPS error, inside the radius even at its 20 m low end (Jasper, 2026-10-14, D39 (g)), so the uphold rests on the pings alone: automatic | UPHOLD | R8 | AUTO | 0.964 | pass |
 | V101 | Ryde advance booking for 08:45 with the platform check at 08:38; an outlier 10 s after the indication is the last ping before 08:38:30, so without the logic it would contradict the check: R11 (D29) | UPHOLD | R11 | APPROVE | 0.964 | pass |
 | V102 | Ryde on-demand trip: at the pin until 08:45:00, then the next ping (08:46:40, 400 m) comes 40 s after the 3-minute wait ended: the driver may have left before it ended, so approval | UPHOLD | R11 | APPROVE | 1.0 | pass |
 | V103 | Ryde advance booking for 08:45: 400 m away from 08:40:20 to 08:44:50 and first back at the pin at 08:45:50: the pings cannot show the driver at the pick-up when the counted wait started, so approval | UPHOLD | R11 | APPROVE | 0.767 | pass |

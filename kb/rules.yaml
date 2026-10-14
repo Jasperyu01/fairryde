@@ -966,7 +966,8 @@ rules:
       cut-off of CW-R02, whose assignment ETA is the ETA the app gave at acceptance, if later than the scheduled time; and a
       driver who is not moving gives this ground only when, by the app's ETA from where the driver was, the driver could no
       longer reach the pick-up by the assignment ETA plus DRIVER_LATE_GRACE_S (an early driver waiting nearby is not a ground).
-    zh: 乘客取消时司机已晚于派单 ETA 加宽限、或没有朝上车点移动（已在上车点等候的司机算作朝上车点移动），则乘客取消费可免除。Ryde 未公开此规则（通用假设）。预约单的派单 ETA 取预约时间（FairRyde 的读法：司机应在那时到达上车点）；但在 CW-R02 的截止时间之后才被接的预约单，派单 ETA 取接单时 App 给出的 ETA（若晚于预约时间）；预约单的司机没有移动时，只有按 App 从司机所在位置算的 ETA 已无法在派单 ETA 加宽限内到达上车点，才构成免除理由（提前到附近等候的司机不构成）。
+      A waiver under this rule always needs human approval (AUTH-02 trigger 13), never AUTO.
+    zh: 乘客取消时司机已晚于派单 ETA 加宽限、或没有朝上车点移动（已在上车点等候的司机算作朝上车点移动），则乘客取消费可免除。Ryde 未公开此规则（通用假设）。预约单的派单 ETA 取预约时间（FairRyde 的读法：司机应在那时到达上车点）；但在 CW-R02 的截止时间之后才被接的预约单，派单 ETA 取接单时 App 给出的 ETA（若晚于预约时间）；预约单的司机没有移动时，只有按 App 从司机所在位置算的 ETA 已无法在派单 ETA 加宽限内到达上车点，才构成免除理由（提前到附近等候的司机不构成）。按本规则免除一律需人工批准（AUTH-02 第 13 项），不能自动。
     params: [DRIVER_LATE_GRACE_S]
     produces: [CW-R-DRIVER-LATE]
     sources:
@@ -1867,8 +1868,11 @@ rules:
       driver count as arrived and present (CW-F04B: F-GPS-LOGIC true), or would do so with one of CW-F04B's parameters at
       either end of its plausible range (D29 names the ping-gap and radius parameters), decision D29. For a no-show fee the
       decision-table rows R9 and R11 (rated D) already make it decisive (decisive_definition clauses 2 and 3); a waiting fee
-      has no decision table (D31), so this trigger carries both parts.
-    zh: 任一即需人工批准：有决定性的规则或决策表行；任何一方带欺诈信号（对称）；清洁费及所有"需批准"类型；金额超限或置信度不足；裁决所依赖的点存在已知来源矛盾（若矛盾会改变结果或金额，则按 META-04 转人工、按 AUTH-06 为 HUMAN）；对自动裁决的申诉；无联系记录、多收费用、记录缺失；决定性余量落在边界带内且各记录对起止时刻的差异大于余量（不论结果有利于谁）；维持收费而 pin 与场馆不符且乘客说自己在该场馆；结果有利的一方的文字里有注入指令；司机 GPS 无法确定等待期间是否离开（GPS_AMBIGUOUS，见 CW-F04B）；按是非曲直维持缺席取消费或等候费，而让司机算作已到达并在场的是 FairRyde 自己的 GPS 判断逻辑、不是定位点本身（CW-F04B：F-GPS-LOGIC 为真），或 CW-F04B 某个参数取其合理区间任一端时会如此（D29 把定位间隔和半径参数列入），决定 D29；缺席取消费的决策表行 R9、R11（可信度 D）本身已使其成为决定性的（decisive_definition 第 2、3 条），等候费没有决策表（D31），由这一项覆盖这两部分。
+      has no decision table (D31), so this trigger carries both parts;
+      (13) a rider's cancellation fee waived because the driver was late or not moving toward the pick-up (CW-R08, rated D;
+      CW-RIDERCANCEL has no decision table, so this trigger makes the waiver need approval, in line with D29; Jasper,
+      2026-10-14, open item D40 (k)).
+    zh: 任一即需人工批准：有决定性的规则或决策表行；任何一方带欺诈信号（对称）；清洁费及所有"需批准"类型；金额超限或置信度不足；裁决所依赖的点存在已知来源矛盾（若矛盾会改变结果或金额，则按 META-04 转人工、按 AUTH-06 为 HUMAN）；对自动裁决的申诉；无联系记录、多收费用、记录缺失；决定性余量落在边界带内且各记录对起止时刻的差异大于余量（不论结果有利于谁）；维持收费而 pin 与场馆不符且乘客说自己在该场馆；结果有利的一方的文字里有注入指令；司机 GPS 无法确定等待期间是否离开（GPS_AMBIGUOUS，见 CW-F04B）；按是非曲直维持缺席取消费或等候费，而让司机算作已到达并在场的是 FairRyde 自己的 GPS 判断逻辑、不是定位点本身（CW-F04B：F-GPS-LOGIC 为真），或 CW-F04B 某个参数取其合理区间任一端时会如此（D29 把定位间隔和半径参数列入），决定 D29；缺席取消费的决策表行 R9、R11（可信度 D）本身已使其成为决定性的（decisive_definition 第 2、3 条），等候费没有决策表（D31），由这一项覆盖这两部分；因司机迟到或没有朝上车点移动而免除乘客取消费（CW-R08，可信度 D；CW-RIDERCANCEL 没有决策表，由这一项使免除需人工批准，与 D29 一致；Jasper，2026-10-14，待办 D40 (k)）。
     params: [AUTO_LIMIT_SGD, TAU, BOUNDARY_BAND_S]
     sources:
       - {type: GOV_GUIDANCE, doc: GOV-IMDA-AGENTIC, quote: 'Organisations should define significant checkpoints or action boundaries that require human approval, especially before sensitive actions are executed.'}

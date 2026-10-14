@@ -64,7 +64,7 @@ Sensitivity test (decisive definition, clause 2):
 | BOOKING_INFER_MATCH_S | 60 | [30, 120] | D | 30 -> UPHOLD (R8) | 120 -> UPHOLD (R8) | no |  |
 | BOOKING_INFER_ETA_S | 120 | [60, 300] | D | 60 -> UPHOLD (R8) | 300 -> UPHOLD (R8) | no |  |
 | TS_TOLERANCE_S | 30 | [5, 60] | D | 5 -> UPHOLD (R8) | 60 -> UPHOLD (R8) | no | CW-R06, CW-F04B, CW-F06 |
-| ARRIVAL_GEOFENCE_M | 50 | [10, 100] | D | 10 -> UPHOLD (R8) | 100 -> UPHOLD (R8) | no | CW-R06, CW-F04B, CW-F06 |
+| ARRIVAL_GEOFENCE_M | 50 | [20, 100] | D | 20 -> UPHOLD (R8) | 100 -> UPHOLD (R8) | no | CW-R06, CW-F04B, CW-F06 |
 | PING_MAX_GAP_S | 300 | [60, 420] | D | 60 -> ESCALATE_HUMAN (R10) | 420 -> UPHOLD (R8) | yes (outcome changes) | CW-F04B |
 | LEFT_MIN_OUTSIDE_S | 60 | [30, 120] | D | 30 -> UPHOLD (R8) | 120 -> UPHOLD (R8) | no | CW-F04B |
 | SPEED_MAX_KMH | 120 | [100, 150] | D | 100 -> UPHOLD (R8) | 150 -> UPHOLD (R8) | no | CW-F04B |
@@ -153,7 +153,7 @@ Sensitivity test (decisive definition, clause 2):
 | BOOKING_INFER_MATCH_S | 60 | [30, 120] | D | 30 -> UPHOLD (R8) | 120 -> UPHOLD (R8) | no | CW-F01 |
 | BOOKING_INFER_ETA_S | 120 | [60, 300] | D | 60 -> UPHOLD (R8) | 300 -> UPHOLD (R8) | no | CW-F01 |
 | TS_TOLERANCE_S | 30 | [5, 60] | D | 5 -> UPHOLD (R8) | 60 -> UPHOLD (R8) | no | CW-R06, CW-F04B, CW-F06 |
-| ARRIVAL_GEOFENCE_M | 50 | [10, 100] | D | 10 -> UPHOLD (R8) | 100 -> UPHOLD (R8) | no | CW-R06, CW-F04B, CW-F06 |
+| ARRIVAL_GEOFENCE_M | 50 | [20, 100] | D | 20 -> UPHOLD (R8) | 100 -> UPHOLD (R8) | no | CW-R06, CW-F04B, CW-F06 |
 | PING_MAX_GAP_S | 300 | [60, 420] | D | 60 -> ESCALATE_HUMAN (R10) | 420 -> UPHOLD (R8) | yes (outcome changes) | CW-F04B |
 | LEFT_MIN_OUTSIDE_S | 60 | [30, 120] | D | 30 -> UPHOLD (R8) | 120 -> UPHOLD (R8) | no | CW-F04B |
 | SPEED_MAX_KMH | 120 | [100, 150] | D | 100 -> UPHOLD (R8) | 150 -> UPHOLD (R8) | no | CW-F04B |

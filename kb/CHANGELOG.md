@@ -47,12 +47,12 @@ Credibility is shown as v0.1 → v0.2 where it changed.
 | CW-F06 | A1, A1b, A2 | FX1 | Content-based reading of rider calls, messages and phone GPS. Messages before the arrival count (D30, D33). The "at the mall" exception (D38). |
 | CW-R03 | A3 | FX4 | Inputs add F-GPS-LOGIC. |
 | CW-R06 | A3 | FX4 | Its FairRyde parts are delegated to D rules. LEFT_MIN_OUTSIDE_S and SPEED_MAX_KMH moved to CW-F04B. |
-| CW-R08 | A3, A4 | FX4, FX9 | The advance-booking assignment ETA is defined (a late acceptance uses the app's ETA). A driver waiting at the pick-up, or an early advance-booking driver who can still arrive in time, is not "not moving". C → D. |
+| CW-R08 | A3, A4, 14 Oct | FX4, FX9 | The advance-booking assignment ETA is defined (a late acceptance uses the app's ETA). A driver waiting at the pick-up, or an early advance-booking driver who can still arrive in time, is not "not moving". A waiver always needs approval (Jasper, 14 Oct). C → D. |
 | CW-R11 | A3 | FX4 | Rows R8, R9 and R11. |
 | CW-R12 | A1b | FX1 | WEAK rider evidence includes messages and phone GPS before the wait. |
 | DQ-02 | A3 | FX4 | Points to CW-F04B. |
 | DT-CW-NOSHOW | A1, A1b, A3, A4 | FX1, FX4, FX8 | Rows follow CW-F06's readings. New input gps_logic_decides. R8 now needs F-GPS-LOGIC false; new row R11 (D) is the same uphold when it is true. The precondition follows CLS-06. 192 combinations, each unique. |
-| AUTH-02 | A3 | FX4 | Trigger 12: an uphold resting on CW-F04B, including at an end of a parameter's plausible range (D29). |
+| AUTH-02 | A3, 14 Oct | FX4 | Trigger 12: an uphold resting on CW-F04B, including at an end of a parameter's plausible range (D29). Trigger 13: a CW-R08 waiver (Jasper, 14 Oct). |
 | AUTH-04 | A2 | FX5 | G3 keeps the history-blind ruling at APPROVE; gate_tiers added. |
 | EXP-01 | A3 | FX4 | B → D (the content list and the 30-day reading are FairRyde's). |
 | EXP-03 | A4 | FX9 | Numbers inside a verbatim clause quote are exempt. |
@@ -75,7 +75,7 @@ Credibility is shown as v0.1 → v0.2 where it changed.
 | PB-INTAKE | A4 | FX6, FX8 | CLS-01 is a READ step; CLS-06 at classification. |
 | PB-CW-NOSHOW | A1, A1b, A3, A4 | FX1, FX4, FX8 | Reading steps, D29 at step 9, and the CLS-06 precondition with its evidence. |
 | PB-CW-WAITING | A1, A1b, A3 | FX1, FX4 | Window of the reading; D29 for waiting fees (step 5). |
-| PB-CW-RIDERCANCEL | A3, A4 | FX4, FX8, FX9 | CLS-06 precondition; CW-R08's two FairRyde elements named. |
+| PB-CW-RIDERCANCEL | A3, A4, 14 Oct | FX4, FX8, FX9 | CLS-06 precondition; CW-R08's two FairRyde elements named; a CW-R08 waiver needs approval. |
 | PB-FC-ROUTE, PB-FC-TOLL | A1, A2, A4 | FX2, FX3, FX7 | Metered exclusion, ERP share and evidence for the final itinerary. |
 | PB-TRIAGE-HUMAN, PB-ROUTE-SUPPORT | A4 | FX6 | CLS-01 is a READ step. |
 
@@ -91,7 +91,7 @@ Credibility is shown as v0.1 → v0.2 where it changed.
   - has_dropoff is 1:N. The destination-change events are annotated, and so is the recommended route.
   - New finding F-GPS-LOGIC; F-PRESENCE is produced by CW-F04 and CW-F04B; F-ERP-EXPECTED is at the rider's share.
   - The wraps and rebuts relations are labeled FairRyde design.
-- **Reference data:** the new table ERP_RIDER_SHARE (A2). LEFT_MIN_OUTSIDE_S belongs to CW-F04B (A3).
+- **Reference data:** the new table ERP_RIDER_SHARE (A2). LEFT_MIN_OUTSIDE_S belongs to CW-F04B (A3). ARRIVAL_GEOFENCE_M's plausible range is [20, 100] (Jasper, 14 Oct).
 - **Annotation schema:** decision-table row R11, and the autonomy tier of REQUEST_INFO.
 
 ### Tools and outputs
@@ -102,24 +102,23 @@ Credibility is shown as v0.1 → v0.2 where it changed.
   - `kb/tools/engine_gates.py`: gate G3.
   - `kb/tools/explain.py`: party explanations, with the EXP-03 quote exemption.
 - **Tests (`kb/tools/selftest.py`):**
-  - 125 no-show variants and 565 message readings.
+  - 126 no-show variants and 565 message readings.
   - 53 ERP cases and the FC-R01 split (R1 to R10).
   - The A2, A3 and A4 rule-card checks, the census check, and the GPS fuzz invariants (`kb/tools/fuzz_presence.py`).
 - **Workbooks:** the names follow the KB version: `kb/out/FairRyde_KB_v0.2.xlsx` and `kb/out/FairRyde_Annotation_v0.2.xlsx`. The repository's annotation workbook had no human labels. A labeled v0.1 copy elsewhere is not overwritten; move its labels by content.
 - **Freeze:** `validation/tools/freeze.py` hashes the repository's `kb/` and takes `--out`. The round 2 freeze is `validation/round2/00_freeze.json`.
 
-### Open for Jasper before or during round 2
+### Jasper's decisions of 14 Oct on the points A3 and A4 left open
 
-- **D39 (a) to (l), A3:**
-  - Whether CW-R06, FC-R01 and AUTH-03 stay B by delegation.
-  - The cost of D29's radius part: automatic upholds of clean cases with ordinary GPS jitter fall from about 39% to 5%.
-  - Engine gaps not fixed.
-- **D40 (a) to (l), A4:**
-  - The safety stand-in misses paraphrases.
-  - The BACKLOG leaves.
-  - Discrimination as a primary safety claim.
-  - The line between rudeness and abuse, and the narrower examples.
-  - trip_data.stops.
-  - FC-R12 materiality.
-  - Whether a CW-R08 waiver needs approval.
-- **D35 item 8:** whether an unrecorded is_carpool goes to a person for every service or only for RydeFLASH, as implemented.
+Applied after A5 and before the freeze, checked by the build and the self-tests only, on Jasper's instruction:
+
+- **D29's radius part (D39 (g)):** the plausible range of ARRIVAL_GEOFENCE_M now starts at 20 m instead of the platform's 10 m check. 20 m is above ordinary phone GPS error: about 4.9 m under open sky (gps.gov) and a mean of about 14.5 m in a high-rise urban canyon (arXiv 2109.00683). The value stays 50 m and the credibility D. A ping between 20 and 50 m from the pin still sends an uphold to approval. In the jitter simulation, automatic upholds of 600 clean cases go from 29 back to 204 (A2: 235). Tests V99 and V99B pin both sides.
+- **CW-R08:** a rider's cancellation fee waived because the driver was late or not moving always needs approval, in line with D29. This is the new AUTH-02 trigger 13, also stated in CW-R08 and PB-CW-RIDERCANCEL step 5.
+- **Kept as they are:** CW-R06, FC-R01 and AUTH-03 at B (D39 (a) to (c)). An unrecorded is_carpool goes to a person only for RydeFLASH (D35 item 8). The line between rudeness and abuse stays as A4 drew it (D40 (e)).
+- **Known limitations of v0.2:** the reference engine's safety check is a pattern list that misses paraphrases (D40 (a)), and the case data has no field for several drop-offs, trip_data.stops (D40 (d)).
+
+### Still open
+
+- D40 (b): whether a made-up driver charge should raise a fraud signal. FC-FAREMISMATCH and FC-DRIVERCHARGE stay with a person.
+- D40 (c): discrimination makes a claim a primary safety claim even when it is mainly about a fee.
+- The other points of D39 and D40 are recorded for information: engine gaps not fixed, FC-R12 materiality, the narrower safety examples.
