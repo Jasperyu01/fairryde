@@ -4,7 +4,7 @@
 
 Step A6 (Jasper, 14 Oct). The organizer uploaded Ryde Dispute Resolution Policy v2.1 and the sample cases DISP-001 (route deviation) and DISP-003 (fare and surge). Policy v2.1 says it applies to the Rider Advocate, Driver Advocate and Judge, so it is the primary policy for the hackathon. v0.2 is unchanged in the Ryde profile: E01 to E04 and E11 give the same results as in the A4 rerun (`validation/build_checks/A6/01_engine_rerun.json`).
 
-Decisions D41 to D56 and organizer questions O17 to O28 are in `kb/open_items.yaml`. D56 records the step check of A6 (round 1) and the limitations it left.
+Decisions D41 to D57 and organizer questions O17 to O28 are in `kb/open_items.yaml`. D56 and D57 record the two rounds of the step check of A6 and the limitations they left.
 
 ### Sources, profiles and data
 
@@ -40,7 +40,7 @@ Decisions D41 to D56 and organizer questions O17 to O28 are in `kb/open_items.ya
 ### Tools and outputs
 
 - **Engines:** `engine_route.py` and `engine_surge.py` are new. `engine_noshow.py` has a v2.1 branch, `engine_toll.py` honors TOLLS_TREATMENT, and `engines.py` picks the engine and scores a sample against its expected ruling. `case_adapter.py` removes the organizer answer blocks and normalizes chat logs. `policy_v21.py` holds the Section 6 path, the composite confidence, precedent matching and the evidence index.
-- **Tests:** `kb/tools/selftest_v21.py`, 60 tests: the three samples pinned to their rulings, one-factor variants, tolls pass-through, regression E01 to E04 and E11, and the reconciliation records. The 128 no-show variants, 53 ERP cases and 565 message readings pass as before.
+- **Tests:** `kb/tools/selftest_v21.py`, 62 tests: the three samples pinned to their rulings, one-factor variants, tolls pass-through, regression E01 to E04 and E11, and the reconciliation records. The 128 no-show variants, 53 ERP cases and 565 message readings pass as before.
 - **Workbooks:** `FairRyde_Annotation_v0.3.xlsx` carries DISP-001, DISP-002 and DISP-003 with the columns organizer_expected_outcome and organizer_expected_amount_sgd; `FairRyde_KB_v0.3.xlsx` has a sheet for the three organizer cases. Both are pseudonymized (names, plates and the card tail are replaced; the organizer's own ids such as R-4521 are kept because they are already pseudonymous), and the leak scan is clean. The recalculation script was not available in this environment, so formulas were not recalculated.
 - **Privacy:** example names in `privacy.yaml` changed so they do not collide with names in the new cases.
 

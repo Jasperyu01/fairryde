@@ -215,6 +215,13 @@ def variants(kb: KB) -> list[tuple]:
       rec(rider_notified=True, notification_method="in_app", notification_timestamp=None),
       {"outcome": "ESCALATE_HUMAN", "tier": "HUMAN"})
 
+    v("S19", "an in-app method with a failure word ('push not delivered'): the record is not read as notified", D3,
+      rec(rider_notified=True, notification_method="in-app push not delivered", notification_timestamp="2026-09-14T21:04:50+08:00"),
+      {"outcome": "ESCALATE_HUMAN", "tier": "HUMAN"})
+    v("S20", "'email_app_digest': an in-app word and an e-mail word, so the method cannot be read", D3,
+      rec(rider_notified=True, notification_method="email_app_digest", notification_timestamp="2026-09-14T21:04:50+08:00"),
+      {"outcome": "ESCALATE_HUMAN", "tier": "HUMAN"})
+
     def unchanged(c):
         c["surge_pricing_log"]["trip_start_surge"] = 1.0
         fb = c["fare_breakdown"]
@@ -435,7 +442,7 @@ def reconciliation_check(kb: KB) -> list[dict]:
         if not ok:
             bad.append(_mk(tid, "A6 reconciliation", [msg]))
     dec = {d["id"]: d for d in kb.y["open_items"]["decisions"]}
-    for i in range(41, 57):
+    for i in range(41, 58):
         need(f"D{i}", f"D{i}" in dec, f"decision D{i} is missing from open_items.yaml")
     prof = kb.profiles[ORGANIZER_PROFILE]
     need("D42", prof["FREE_WAIT_S"]["value"] == 300 and prof["WAIT_ANCHOR_FIELD"]["value"] == "trip_data.scheduled_time" and prof["THRESHOLD_COMPARISON"]["value"] == "more_than",

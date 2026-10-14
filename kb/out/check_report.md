@@ -10,10 +10,10 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
 * Engine self-test: 128/128 variants pass
 * ERP rules self-test: 53 ERP cases, the FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: all pass
-* Policy v2.1 self-test (A6): 60/60 pass (the three organizer samples pinned to their expected rulings, one-factor variants, tolls pass-through, regression E01 to E04 and E11, and the reconciliation records)
+* Policy v2.1 self-test (A6): 62/62 pass (the three organizer samples pinned to their expected rulings, one-factor variants, tolls pass-through, regression E01 to E04 and E11, and the reconciliation records)
 * Privacy dry run on the organizer cases (counts only): before {'PERSON_NAME': 13, 'PERSON_NAME_TOKEN': 29, 'VEHICLE_PLATE': 5, 'SG_PLATE': 5, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'CARD_TAIL': 1, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'CARD_TAIL': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'CARD_TAIL': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
-* Annotation workbook: FairRyde_Annotation_v0.3.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.3.20261014T143404.xlsx
+* Annotation workbook: FairRyde_Annotation_v0.3.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.3.20261014T151229.xlsx
 * Issues: ERROR 0, WARN 0, INFO 7
 
 * DISP-002 under organizer_v2_1: **UPHOLD** (row R8), reasons CW-R-NOSHOW-VALID, CW-R-PIN-AMBIGUOUS, flags NO_RIDER_EVIDENCE, PIN_VENUE_MISMATCH, FRAUD_SIGNAL, GENERIC_ASSUMPTION_USED, confidence 0.939, tier **APPROVE**

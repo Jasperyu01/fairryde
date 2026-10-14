@@ -1,0 +1,864 @@
+[
+ {
+  "dimension": "fidelity",
+  "review": {
+   "dimension": "FIX FIDELITY AND SCOPE (A6 round 2, range 29f04d1..65d55ec)",
+   "checked_ok": [
+    "python3 kb/build_kb.py --no-xlsx ends 'ERROR 0 | WARN 0 | INFO 7'; its output shows 'expected ruling of DISP-001/002/003: matches', engine self-test 128/128, ERP 53 cases pass, Policy v2.1 self-test 60/60, CW-F06 565/565, GPS fuzz 350 random cases (150 + 100 + 100 for the three profiles) 0 crashes 0 findings, privacy dry run clean, leak scan total 0. Side effect of running the build as instructed: it rewrote kb/out/check_report.md (the 'Annotation workbook' line now says 'workbooks skipped (--no-xlsx)'); I ran no git command that changes state and did not revert it, so the parent should not commit that line.",
+    "python3 kb/tools/selftest.py: 128 / 128, 565 / 565 message readings, '53 ERP cases, FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: all pass'; python3 kb/tools/selftest_v21.py: 60 / 60 (CHANGELOG now says 60 tests, matching).",
+    "python3 validation/tools/rerun_engine.py /tmp/a6check2/rerun.json E01 E02 E03 E04 E11: 'OK E01 UPHOLD -> UPHOLD R8 APPROVE; OK E02 WAIVE_FEE R1 APPROVE; OK E03 UPHOLD R8 APPROVE; OK E04 WAIVE_FEE R6 AUTO; OK E11 TOLL_REFUND None APPROVE; 5/5 outcomes match'. The written JSON is identical (==) to validation/build_checks/A6/01_engine_rerun.json. kb/organizer_cases.yaml and 01_engine_rerun.json are not in the diff.",
+    "I ran the three organizer samples at 29f04d1 and 65d55ec: profile, outcome, amount, tier, reasons, flags and decision row are identical. DISP-001 PARTIAL_REFUND S$3.44 tier APPROVE; DISP-002 UPHOLD tier APPROVE (R8; fraud flag 1, C 0.84 below 95%, so Section 6.3 decides); DISP-003 FULL_REFUND S$4.50 tier AUTO. Only the party texts differ (canceled spelling, 'from the driver's assignment to the cancellation', credibility labels D for FC-F05, FC-F06, CW-F02C, 'the case file holds a signal that only the reviewer sees' instead of 'a party has a fraud flag (1)'). No CRITICAL or outcome/amount/tier change.",
+    "Rule cards compared structurally (yaml, 29f04d1 vs 65d55ec) for every rule: no rule added or removed. English meaning changed only in FC-F06 (statement: an agreed reroute no longer claimed to be the 'informed and agrees' row; now says FC-R13 checks traffic justification first, D56 item 1) and AUTH-07 (statement: D29 wording now says the penalty lowers C only, R9/R11 and the pin trigger still send the fee to approval, open question O26). Credibility changes: CW-F02C A to D, FC-F05 A to D, FC-F06 A to D, each with a credibility_note that names the FairRyde-defined parts (arrival fallback D42/D54, point of deviation and reason requirement D54, missing-traffic-data choice FC-R12). All other rule diffs are the appended zh pointer sentence on 25 rules. Both statement changes match what the engine does (FC-R13 order verified in engine output; DISP-002 stays APPROVE through R9/R11-type decisive rows).",
+    "Reference data: only TOLLS_TREATMENT (credibility A to D with an honest note that the only statement is the DISP-001 reference answer, O17/D47) and a REMEDY_FORM note changed; no value changed. TOLLS_TREATMENT D matches the project rule 'a rule element resting on the reference answer is D'.",
+    "Mutation checks (copy of the repo at 65d55ec with one file reverted to 29f04d1, run selftest_v21.py): reverting engine_surge.py gives FAIL S16, S17, S18 (57/60); reverting engine_route.py gives FAIL R16 (59/60); reverting explain.py gives 19 failures (41/60: precedent line on ESCALATE_HUMAN, 'AI ruling is final' at tier APPROVE, refund promise at tier HUMAN, fraud flag named). So the surge, negative-excess-line and party-text fixes are really tested.",
+    "Each fixed item in 04_round1_disposition.jsonl was matched against the diff: ADV-01/ADV-02 (notice_valid: plain yes/no only, method and time required, SMS/email/etc. denied, tests S16-S18), ADV-12 (engine_route negative excess line, R16), ADV-11 (kbload regex DISP-(\\d{4}-)?\\d+), ADV-15 (policy_v21 precision), C1 (_prec_line requires equal outcome), C2 (_why_person), C3 (CW-R13 first in row_rules, plural, assumption item), C4 (window wording), C5 (tier HUMAN says FairRyde proposes), C7 (canceled), C8 (agreement stated), C9 (old wording for non-v2.1), C10 (fraud flag not named), C11/C12 (inventory, scope, annotation_schema, s_auth), C14 (CARD_TAIL pattern in privacy.yaml, privacy_scan.py, make_xlsx.py), C15 and F6 (NEXT_STEPS, CLAUDE.md), F4/SG-09 (D44 to D51 in ORG-DISP001 note), F7 (build runs fuzz for 3 profiles), F10 (CHANGELOG, report label, zh pointers), SG-03/SG-05/SG-06/F2 (credibility D and notes). All present and doing what the disposition says, except the partial items reported below.",
+    "D56 items recorded as limitations were checked against the code and rules: item 1 (FC-R13 order, GEN-R07, FC-R12), item 2 (FC-F06B window overlap), item 3 (tolerance branch), item 4, item 5 (D40 a), item 6, item 8 (Precedent 7.1 S$3.20 against S$3.44 appears in the DISP-001 party text), item 9 (META-04 known_conflicts lists Ryde pages only; D42 holds the Section 2.1 conflict), item 10 and item 11 (exactly 25 rules carry the zh pointer, counted) are accurately described; O26, O27, O28 exist with the questions D56 and D52 refer to.",
+    "Credibility D on FC-F05, FC-F06 and CW-F02C does not change any ruling or tier: in engine_route.decide_tier the decisive reading adds a trigger regardless of credibility; the label only sets the GENERIC_ASSUMPTION_USED flag (party-text sentence) when such a rule is decisive. D34 frozen reading area (CW-F06 READ, rider_contact_reading, before_arrival_reading) is untouched by this range.",
+    "Self-test coverage of the privacy tail fix: build privacy dry run shows CARD_TAIL before 1, after 0 and the leak scan total 0, so the tail fix is exercised by the build."
+   ],
+   "findings": [
+    {
+     "id": "R2-FF-01",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 2331,
+     "claim": "The zh text of FC-F06 was not updated with its round 1 English fix (SG-02) and carries no pointer; it now contradicts the English. The zh of AUTH-07 was not updated either and still states the overstated D52 effect that F1/SG-10 corrected in English.",
+     "evidence": "FC-F06 zh: '\u4e58\u5ba2\u540c\u610f\u7684\u8def\u7ebf\u5c5e\u4e8e\"\u5df2\u544a\u77e5\u5e76\u540c\u610f\"\u4e00\u884c\uff08FC-R13\uff09' while the English now says 'a route the rider agreed to has no row of its own; it counts as justified only when the traffic data shows an incident (FC-R13 checks the traffic justification first, so an agreed reroute without it is refunded, decision D56 item 1)'. AUTH-07 zh: '\u7b49\u7ea7\u4ecd\u6309\u7b2c 6 \u8282\uff08\u51b3\u5b9a D52\uff1b\u6709\u6b3a\u8bc8\u6807\u8bb0\u65f6\u8be5\u6263\u5206\u4f7f\u88c1\u51b3\u4f4e\u4e8e 95%\uff0c\u4f4e\u4e8e S$10 \u4e14\u65e0\u6807\u8bb0\u65f6\u7b2c 6.1 \u8282\u63a5\u53d7\u4efb\u4f55\u7f6e\u4fe1\u5ea6\uff09' while the English says the penalty 'changes the tier when it moves C across a Section 6 threshold' and the R9/R11 approval 'also remains' (O26). Neither rule is among the 25 rules that received the pointer sentence.",
+     "failure_scenario": "A Chinese-reading reviewer (Jasper, Prof. Cao) reads FC-F06 zh and believes an agreed reroute without a traffic reason gets no refund, but FC-R13 and the engine refund the excess distance fare (full refund path FC-R-DEVIATION-UNJUSTIFIED). For AUTH-07 the zh claims the penalty pushes a fraud-flagged ruling below 95% and that the tier follows Section 6, while the D29 approval via R9/R11 still applies. No ruling changes; the disposition rows SG-02 and F1 read as fully fixed.",
+     "suggested_fix": "Append the same pointer sentence to the zh of FC-F06 and AUTH-07, or retranslate the two changed statements, and say in D56 that these two zh texts lag the English."
+    },
+    {
+     "id": "R2-FF-02",
+     "severity": "MINOR",
+     "file": "kb/reference_data.yaml",
+     "line": 67,
+     "claim": "The D29_CONFIDENCE_PENALTY note still carries the overstated D52 wording; disposition SG-10 ('fixed with F1') is only true for D52 and AUTH-07 English.",
+     "evidence": "reference_data.yaml line 67 (unchanged in 29f04d1..65d55ec): 'Under this profile D29 is a confidence penalty, so the tier follows Section 6. Any penalty of 0.05 or more keeps such a ruling below the 95% a fraud flag requires'. The corrected D52 says 'the penalty only lowers C, so it can change a tier only where C meets a threshold' and that the old D29 approval is NOT removed (rows R9/R11, pin trigger, O26).",
+     "failure_scenario": "With C = 1.0 and penalty exactly 0.05 (the lower end of the plausible_range [0.05, 0.25] listed in the same line), C = 0.95 meets the 95% threshold (policy_v21 uses confidence < needed - 1e-9), so the note's 'any penalty of 0.05 or more keeps such a ruling below 95%' is false at the range end; and 'the tier follows Section 6' is contradicted by D52. The parameter note is exported to the KB workbook and read by the owner.",
+     "suggested_fix": "Replace the note with the D52 wording ('lowers C only; the approval of D29 remains via R9/R11; O26') and 'above 0.05' if the 95% statement is kept."
+    },
+    {
+     "id": "R2-FF-03",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 0,
+     "claim": "Two engine behaviors added in round 1 are not written in the rule cards: the negative excess line check (DQ-05) and the finer notice_valid classification (FC-F08). FC-F08 stays at credibility A although the method lists and the 'time required' rule are FairRyde's operationalization of 'in-app notification before or at pickup'.",
+     "evidence": "engine_route.py now adds 'an excess line in the fare breakdown is negative' to the FIGURES_DISAGREE notes, but DQ-05 English is unchanged in the range (it says only 'the excess lines never add up to more than the whole difference'). engine_surge.notice_valid now uses a denylist {sms, email, mail, whatsapp, telegram, call, phone, text, letter} and an allowlist {app, push, inapp}; a notified record with no timestamp, or with a method that is neither listed, returns None (escalates), and a flag other than yes/no returns None. FC-F08 statement and credibility_note are unchanged and say only 'A record with no yes or no is not readable'; the note says 'its timing and the in-app channel are the organizer's text (A)'. D56 says a negative excess line 'sends the route case to approval' while R16 and the engine give tier HUMAN (G1 data inconsistency).",
+     "failure_scenario": "A reviewer checking FC-F08 or DQ-05 against the engine cannot find why a record with method 'notification' or a missing timestamp escalates, or why a negative excess line escalates under every profile (the check is not limited to organizer_v2_1). Under the project rule 'a Ryde condition extended by FairRyde is D' FC-F08's A label is too high for the channel word lists. Outcomes are the safe direction (more escalation).",
+     "suggested_fix": "Add one sentence to DQ-05 and FC-F08 that states the new checks, label the method lists and the missing-time rule as FairRyde's (D, decision D56) in FC-F08's credibility_note, and change 'approval' to 'a person (tier HUMAN)' in D56."
+    },
+    {
+     "id": "R2-FF-04",
+     "severity": "MINOR",
+     "file": "kb/tools/selftest_v21.py",
+     "line": 336,
+     "claim": "Several round 1 fixes have no test that fails without them, and the test gaps that F3 conceded are not recorded in open_items.",
+     "evidence": "Mutation runs on a copy of 65d55ec: reverting kb/tools/kbload.py (ADV-11, DISP-2026-0089 style ids) leaves selftest_v21 at '60 / 60'; reverting kb/tools/policy_v21.py (ADV-15, two-decimal deviation text) leaves '60 / 60'; reverting kb/tools/privacy_scan.py (CARD_TAIL) leaves '60 / 60' (only the build's privacy dry run covers it). grep for '0089', 'CARD' and 'credibility' in selftest_v21.py finds nothing; the reconciliation checks do not test the new D ratings of CW-F02C, FC-F05, FC-F06 and TOLLS_TREATMENT. F3 says 'contact-window tests remain a limitation' but D56 lists no such item. _explanation_problems accepts a precedent line for any refund-class outcome, so it cannot tell a PARTIAL_REFUND case citing a FULL_REFUND precedent.",
+     "failure_scenario": "A later change that breaks the DISP-nnnn-yyyy id pattern (profile falls back to organizer_case or ryde_2026 for an organizer-style id), the 2.0 vs 2.1 km text, the card-tail replacement, or sets FC-F05 back to credibility A would pass both self-test suites.",
+     "suggested_fix": "Add a variant with dispute_id 'DISP-2026-0089' expecting profile organizer_v2_1, one for deviation 2.04 km text, a credibility assertion for the four D labels in reconciliation_check, and add the contact-window and elapsed-floor gaps to D56."
+    },
+    {
+     "id": "R2-FF-05",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 68,
+     "claim": "D56 item 7 records only one of the three facts of ADV-10, although the disposition says 'recorded D56 item 7'.",
+     "evidence": "ADV-10 claim: 'a call placed only as an app event is not counted, the contact window starts at the arrival when the assignment events are missing, and a failed or empty c...'. D56 item (7) reads only: 'driver contact is counted from chat and call records, not from app events'.",
+     "failure_scenario": "The fallback of the contact window to the arrival when the assignment events are missing, and the counting of a failed or empty call, can change whether CW-R13 voids a fee (Section 2.3), but a reader of D56 does not learn that these two limits exist.",
+     "suggested_fix": "Extend D56 item 7 with the window fallback and the failed or empty call case."
+    },
+    {
+     "id": "R2-FF-06",
+     "severity": "MINOR",
+     "file": "kb/tools/explain.py",
+     "line": 470,
+     "claim": "The new _why_person text cites Section 6.3 of the organizer's policy for a FairRyde fraud signal (FRD), which is not a Section 6.3 fraud flag; and the party text for organizer cases still says 'the organizer's policy' (C9 only fixed the regression profiles).",
+     "evidence": "_why_person: `if trig.startswith(\"fraud signal\"): why = \"the case file holds a signal that only the reviewer sees (Section 6.3)\"`. Triggers that start with 'fraud signal on DRIVER (...) (symmetric trigger; the detail is for the reviewer ...)' come from FairRyde's FRD-01/FRD-02 signals (tr.fraud), while Section 6.3 concerns the party's fraud_flags >= 1 in the file (policy_v21.fraud_flag_count). In the DISP-002 party text at 65d55ec: 'CW-R03 No-show cancellation fee is valid (the organizer's policy; credibility A)'.",
+     "failure_scenario": "An organizer case where the file has fraud_flags 0 but the FRD signal fires is sent to a person at APPROVE; the rider and driver are told the reason is in 'Section 6.3', which would not apply to that file. For C9, a rider is shown a hackathon term ('organizer') instead of Ryde's policy in every organizer case. No tier or amount changes.",
+     "suggested_fix": "Cite FairRyde's fraud check (FRD-01/FRD-02) without a Section number in that branch; for organizer_v2_1 render ORGANIZER as 'Ryde's dispute resolution policy' (or similar) in SRC_WORDS."
+    },
+    {
+     "id": "R2-FF-07",
+     "severity": "MINOR",
+     "file": "validation/round2/00_freeze.json",
+     "line": 2,
+     "claim": "The freeze file is still KB v0.2.0 while NEXT_STEPS and CLAUDE.md-level documentation call A6 done and the disposition (F8, C6) promises a refreeze 'at the end'.",
+     "evidence": "validation/round2/00_freeze.json: kb_version '0.2.0', frozen_at '2026-10-14T12:57:04'; kb/taxonomy.yaml meta version 0.3.0; docs/NEXT_STEPS.md line 28 'A6 (done)'. Not changed in 29f04d1..65d55ec.",
+     "failure_scenario": "If the step is closed without the promised refreeze, the validation round 2 plan would start from the v0.2.0 freeze and the hash check at the end of a validation run would flag the v0.3.0 files as changed.",
+     "suggested_fix": "Run validation/tools/freeze.py for v0.3.0 after round 2 and note it in the run log; keep the disposition F8/C6 open until then."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "R2-FF-01",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read kb/rules.yaml at 65d55ec. FC-F06 zh (line 1335) still says '\u4e58\u5ba2\u540c\u610f\u7684\u8def\u7ebf\u5c5e\u4e8e\u5df2\u544a\u77e5\u5e76\u540c\u610f\u4e00\u884c\uff08FC-R13\uff09' with no pointer, while the English was changed to say an agreed route has no row of its own and is refunded at FC-R13 when no traffic justification exists. AUTH-07 zh still says 'D52; \u6709\u6b3a\u8bc8\u6807\u8bb0\u65f6\u8be5\u6263\u5206\u4f7f\u88c1\u51b3\u4f4e\u4e8e 95%' and 'tier still follows Section 6', while the English was corrected (penalty changes a tier only across a threshold; R9/R11 approval remains, O26). 'grep -c \u4e2d\u6587\u5f85\u8bd1' gives 25 and neither rule carries it. D56 item 11 does not name these two as lagging. Wording only, no outcome change, so MINOR."
+    },
+    {
+     "id": "R2-FF-02",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "kb/reference_data.yaml D29_CONFIDENCE_PENALTY note was not touched in 29f04d1..65d55ec (the diff only changes TOLLS_TREATMENT and REMEDY_FORM). It still says 'the tier follows Section 6. Any penalty of 0.05 or more keeps such a ruling below the 95%', which contradicts the corrected D52 and AUTH-07 English. policy_v21.py line 67 uses 'confidence < needed - 1e-9', so C=1.0 minus 0.05 = 0.95 meets 95%; the note is false at the range end. Disposition SG-10 'fixed with F1' is only true for D52 and AUTH-07 English. Wording, no outcome change."
+    },
+    {
+     "id": "R2-FF-03",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "engine_route.py adds 'an excess line in the fare breakdown is negative' to the FIGURES_DISAGREE notes and engine_surge.notice_valid now has the deny/allow method lists and the missing-method/time escalation. DQ-05 English (rules.yaml ~474-484) is unchanged and only mentions excess lines adding up to more than the difference. FC-F08 statement is unchanged and still credibility A with a note saying timing and in-app channel are the organizer's. The method word lists and the missing-time escalation are FairRyde operationalization and carry no D label or decision entry beyond D56's general sentence. D56 says a negative line 'sends the route case to approval' while DQ-05 says gate G1 sends it to a person. Safe-direction behavior, labeling and documentation only."
+    },
+    {
+     "id": "R2-FF-04",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced in a copy under /tmp/a6check2/kbcopy at 65d55ec. Replacing kb/tools/kbload.py with the 29f04d1 version leaves 'python3 kb/tools/selftest_v21.py' at '60 / 60'; replacing policy_v21.py with the 29f04d1 version also leaves '60 / 60'. grep of selftest_v21.py for '0089', 'CARD' and 'credibility' finds nothing. D56 does not list the contact-window or elapsed-floor test gaps although F3 says they remain a limitation. Test coverage gap only, no outcome change."
+    },
+    {
+     "id": "R2-FF-05",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "D56 item (7) in kb/open_items.yaml (line 68) reads only 'driver contact is counted from chat and call records, not from app events'. The text contains no mention of the contact window falling back to the arrival or of failed or empty calls, though the disposition row ADV-10 says 'recorded D56 item 7' and its claim lists those facts. Documentation gap only."
+    },
+    {
+     "id": "R2-FF-06",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "explain.py _why_person returns 'the case file holds a signal that only the reviewer sees (Section 6.3)' for any trigger starting with 'fraud signal'. Those triggers come from FairRyde's FRD signals (engine_noshow.py:1369, engine_route.py:471, engine_surge.py:296, engine_toll.py:238), not from the file's fraud_flags that Section 6.3 concerns (AUTH-07 itself says 'not FairRyde's FRD signal'). The new code at explain.py line 66 restores the old 'policy attached to this trip' wording only when profile != organizer_v2_1, so organizer_v2_1 party texts still say 'the organizer's policy' (SRC_WORDS line 9). Wording in party text, no tier or amount change."
+    },
+    {
+     "id": "R2-FF-07",
+     "verdict": "REFUTED",
+     "severity_after_check": "NONE",
+     "reason": "validation/round2/00_freeze.json is indeed v0.2.0 (frozen_at 2026-10-14T12:57:04, last touched by commit 421e3ae). But this is a scheduled step, not a defect of the fixes. The disposition F8/C6 says 'refrozen at the end', a freeze taken before round 2 ends would be stale as soon as any round 2 fix lands, and CLAUDE.md's 'Next: validation round 2 on the frozen v0.3.0' is forward-looking. Nothing in the range claims the refreeze was done. It remains an open action for after the check, not a problem in the change."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "grounding",
+  "review": {
+   "dimension": "SOURCE GROUNDING AND CREDIBILITY (round 2, base 29f04d1 to head 65d55ec)",
+   "checked_ok": [
+    "Build and tests: on a scratch copy under /tmp/a6check2/repo, python3 kb/tools/selftest_v21.py gives 60 / 60 and python3 kb/build_kb.py --no-xlsx --no-fuzz ends ERROR 0 | WARN 0 | INFO 7. The real repo was not touched (the modified kb/out/check_report.md in it was already there).",
+    "New credibility labels follow the weakest-element principle in substance. CW-F02C (D): Section 2.1 start is A; the arrival fallback and RECORDS_MISSING are FairRyde's, and the note says so. FC-F05 (D): the point of deviation, requiring a reason in the message and treating an objection as not agreed are named as FairRyde's. FC-F06 (D): the no-traffic-data to FC-R12 choice and the FC-F06B match are named. TOLLS_TREATMENT (D): the note says the single source is the DISP-001 reference answer used on Jasper's decision (D47). The new notes are honest about which parts are A and which are D.",
+    "FC-R13B (D), CW-R13 (D), FC-F06B (D), GEN-R08 (D), AUTH-07 (D) labels and notes are consistent with their statements; CW-R14, FC-F07, FC-R14, FC-R15 as A are acceptable (quotes are Section 2.4, 3.1, 3.3, 3.4, Appendix A, Precedent 7.2 and say what the rules use them for; FairRyde's amount check in FC-R14 only escalates).",
+    "Quotes: the build's exact-substring check passes. Spot-read against kb/sources/organizer/policy_v2.1.md: Sections 1.2, 1.3 (rows), 1.4, 2.1, 2.3, 2.4, 3.1 to 3.5, 6.1 to 6.3, Precedents 7.1 to 7.3 say what the rules use them for. FC-F08's 'before or at the point of pickup' versus the engine test 'no later than trip start' was refuted in round 1 and I did not reopen it.",
+    "Section 6 mapping in AUTH-07 matches policy_v21.ruling_path and the policy table: under S$10 final at any confidence, S$10 to S$50 inclusive at 80%, above S$50 HUMAN, route over 2 km APPROVE, fraud flag 95% regardless of value, strictest decides. CONTACT_NOT_ATTEMPTED no longer a trigger, G5 and G6 replaced, G1 and G4 kept: all match engine_noshow.decide_tier.",
+    "D52 'the old D29 approval is not removed' is true in code: for a fee upheld on FairRyde's own GPS logic, decide_tier still adds 'decisive: ...' through DT rows R9 and R11 (rated D) or the plausible-range sensitivity, tier APPROVE. I ran the N10 variant at fraud flag 0 and 1 and penalty 0, 0.05, 0.10 and 0.25: always APPROVE.",
+    "Round-1 SG-02 (FC-F06 text) and SG-09 (ORG-DISP001 note cites D51), F4 (D44/D54 cross-references in ORG-DISP001 and CW-R13) are fixed as the disposition says. The zh pointer sentence (organizer_v2_1 additions: see English) is present on every pre-existing rule whose English was extended in A6, and the pointer is an honest label.",
+    "zh versus English for CW-F02C, CW-R13, FC-F05, FC-F08, FC-R13, FC-R13B, FC-F07, FC-R14, FC-R15, GEN-R08, CW-R14, FC-F06B: same meaning. Exceptions are reported in the findings (FC-F06 zh, AUTH-07 zh).",
+    "notice_valid (engine_surge.py): a plain yes/no is now required, and the method and the time must both be present. SMS, email, 'failed', 'pending' and 'yes (delayed)' no longer count as an in-app notice (I ran them). That matches the disposition for ADV-01 and ADV-02, apart from the mixed-method case in finding F2.",
+    "Party texts: the DISP-001, DISP-002 and DISP-003 rider texts carry 'extended by FairRyde; credibility D' on FC-F05, FC-F06 and CW-F02C, use 'canceled', no longer print the fraud flag, and the precedent line appears only when the outcome equals the precedent's."
+   ],
+   "findings": [
+    {
+     "id": "F1",
+     "severity": "MAJOR",
+     "file": "/home/user/fairryde/kb/reference_data.yaml",
+     "claim": "The D29_CONFIDENCE_PENALTY parameter note (line 67) and the zh text of AUTH-07 still carry the wording that round 1 (F1 and SG-10) found wrong. The disposition says 'fixed with F1', but only the English of AUTH-07 and D52 were changed. Both texts still say the tier simply follows Section 6, that any penalty of 0.05 or more keeps a ruling below 95%, and the zh adds that the Section 6 tier is the whole effect. The English AUTH-07 now says the opposite: the old D29 approval remains through rows R9 and R11.",
+     "evidence": "reference_data.yaml:67: \"Under this profile D29 is a confidence penalty, so the tier follows Section 6. Any penalty of 0.05 or more keeps such a ruling below the 95% a fraud flag requires\". rules.yaml AUTH-07 zh (line 2331): \"\u672c\u53c2\u6570\u6863\u628a\u5b83\u6539\u4e3a\u5bf9 C \u6263 D29_CONFIDENCE_PENALTY\uff080.10\uff09\uff0c\u7b49\u7ea7\u4ecd\u6309\u7b2c 6 \u8282\uff08\u51b3\u5b9a D52\uff1b\u6709\u6b3a\u8bc8\u6807\u8bb0\u65f6\u8be5\u6263\u5206\u4f7f\u88c1\u51b3\u4f4e\u4e8e 95%\uff0c\u4f4e\u4e8e S$10 \u4e14\u65e0\u6807\u8bb0\u65f6\u7b2c 6.1 \u8282\u63a5\u53d7\u4efb\u4f55\u7f6e\u4fe1\u5ea6\uff09\". Not in the 29f04d1..65d55ec diff for either file part. English AUTH-07: \"The D29 approval itself also remains, through the decision-table rows R9 and R11 (rated D)\".",
+     "failure_scenario": "A reader of the parameter card or of the Chinese rule concludes that a fee upheld on FairRyde's own GPS logic is decided by Section 6 alone, so under S$10 without a fraud flag it is AUTO. The code (decide_tier) and the English AUTH-07 send it to APPROVE. The '0.05 or more' claim is also unconditional: ruling_path tests confidence < needed - 1e-9, so a C of 1.0 minus a penalty of exactly 0.05 gives 0.95, which meets the 95% threshold (C can reach 1.0 when there are no soft flags).",
+     "suggested_fix": "Rewrite the note in reference_data.yaml and the AUTH-07 zh to the D52 wording: the penalty only lowers C, the old D29 approval is not removed (rows R9 and R11 stay decisive), O26 is open. Drop or qualify the 'any penalty of 0.05 or more' sentence."
+    },
+    {
+     "id": "F2",
+     "severity": "MAJOR",
+     "file": "/home/user/fairryde/kb/rules.yaml",
+     "line": 2224,
+     "claim": "AUTH-02 (not touched by the round-1 fixes) contradicts the corrected AUTH-07 and D52 about trigger 12. It says that under organizer_v2_1 trigger (12) 'is a confidence penalty, not an approval trigger', so a waiting fee upheld on FairRyde's own GPS logic, which has no decision-table row (D31), would have no approval at all under that profile. AUTH-07 and D52 now say the D29 approval remains.",
+     "evidence": "AUTH-02 statement end: \"Under organizer_v2_1 (AUTH-07): trigger (4) is Section 6 ...; trigger (12) is a confidence penalty, not an approval trigger (decision D52); trigger (7) CONTACT_NOT_ATTEMPTED does not apply\". AUTH-07: \"The D29 approval itself also remains, through the decision-table rows R9 and R11 (rated D) and the pin trigger\". AUTH-02 also says in item (12): \"a waiting fee has no decision table (D31), so this trigger carries both parts\".",
+     "failure_scenario": "For a no-show fee the rows R9 and R11 carry the approval, so the engine gives APPROVE (verified on N10). A waiting fee has no row, so by the AUTH-02 sentence it would be AUTO under v2.1 with FairRyde's own GPS logic deciding presence, contradicting D29 and AUTH-07. No engine exists for waiting fees, so it is outcome-neutral today.",
+     "suggested_fix": "Change the AUTH-02 closing sentence to: trigger (12) also adds the confidence penalty under v2.1, but the approval stays through R9 and R11 (and for a waiting fee until O26 is answered). Align the zh of AUTH-02."
+    },
+    {
+     "id": "F3",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/rules.yaml",
+     "line": 2329,
+     "claim": "AUTH-07 and D52 still describe the D29 penalty as a mechanism that can change a tier ('Section 6 decides the tier from C'; 'it changes the tier when it moves C across a Section 6 threshold'). In decide_tier it never can. Every case where the penalty is applied (upheld, gl_now or gl_param) already carries a 'decisive' trigger from R9, R11 or the sensitivity test, so the tier is APPROVE with penalty 0 as well. The sentence also lists 'a deviation or fare dispute in the 80% band', which cannot occur on the no-show path where the penalty is applied (fee fixed at S$5.00). The 'pin trigger' is AUTH-02 item 9 and not part of the D29 approval.",
+     "evidence": "AUTH-07: \"so Section 6 decides the tier from C (decision D52). The penalty lowers C only: it changes the tier when it moves C across a Section 6 threshold, which needs a fraud flag (95%) or a deviation or fare dispute in the 80% band\". Experiment with the N10 case: fraud_flags 0 or 1 and penalty 0.0, 0.05, 0.10, 0.25 all give tier APPROVE with 'decisive: CW-F04B (...)' as the first or only trigger (for example 'ff=0 pen=0.0 APPROVE C_eff 0.964').",
+     "failure_scenario": "Jasper answers O26 or tunes the 0.05 to 0.25 range believing the parameter affects the tier. It affects only the printed C_effective and the extra trigger line text, so D52 'done' is in practice 'D29 approval unchanged'.",
+     "suggested_fix": "State plainly in AUTH-07 and D52 that under v2.1 the penalty is informational until the rows R9 and R11 are relaxed (O26): it lowers the printed confidence and adds an explanatory trigger, and no tier changes. Remove the deviation and fare-dispute example and the pin trigger from the D29 sentence."
+    },
+    {
+     "id": "F4",
+     "severity": "MAJOR",
+     "file": "/home/user/fairryde/kb/rules.yaml",
+     "line": 1748,
+     "claim": "FC-R13 stays credibility A, although its refund base and the toll treatment now rest on elements the same fix round rated D or recorded as unreconciled. The refund 'is the excess distance fare itself' comes from the DISP-001 reference answer (sources.yaml: never an input to a ruling) and from Precedent 7.1 whose own amount does not reconcile (D56 item 8). TOLLS_TREATMENT (one of its params) was moved to D on exactly that ground. The statement still says 'Precedent 7.1 ruled so on the same key facts', and the note says the base 'follows DISP-001 and Precedent 7.1'.",
+     "evidence": "FC-R13 credibility_note: \"Rows (1), (2) except its amount, (3) and (4) are the organizer's matrix (A), and the refund base follows DISP-001 and Precedent 7.1.\" Its sources include the answer-key quotes 'Only the excess distance fare is refunded. Tolls are passed through at cost.' and '\"excess_distance_fare\": 3.44'. D56 item 8: \"Precedent 7.1's S$3.20 does not reconcile with a refund equal to the excess distance fare alone (D46)\". Policy 1.3 says only 'Partial refund of excess distance fare'. selftest R08 shows the effect: 1.8 km, PARTIAL_REFUND S$3.44, tier AUTO, with the toll line left unrefunded.",
+     "failure_scenario": "A route case of 1.8 km (the pattern of Precedent 7.1) and under S$10 is ruled AUTO with a refund that reads 'partial' as the whole distance fare and withholds the tolls. Both are FairRyde or sample-answer readings (D46 is still open, O17 and O28), yet no label, flag or approval trigger marks them. FC-R13B is the only part flagged GENERIC_ASSUMPTION_USED (only for FULL_REFUND).",
+     "suggested_fix": "Rate FC-R13 D, or split the amount reading into its own D rule as was done for FC-R13B. Name the refund base and the toll treatment as FairRyde or sample-answer readings in the note, and add the Precedent 7.1 non-reconciliation to the rule text, not only to D56."
+    },
+    {
+     "id": "F5",
+     "severity": "MAJOR",
+     "file": "/home/user/fairryde/kb/tools/engine_surge.py",
+     "line": 56,
+     "claim": "The new notice_valid denylist is checked before the in-app tokens, so a method that names the app and also a denylisted word is ruled 'not an in-app notification' (False, rider not notified, surge differential refunded). The rule text FC-F08 only says 'the method is an in-app notification'. The precedence and the word lists are an unlabeled FairRyde choice, and a mixed or ambiguous string should come back as None (insufficient data, FC-R12) like the 'notification' case does.",
+     "evidence": "I ran notice_valid with a timestamp before trip start: 'in-app text alert' -> (False, 'the notification method (in-app text alert) is not an in-app notification (Section 3.2)'); 'app notification (text banner)' -> False; 'in-app call' -> False; 'phone app' -> False; but 'notification' -> (None, 'does not say it was in the app'). Code: `if tokens & {\"sms\", \"email\", \"mail\", \"whatsapp\", \"telegram\", \"call\", \"phone\", \"text\", \"letter\"}: return False` precedes the app check.",
+     "failure_scenario": "A platform record with notification_method 'in-app text alert' (an in-app notice) is treated as proof of no notice, and a DISP-003-type case is refunded in full at tier AUTO against the driver's side, where the grounded answer is no refund (Section 3.3, row 1). Needs an unusual method string, so MAJOR rather than CRITICAL, but it can reverse a surge outcome.",
+     "suggested_fix": "Return False only when the denylist matches and no app token is present; return None when both appear. Write the allowlist and denylist into FC-F08 as FairRyde's reading of 'in-app notification' (D-labeled part), and add a test for a mixed string next to S16 to S18."
+    },
+    {
+     "id": "F6",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/open_items.yaml",
+     "line": 59,
+     "claim": "D47 was not updated when TOLLS_TREATMENT was downgraded: it still says the source is the sample's recommended ruling 'credibility A as organizer data', while reference_data.yaml now rates the parameter D and says the answer-key sentence is used on Jasper's decision. The first reconciliation record a reader opens contradicts the parameter.",
+     "evidence": "open_items.yaml D47: \"Policy v2.1 itself is silent on tolls; the source is the sample's recommended ruling (credibility A as organizer data).\" reference_data.yaml:62: \"credibility: D, note: ... used here as a rule source for this single parameter on Jasper's decision (D47), so it is D\". D47 is not in the 29f04d1..65d55ec diff.",
+     "failure_scenario": "A reviewer reading D47 takes the toll pass-through as A-rated organizer text, which is the opposite of the round-1 correction (SG-03).",
+     "suggested_fix": "Change D47 to 'credibility D (the answer key of DISP-001 is not policy text; question O28)'."
+    },
+    {
+     "id": "F7",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/reference_data.yaml",
+     "line": 68,
+     "claim": "REMEDY_FORM = ORIGINAL_PAYMENT_METHOD is still A. The only added thing is a note, and the note says Precedent 7.3 shows the form, but Precedent 7.3 says only 'reversed and refunded to the rider'. The explicit 'original_payment_method' is in DISP-001's reference answer, the same kind of source that moved TOLLS_TREATMENT to D. CW-R13 and FC-R15 then state 'refunded to the original payment method' as sourced (Section 2.3, Precedent 7.3 / Section 3.3).",
+     "evidence": "Note: \"Section 3.3 does not name a form; the surge refund and the fee void take the form the route sample and Precedent 7.3 show.\" Precedent 7.3 in policy_v2.1.md: \"The $5.00 fee is reversed and refunded to the rider.\" CW-R13: \"the fee refunded to the original payment method (Section 2.3; Precedent 7.3 ...)\".",
+     "failure_scenario": "The surge refund (DISP-003, S$4.50, tier AUTO) and the void fee cite A-rated sources for a payment channel that no policy text names. Outcome and amount are unaffected.",
+     "suggested_fix": "Rate REMEDY_FORM D for the surge and void uses (or A only for the route refund) and correct the note and the CW-R13 attribution so Precedent 7.3 is not said to show the payment method."
+    },
+    {
+     "id": "F8",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/rules.yaml",
+     "line": 1339,
+     "claim": "The zh text of FC-F06 was not updated with the round-1 fix (SG-02) and now contradicts the English. The English says a route the rider agreed to has no row of its own and an agreed reroute without a traffic incident is refunded; the zh still says an agreed route belongs to the 'informed and agrees' row. FC-F06 got no zh pointer sentence either.",
+     "evidence": "English FC-F06: \"a route the rider agreed to has no row of its own; it counts as justified only when the traffic data shows an incident (FC-R13 checks the traffic justification first, so an agreed reroute without it is refunded, decision D56 item 1)\". zh FC-F06: \"\u4e58\u5ba2\u540c\u610f\u7684\u8def\u7ebf\u5c5e\u4e8e'\u5df2\u544a\u77e5\u5e76\u540c\u610f'\u4e00\u884c\uff08FC-R13\uff09\u3002\"",
+     "failure_scenario": "A Chinese-reading reviewer expects an agreed reroute to get 'no refund' when the engine refunds it (FC-R-DEVIATION-UNJUSTIFIED, APPROVE).",
+     "suggested_fix": "Replace that zh sentence with the meaning of the new English sentence."
+    },
+    {
+     "id": "F9",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/open_items.yaml",
+     "line": 105,
+     "claim": "O27 and D56 item 1 say Section 1.3 has 'no row' for a reroute the rider agreed to without a traffic reason. The matrix row 'Driver reroutes without traffic justification (no evidence of congestion) | N/A | Yes | Full refund' has Rider informed? = N/A, so it covers that case. The refund FC-R13 gives is the organizer's row, not a FairRyde gap. The question to the organizer misstates the source.",
+     "evidence": "policy_v2.1.md Section 1.3: \"| Driver reroutes **without** traffic justification (no evidence of congestion) | N/A | Yes | **Full refund** of excess distance fare |\". O27: \"Section 1.3 has no row for ... a reroute the rider agreed to without a traffic reason ... Today ... the second is refunded (D56).\"",
+     "failure_scenario": "The organizer is asked a question whose premise is wrong, and the engine's behavior is recorded as a limitation when it follows the matrix literally.",
+     "suggested_fix": "Reword O27 to the real open point (does agreement or acknowledgment ever excuse a reroute without a traffic reason?) and mark the agreed-without-traffic case as row 4 in D56 item 1 and in the FC-F06 text."
+    },
+    {
+     "id": "F10",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/rules.yaml",
+     "line": 594,
+     "claim": "Several new credibility notes cite the wrong decision for the FairRyde part they name. D54 covers the new readings and mapping (FC-F05 reading, FC-F06B, corridor, point of deviation) but says nothing about the arrival fallback with RECORDS_MISSING, the missing-traffic-data escalation, or requiring a reason in the message. Those are in D42 and D56 item 1 (the missing traffic data) or are not recorded as a decision at all (the reason requirement).",
+     "evidence": "CW-F02C note: \"... are FairRyde's (D, decisions D42 and D54)\"; FC-F06 note: \"Treating a case with no traffic data at all as missing data (FC-R12), and the offline match ... are FairRyde's (D, decision D54)\"; FC-F05 note: \"requiring a reason in the message ... are FairRyde's (D, decision D54)\". The text of D54 in open_items.yaml has none of these three points.",
+     "failure_scenario": "A reviewer following the cited decision finds no record of the choice, which the project rule 'every rule element needs a source or an open FairRyde label' wants recorded.",
+     "suggested_fix": "Cite D42 for the arrival fallback, D56 item 1 for the missing-traffic-data choice, and add the reason requirement to D54."
+    },
+    {
+     "id": "F11",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/rules.yaml",
+     "line": 89,
+     "claim": "META-01, the CHANGELOG and scope.yaml still define an organizer case as 'a dispute_id of the form DISP-nnn', but round 1 widened kbload.is_organizer_case to DISP-2026-0089 style ids (ADV-11). The rule that selects the policy profile no longer says what the code does.",
+     "evidence": "META-01: \"Organizer cases (a dispute_id of the form DISP-nnn) are judged under profile organizer_v2_1\"; kbload.py: `re.fullmatch(r\"DISP-(\\d{4}-)?\\d+\", ...)`.",
+     "failure_scenario": "A case with id DISP-2026-0142 is judged under organizer_v2_1 although META-01 says only DISP-nnn qualifies; a loader author following the rule text builds a different test.",
+     "suggested_fix": "Write 'DISP-nnn or DISP-yyyy-nnnn' in META-01 (and its zh) and the CHANGELOG."
+    },
+    {
+     "id": "F12",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/rules.yaml",
+     "claim": "Carry-over of SG-01, only recorded and not fixed: CW-F03 and CW-R03 remain credibility A while quoting Section 2.1 ('After 5 minutes ...'). The credibility_principle says a source counts toward A only if the clause is not one side of a META-04 known conflict, and Section 2.1's 5-minute wait conflicts with DISP-002's own 8-minute threshold and app timer (recorded in D42 and D41). The META-04 registry lists Ryde pages only (D56 item 9).",
+     "evidence": "credibility_principle: \"A source only counts toward A if the quoted clause is not itself one side of a META-04 known conflict.\" D56 (9): \"the META-04 known-conflict registry lists Ryde pages only\".",
+     "failure_scenario": "The two A-rated rules that decide DISP-002 rest on a clause the KB itself records as contradicted by the organizer's own file; the principle is not applied, and nothing marks it for the reviewer apart from the source check in the trace.",
+     "suggested_fix": "Add the Section 2.1 versus embedded-object conflict to META-04's known_conflicts, or add an explicit exception sentence to the credibility_principle for organizer-internal conflicts handled by the source check."
+    },
+    {
+     "id": "F13",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/rules.yaml",
+     "claim": "FC-F08 stays A with the Section 3.2 content requirement (new multiplier, revised fare, option to cancel without penalty) not applied. The omission is disclosed (D55 b), but nothing in the trace, flags or party text marks an AUTO 'notified, no refund' ruling as resting on an unchecked content condition.",
+     "evidence": "FC-F08: \"the content is not checked and a record that says notified is accepted as meeting it (limitation, decision D55)\". engine_surge.py has no flag or trigger for it (grep for content/D55 finds none).",
+     "failure_scenario": "A surge fare is upheld automatically against a rider whose in-app notice never stated the revised fare or the cancel option; the rider and the reviewer are told nothing about the unchecked condition.",
+     "suggested_fix": "Add a soft flag or a line in the surge explanation ('the notice content was not checked, Section 3.2') whenever the notice is accepted, or label the accepted-notice path as a D-part in the FC-F08 note."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read reference_data.yaml:67 and the AUTH-07 zh (rules.yaml:2331). Both are unchanged context lines in git diff 29f04d1 65d55ec. Both still say the tier follows Section 6 and that a penalty of 0.05 or more keeps a ruling below 95%. The English AUTH-07, D52 and the code say the old approval stays through R9 and R11. I ran N10 with penalty 0, 0.05, 0.10 and 0.25 and fraud flags 0 and 1. Every run gave APPROVE, with the first trigger 'decisive: DT-CW-NOSHOW R11'. So the stale text is wrong about behavior, and the disposition's 'fixed with F1' is only true for the English. I rate it MINOR because it is stale wording in a param note and a translation. The engine and the English rule and decision records are correct, and no outcome or tier is affected."
+    },
+    {
+     "id": "F2",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "AUTH-02 (rules.yaml:2224-2228) does say trigger (12) 'is a confidence penalty, not an approval trigger' under v2.1. For a no-show fee this is consistent with AUTH-07, because the approval comes through the decisive rows R9 and R11, which is trigger (1). The finding's premise that AUTH-07 and D52 say the D29 approval stays for a waiting fee is not supported. AUTH-07 ties the remaining approval to R9, R11 and the pin trigger, and a waiting fee has none of them. What is real is an undefined case: a waiting fee upheld on FairRyde's own GPS logic under v2.1 has no stated approval path. O26 only names R9 and R11. No engine or organizer case exists for it, so no outcome changes. This is a question for the KB owner, not a clear contradiction."
+    },
+    {
+     "id": "F3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I reproduced it with a scratch script on N10, with penalty 0, 0.05, 0.10 and 0.25 and fraud flags 0 and 1. The tier is APPROVE in all eight runs, driven by the R11 'decisive' trigger. The penalty only changes the printed C_effective (0.964 down to 0.714) and adds the explanatory trigger line when fraud flag is 1. In decide_tier the penalty is applied only when the fee is upheld through GPS logic, which is exactly when R9 or R11 is decisive. So it never changes a tier. The 'deviation or fare dispute in the 80% band' example cannot occur on the no-show path. D52 does say the old approval is not removed, so the effect is disclosed. What remains is imprecise wording, and the 'pin trigger' is not part of D29."
+    },
+    {
+     "id": "F4",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "The MAJOR claim does not hold. credibility_principle (rules.yaml:41-46) says parameters are rated separately and a rule is not lowered because it uses a C or D parameter. 'Partial refund of excess distance fare' is Section 1.3 text. The S$3.44 amount is the expected ruling given in the task (Section 1.3). The partial-versus-full reading is labeled in FC-R13 ('Decision D46 (partial or full)'), in D46 and in O17. Precedent 7.1's non-reconciliation is recorded in D56 item 8. Selftest R08 giving AUTO for 1.8 km under S$10 is the Section 6.1 and 6.2 result. A narrow point remains. The FC-R13 statement itself says tolls are not refunded (D47), and that element is D-rated by TOLLS_TREATMENT. The note also says the base 'follows DISP-001'. Whether that makes the rule D is a judgment for the owner. No amount or tier changes."
+    },
+    {
+     "id": "F5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "I ran notice_valid and then the full engine on DISP-003 with rider_notified=True and a timestamp before the trip start. Method 'in-app text alert' gives (False, 'not an in-app notification'), outcome FULL_REFUND (FC-R-SURGE-UNNOTIFIED) and tier AUTO. Method 'push_notification' gives UPHOLD. Method 'notification' gives ESCALATE_HUMAN. 'app notification (text banner)', 'in-app call' and 'phone app' also return False. The denylist (engine_surge.py:56) is checked before the app allowlist. A string that names the app and also a denylisted word is ruled as proof of no notice, not as ambiguous. FC-F08 does not state either word list. The failure scenario is real and reverses the surge outcome. It needs an unusual method string, so I did not rate it CRITICAL. The record contradicts itself on the method, so the correct outcome is uncertain and a person should decide."
+    },
+    {
+     "id": "F6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "open_items.yaml:59 (D47) still ends 'the source is the sample's recommended ruling (credibility A as organizer data)'. D47 is not changed in the diff; the only D47 hit in the open_items diff is a new reference inside O28. reference_data.yaml now rates TOLLS_TREATMENT D and says the answer-key sentence is a rule source only on Jasper's decision. The two records contradict each other. This is a labeling inconsistency only."
+    },
+    {
+     "id": "F7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I read the Precedent 7.3 section of policy_v2.1.md and grepped the policy. No policy text names a payment method; 'original payment method' appears only in the DISP-001 answer key. The REMEDY_FORM note (reference_data.yaml:68) still says the route sample and Precedent 7.3 show the form. Precedent 7.3 says only 'reversed and refunded to the rider'. CW-R13 (rules.yaml:1133) attributes 'refunded to the original payment method' to Section 2.3 and Precedent 7.3. sources.yaml:53 says the reference answers are never an input to a ruling. So the A rating and the attribution overstate the source. Outcome and amount are unaffected."
+    },
+    {
+     "id": "F8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "The English FC-F06 (rules.yaml:1334) says a route the rider agreed to has no row of its own and is refunded when there is no traffic incident. The zh (line 1335) still says '\u4e58\u5ba2\u540c\u610f\u7684\u8def\u7ebf\u5c5e\u4e8e\u5df2\u544a\u77e5\u5e76\u540c\u610f\u4e00\u884c\uff08FC-R13\uff09'. That is the opposite meaning. The zh line is not changed by the round-1 diff. This is a translation inconsistency only; the engine follows the English."
+    },
+    {
+     "id": "F9",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "policy_v2.1.md Section 1.3 row 4 reads 'Driver reroutes without traffic justification | N/A | Yes | Full refund'. Rider informed is N/A, so a reroute without traffic justification is covered whether or not the rider agreed. FC-R13 item (2) says 'whether or not the rider was informed', which follows the matrix. O27 and D56 item 1 say Section 1.3 has 'no row' for an agreed reroute without a traffic reason, which misstates the source. Whether agreement should excuse such a reroute is a fair question for the organizer, but the stated premise is wrong. No behavior changes."
+    },
+    {
+     "id": "F10",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "The CW-F02C note (rules.yaml:595) cites D42 and D54. D42 does record the arrival fallback and RECORDS_MISSING, so that part is fine. The FC-F06 note (line 1340) cites only D54 for treating a case with no traffic data as missing data. D54's text does not cover it; D56 item 1 does. The FC-F05 note (line 1321) cites D54 for 'requiring a reason in the message'. D54's text does not mention a reason requirement. The remaining part of the finding holds for FC-F06 and FC-F05. These are citation slips only; the choices are labeled D in the rules."
+    },
+    {
+     "id": "F11",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "kbload.py:29 matches r'DISP-(\\d{4}-)?\\d+'. META-01 (rules.yaml:89 and its zh at line 96), CHANGELOG.md:12, reference_data.yaml:35, reference_data.yaml:159 and the is_organizer_case docstring all say 'DISP-nnn'. The rule text no longer states the test the code applies. Wording only."
+    },
+    {
+     "id": "F12",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "This is a carry-over of round-1 SG-01, which was dispositioned as 'recorded D56 item 9' and rated MINOR. The credibility_principle (rules.yaml:46) does say a clause on either side of a META-04 known conflict does not count toward A. The registry (known_conflicts, rules.yaml:152 onward) lists Ryde pages only. CW-F03 stays A with the Section 2.1 quote at rules.yaml:618, and D42 and D56 item 9 record the conflict with DISP-002's embedded 8-minute threshold. Whether an organizer-internal conflict should drop the rating or be handled as an exception is for the owner to decide. It is already recorded and no outcome is affected."
+    },
+    {
+     "id": "F13",
+     "verdict": "REFUTED",
+     "severity_after_check": "NONE",
+     "reason": "FC-F08 (rules.yaml:1396-1398) says in its statement that the notice content is not checked and a record saying notified is accepted, as a limitation under D55. D55 (b) records it, and the sample has no such content field. This is a disclosed scope limit, so no required label is missing. The unchecked condition only narrows what is verified; FairRyde does not extend the Ryde condition. Asking for an extra runtime flag in every trace is a design preference, not a defect."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "adversarial",
+  "review": {
+   "dimension": "ADVERSARIAL TEST OF THE CHANGED LOGIC (round 2, head 65d55ec): engine_noshow v2.1 path, engine_surge.notice_valid, engine_route negative-excess check, explain.policy_v21",
+   "checked_ok": [
+    "Ran 75 hand-built no-show edge cases (window edges, late and early drivers, missing or reordered events, mixed evidence, contact variants, fee and fraud-flag variants) plus about 4,900 randomized E.run cases under organizer_v2_1. No CRITICAL found: no case where a rule-required escalation or approval came out as tier AUTO, and no AUTO upheld fee with 300 s or less of wait. The only AUTO uphold that fails my independent check is the same-second contact boundary (F7).",
+    "Differential test of the A6 engine against engine_noshow.py from 421e3ae (pre-A6): all 126 selftest variants under ryde_2026, organizer_case and their own profile (384 runs) and 250 randomized advance and on-demand cases (372 runs) give identical outcome, reasons, row, tier, flags and triggers. The v2.1 changes do not leak into the Ryde or legacy profiles.",
+    "python3 kb/tools/selftest_v21.py passes 60/60 including S16 to S18 and R16. The N-series window edges behave as pinned: 300 s exactly is not met (more_than), 301 s is met, and an app timer or policy-object reading that flips the result gives SOURCE_CONFLICT with tier HUMAN.",
+    "Wait window edges: scheduled_time in UTC 'Z' form, driver arriving late (arrival 08:55, cancel 09:00:30 gives WAIVE, 09:01:00 gives UPHOLD) or early, cancelling before the scheduled time (elapsed clamped to 0), no scheduled_time (anchor is the arrival, RECORDS_MISSING, tier APPROVE). All give the outcome the rule text implies; the late-driver uphold always goes to APPROVE through the CW-F03B reading test.",
+    "notice_valid, rider_notified values: True, False, 'true', 'TRUE', 'True ', 'yes', '1', 1 count as yes; False, 'false ', 'no', '0', 0 count as no; 'y', 'n', 't', 'f', 'none', 'null', '', blanks, 'notified', 'delivered', 'sent', 'failed', 'pending', 'partial', 'true (failed)', 1.0, '1.0', 'on', 'read', 'seen' all return None and the case goes to HUMAN. Missing flag, missing method, missing timestamp, and a flag-only record also return None (HUMAN). Notification 1 s after the trip start gives not notified; exactly at the start is accepted.",
+    "notice_valid, methods: 'in-app', 'In App Push', 'app_push', 'in_app', 'InApp', 'IN_APP_BANNER', 'Ryde app', 'app message' count as in-app; 'email_app_digest', 'SMS via app', 'whatsapp', 'email', 'in-app call', 'voice call via app' count as not in-app (the ADV-01 fix works for sms/email words); bare 'notification' and 'notification center' return None (HUMAN).",
+    "engine_route negative-excess check: excess_distance_fare of -3.44, -0.004, -1e-9 or '-3.44', and excess_tolls of -2.22, all give FIGURES_DISAGREE, GEN-R-DATA-INCONSISTENT and tier HUMAN; None or 'NaN' gives FC-R-INSUFFICIENT-DATA (HUMAN); excess above the whole difference, sum of excess lines above the difference, negative delta and a fare below the estimate all give HUMAN. A negative excess fare can no longer be refunded.",
+    "Section 6 ruling path in the route and surge engines: fee or fare difference over S$50 gives HUMAN (surge diff 63.00 tested); deviation 2.0 km is AUTO, 2.01 km is APPROVE; 1.0 km exactly is UPHOLD and 1.01 km is a partial refund; a fraud flag on rider or driver is counted by fraud_flag_count including string, missing and unreadable values (unreadable counts as a flag).",
+    "Surge engine: an unchanged or fallen surge gives UPHOLD (FC-R-SURGE-NOT-HIGHER); a fare above the quote with no surge increase, a booking fee change, a surge activated after the trip start, a missing record and a safety complaint all give HUMAN; the full differential is refunded only when it is solely the surge.",
+    "Safety content (Section 5.2) under organizer_v2_1 returns HUMAN with no outcome even when combined with a void or an unreadable contact record (K18, S21). RydeTAXI beats the void (policy gap, HUMAN). A rider message placing the rider at the pick-up gives R7 HUMAN. Injection text is flagged and ignored.",
+    "Explanation texts for the 50 selftest_v21 variants: no EXP-03 unmatched numbers, no 'AI ruling is final' at a tier other than AUTO, no promise of a refund at HUMAN or on ESCALATE_HUMAN, no 'fraud flag' wording, no 'ruled the same way' on a UPHOLD, no tier/status mismatch. The route and surge party texts agree with their rulings in all variants except the wording points in F11.",
+    "Frozen area (D34): rider_contact_reading and before_arrival_reading were not changed by this step and were not reviewed."
+   ],
+   "findings": [
+    {
+     "id": "F1",
+     "severity": "MAJOR",
+     "file": "/home/user/fairryde/kb/tools/engine_surge.py",
+     "line": 53,
+     "claim": "notice_valid decides 'in-app' by the presence of the tokens app, push or inapp and never reads negation or failure words, so a method string that says the notice was NOT delivered in the app, or was an OS-level push, is accepted as an in-app notice. The surge fare is then upheld at tier AUTO and the S$4.50 refund is refused.",
+     "evidence": "tokens = set(re.findall(r\"[a-z]+\", method)); if not tokens & {\"app\", \"push\", \"inapp\"}: ... else return True. Run with rider_notified=True, notification_timestamp=2026-09-14T21:04:50+08:00, trip start 21:05:00: method 'no in-app notification' -> valid=True UPHOLD FC-R-SURGE-NOTIFIED tier=AUTO; 'push_failed' -> True UPHOLD AUTO; 'in_app_not_delivered' -> True UPHOLD AUTO; 'push (undelivered)' -> True; 'not sent via app' -> True; 'in-app (scheduled)' -> True; 'in_app_queued' -> True; 'OS push' / 'system push' / 'Push notification (OS)' / 'push to watch' -> True UPHOLD AUTO.",
+     "failure_scenario": "DISP-003 with surge_pricing_log {rider_notified: true, notification_method: 'push_failed', notification_timestamp: '2026-09-14T21:04:50+08:00'} (or 'no in-app notification', 'OS push'): the record shows the in-app notice failed or was a lock-screen push, Section 3.2 is not met and Section 3.3 gives a full refund of S$4.50, but the engine returns UPHOLD, FC-R-SURGE-NOTIFIED, tier AUTO. The rider loses the refund with no person involved. FC-F08 states 'counts only if the method is an in-app notification' at credibility A; accepting 'push' as in-app and the channel word lists are FairRyde's reading and are not labeled D or recorded.",
+     "suggested_fix": "Return None (person decides) when the method contains a negation or failure token (no, not, never, fail, failed, undelivered, queued, scheduled, pending, suppressed, os, system, lock) or any token outside a small allowlist of in-app words; accept 'push' only as 'in-app push' or 'app push'. Record the push and channel-list reading as a FairRyde reading (credibility D) in FC-F08 and open_items, and add selftest S19 to S21 for 'push_failed', 'no in-app notification' and 'OS push'."
+    },
+    {
+     "id": "F2",
+     "severity": "MAJOR",
+     "file": "/home/user/fairryde/kb/tools/engine_surge.py",
+     "line": 54,
+     "claim": "The A6 fix returns False ('not an in-app notification') for any method string that is not recognized, and for any string that mixes an in-app word with a deny-listed channel word. The surge engine then refunds S$4.50 at tier AUTO although the record says the rider was notified and the method may well be in-app. Unknown wording should go to a person (None), as the fix already does for the bare word 'notification'.",
+     "evidence": "Lines 54 and 56: 'if tokens & {\"sms\", \"email\", ...}: return False' and 'if not tokens & {\"app\", \"push\", \"inapp\", \"notification\"}: return False'. rider_notified=True, ts 21:04:50 before start: 'in-app, sms' -> valid=False FULL_REFUND 4.5 AUTO; 'app and email' -> False FULL_REFUND AUTO; 'push + sms' -> False; 'in-application' -> False FULL_REFUND 4.5 AUTO; 'application' -> False; 'popup', 'banner', 'toast', 'alert', 'modal', 'dialog', 'inbox', 'fcm', 'apns', 'firebase', 'mobile', 'lock screen', 'in ride card', 'interstitial' -> False FULL_REFUND 4.5 AUTO; method '  ' (spaces) -> False FULL_REFUND AUTO while method '' -> None HUMAN; method True or 5 or {'a':1} -> False FULL_REFUND AUTO.",
+     "failure_scenario": "A record {rider_notified: true, notification_method: 'in-app, sms', notification_timestamp before the start} means the rider got an in-app notice (plus an SMS); Section 3.3 gives no refund. The engine returns FULL_REFUND S$4.50 tier AUTO. Same for 'in-application', 'banner' or an unlisted gateway name such as 'fcm'. The wrong payout is automatic and final under Section 6.1 (under S$10).",
+     "suggested_fix": "Only return False when a deny-listed channel is the only channel found (no in-app token at all). If an in-app token and a deny-listed token are both present, return None. If no token is recognized, return None, not False. strip() the method before the 'not method' test and coerce non-strings to None."
+    },
+    {
+     "id": "F3",
+     "severity": "MAJOR",
+     "file": "/home/user/fairryde/kb/tools/engine_surge.py",
+     "line": 60,
+     "claim": "The notification time is compared only with the trip start, never with when the surge was activated, so a notification stamped before the surge existed (a day earlier, or before the quote) is accepted as the Section 3.2 notice and the surge fare is upheld at AUTO.",
+     "evidence": "Line 60: 'if E.T(ts) > E.T(start): return False'. Nothing reads log['surge_activated_at'] (2026-09-14T21:04:30+08:00 in DISP-003). Run: rider_notified=True, method 'in_app', notification_timestamp 2026-09-14T21:00:00+08:00 -> valid=True UPHOLD FC-R-SURGE-NOTIFIED AUTO; 2026-09-13T21:04:50+08:00 (a day before) -> valid=True UPHOLD AUTO; 2026-09-14T20:50:00+08:00 -> UPHOLD AUTO.",
+     "failure_scenario": "A notice sent before the multiplier rose cannot state 'the new surge multiplier' or 'the revised estimated fare' that Section 3.2 requires. A record with an in-app notice timestamped 21:00 for a surge activated at 21:04:30 is upheld automatically with no refund; DISP-003 would have been refunded S$4.50 on the correct reading.",
+     "suggested_fix": "In notice_valid compare ts with surge_activated_at (log) and return False (or None, a person decides) when ts < activated_at; pass the activation time as a parameter. Add a selftest variant S19 for it and an FC-F08 sentence."
+    },
+    {
+     "id": "F4",
+     "severity": "MAJOR",
+     "file": "/home/user/fairryde/kb/tools/engine_noshow.py",
+     "line": 977,
+     "claim": "Under organizer_v2_1 'no contact' now voids the fee at tier AUTO (CONTACT_NOT_ATTEMPTED was dropped as an approval trigger), but the contact count reads only chat_logs with sender exactly 'driver' and type exactly 'call' or 'message', from the assignment event. An absent chat_logs key, a driver call that only the app_events record, a differently spelled sender, or a missing assignment event is therefore read as proof of no contact and the fee is voided automatically.",
+     "evidence": "calls = [c for c in chat if c[\"sender\"] == \"driver\" and c[\"type\"] == \"call\" and c_from <= T(c[\"timestamp\"]) <= end]; the v21 trigger filter 'not (v21 and f == \"CONTACT_NOT_ATTEMPTED\")'. Runs on clean DISP-002 (no policy flags): (K03) chat has no driver entries but app_events still holds 'driver_called_rider' at 08:47:05 'Driver initiated in-app call to rider' -> WAIVE_FEE CW-R-NOCONTACT-VOID tier=AUTO; (S07) chat_logs key removed -> WAIVE_FEE CW-R-NOCONTACT-VOID AUTO flags CONTACT_NOT_ATTEMPTED; (K04) sender 'Driver' -> WAIVE_FEE VOID AUTO; (K11) sender 'driver ' -> WAIVE_FEE VOID AUTO; (K07) message 08:35 and call 08:36 (after assignment) but no driver_assigned/booking_confirmed events -> WAIVE_FEE VOID AUTO. Same messages with type 'Call' -> INSUFFICIENT -> APPROVE only because of the other-reading test.",
+     "failure_scenario": "A no-show case whose chat export lost the driver's call (the app event shows it) is decided WAIVE_FEE S$5.00 refund with tier AUTO and the explanation tells both parties 'the trip record shows 0 calls', although a record in the same file shows the call. Round 1 recorded the exact-spelling matching as D56 item 4, but before A6 it only lowered the tier; with the void it now changes the money automatically.",
+     "suggested_fix": "Count a driver call also from app_events driver_called_rider and accept normalized sender and type (kb.resolve TX-ROLE, strip, lower). When the app events and chat_logs disagree about driver contact, or chat_logs is absent, or the assignment event is missing, do not void at AUTO: flag RECORDS_MISSING (or SOURCE_CONFLICT) so the tier is APPROVE or HUMAN."
+    },
+    {
+     "id": "F5",
+     "severity": "MAJOR",
+     "file": "/home/user/fairryde/kb/tools/engine_noshow.py",
+     "line": 1422,
+     "claim": "For a no-show, a Section 6.1 'above S$50: always human review, AI prepares the case file only' result is turned into tier APPROVE, not HUMAN. The route and surge engines take sec6['tier'], but engine_noshow.decide_tier only appends the Section 6 reason as a trigger and then sets APPROVE.",
+     "evidence": "Lines 1399 to 1402 add sec6['reasons'] to triggers; lines 1422 to 1423: 'elif triggers or gates: tier = \"APPROVE\"'. engine_route.py line 460 and engine_surge.py line 287 use 'tier = sec6[\"tier\"]'. Run: DISP-002 clean with cancellation_fee=60.0 -> UPHOLD CW-R-NOSHOW-VALID tier=APPROVE; trigger 'Section 6.1: a dispute above S$50 (S$60.00) is always human review; the AI agent prepares the case file only.'; the party text says 'the S$60.00 cancellation fee stands ... This is a provisional decision' and then 'Why a person reviews it: Section 6.1: a dispute above S$50 ... always human review; the AI agent prepares the case file only.' Surge with diff 63.00 gives tier=HUMAN.",
+     "failure_scenario": "A misrecorded cancellation_fee of S$60 (or any charge above S$50) is ruled UPHOLD with APPROVE, i.e. FairRyde proposes an outcome, although AUTH-07 and D48 map this path to HUMAN with no proposed outcome; the party text contradicts itself (a proposed ruling and 'AI prepares the case file only').",
+     "suggested_fix": "In decide_tier, after sec6 is computed, set tier = 'HUMAN' when sec6['tier'] == 'HUMAN' (as the other two engines do) and have the party text use the HUMAN wording. Add a selftest variant for a fee above S$50."
+    },
+    {
+     "id": "F6",
+     "severity": "MAJOR",
+     "file": "/home/user/fairryde/kb/tools/explain.py",
+     "line": 305,
+     "claim": "For the new META-04 escalation (GEN-R-SOURCE-CONFLICT) the party text states a decision-table ground as the reason the case goes to a person, and one of the two readings is thereby asserted as fact. The 'Why a person reviews it' sentence cites Section 6.3 and a hidden signal for an escalation that has no Section 6 ruling at all.",
+     "evidence": "explain.py line 305: 'why = ... row.get(\"plain\", ...).split(\", so \")[0]' is used for every ESCALATE_HUMAN. N05 (299 s, app timer says met): 'Outcome: a Ryde staff member will decide this case, because the driver did not wait long enough.' N06B (301 s, policy object says not met): 'Outcome: a Ryde staff member will decide this case, because the driver arrived, stayed and waited long enough.' Same text for N07, W01, W02, W04, M06. For N06B and N07: 'Why a person reviews it: the case file holds a signal that only the reviewer sees (Section 6.3).' while the ruling is ESCALATE_HUMAN GEN-R-SOURCE-CONFLICT with section6=None.",
+     "failure_scenario": "Rider and driver are each told a finding that one of the case's own records contradicts (and that the person is meant to decide), and are told Section 6.3 (a ruling threshold) is why a person looks at it, instead of 'the records disagree about whether the free wait was over'. selftest_v21._explanation_problems does not check this, so the round 1 fix class C1 to C10 is incomplete for the new path.",
+     "suggested_fix": "In explain.noshow, for reasons[0] == 'GEN-R-SOURCE-CONFLICT' write the reason from t.source_check ('the platform's wait timer and the policy for this trip disagree about whether the free wait was over') and skip the decision-table phrase; in _why_person do not cite Section 6.3 when tier['section6'] is None. Add a check for 'because the driver' on source-conflict variants."
+    },
+    {
+     "id": "F7",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/tools/engine_noshow.py",
+     "line": 977,
+     "claim": "A driver message or call stamped at exactly the cancellation second counts as contact 'before cancelling' (inclusive upper bound), so a fee is upheld at AUTO when the only message or call is simultaneous with the cancellation.",
+     "evidence": "'c_from <= T(c[\"timestamp\"]) <= end'. DISP-002 clean (S.clean) with chat = driver message 08:52:00 and driver call 08:52:00 and the system cancellation message at 08:52:00 -> UPHOLD R8 tier=AUTO. In a 4,900-case random run every AUTO uphold that fails my independent 'strictly before the cancellation' check is of this kind (e.g. message 08:41:18, call 08:58:05 with cancellation 08:58:05).",
+     "failure_scenario": "The driver taps cancel and the app logs a call and a message in the same second: the obligation 'before cancelling' is not shown, but the fee stands automatically. Ambiguous order of equal timestamps, so only MINOR.",
+     "suggested_fix": "Use a strict '<' end for driver contact, or flag equal timestamps as BOUNDARY (approval); say which in CW-R13."
+    },
+    {
+     "id": "F8",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/tools/engine_noshow.py",
+     "line": 1130,
+     "claim": "The order void > source conflict > MAT-04 is not in CW-R13, and MAT-04 (a Ryde 30-day waiver window, reaching organizer_v2_1 through the profile fallback) is applied inconsistently: it beats a WAIVE row but not the void.",
+     "evidence": "'elif void:' precedes 'elif days > window:'. DISP-002 clean, filed 37 days after the trip, no driver contact: WAIVE_FEE CW-R-NOCONTACT-VOID flags OUT_OF_WINDOW tier=AUTO. Same case with adequate contact and a short wait (cancel 08:48:00, filed 40 days later): UPHOLD CW-R-OUT-OF-WINDOW tier=AUTO ('the S$5.00 fee stands, because the request was filed 40 days after the trip, outside the 30-day window'), although without the window the row is R6 WAIVE_FEE. kb.param('WAIVER_WINDOW_DAYS','organizer_v2_1') returns the ryde_2026 value with fallback_from='ryde_2026'; D41 to D56 do not mention MAT-04 and CW-R13 says it 'overrides every row of DT-CW-NOSHOW except a policy gap'.",
+     "failure_scenario": "Two late requests with the same lateness get opposite results, and in the second a fee that policy v2.1 does not support is upheld on a rule the organizer policy does not contain.",
+     "suggested_fix": "Decide and record (open_items) whether MAT-04 applies to organizer_v2_1 cases; if yes mark the extension D and state in CW-R13 that the void is checked before or after MAT-04; if no, drop it for this profile."
+    },
+    {
+     "id": "F9",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/tools/engine_noshow.py",
+     "line": 1312,
+     "claim": "contact_test counts a change of reasons alone as a decisive reading, and a cancellation before the scheduled time is labeled 'arrival unverified'. Both send routine waive cases to APPROVE (safe direction).",
+     "evidence": "Line 1312: '\"changes\": t2.outcome != base.outcome or t2.reasons != base.reasons'. DISP-002 clean with the driver cancelling at 08:44:00 (before the scheduled 08:45) and one message but no call: WAIVE_FEE reasons ['CW-R-ARRIVAL-UNVERIFIED', 'CW-R-NOCONTACT-VOID'] row R5 tier=APPROVE, flags RECORDS_MISSING, triggers 'decisive: CW-R13 (Section 2.3 can be read as CONTACT_VOID_WHEN = either_missing or CONTACT_VOID_WHEN = both_missing; the other reading gives WAIVE_FEE); DT-CW-NOSHOW R5 (decision-table row rated D)'. Fuzz: cancellation at or before the scheduled time always lands in row R5.",
+     "failure_scenario": "Every waive row with one of the two contacts missing becomes APPROVE with a trigger that says the other reading gives WAIVE_FEE, the same outcome. A driver cancelling before the scheduled time gets the reason 'arrival unverified' and a RECORDS_MISSING flag, where R6 CW-R-WAIT-SHORT (credibility A, AUTO) is the right row. Not frequent, and a person reviews it.",
+     "suggested_fix": "Compare outcomes only in contact_test for rows whose outcome is WAIVE_FEE; when wend <= start (cancelled before the free wait began) route to R6 with CW-R-WAIT-SHORT instead of presence UNKNOWN."
+    },
+    {
+     "id": "F10",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/tools/explain.py",
+     "line": 498,
+     "claim": "The round 1 fix C3 (name CW-R13 as the deciding rule and explain Section 2.3) works only when CW-R-NOCONTACT-VOID is reasons[0]. When the void is appended to a decision-table WAIVE row the party text omits CW-R13 from the deciding rules and has no Section 2.3 paragraph.",
+     "evidence": "explain.py line 498 'if t.reasons and t.reasons[0] == \"CW-R-NOCONTACT-VOID\"' and line 322 'if reason == \"CW-R-NOCONTACT-VOID\"'. W06 (cancel 08:44:00, one message, no call): ruling reasons ['CW-R-ARRIVAL-UNVERIFIED', 'CW-R-NOCONTACT-VOID']; the rider text says 'Rules that decided the outcome: GEN-R01 ...; CW-F04B ...' and lists CW-R13 only under 'Also used' with no sentence that the fee is voided under Section 2.3.",
+     "failure_scenario": "Parties are told the refund rests on GPS presence rules while the fee is also voided for missing contact; they are not told about the contact obligation.",
+     "suggested_fix": "Test 'CW-R-NOCONTACT-VOID in t.reasons' in both places."
+    },
+    {
+     "id": "F11",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/tools/explain.py",
+     "line": 505,
+     "claim": "Two party-text sentences contradict the facts of the case. (a) 'Section 2.1 counts the free wait from the scheduled pickup time' is always printed, also when the trace has no scheduled time and counted from the arrival. (b) The surge text prints 'the rider was not notified' next to 'no refund is due' when the surge did not rise.",
+     "evidence": "Line 505: wait = f\"Section 2.1 counts the free wait from the scheduled pickup time ...\" with no condition; W13, W14 and N08 (no scheduled_time, flag RECORDS_MISSING, 'The wait lasted 480 seconds, from 08:43:00') contain both sentences. Line 586 'if notice is False:' is independent of sc['increased']: S05 and S06 text: 'The platform's surge record shows that the rider was not notified in the app before the trip started (Section 3.2).' followed by 'Outcome: the final fare stands and no refund is due (Section 3.3).'",
+     "failure_scenario": "A reader sees a sentence that contradicts the wait start used, or a non-notification without a refund and no explanation that the surge did not rise.",
+     "suggested_fix": "Print the Section 2.1 sentence only when the anchor rule used the scheduled time; print the notification sentence only when the surge rose."
+    },
+    {
+     "id": "F12",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/tools/engine_surge.py",
+     "line": 60,
+     "claim": "Malformed values crash the engine instead of giving None or a person: a non-ISO or timezone-less notification_timestamp in notice_valid, and (new in A6) a non-numeric no_show_threshold_min in source_check.",
+     "evidence": "notice_valid with notification_timestamp '2026-09-14T21:04:50' or '2026-09-14 21:04:50' -> TypeError: can't compare offset-naive and offset-aware datetimes; 'soon' -> ValueError: Invalid isoformat string; 1789391090 -> TypeError: fromisoformat: argument must be str; True -> TypeError. No-show: chat timestamp '2026-09-13T08:47:05' -> TypeError; cancellation_policy.no_show_threshold_min '8 min' -> ValueError: could not convert string to float; cancellation_fee '5.00' -> ValueError: Unknown format code 'f'.",
+     "failure_scenario": "One bad field aborts the run and no ruling or escalation is produced.",
+     "suggested_fix": "Wrap E.T and float conversions in the notice, contact and source-check code, and return None or flag RECORDS_MISSING."
+    },
+    {
+     "id": "F13",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/tools/kbload.py",
+     "line": 29,
+     "claim": "An organizer case is recognized only by an exact upper-case dispute id, so an id with different case, spacing or prefix silently gets another profile (no-show) or crashes (route, surge).",
+     "evidence": "re.fullmatch(r\"DISP-(\\d{4}-)?\\d+\", str(...dispute_id)). DISP-002 with dispute_id 'disp-002', 'DISP-002 ', 'DISP_002', 'TKT-DISP-002' -> profile organizer_case (policy object, 8 min). DISP-001 with 'disp-001' or 'DISP-001 ' -> NotImplementedError: no reference engine for FC-ROUTE under ryde_2026.",
+     "failure_scenario": "A hidden organizer case with a padded or lower-case id is decided with the legacy 8-minute policy-object threshold, or crashes.",
+     "suggested_fix": "strip() and upper() the id before matching and record the id rule in META-01."
+    },
+    {
+     "id": "F14",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/tools/engine_route.py",
+     "line": 194,
+     "claim": "The new negative check stops negative excess fares, but a zero or implausible excess distance fare is still paid at AUTO: it is never compared with the deviation.",
+     "evidence": "DISP-001 with actual_distance_km 22.4 (1.9 km deviation) and excess_distance_fare 0, excess_tolls 0 -> PARTIAL_REFUND amount 0.0 tier=AUTO, text 'you are eligible for a refund of S$0.00'. Same deviation with excess_distance_fare 6.5 (the whole fare difference, tolls 0) -> PARTIAL_REFUND 6.5 AUTO. True is read as 1.0 (excess_distance_fare=True gives PARTIAL_REFUND 1.0). Related to the recorded F9 and ADV-07.",
+     "failure_scenario": "A 1.9 km deviation is refunded S$6.50 automatically on an unchecked fare line, or a S$0.00 'refund' is announced as eligible.",
+     "suggested_fix": "Escalate (FIGURES_DISAGREE) when excess_distance_fare is 0 with a deviation, or when it exceeds the deviation times the rate stated in the case notes; ignore booleans in _num."
+    },
+    {
+     "id": "F15",
+     "severity": "MINOR",
+     "file": "/home/user/fairryde/kb/rules.yaml",
+     "line": 1,
+     "claim": "FC-F08 stays at credibility A although the engine's channel handling goes beyond its text: it treats 'push' as in-app and applies deny and allow word lists. By the project rule an organizer condition extended by FairRyde is D.",
+     "evidence": "FC-F08 statement: 'A record that says notified counts only if the method is an in-app notification and the time is no later than the start of the trip.'; credibility_note: 'The duty, its timing and the in-app channel are the organizer's text (A).' notice_valid accepts 'push', 'push_notification', 'OS push'; rejects 'in-app, sms'.",
+     "failure_scenario": "The label overstates the rule's credibility for the surge uphold and refund decisions (F1, F2).",
+     "suggested_fix": "Rate FC-F08 D (or split the channel reading into a D element) and add a decision to open_items."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Ran notice_valid directly (scratch /tmp/a6check2/f1.py) with rider_notified=True, ts 21:04:50, start 21:05:00. 'no in-app notification', 'push_failed', 'in_app_not_delivered', 'push (undelivered)', 'not sent via app', 'in-app (scheduled)', 'OS push' and 'system push' all return True (in-app notice before start). Source lines 52 to 58 only test token presence of app/push/inapp and never negation or failure words. FC-F08 stays A and does not record the 'push counts as in-app' reading. Reachable only with free-text method values (the sample has null), but the result is an automatic upheld fare."
+    },
+    {
+     "id": "F2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Ran notice_valid: 'in-app, sms', 'app and email', 'in-application', 'banner', 'fcm' and '  ' (spaces) all return False; '' returns None, so whitespace and the empty string are handled differently. True and 5 also return False. Lines 54 and 56 return False for unrecognized text, while the bare word 'notification' goes to None. False leads to FULL_REFUND of S$4.50 at AUTO under S$10. Contrived inputs, but the failure direction is an automatic wrong payout."
+    },
+    {
+     "id": "F3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced: ts 21:00:00, and ts a day earlier, with 'in_app' return True. notice_valid only compares ts with the trip start (line 60) and never reads surge_activated_at (used elsewhere at engine_surge.py line 169). Real gap, but FC-F08 and D55 already state that the notice content (new multiplier, revised fare) is not checked. A notice stamped before the surge existed is not a realistic record, so this is missing detail rather than a likely outcome change."
+    },
+    {
+     "id": "F4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced on S.clean(DISP-002): no driver chat entries, no chat_logs key, and sender 'Driver' each give WAIVE_FEE CW-R-NOCONTACT-VOID at AUTO with flag CONTACT_NOT_ATTEMPTED, while app_events still holds driver_called_rider. But the code is identical at 29f04d1 (git show 29f04d1:kb/tools/engine_noshow.py already has 'not (v21 and f == CONTACT_NOT_ATTEMPTED)'), so it is not a round 1 fix regression. D56 limitations (4) exact chat values and (7) contacts counted from chat, not app events, record it, and the round 1 skeptic already rated ADV-03 MINOR. It needs inconsistent or incomplete input data. Real, and the owner should decide it."
+    },
+    {
+     "id": "F5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Ran DISP-002 with trip_data.cancellation_fee=60: UPHOLD CW-R-NOSHOW-VALID tier APPROVE, triggers include 'Section 6.1: a dispute above S$50 ... always human review; the AI agent prepares the case file only' and CHARGE_AMOUNT_MISMATCH. policy_v21.ruling_path returns tier HUMAN for the REVIEW band. engine_noshow.decide_tier (lines 1399 to 1423) puts the reasons in triggers and then sets APPROVE, ignoring sec6['tier']. AUTH-07 and D48 say 'always human review, case file only' is HUMAN. Code unchanged since 29f04d1. Both tiers need a person, and a legitimate no-show fee is fixed at S$5, so the case is unreachable with valid data. It is wrong against the rule text and outcome-neutral, hence MAJOR."
+    },
+    {
+     "id": "F6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Ran N05, N06B, N07: all ESCALATE_HUMAN GEN-R-SOURCE-CONFLICT tier HUMAN with section6=None. The text says 'because the driver did not wait long enough' (N05, N07) and 'because the driver arrived, stayed and waited long enough' (N06B), taken from the decision-table row phrase (explain.py line 305). Each asserts one side of a conflict the case itself records. Partly refuted: the 'Section 6.3 signal' sentence appears only because the DISP-002 base rider has a fraud flag, a real trigger. On a clean variant the text says 'FairRyde's approval rules ask for a person's check (AUTH-07)'. So the Section 6.3 half is not wrong, but the reason sentence is. Outcome-neutral (HUMAN either way)."
+    },
+    {
+     "id": "F7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran S.clean(DISP-002) with a driver message and call both at 08:52:00 and the cancellation at 08:52:00: UPHOLD R8 at AUTO. Line 977 uses c_from <= ts <= end. Equal-second ordering is ambiguous and the precise rule is a wording or labeling issue."
+    },
+    {
+     "id": "F8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran: filed 37 days late with no driver contact gives WAIVE_FEE CW-R-NOCONTACT-VOID AUTO with flag OUT_OF_WINDOW. Filed 40 days late with a short wait gives UPHOLD CW-R-OUT-OF-WINDOW AUTO, while in window it is WAIVE_FEE R6. The order is 'elif void' before 'elif days > window' (lines 1124 and 1139). kb.param('WAIVER_WINDOW_DAYS','organizer_v2_1') returns fallback_from ryde_2026, and policy_v2.1.md has no filing window (its only 30-day text is the rolling no-show account flag). Pre-existing, not in the round 1 range, rare input (DISP-002 is filed the same day). It needs an owner decision."
+    },
+    {
+     "id": "F9",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran a driver cancellation at 08:44:00 with one message: WAIVE_FEE reasons [CW-R-ARRIVAL-UNVERIFIED, CW-R-NOCONTACT-VOID], row R5, tier APPROVE, flag RECORDS_MISSING, with the decisive trigger text quoted. The safe direction (more review), so it is only a labeling and efficiency issue."
+    },
+    {
+     "id": "F10",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Same run as F9: the party text lists GEN-R01 and CW-F04B as the deciding rules, CW-R13 only under 'Also used', and has no Section 2.3 sentence. explain.py lines 322 and 498 test reasons[0] only. A wording gap on a combined-reason path."
+    },
+    {
+     "id": "F11",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "(b) is reproduced: S05 and S06 (surge did not rise, rider_notified False) print 'rider was not notified in the app ... (Section 3.2)' followed by 'no refund is due', because explain.py line 586 ignores sc['increased']. (a) is weaker. Line 505 is unconditional, but it states what Section 2.1 says, not a claim about this case's anchor. It is still confusing when no scheduled time exists. Wording only."
+    },
+    {
+     "id": "F12",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran notice_valid: a timezone-less timestamp raises TypeError (naive vs aware) and 'soon' raises ValueError. I did not run the no-show cases ('8 min', fee '5.00'). D56 limitation (4) already says malformed timestamps and missing keys raise errors and that a loader must validate first."
+    },
+    {
+     "id": "F13",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran: DISP-002 with 'disp-002', 'DISP-002 ', 'DISP_002' or 'TKT-DISP-002' gets profile organizer_case (legacy). DISP-001 with 'disp-001' or 'DISP-001 ' raises NotImplementedError. kbload.is_organizer_case uses an exact fullmatch. Organizer ids are likely well-formed, so it is a robustness gap only."
+    },
+    {
+     "id": "F14",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran DISP-001 with excess_distance_km 1.9 and actual 22.4: excess_distance_fare 0 gives PARTIAL_REFUND 0.0 AUTO, 6.5 gives 6.5 AUTO, and True gives 1.0 AUTO. The check only catches negative values or values above the fare difference. This overlaps D56 limitation (3), which says a deviation within tolerance is not cross-checked against the charged excess fare."
+    },
+    {
+     "id": "F15",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "rules.yaml FC-F08 (line 1404 to 1405) is credibility A with the note 'the in-app channel are the organizer's text'. notice_valid accepts 'push' and uses its own allow and deny word lists, which are FairRyde's reading under CLAUDE.md ('a Ryde condition extended by FairRyde is D'). It is a labeling issue that depends on F1 and F2."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "consistency",
+  "review": {
+   "dimension": "CONSISTENCY ACROSS FILES AND PARTY-FACING TEXT",
+   "checked_ok": [
+    "Ran python3 kb/tools/selftest_v21.py (60/60) and python3 kb/build_kb.py --no-xlsx --no-fuzz (ERROR 0 | WARN 0 | INFO 7); ran fuzz_presence.run for None, organizer_case and ryde_2026 (100 cases each): 0 crashes, 0 findings. Side effect to know about: the build rewrote one line of kb/out/check_report.md in the working tree (the annotation workbook line now reads 'workbooks skipped (--no-xlsx)'); I made no other change and ran no git state change, so the file shows as modified in git status.",
+    "Read the rider and driver texts for DISP-001, DISP-002, DISP-003 (rulings S$3.44 / UPHOLD / S$4.50, tiers APPROVE / APPROVE / AUTO), against the case files: amounts, distances (24.8 vs 20.5 km), the 360 s wait, 1 call and 4 messages, the 1.0x to 1.5x surge, the 'not notified' record, the Section 6.1/6.2/6.3 sentences all match the facts. No fraud flag is named any more (C10 text fix works), and 'the AI ruling is final' appears only at tier AUTO.",
+    "E01 and E03 texts (ryde_2026) checked against the case JSON: wait 420 s and 195 s, 15 s margin, driver 1 call and 3 messages / 1 message, rider message wording, 'canceled' spelling: all correct. The 'driver's assignment to the cancellation' window wording appears only under organizer_v2_1; E01 and E03 still say 'during the wait'.",
+    "Round 1 fixes confirmed in code and text: surge notice allowlist/denylist (S16 SMS notification gives refund, S17 'failed' and S18 no timestamp escalate; party text 'not notified in the app' is true in S02, S03, S16); precedent line only when the precedent outcome equals the ruling (R01, R04 have none); F-AGREED sentences in R01, R02, R02B; HUMAN tier says 'FairRyde proposes ... a Ryde staff member decides' (S12, R02); card tail replaced by CARD-X in the KB workbook; dispute-id pattern; negative excess line (R16) escalates; American spelling in explain.py.",
+    "No em dash or en dash in any line added between 29f04d1 and 65d55ec (grep for U+2013 and U+2014 on the diff and on the touched tool and doc files: none). No names, plates, phone numbers or card tails in the new test data; the committed Annotation workbook has no hits for the organizer names, plates or ids; the KB workbook keeps only the organizer ids R-/D-nnnn, which privacy.yaml ACCOUNT_ID allows (keep_original_for_synthetic: true) and D56 item 12 records.",
+    "Consistent with the rules: scope.yaml competency question (META-01 organizer_v2_1), annotation_schema wait_elapsed_s anchor text, inventory.yaml status lines, privacy.yaml CARD_TAIL and privacy_scan.py CARD_TAIL pattern, report_md.py label, make_xlsx s_auth row (S$10 / 80% / 95% / 2 km, G1 and G4 stay, G5 and G6 replaced), CHANGELOG test count 60 and decisions D41 to D56 / O17 to O28, O26 to O28 present in open_items.yaml, D56 items 1 to 12 match the behavior I observed in R02, R05, S16 to S18, R16.",
+    "The 25 zh texts that got the pointer sentence are exactly the 25 rules in the CHANGELOG list 'Rules with v2.1 text and sources added'; the pointer wording contains no dash.",
+    "Frozen area (D34): I did not review the reading of rider calls and messages."
+   ],
+   "findings": [
+    {
+     "id": "F1",
+     "severity": "MAJOR",
+     "file": "kb/tools/policy_v21.py",
+     "line": 66,
+     "claim": "The round 1 'precision' fix (ADV-15) only handles deviations that round to 2.0 km or less. For any deviation above 2 km with two decimals, the Section 6.2 sentence in the party text states a different, rounded number than the facts sentence, and EXP-03 reports an unregistered number.",
+     "evidence": "policy_v21.py:66 f\"Section 6.2: the deviation of {deviation_km:.{2 if round(deviation_km, 1) <= p('ROUTE_AI_MAX_KM') else 1}f} km is above ...\". Run on DISP-001 with actual_distance_km 23.77 (excess 3.27): facts sentence 'a deviation of 3.27 km; Section 1.3 allows 1.0 km', reason sentence 'Section 6.2: the deviation of 3.3 km is above the 2.0 km', exp03_unmatched ['3.3']. With 22.64: '2.14' vs '2.1', unmatched ['2.1']; with 22.56: '2.06' vs '2.1', unmatched ['2.1'].",
+     "failure_scenario": "A real route case with a 3.27 km deviation (any two-decimal figure above 2.05 km) gives the rider and the driver one text with two different deviations, and the EXP-03 guard (explanation numbers must be registered findings) fails for that explanation. The sample (4.3 km) and the test variants (1.8, 2.0, 2.1 km) all hide it, and selftest_v21 would not catch it.",
+     "suggested_fix": "Format the figure the same way as the dev_km finding (rounded to 2 decimals, trailing zeros trimmed) in the Section 6.2 reason, or register the rounded value; add a selftest_v21 variant with a two-decimal deviation above 2 km that asserts exp03_unmatched is empty."
+    },
+    {
+     "id": "F2",
+     "severity": "MAJOR",
+     "file": "kb/tools/explain.py",
+     "line": 305,
+     "claim": "When Section 2.1 and another record disagree (GEN-R-SOURCE-CONFLICT, cases N05, N06B, N07), the party text gives the decision-table row's plain reason as the reason for sending the case to a person, which is false or contradictory, and the 'Why a person reviews it' sentence points to a fraud signal and Section 6.3 instead of the conflict.",
+     "evidence": "line 305: why = ... row.get(\"plain\", ...).split(\", so \")[0] -> N05 and N07: 'Outcome: a Ryde staff member will decide this case, because the driver did not wait long enough.'; N06B: 'Outcome: a Ryde staff member will decide this case, because the driver arrived, stayed and waited long enough.' All three end with 'Why a person reviews it: the case file holds a signal that only the reviewer sees (Section 6.3).' although the tier triggers are 'fraud signal on RIDER (... symmetric trigger; the detail is for the reviewer, not for the parties)' and 'margin ... the records disagree by up to 60 s', and the reason code is GEN-R-SOURCE-CONFLICT (Section 2.1 against the app timer or the embedded 8-minute threshold).",
+     "failure_scenario": "At exactly 300 s after the scheduled pickup (N07) the rider and the driver are told the staff member decides 'because the driver did not wait long enough', which reads as a finding for the rider while the real reason is that the written policy and the app timer give different answers. In N06B the stated reason ('waited long enough') argues for upholding. Both parties are also told the 95% (Section 6.3) fraud-flag path is why a person looks, which is not the reason. Outcome and tier are unchanged.",
+     "suggested_fix": "For reason GEN-R-SOURCE-CONFLICT use a dedicated sentence ('Ryde's written policy and the platform's records give different answers on whether the free wait was over, so a staff member decides'), and in _why_person prefer the AUTH-06 / source-conflict trigger over the symmetric fraud trigger; add N05 and N07 to the party-text checks in _explanation_problems."
+    },
+    {
+     "id": "F3",
+     "severity": "MINOR",
+     "file": "kb/tools/explain.py",
+     "line": 464,
+     "claim": "The fallback branch of _why_person cites AUTH-07 as the reason for human review in every case where the tier comes from AUTH-06 (no ruling to approve) or from an injection trigger, so the party is given a wrong rule and a vague reason.",
+     "evidence": "Falls to the else: why = \"FairRyde's approval rules ask for a person's check of this kind of case (AUTH-07)\". Output in R02, R02B, R05, R10, R11, R16, S04, S07, S08, S09, S17, S18, N12 (triggers[0] = 'FairRyde has no ruling to approve (AUTH-06): GEN-R-POLICY-GAP' or 'FC-R-INSUFFICIENT-DATA' or 'GEN-R-DATA-INCONSISTENT') and S14 (triggers[0] = 'instruction injected by the party the outcome favors (RIDER)').",
+     "failure_scenario": "A rider whose surge record was unreadable (S17, S18) is told 'FairRyde's approval rules ask for a person's check of this kind of case (AUTH-07)'. AUTH-07 is the Section 6 ruling path and has nothing to do with it; the real cause is in the outcome sentence ('the records do not settle it'). The sentence also repeats what the outcome line already said.",
+     "suggested_fix": "Add branches for 'FairRyde has no ruling to approve' (omit the sentence or say the records or rules do not settle it) and for the injection trigger (say the message contained an instruction that was ignored), and cite AUTH-06 or GEN-R-INJ instead of AUTH-07."
+    },
+    {
+     "id": "F4",
+     "severity": "MINOR",
+     "file": "kb/tools/explain.py",
+     "line": 592,
+     "claim": "At tier HUMAN above S$50 (variant S12) the party text says FairRyde proposes a refund of S$60.00 and, in the same text, that the AI agent prepares the case file only; 'a Ryde staff member decides' is also said twice.",
+     "evidence": "S12 rider: 'Outcome: FairRyde proposes a refund of the surge differential, S$60.00, to your original payment method (Section 3.3); a Ryde staff member decides. A Ryde staff member decides this case. ... Why a person reviews it: Section 6.1: a dispute above S$50 (S$60.00) is always human review; the AI agent prepares the case file only.' AUTH-07: ''always human review, case file only' and a safety claim are HUMAN'.",
+     "failure_scenario": "The text announces an amount while quoting the policy that says the AI agent only prepares the file (the safety path says FairRyde 'proposes no outcome, amount or measure'). A reader cannot tell whether S$60.00 is a proposal or not. The C5 fix created this wording.",
+     "suggested_fix": "At tier HUMAN from Section 6.1 say 'FairRyde has prepared the case file; the surge differential is S$60.00 and a Ryde staff member decides', and drop the duplicated 'A Ryde staff member decides this case' status line."
+    },
+    {
+     "id": "F5",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 2331,
+     "claim": "The zh texts of AUTH-07 (line 2331) and FC-F06 (line 1325 block) were not updated or marked by the pointer sentence, and now state the behavior that the round 1 fixes removed.",
+     "evidence": "AUTH-07 zh: '\u7b49\u7ea7\u4ecd\u6309\u7b2c 6 \u8282\uff08\u51b3\u5b9a D52\uff1b\u6709\u6b3a\u8bc8\u6807\u8bb0\u65f6\u8be5\u6263\u5206\u4f7f\u88c1\u51b3\u4f4e\u4e8e 95%\uff0c\u4f4e\u4e8e S$10 \u4e14\u65e0\u6807\u8bb0\u65f6\u7b2c 6.1 \u8282\u63a5\u53d7\u4efb\u4f55\u7f6e\u4fe1\u5ea6\uff09' while the English says the penalty only lowers C and 'The D29 approval itself also remains, through the decision-table rows R9 and R11 ... open question O26'. FC-F06 zh: '\u4e58\u5ba2\u540c\u610f\u7684\u8def\u7ebf\u5c5e\u4e8e\"\u5df2\u544a\u77e5\u5e76\u540c\u610f\"\u4e00\u884c\uff08FC-R13\uff09' while the English says 'a route the rider agreed to has no row of its own; it counts as justified only when the traffic data shows an incident (... an agreed reroute without it is refunded, decision D56 item 1)'. Neither rule is among the 25 zh texts that got '\uff08organizer_v2_1 \u53c2\u6570\u6863\u4e0b\u65b0\u589e\u7684\u5185\u5bb9\u89c1\u82f1\u6587\u6761\u6587\uff0c\u4e2d\u6587\u5f85\u8bd1\u3002\uff09'.",
+     "failure_scenario": "A Chinese-reading reviewer (Jasper, Prof. Cao) is told that D29 became only a penalty and that an agreed reroute is the 'no refund' row, while the engine sends the first to approval and refunds the second.",
+     "suggested_fix": "Update both zh texts or append the same pointer sentence, and list AUTH-07 and FC-F06 with the other 25 in D56 item 11."
+    },
+    {
+     "id": "F6",
+     "severity": "MINOR",
+     "file": "kb/reference_data.yaml",
+     "line": 67,
+     "claim": "Statements about D52 that round 1 declared fixed (F1, SG-10) still exist in other files, and the new D52/AUTH-07 text contains a wrong example.",
+     "evidence": "reference_data.yaml:67 D29_CONFIDENCE_PENALTY note: 'the tier follows Section 6. Any penalty of 0.05 or more keeps such a ruling below the 95% a fraud flag requires; below S$10 and without a fraud flag Section 6.1 accepts any confidence, so the penalty changes no tier there.' (no word that the D29 approval stays through R9/R11, O26). playbooks.yaml:80 'the ruling path of Section 6 (AUTH-07) with D29 as a confidence penalty'. AUTH-07 and D52 now say the penalty changes a tier 'when it moves C across a Section 6 threshold, which needs a fraud flag (95%) or a deviation or fare dispute in the 80% band' / 'the S$10 to S$50 band 80%', but the penalty applies only to an upheld no-show fee (S$5.00, always under S$10), so only the fraud-flag threshold can ever be crossed.",
+     "failure_scenario": "A reader of the parameter card concludes that D29 no longer sends any fee to a person, the opposite of D52's own 'NOT removed' sentence; the SG-10 overstatement (0.05 'keeps below 95%') was not corrected there. DISP-002 shows the real effect: tier APPROVE with or without the penalty.",
+     "suggested_fix": "Rewrite the reference_data note and the playbook step to match D52 (penalty plus the standing approval rows, O26) and delete the 80% band examples from AUTH-07 and D52."
+    },
+    {
+     "id": "F7",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1731,
+     "claim": "FC-R13 stays credibility A although TOLLS_TREATMENT, an essential parameter of FC-R13, was changed to D in round 1 (SG-03), and its credibility_note does not mention it. The build still prints the INFO line.",
+     "evidence": "FC-R13: credibility A, params [DEVIATION_TOLERANCE_KM, TOLLS_TREATMENT, ROUTE_AI_MAX_KM, REMEDY_FORM]; note: 'Rows (1), (2) except its amount, (3) and (4) are the organizer's matrix (A) ...'. kb/out/check_report.md: 'INFO | rule-credibility | FC-R13 | rated A but essential parameter(s) are D: TOLLS_TREATMENT=D, REMEDY_FORM=D'. reference_data TOLLS_TREATMENT now 'credibility: D' ('the reference answer of sample DISP-001, used here as a rule source ... so it is D'). The DISP-001 party text prints 'FC-R13 ... (the organizer's policy; credibility A)' next to 'The tolls of S$2.22 for the longer route pass through at cost and are not refunded.'",
+     "failure_scenario": "CLAUDE.md: a rule's credibility is its weakest essential element. Changing the toll treatment would change the amount, and the rule that applies it is shown to the parties and the reviewer as A.",
+     "suggested_fix": "Split the toll pass-through out of FC-R13 (like FC-R13B) or rate FC-R13 D with a note; at least name TOLLS_TREATMENT (D, D47, O28) in the credibility_note."
+    },
+    {
+     "id": "F8",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1387,
+     "claim": "FC-F08 is rated A, but the round 1 fix added FairRyde-defined conditions that change the outcome and are not labeled: a notified record without both a method and a time is treated as unreadable, and the in-app test is a FairRyde word list.",
+     "evidence": "FC-F08 credibility_note: 'The duty, its timing and the in-app channel are the organizer's text (A).' engine_surge.notice_valid: 'if not method or not ts or not start: return None, \"the record says notified, without both the method and the time ...\"' and token sets {sms, email, mail, whatsapp, telegram, call, phone, text, letter} / {app, push, inapp}. Section 3.2 does not require a timestamp or a method vocabulary. S18 (in_app, no timestamp) gives ESCALATE_HUMAN instead of the upheld fare.",
+     "failure_scenario": "Project rule: a Ryde condition extended by FairRyde is D. The record 'notified: true, in_app' with no time now escalates; the rule card says only A elements apply.",
+     "suggested_fix": "Add a FairRyde source and a credibility_note (D) for the evidence requirements, or rate FC-F08 D; add the missing-method-or-time consequence to the English statement and zh."
+    },
+    {
+     "id": "F9",
+     "severity": "MINOR",
+     "file": "kb/tools/explain.py",
+     "line": 322,
+     "claim": "For a void fee (CW-R-NOCONTACT-VOID) the rule list 'Rules that decided the outcome' now starts with CW-R13 but still lists the arrival and presence rules of the upheld row (CW-R06, CW-F04) as deciders.",
+     "evidence": "N01 rider text: 'Rules that decided the outcome: CW-R13 ... (FairRyde assumption; credibility D; decisive for the approval step); CW-R06 Arrival counts only if GPS shows the driver at the pick-up point (Ryde policy; credibility B); CW-F04 Driver presence at the pick-up point (Ryde policy; credibility B). Also used: ... CW-R03 No-show cancellation fee is valid ...'. Code: row_rules = [\"CW-R13\"] + [r for r in row_rules if r not in (\"CW-R03\", \"CW-R13\")].",
+     "failure_scenario": "The void happens whatever GPS shows (CW-R13 overrides all rows), yet the parties are told the GPS presence rules decided it.",
+     "suggested_fix": "For this reason keep only CW-R13 in row_rules and move the others to 'Also used'."
+    },
+    {
+     "id": "F10",
+     "severity": "MINOR",
+     "file": "docs/NEXT_STEPS.md",
+     "line": 7,
+     "claim": "Status and scope text in documents is out of step with the round 1 changes.",
+     "evidence": "(a) NEXT_STEPS.md line 7 and CLAUDE.md status: 'decisions D41 to D55' while CHANGELOG, open_items and selftest reconciliation_check now cover D41 to D56; selftest_v21.py docstring: '(decisions D41 to D55)'. (b) NEXT_STEPS.md line 7: 'A6 done (... , refrozen)' and the round 1 disposition F8/C6 'refrozen at the end', but validation/round2/00_freeze.json still has \"kb_version\": \"0.2.0\", frozen_at 2026-10-14T12:57:04, and git log shows no commit of it since 421e3ae. (c) kb/scope.yaml:98 'one organizer sample' (there are three). (d) kb/CHANGELOG.md says nothing about the zh pointer sentences (disposition F10 'CHANGELOG, report label, zh pointer'; only D56 item 11 does). (e) D56 says a negative excess line 'sends the route case to approval' but R16 expects tier HUMAN.",
+     "failure_scenario": "A validator who trusts 'refrozen' and runs the hash check against 00_freeze.json finds the v0.2.0 hashes and a mismatch on every changed file; readers of CLAUDE.md miss D56 and O26 to O28.",
+     "suggested_fix": "Refreeze after round 2 and only then keep the word 'refrozen'; update the D-range in CLAUDE.md, NEXT_STEPS and the selftest docstring; fix scope.yaml:98; add one line on the zh pointers to the CHANGELOG; change D56 'to approval' to 'to a person (tier HUMAN)'."
+    },
+    {
+     "id": "F11",
+     "severity": "MINOR",
+     "file": "kb/taxonomy.yaml",
+     "line": 642,
+     "claim": "The American-spelling fix (C7) was applied to explain.py only; British 'cancelled' / 'cancelling' remain in text written in A6.",
+     "evidence": "taxonomy.yaml:642 'Driver cancelled for no-show without both a chat message and a call: the fee is voided'; open_items.yaml D44 topic 'Section 2.3: no message AND call before cancelling voids the fee'; engine_noshow.py:1135 'overridden by CW-R13 (Section 2.3: ... before cancelling voids the fee; Precedent 7.3)'; selftest_v21.py N03, N09, N13 descriptions ('before cancelling', 'cancelled at 08:52', 'the driver cancelled at 08:44').",
+     "failure_scenario": "Breaks the CLAUDE.md rule 'American spelling' in the KB's taxonomy label and decision title; the engine string reaches traces.",
+     "suggested_fix": "Replace with 'canceled' / 'canceling' in these places (keep the spelling only inside verbatim quotes of the policy)."
+    },
+    {
+     "id": "F12",
+     "severity": "MINOR",
+     "file": "kb/out/check_report.md",
+     "line": 25,
+     "claim": "The check report still shows a different confidence for DISP-002 than the party text for the same ruling (second half of C10 not done).",
+     "evidence": "check_report.md: 'DISP-002 under organizer_v2_1: UPHOLD (row R8) ... confidence 0.939, tier APPROVE'; the rider and driver text: 'the confidence of this ruling is 0.84' (C minus D29_CONFIDENCE_PENALTY 0.10). Disposition C10 says 'fixed: fraud flag not named; test' only.",
+     "failure_scenario": "A reviewer comparing the report with the party text sees two confidences for one ruling and cannot tell that the penalty was applied.",
+     "suggested_fix": "Print C and C_effective (or the penalty) in the report and workbook lines for organizer_v2_1."
+    },
+    {
+     "id": "F13",
+     "severity": "MINOR",
+     "file": "kb/tools/make_xlsx.py",
+     "line": 965,
+     "claim": "The annotation workbook formula for wait_elapsed_s under organizer_v2_1 returns blank when the scheduled time is missing, but CW-F02C and the engine fall back to the arrival time (N08, flag RECORDS_MISSING), and annotation_schema.yaml describes the anchor without the fallback.",
+     "evidence": "make_xlsx.py:965 IF({prof}=\"organizer_v2_1\",IF(ISNUMBER({sch}),ROUND(MAX(0,{end}-MAX({sch},IF(ISNUMBER({arr}),{arr},{sch})))*86400,0),\"\"), ...); CW-F02C credibility_note: 'from the arrival when the case has no scheduled time (flag RECORDS_MISSING)'; selftest N08 'no scheduled time on the record: the wait counts from the arrival'. The Python expected value at line 850 does fall back for a missing scheduled time.",
+     "failure_scenario": "For a case without scheduled time the sheet shows an empty elapsed wait while the engine ruled on a wait counted from the arrival.",
+     "suggested_fix": "Use the arrival as the anchor in the formula when the scheduled time is empty, and add that to the annotation_schema formula text."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Read policy_v21.py:66 and reproduced it with a scratch script (/tmp/a6check2/f1.py) that sets DISP-001 actual_distance_km and excess_distance_km consistently. At 23.77 km the facts sentence says 'a deviation of 3.27 km' and the Section 6.2 reason says '3.3 km', with exp03_unmatched ['3.3']. At 22.64 km it gives '2.14' vs '2.1' and unmatched ['2.1']. At 22.56 km the unmatched number is '2.1'. At 24.8 km (4.3 km, the sample) it is clean. Outcome and tier are unchanged and it affects an in-scope text only, so MAJOR (wrong, outcome-neutral) fits."
+    },
+    {
+     "id": "F2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Ran N05, N06B and N07 through explain.policy_v21. All three escalate with GEN-R-SOURCE-CONFLICT. N05 and N07 say 'a Ryde staff member will decide this case, because the driver did not wait long enough'. N06B says 'because the driver arrived, stayed and waited long enough'. All end with 'Why a person reviews it: the case file holds a signal that only the reviewer sees (Section 6.3)'. The trigger list starts with the symmetric fraud trigger, and the margin/records-disagree trigger comes second. The real cause, the source conflict, appears only inside the facts paragraph. The stated reason is misleading for the parties, but outcome and tier are unchanged, so MAJOR by the definitions."
+    },
+    {
+     "id": "F3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran S17 and S14. S17 (triggers[0] 'FairRyde has no ruling to approve (AUTH-06)') prints 'Why a person reviews it: FairRyde's approval rules ask for a person's check of this kind of case (AUTH-07)'. S14 (injection trigger) prints the same. AUTH-07 in rules.yaml is the Section 6 thresholds rule, so the citation is wrong. Wording only."
+    },
+    {
+     "id": "F4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran S12. The text says 'FairRyde proposes a refund of the surge differential, S$60.00 ... a Ryde staff member decides. A Ryde staff member decides this case.' It then says 'Section 6.1 ... the AI agent prepares the case file only'. The duplicate status line and the mixed proposal/case-file-only message are real. Outcome-neutral wording."
+    },
+    {
+     "id": "F5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read rules.yaml. The FC-F06 English now says an agreed route has no row of its own, and an agreed reroute without a traffic incident is refunded (D56 item 1). The zh still says the agreed route belongs to the 'informed and agrees' row (FC-R13). The AUTH-07 zh says 'the tier still follows Section 6' and omits the standing D29 approval through R9/R11 and O26 that the English states. Neither has the pointer sentence (25 rules carry it). The zh is stale. Documentation only."
+    },
+    {
+     "id": "F6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "reference_data.yaml D29_CONFIDENCE_PENALTY note is unchanged by round 1 and says 'the tier follows Section 6', with no mention that the R9/R11 approval stays (D52, O26). playbooks.yaml:80 says 'D29 as a confidence penalty'. The penalty is applied only in engine_noshow.py (grep), on a S$5 fee, so the '80% band' examples in AUTH-07 and D52 can never apply to it. Wording and labeling only."
+    },
+    {
+     "id": "F7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "FC-R13 (rules.yaml:1731 to 1762) is still credibility A with TOLLS_TREATMENT in params. TOLLS_TREATMENT is now D in the organizer_v2_1 profile. check_report.md line 30 prints 'FC-R13 rated A but essential parameter(s) are D: TOLLS_TREATMENT=D, REMEDY_FORM=D'. The credibility_note does not mention tolls. The same INFO pattern already exists for other rules (CW-R10, FC-R15), so it is a labeling inconsistency, not a new class of defect. The FC-R13 outcome is unchanged."
+    },
+    {
+     "id": "F8",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "The engine_surge.py diff shows the new method/time requirement and token word lists. FC-F08 is rated A, and its statement says a notified record 'counts only if the method is an in-app notification and the time is no later than the start'. So a record missing a time can arguably not count under the stated text. The consequence (escalate, not 'not notified') and the word lists are not stated or labeled as FairRyde choices. Whether that is a D extension or an operationalization of the A text is the KB owner's call. At most a MINOR labeling issue."
+    },
+    {
+     "id": "F9",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Ran N01. The rider text lists 'Rules that decided the outcome: CW-R13 ...; CW-R06 ...; CW-F04 ...'. engine_noshow.py:1131 comment says the fee is voided 'whatever the facts of the wait show, so the other findings are moot'. So CW-R06 and CW-F04 are not deciders. Wording only."
+    },
+    {
+     "id": "F10",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "grep shows CLAUDE.md and docs/NEXT_STEPS.md say 'D41 to D55', and the selftest_v21.py docstring says D41 to D55, while CHANGELOG and D56 exist. NEXT_STEPS says 'refrozen'. validation/round2/00_freeze.json is still kb_version 0.2.0, last changed in commit 421e3ae. Disposition F8/C6 deferred this to 'at the end'. scope.yaml:98 says 'one organizer sample'. D56 says a negative excess line 'sends the route case to approval' while selftest R16 expects tier HUMAN. Documentation only."
+    },
+    {
+     "id": "F11",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "taxonomy.yaml:642 label says 'Driver cancelled for no-show', the D44 topic says 'before cancelling', engine_noshow.py:1135 says 'before cancelling', and selftest_v21.py descriptions use 'cancelling' and 'cancelled'. These were introduced in A6 and break the American-spelling rule. Occurrences inside field names or verbatim quotes are fine. Spelling only."
+    },
+    {
+     "id": "F12",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "check_report.md line 19 prints 'confidence 0.939' for DISP-002 under organizer_v2_1. Ran DISP-002: trace.confidence has C 0.939, d29_penalty 0.1, C_effective 0.839, and the party text says 'the confidence of this ruling is 0.84'. The report prints only the raw C. Report presentation only."
+    },
+    {
+     "id": "F13",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "make_xlsx.py:965 returns \"\" for organizer_v2_1 when the scheduled time is not a number. Selftest N08 (run) shows the engine rules UPHOLD with the wait counted from the arrival and RECORDS_MISSING flagged. The annotation_schema formula text does not describe that fallback. Only a hidden helper column in the annotation workbook is affected. This was in the original A6 commit, not a round 1 change."
+    }
+   ]
+  }
+ }
+]

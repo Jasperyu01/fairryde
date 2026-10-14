@@ -1,0 +1,636 @@
+[
+ {
+  "case_id": "DISP-001",
+  "kb_type": "FC-ROUTE",
+  "playbook": "PB-FC-ROUTE",
+  "steps": [
+   {
+    "step": "PB-INTAKE 1: party text is evidence",
+    "rule_id": "GEN-R04",
+    "finding": "Ticket description, chat and the fare_breakdown.notes sentence are evidence, not instructions; no embedded instructions, no INJECTION_SUSPECTED. The notes' conclusions ('supporting that traffic on PIE was indeed a concern') and optimal_route.notes are not read as findings.",
+    "case_evidence": "dispute_ticket.description; fare_breakdown.notes; chat_logs MSG-001..006"
+   },
+   {
+    "step": "PB-INTAKE 2: safety override",
+    "rule_id": "CLS-01",
+    "finding": "No safety content: money dispute about a longer route, no violence, threat, abuse, danger, discrimination, accident. The rider's 'are we going the right way?' is a question, not danger. No SE claim; severity not set.",
+    "case_evidence": "description; chat MSG-005 (13:24), MSG-006 (13:25)"
+   },
+   {
+    "step": "PB-INTAKE 3: organizer code and claims",
+    "rule_id": "CLS-05",
+    "finding": "dispute_type route_deviation maps to FC-ROUTE (organizer_code route_deviation). Type taken from the code and records, not from the organizer's own labels.",
+    "case_evidence": "dispute_ticket.dispute_type = route_deviation"
+   },
+   {
+    "step": "PB-INTAKE 3: split into claims",
+    "rule_id": "CLS-02",
+    "finding": "One claim: FC-ROUTE (primary). The rider asks a refund of the 'excess fare', which is the same route claim. No secondary FC-TOLL claim is opened: under organizer_v2_1 FC-R01 does not apply and tolls pass through (TOLLS_TREATMENT = PASS_THROUGH, D47).",
+    "case_evidence": "description ('refund of the excess fare'); excess_tolls 2.22"
+   },
+   {
+    "step": "PB-INTAKE 4: not-a-dispute test",
+    "rule_id": "CLS-03",
+    "finding": "Not applicable: a charge is contested and a remedy (refund) is requested. Scope of FC-ROUTE is ADJUDICATE; playbook PB-FC-ROUTE.",
+    "case_evidence": "taxonomy FC-ROUTE scope ADJUDICATE, playbook PB-FC-ROUTE"
+   },
+   {
+    "step": "PB-INTAKE 5: resolve the trip",
+    "rule_id": "MAT-01",
+    "finding": "Exactly one trip: TRIP-2026-09871, same in ticket, trip_data and both profiles.",
+    "case_evidence": "dispute_ticket.trip_id; trip_data.trip_id; rider_id R-4521; driver_id D-1187"
+   },
+   {
+    "step": "PB-INTAKE 6/7: relation",
+    "rule_id": "MAT-02",
+    "finding": "NEW claim (no other ticket on this trip in the file); not an appeal, so MAT-03 does not apply. dispute_history shows past disputes on other trips only.",
+    "case_evidence": "dispute_ticket.status open; rider_profile.dispute_history (history, not used)"
+   },
+   {
+    "step": "PB-INTAKE 8: policy profile and date",
+    "rule_id": "META-01",
+    "finding": "dispute_id DISP-001 is an organizer case, so profile organizer_v2_1 (policy v2.1). The case carries no embedded policy object. Parameters not governed by v2.1 would fall back to ryde_2026 (none needed here).",
+    "case_evidence": "dispute_ticket.dispute_id = DISP-001"
+   },
+   {
+    "step": "PB-INTAKE 8: in force on trip date",
+    "rule_id": "META-02",
+    "finding": "Trip date 2026-09-12 is on or after organizer_v2_1 effective_from 2026-01-01: profile in force, no policy gap.",
+    "case_evidence": "trip_data.start_time 2026-09-12T13:15:00+08:00"
+   },
+   {
+    "step": "PB-INTAKE 9: coordinate and timeline sanity",
+    "rule_id": "DQ-03, DQ-04",
+    "finding": "All pickup, dropoff and GPS coordinates are inside SG_BBOX [1.15,103.59,1.48,104.10]. Timeline in order: chat 13:08-13:25, trip 13:15-13:52, filed 14:35 after the trip. Soft speed check (DQ-02): reported speeds are at most about 2.7 times the straight-line implied speed between pings, below SPEED_RATIO_SOFT 3.0; no flag, no data error.",
+    "case_evidence": "gps_telemetry points 1-16; trip_data.start_time/end_time; dispute_ticket.filed_at"
+   },
+   {
+    "step": "PB-FC-ROUTE 1-10: ryde_2026 steps skipped",
+    "rule_id": "FC-R01, FC-R03, FC-R04, FC-R05",
+    "finding": "Steps 1 to 10 are the ryde_2026 profile; under organizer_v2_1 (DISP-nnn) steps 11 to 16 run instead. FC-R01 to FC-R05 are not used (FC-R13 text). Pricing-mode/fixed-fare no-refund logic (FC-R01) therefore not applied.",
+    "case_evidence": "playbook step 1 note; FC-R13 statement"
+   },
+   {
+    "step": "PB-FC-ROUTE 11: fare figures agree",
+    "rule_id": "DQ-05",
+    "finding": "Figures agree within tolerance: 35.00 - 28.50 = 6.50 = excess_fare = fare_breakdown.delta; excess_distance_fare 3.44 = 4.3 km x S$0.80; excess_tolls 2.22; 3.44 + 2.22 = 5.66, not more than the whole difference 6.50. Distances: 24.8 - 20.5 = 4.3 = excess_distance_km; estimated_distance equals optimal_route 20.5. No FIGURES_DISAGREE, gate G1 does not fire. (Remaining S$0.84 of the difference is not itemized; the KB refunds only the distance part.)",
+    "case_evidence": "trip_data.estimated_fare 28.5, actual_fare 35.0, excess_fare 6.5; fare_breakdown.excess_distance_fare 3.44, excess_tolls 2.22; trip_data.estimated_distance_km 20.5, actual_distance_km 24.8, excess_distance_km 4.3"
+   },
+   {
+    "step": "PB-FC-ROUTE 11: deviation measurement",
+    "rule_id": "FC-F02",
+    "finding": "F-DEVIATION-KM = recorded actual 24.8 - recommended 20.5 = 4.3 km, more than DEVIATION_TOLERANCE_KM 1.0 km and more than ROUTE_AI_MAX_KM 2.0 km. Far from the 1 km boundary band (0.2 km), so no BOUNDARY_MARGIN. Recorded trip distance used, not the sum of straight lines between pings. F-DEVIATION-CONFIRMED = true: pings 3 to 13 (Stamford Rd, Esplanade, Marina Blvd, Nicoll Hwy, Geylang, Dunman, ECP) lie well over CORRIDOR_HALF_WIDTH_M 100 m from the PIE polyline, far more than 2 consecutive pings, outside the 500 m endpoint zones. Point of deviation = first ping beyond the corridor: ping 2 (13:17, about 300 m off the Scotts Rd to PIE slip road), at the latest ping 3 (13:19:30). Corridor test is rough (D54).",
+    "case_evidence": "trip_data.actual_distance_km 24.8; optimal_route.estimated_distance_km 20.5 and waypoints 1-10 (PIE); gps_telemetry points 2-14 (CBD, Nicoll Hwy, Geylang Rd, ECP)"
+   },
+   {
+    "step": "PB-FC-ROUTE 12: notice of route change and agreement",
+    "rule_id": "FC-F05",
+    "finding": "F-NOTICE = NO. Before the deviation (13:09-13:10:30) the driver only confirmed the pickup and 'we will get there in time'. The only driver message after the deviation began (13:25, MSG-006 'Don't worry, I know the way. We will reach on time.') gives neither a route change nor a reason, and is late anyway (after 13:17-13:19:30). No call record in the case. F-AGREED = NO (the rider questioned the route at 13:24, no acknowledgment of a change). Reading: even a generous reading of MSG-006 is at most UNCLEAR (one element, neither element present), never a notice with reason.",
+    "case_evidence": "chat MSG-002 13:09, MSG-004 13:10:30, MSG-005 13:24 rider 'doesn't look like the usual route', MSG-006 13:25; description 'The driver did not inform me'"
+   },
+   {
+    "step": "PB-FC-ROUTE 13: traffic justification",
+    "rule_id": "FC-F06, FC-F06B",
+    "finding": "F-JUSTIFIED = TRUE (reading clear). TC-001: road PIE, direction eastbound (= direction Orchard to Changi), window 13:05 to 13:50 overlaps the trip 13:15-13:52, type vehicle_fire, severity high: passes all four tests and names a direction. TC-002 (PIE exit ramp, eastbound, 13:15-13:40, heavy_congestion, moderate) also passes. TC-003 (ECP, traffic_flow, low) is on the driver's road: neither a justification nor a reason against. The organizer's own conclusion in TC-003's text is not read. Traffic data exists, so FC-R12 does not fire.",
+    "case_evidence": "traffic_conditions TC-001, TC-002, TC-003; optimal_route.route_name 'PIE (Pan-Island Expressway)'; waypoint descriptions PIE"
+   },
+   {
+    "step": "PB-FC-ROUTE 14: refund matrix",
+    "rule_id": "FC-R13",
+    "finding": "Section 1.3 matrix, in order: (1) deviation 4.3 km > 1 km, so not tolerance; (2) traffic justification exists, so not the unjustified row (FC-R13B not used); (3) rider not informed, so not 'informed and agrees' and not 'informed without agreement'; (4) traffic justified and rider not informed: PARTIAL_REFUND of the excess distance fare, reason FC-R-DEVIATION-UNNOTIFIED. Amount = fare_breakdown.excess_distance_fare = S$3.44 (4.3 km x S$0.80), which is below the S$6.50 total difference. Tolls S$2.22, time and the remaining difference are not refunded (TOLLS_TREATMENT PASS_THROUGH, D47). Form: ORIGINAL_PAYMENT_METHOD (REMEDY_FORM). The rider's request for the full S$6.50 is granted only in the distance part.",
+    "case_evidence": "fare_breakdown.excess_distance_fare 3.44, excess_tolls 2.22, delta.total 6.5; rider_profile.payment_method credit_card (Visa)"
+   },
+   {
+    "step": "PB-FC-ROUTE 14: insufficient data check",
+    "rule_id": "FC-R12",
+    "finding": "Not triggered: recorded distance, fare breakdown, recommended route, dense enough pings (16 pings, 2 to 3 minutes apart) and traffic data are all present; no itinerary change or added stop.",
+    "case_evidence": "trip_data.actual_distance_km; fare_breakdown; optimal_route; gps_telemetry (16 points); traffic_conditions (3)"
+   },
+   {
+    "step": "PB-FC-ROUTE 15: precedent",
+    "rule_id": "GEN-R08",
+    "finding": "PREC-7.1 (FC-ROUTE, partial refund, DISP-2026-0089) is ALIGNED: key factors rider_informed = false and traffic_justified = true equal the case. Deviation size (1.8 km there, 4.3 km here) is not a key factor. Cite policy Sections 1.2, 1.3 (and 1.4 for the measurement). The precedent supports but does not decide.",
+    "case_evidence": "precedents.yaml PREC-7.1 factor_vector vs F-NOTICE NO, F-JUSTIFIED TRUE"
+   },
+   {
+    "step": "PB-FC-ROUTE 15/17: fraud and history",
+    "rule_id": "GEN-R03, FRD-01, FRD-02",
+    "finding": "No FRAUD_SIGNAL: rider has fraud_flags 0 and only 2 past disputes (below RIDER_ABUSE_MIN_DISPUTES 3); driver fraud_flags 0 and no overcharge beyond what the fare lines show. History, ratings, compliments and loyalty tier are never decisive and not used. Section 6.3: no party has a fraud flag of 1 or more, so the 80% confidence threshold applies, not 95%.",
+    "case_evidence": "rider_profile.fraud_flags 0, dispute_history total 2 (upheld 1, rejected 1); driver_profile.fraud_flags 0"
+   },
+   {
+    "step": "PB-FC-ROUTE 8/16: both sides heard",
+    "rule_id": "GEN-R05",
+    "finding": "Rider Advocate and Driver Advocate briefs are to be attached citing findings and evidence IDs only (the driver's side: PIE fire, no notice sent). Procedural, does not change the outcome. No briefs are in the case file.",
+    "case_evidence": "no advocate briefs in the case file"
+   },
+   {
+    "step": "PB-FC-ROUTE 16: autonomy tier",
+    "rule_id": "AUTH-07, AUTH-05, AUTH-01, AUTH-02, AUTH-04, AUTH-06",
+    "finding": "Section 6.2: route deviation needs deviation <= 2 km and confidence >= 80%, else escalate. Deviation 4.3 km > 2 km, so it goes to human review with the remedy recommended (S$3.44 PARTIAL_REFUND). FairRyde has a proposed ruling, so the tier is APPROVE (D48; DISP-001 is the named example: 4.3 km, S$3.44), not HUMAN (the outcome is not ESCALATE_HUMAN) and not AUTO. Dispute value (S$6.50 or S$3.44) is under S$10 but that does not override the 2 km route rule (strictest constraint decides). No gate G1/G4 fires, no fraud flag, no FRD signal.",
+    "case_evidence": "F-DEVIATION-KM 4.3 > ROUTE_AI_MAX_KM 2.0; fraud_flags 0 both parties"
+   },
+   {
+    "step": "PB-FC-ROUTE 10/EXP: explanation",
+    "rule_id": "EXP-01, EXP-02, EXP-03, GEN-R08, AUTH-00, META-05",
+    "finding": "Each party is told: outcome PARTIAL_REFUND S$3.44 ('eligible for', AUTH-00); the rules used with credibility (FC-R13 A, FC-F02 D, FC-F05 D/READ, FC-F06/FC-F06B D, DQ-05 D); the sections (1.2, 1.3, 1.4) and PREC-7.1; why tolls S$2.22 are not refunded; the missing items (no call recording, no advocate briefs, no screenshots in the file); that history was not used; how to ask for human review. D-rated rules were on the path but the outcome does not move under their other readings, so no decisive generic assumption is claimed (GENERIC_ASSUMPTION_USED not forced).",
+    "case_evidence": "all numbers equal findings: 4.3, 20.5, 24.8, 3.44, 2.22, 6.50, 0.80"
+   }
+  ],
+  "outcome": "PARTIAL_REFUND",
+  "amount_sgd": 3.44,
+  "payer": "PLATFORM (Ryde refunds to the rider's original payment method; KB does not say who funds it)",
+  "payee": "RIDER (R-4521), to the original payment method (Visa card)",
+  "reasons": [
+   "FC-R-DEVIATION-UNNOTIFIED"
+  ],
+  "tier": "APPROVE",
+  "tier_basis": "AUTH-07 (policy v2.1 Section 6.2): the deviation is 4.3 km, above ROUTE_AI_MAX_KM 2 km, so the AI ruling is not final and goes to human review with the remedy recommended (S$3.44 PARTIAL_REFUND). FairRyde has a ruling for a person to confirm or change, so tier APPROVE under D48 and AUTH-06 (not HUMAN, because the outcome is not ESCALATE_HUMAN). No fraud flag (95% rule not triggered), no gate G1 or G4.",
+  "rules_cited": [
+   "GEN-R04",
+   "CLS-01",
+   "CLS-02",
+   "CLS-03",
+   "CLS-05",
+   "MAT-01",
+   "MAT-02",
+   "META-01",
+   "META-02",
+   "META-05",
+   "DQ-02",
+   "DQ-03",
+   "DQ-04",
+   "DQ-05",
+   "FC-F02",
+   "FC-F05",
+   "FC-F06",
+   "FC-F06B",
+   "FC-R12",
+   "FC-R13",
+   "GEN-R03",
+   "GEN-R05",
+   "GEN-R08",
+   "FRD-01",
+   "FRD-02",
+   "AUTH-00",
+   "AUTH-01",
+   "AUTH-02",
+   "AUTH-04",
+   "AUTH-05",
+   "AUTH-06",
+   "AUTH-07",
+   "EXP-01",
+   "EXP-02",
+   "EXP-03",
+   "PREC-7.1"
+  ],
+  "kb_silent": [
+   "Who funds the refund (platform or driver): KB names only payee/remedy form (ORIGINAL_PAYMENT_METHOD); payer recorded as PLATFORM from the ontology note that the platform issues the remedy, not a rule.",
+   "The unitemized remainder of the fare difference (6.50 - 3.44 - 2.22 = S$0.84, presumably the +2 min time fare): no rule says whether it is refundable; KB refunds only the excess distance fare and passes through the rest.",
+   "Whether a partial refund must be the whole excess distance fare or a fraction: FC-R13 and PREC-7.1 fix it at the excess distance fare itself (S$3.44), but Section 1.3 wording 'partial' is ambiguous (D46); rider asked for S$6.50.",
+   "Rider wrote 'White Toyota Vios' in MSG-001 while the driver profile says Silver: no rule covers a color mismatch that the rider did not complain about; not treated as safety content or SE-MISMATCH (the rider did not report it), and not used.",
+   "Content of the notice under FC-F05 when a message says neither route change nor reason (MSG-006): KB gives UNCLEAR only for one-of-two or calls; here read as NO. Outcome is the same under UNCLEAR as no matrix row for 'informed' is reached.",
+   "Service type is not recorded (trip_type 'standard' is not a TX-SERVICE code); not needed under organizer_v2_1 (no FC-R01 pricing-mode or ERP share logic), but KB has no service-type fallback for route cases.",
+   "No call records, no navigation record and no advocate briefs in the case file; GEN-R05 briefs cannot be attached.",
+   "No rule uses the rider's statement of the usual PIE route ('35 minutes, about $28') or the 37-minute actual duration; duration is not a v2.1 test.",
+   "Corridor test uses polyline corners of the recommended route, so it is rough (D54); outcome not sensitive to it with these distances."
+  ],
+  "confidence": 3,
+  "note": "DISP-001 resembles PREC-7.1 on the key facts (rider not informed, traffic justified) and is decided by FC-R13 row 4. Tolls (S$2.22) pass through at cost under D47. Flags: none forced; the human reviewer should see the S$6.50 total difference as the rider's ask against the S$3.44 distance-only remedy."
+ },
+ {
+  "case_id": "DISP-002",
+  "kb_type": "CW-NOSHOW (TX-CASE; organizer_code no_show_charge; scope ADJUDICATE; profile organizer_v2_1)",
+  "playbook": "PB-CW-NOSHOW",
+  "steps": [
+   {
+    "step": "INTAKE 1 GEN-R04 injection check",
+    "rule_id": "GEN-R04",
+    "finding": "Ticket text is evidence only; no instructions to the system, no INJECTION_SUSPECTED.",
+    "case_evidence": "dispute_ticket.description"
+   },
+   {
+    "step": "INTAKE 2 safety override",
+    "rule_id": "CLS-01",
+    "finding": "No violence, threat, abuse, danger, accident or discrimination in the description or chat. Not safety content; no SE claim.",
+    "case_evidence": "dispute_ticket.description; chat_logs (driver messages are neutral)"
+   },
+   {
+    "step": "INTAKE 3 classify and split claims",
+    "rule_id": "CLS-05, CLS-02, CLS-06, CLS-04",
+    "finding": "no_show_charge maps to CW-NOSHOW. One claim (the S$5.00 fee). Every record says the driver canceled with reason rider_no_show, so CW-NOSHOW stands and no reclassification is needed. A pin problem is handled inside CW-NOSHOW (CLS-04), not as EX-LOCATION.",
+    "case_evidence": "dispute_type=no_show_charge; trip_data.cancellation_reason=rider_no_show; chat_logs 08:51:00 system 'Trip cancelled by driver. Reason: rider_no_show'; app_events driver_released 'cancelled (rider_no_show)'"
+   },
+   {
+    "step": "INTAKE 4 not-a-dispute check",
+    "rule_id": "CLS-03",
+    "finding": "A charge is contested with a fee-waiver remedy, so not routed to support.",
+    "case_evidence": "description 'I want the charge reversed'; cancellation_fee 5.0"
+   },
+   {
+    "step": "INTAKE 5 resolve trip",
+    "rule_id": "MAT-01",
+    "finding": "Exactly one trip given.",
+    "case_evidence": "trip_id TRIP-2026-09945 in ticket and trip_data"
+   },
+   {
+    "step": "INTAKE 6 relation",
+    "rule_id": "MAT-02",
+    "finding": "NEW (no other ticket in the file).",
+    "case_evidence": "only DISP-002 present"
+   },
+   {
+    "step": "INTAKE 7 appeal check",
+    "rule_id": "MAT-03",
+    "finding": "Not an appeal.",
+    "case_evidence": "status open, no prior ruling"
+   },
+   {
+    "step": "INTAKE 8 policy profile",
+    "rule_id": "META-01, META-02",
+    "finding": "dispute_id DISP-002 is an organizer case, so profile organizer_v2_1 (policy v2.1, effective 2026-01-01); trip date 2026-09-13 is in force. The embedded cancellation_policy is a cross-check only: 5 min free wait and S$5.00 agree with v2.1; the 8-minute threshold is not used.",
+    "case_evidence": "trip_data.scheduled_time 2026-09-13; cancellation_policy {5, 5.0, 8}"
+   },
+   {
+    "step": "INTAKE 9 coordinates and timeline sanity",
+    "rule_id": "DQ-03, DQ-04",
+    "finding": "All coordinates inside SG_BBOX. Events in time order, booking 08:30 first, dispute filed 09:20 after the 08:51 cancellation.",
+    "case_evidence": "pickup lat/lng 1.2847,103.8382; app_events order; filed_at 09:20"
+   },
+   {
+    "step": "1 precondition: who canceled",
+    "rule_id": "CLS-06, CW-R03",
+    "finding": "Driver canceled with reason rider_no_show; reason field, system message and driver_released event agree; no record names the rider as canceling. Table DT-CW-NOSHOW is usable.",
+    "case_evidence": "trip_data.cancellation_reason; chat_logs system message 08:51:00; app_events 08:51:05"
+   },
+   {
+    "step": "2 filing window",
+    "rule_id": "MAT-04",
+    "finding": "Filed 2026-09-13T09:20, same day as the trip, inside WAIVER_WINDOW_DAYS 30 (Ryde profile value, v2.1 is silent). No CW-R-OUT-OF-WINDOW.",
+    "case_evidence": "dispute_ticket.filed_at; trip_data.cancellation_time"
+   },
+   {
+    "step": "3 service scope",
+    "rule_id": "CW-R00",
+    "finding": "No service type is recorded (TX-SERVICE UNKNOWN); nothing indicates RydeTAXI (vehicle Honda HR-V, fixed-style booking), so the policy is applied. The KB has no rule for an unrecorded service in CW-R00; recorded in kb_silent.",
+    "case_evidence": "driver_profile.vehicle; no service_type field"
+   },
+   {
+    "step": "4 booking type",
+    "rule_id": "CW-F01",
+    "finding": "Not recorded. Matched 15 s after booking (within 60 s) and ETA 13 min gives 08:43:15, 105 s before scheduled 08:45 (within 120 s): inferred ON_DEMAND, flag BOOKING_TYPE_INFERRED. Under v2.1 the booking type does not change the anchor.",
+    "case_evidence": "app_events booking_confirmed 08:30:00, driver_assigned 08:30:15 'ETA 13 min'; scheduled_time 08:45"
+   },
+   {
+    "step": "5 wait anchor",
+    "rule_id": "CW-F02, CW-F02C",
+    "finding": "Under organizer_v2_1 the free wait counts from the scheduled pickup time 08:45:00 (not driver_wait_start 08:43:00). Driver arrived earlier, so the anchor stands.",
+    "case_evidence": "trip_data.scheduled_time 08:45:00; driver_wait_start 08:43:00; app timer 'ends at 08:48' (recorded conflict D42, does not change the threshold result)"
+   },
+   {
+    "step": "6 timestamp and speed consistency",
+    "rule_id": "DQ-01, DQ-02",
+    "finding": "Arrival: trip 08:43:00, event 08:43:00, GPS arrived 08:43:00. Wait start: 08:43:00 vs timer 08:43:10 (10 s, within TS_TOLERANCE_S 30). End: cancellation, fee event, system message and GPS cancelled all 08:51:00. No TIMER_ANCHOR_MISMATCH. Wait-window pings are at 0 km/h with 0 displacement: no SPEED_INCONSISTENT.",
+    "case_evidence": "trip_data; app_events; gps_telemetry 08:43 to 08:51"
+   },
+   {
+    "step": "7 arrival valid",
+    "rule_id": "CW-R06, CW-F04B",
+    "finding": "TRUE. Platform check 'Driver GPS within 10m of pickup point' and the moment ping at 08:43:00 is at the pin (0 m, inside ARRIVAL_GEOFENCE_M 50). No outliers (the 08:41 ping, about 86 m out, is the approach before the driver was first seen inside). Not ARRIVAL_UNCONFIRMED.",
+    "case_evidence": "app_events driver_arrived 08:43:00; gps_telemetry 08:41 and 08:43"
+   },
+   {
+    "step": "8 elapsed wait and margin",
+    "rule_id": "CW-F03, CW-F03B",
+    "finding": "Wait start = later of anchor 08:45:00 and GPS confirmation 08:43:00 = 08:45:00. Elapsed to 08:51:00 = 360 s. Threshold 300 s, comparison more_than: met, margin +60 s, outside BOUNDARY_BAND_S 30, no BOUNDARY_MARGIN. Other readings (from arrival 480 s, embedded 8-min object at_least, app timer end 08:48:10, Ryde 3 min) all also meet the threshold, so no META-04 escalation.",
+    "case_evidence": "scheduled_time 08:45; cancellation_time 08:51:00; cancellation_policy.no_show_threshold_min 8; wait_timer_expired 08:48:10"
+   },
+   {
+    "step": "9 driver presence",
+    "rule_id": "CW-F04, CW-F04B",
+    "finding": "Window 08:45:00 to 08:50:00 (threshold reached). Inside pings at 08:45 and 08:48, none outside. Longest uncovered stretch 180 s, below PING_MAX_GAP_S 300: CONSISTENT. F-GPS-LOGIC false at the stated values. Sensitivity: at PING_MAX_GAP_S low end 60 the 180 s gap makes presence SPARSE, F-GPS-LOGIC true and, with rider evidence WEAK, row R10 (ESCALATE_HUMAN). So CW-F04B is decisive (decisive_definition clause 2) and reference_data notes this for DISP-002.",
+    "case_evidence": "gps_telemetry 08:45:00, 08:48:00 at 1.2847,103.8382 status waiting"
+   },
+   {
+    "step": "10 contact attempts",
+    "rule_id": "CW-F05",
+    "finding": "ADEQUATE under v2.1: from assignment to cancellation the driver made 1 call (counts though unanswered) AND sent 4 messages; required 1 and 1.",
+    "case_evidence": "chat_logs 08:43:00, 08:45:20, 08:49:30, 08:50:45 messages; 08:47:05 call rang 22 s; app_events driver_called_rider 08:47:05"
+   },
+   {
+    "step": "11 rider counter-evidence",
+    "rule_id": "CW-F06",
+    "finding": "WEAK. The statement contests the driver's presence and place ('driver never showed up', 'couldn't find the car'), but there are no rider messages, calls or rider GPS, and no notification failure was logged (rider_notified push sent 08:43:05). Reading of the statement: WEAK vs NONE gives the same row (R8 accepts both); no rider call or message to read.",
+    "case_evidence": "dispute_ticket.description; chat_logs has no rider entries; app_events rider_notified 08:43:05"
+   },
+   {
+    "step": "12 pin versus venue",
+    "rule_id": "CW-F07, CW-R11",
+    "finding": "TRUE. Pin 1.2847,103.8382 is about 1.26 km east of OneMap Tiong Bahru Plaza 1.28646,103.82702, far above PIN_VENUE_MAX_M 200. Flag PIN_VENUE_MISMATCH; secondary note CW-R-PIN-AMBIGUOUS because the fee is upheld. The rider's statement places her at the named venue lobby, so AUTH-02 trigger 9 requires approval; the reviewer may offer a goodwill credit.",
+    "case_evidence": "trip_data.pickup_location {name Tiong Bahru Plaza, lat 1.2847, lng 103.8382}; reference_data VENUES Tiong Bahru Plaza; description 'at the lobby'"
+   },
+   {
+    "step": "13 advocate briefs",
+    "rule_id": "GEN-R05",
+    "finding": "No Rider Advocate or Driver Advocate briefs are in the case file; step reported as missing. The driver's side is on file in chat and call records.",
+    "case_evidence": "case file has no briefs"
+   },
+   {
+    "step": "14 decision table",
+    "rule_id": "DT-CW-NOSHOW row R8, CW-R03",
+    "finding": "arrival_valid TRUE, presence CONSISTENT, threshold_met true, rider_evidence WEAK, gps_logic_decides false hits R8: UPHOLD, reason CW-R-NOSHOW-VALID, row credibility B. No policy gap, no source conflict that changes the outcome (META-04), request inside the window.",
+    "case_evidence": "findings of steps 7 to 11"
+   },
+   {
+    "step": "15 overrides and checks",
+    "rule_id": "CW-R13, CW-R04, DQ-06, CW-R11",
+    "finding": "CW-R13 does not void the fee: the driver sent messages and made a call (either_missing and both_missing readings agree, so CONTACT_VOID_WHEN is not decisive). CW-R04 does not apply under v2.1. Charged 5.00 equals policy amount 5.00: consistent, no CHARGE_AMOUNT_MISMATCH. CW-R11 flag and note as in step 12.",
+    "case_evidence": "trip_data.cancellation_fee 5.0; NO_SHOW_FEE_SGD 5.00; contacts in step 10"
+   },
+   {
+    "step": "16 payee and remedy form",
+    "rule_id": "CW-R09, CW-R10",
+    "finding": "Fee stands: payer RIDER (e-wallet), payee DRIVER (compensation for time and fuel). No waiver, so no refund or voucher is issued.",
+    "case_evidence": "cancellation_policy.fee_goes_to driver_compensation; rider_profile.payment_method e-wallet; app_events cancellation_fee_applied"
+   },
+   {
+    "step": "17 fraud signals",
+    "rule_id": "FRD-02, FRD-01, GEN-R03, GEN-R06",
+    "finding": "FRD-02: 4 disputes (min 3), 3 rejected (75 percent, min 50 percent) and a platform fraud flag ('frequent late cancellations'): FRAUD_SIGNAL against the rider, shown to the reviewer only, never changes the outcome, requires approval. FRD-01: no signal (arrival confirmed by GPS, driver contacted the rider). No account action by FairRyde.",
+    "case_evidence": "rider_profile.dispute_history {4, upheld 1, rejected 3}; fraud_flags 1; fraud_flag_details"
+   },
+   {
+    "step": "18 confidence",
+    "rule_id": "AUTH-05",
+    "finding": "A=1, R=1 (offline), M=1 (margin 60 s over 2x30). E is 1 minus 0.10 for soft flag PIN_VENUE_MISMATCH, lower if rider-side records are counted as required because the rider contests presence: C is about 0.94 to 0.98. D29 penalty not applied (F-GPS-LOGIC false). Whether C reaches the 95 percent bar is not settled by the KB's E definition, see kb_silent.",
+    "case_evidence": "findings above; CONFIDENCE_WEIGHTS"
+   },
+   {
+    "step": "19 tier",
+    "rule_id": "AUTH-07, AUTH-02, AUTH-04, AUTH-06",
+    "finding": "Amount S$5.00 is under S$10, but rider fraud_flags is 1, which raises the confidence bar to 95 percent (Section 6.3). Independently, AUTH-02 triggers apply: (1) decisive CW-F04B parameter PING_MAX_GAP_S, (2) FRAUD_SIGNAL, (9) upheld fee with PIN_VENUE_MISMATCH and the rider placing herself at the named venue. Outcome is not ESCALATE_HUMAN and no safety content, so tier APPROVE, not AUTO and not HUMAN.",
+    "case_evidence": "rider_profile.fraud_flags 1; steps 9, 12, 17"
+   },
+   {
+    "step": "20 explanation and precedent",
+    "rule_id": "EXP-01, EXP-02, EXP-03, META-05, GEN-R08",
+    "finding": "Cite policy v2.1 Sections 2.1, 2.2, 2.3 and 6.2. Precedent PREC-7.3 (no-show without contact) is DISTINGUISHED: there the driver sent 0 messages and made 0 calls, here 4 and 1; the wait is 6 minutes in both. GENERIC_ASSUMPTION_USED applies because a D-rated element is decisive (CW-F04B); the explanation names the D rules used (CW-F02C, CW-F06, CW-R11, CW-F07, DQ-06). History was used only for the fraud check and is disclosed to the reviewer.",
+    "case_evidence": "kb/precedents.yaml PREC-7.3 facts vs chat_logs; app_events 08:47:05"
+   }
+  ],
+  "outcome": "UPHOLD",
+  "amount_sgd": 5,
+  "reasons": [
+   "CW-R-NOSHOW-VALID",
+   "CW-R-PIN-AMBIGUOUS"
+  ],
+  "tier": "APPROVE",
+  "tier_basis": "AUTH-02 triggers (1) decisive CW-F04B (at PING_MAX_GAP_S 60 the 180 s ping gap makes presence SPARSE and, with rider evidence WEAK, row R10 ESCALATE_HUMAN), (2) FRAUD_SIGNAL on the rider (FRD-02), (9) upheld fee with PIN_VENUE_MISMATCH and the rider placing herself at the named venue (CW-R11); AUTH-07 bar of 95 percent because rider fraud_flags is 1 (Section 6.3). Not AUTO because of those triggers, and not HUMAN because the outcome is a ruling (UPHOLD), not ESCALATE_HUMAN, and no safety content.",
+  "rules_cited": [
+   "GEN-R04",
+   "CLS-01",
+   "CLS-02",
+   "CLS-03",
+   "CLS-04",
+   "CLS-05",
+   "CLS-06",
+   "MAT-01",
+   "MAT-02",
+   "MAT-03",
+   "MAT-04",
+   "META-01",
+   "META-02",
+   "META-04",
+   "META-05",
+   "DQ-01",
+   "DQ-02",
+   "DQ-03",
+   "DQ-04",
+   "DQ-06",
+   "CW-R00",
+   "CW-F01",
+   "CW-F02",
+   "CW-F02C",
+   "CW-F03",
+   "CW-F03B",
+   "CW-F04",
+   "CW-F04B",
+   "CW-F05",
+   "CW-F06",
+   "CW-F07",
+   "CW-R03",
+   "CW-R04",
+   "CW-R06",
+   "CW-R09",
+   "CW-R10",
+   "CW-R11",
+   "CW-R13",
+   "DT-CW-NOSHOW R8",
+   "GEN-R05",
+   "GEN-R03",
+   "GEN-R06",
+   "GEN-R08",
+   "FRD-01",
+   "FRD-02",
+   "AUTH-02",
+   "AUTH-04",
+   "AUTH-05",
+   "AUTH-06",
+   "AUTH-07",
+   "EXP-01",
+   "EXP-02",
+   "EXP-03"
+  ],
+  "kb_silent": [
+   "Service type is not recorded (TX-SERVICE UNKNOWN); CW-R00 says all services except RydeTAXI but gives no rule for an unrecorded service. Applied the policy and flagged it.",
+   "Policy v2.1 has no waiver filing window; MAT-04 uses the Ryde-profile 30 days via the v2.1 fallback. Filed same day so it does not matter.",
+   "AUTH-05 E: it is unclear whether absent rider-side records (rider GPS, delivery logs) count as required evidence when the rider contests presence, so C is 0.94 to 0.98 and may be just below or above the 95 percent bar of AUTH-07. The tier is APPROVE either way because of the AUTH-02 triggers.",
+   "AUTH-07 Section 6.2 says a no-show ruling is final (AUTO), while AUTH-02 triggers (1), (2) and (9) require approval; the KB itself records this as open question O26, so APPROVE was chosen as the stricter constraint.",
+   "The KB does not say how the reviewer's goodwill credit (CW-R11) is sized or whether FairRyde should propose one; no amount proposed.",
+   "The KB has no rule on a pickup pin about 1.26 km from the named venue changing the outcome beyond a flag and note (CW-R11 says outcome unchanged); rider's claim of waiting 10 minutes at the venue is not testable without rider-side records.",
+   "Case carries no Rider Advocate or Driver Advocate briefs (GEN-R05 GET step reported missing).",
+   "Meaning of dispute_history.upheld for the rider (rider won or charge upheld) is flagged ambiguous in TX-OUTCOME; FRD-02 uses the rejected count (3 of 4) only.",
+   "The 8-minute threshold in the embedded policy object has no counterpart in v2.1; it is exactly met at 08:51:00 from driver_wait_start, so the object and v2.1 agree on the outcome and META-04 does not fire."
+  ],
+  "confidence": 2,
+  "payer": "RIDER R-7823 (e-wallet)",
+  "payee": "DRIVER D-2398 (cancellation fee as driver compensation)",
+  "note": "Charge stands: the S$5.00 no-show fee is payable by the rider to the driver and no refund is issued (remedy to the rider is S$0; 5.0 is the upheld fee). Ruling is a recommendation for human approval. Flags: BOOKING_TYPE_INFERRED, PIN_VENUE_MISMATCH, FRAUD_SIGNAL (rider, reviewer only), GENERIC_ASSUMPTION_USED. The reviewer sees that the pin is far from Tiong Bahru Plaza and may offer a goodwill credit (CW-R11)."
+ },
+ {
+  "case_id": "DISP-003",
+  "kb_type": "FC-SURGE",
+  "playbook": "PB-FC-SURGE",
+  "steps": [
+   {
+    "step": "INTAKE 1 (PB-INTAKE n1)",
+    "rule_id": "GEN-R04",
+    "finding": "All party text treated as evidence. No instructions to the system in the description or chat, so no INJECTION_SUSPECTED.",
+    "case_evidence": "dispute_ticket.description; chat_logs MSG-001 to MSG-003 are ordinary messages."
+   },
+   {
+    "step": "INTAKE 2 (PB-INTAKE n2)",
+    "rule_id": "CLS-01",
+    "finding": "No safety content (no violence, threat, abuse, danger, accident or discrimination). A money dispute is not safety content by itself. No SE claim.",
+    "case_evidence": "description is only about a $16.50 charge against a $12.00 quote; chat is about pickup location and the fare."
+   },
+   {
+    "step": "INTAKE 3 (PB-INTAKE n3)",
+    "rule_id": "CLS-05",
+    "finding": "fare_dispute plus surge evidence (a surge_pricing_log and surge multipliers in the fare breakdown) is FC-SURGE, scope ADJUDICATE, playbook PB-FC-SURGE. The type comes from the code and the records, not from the organizer's root_cause label. CLS-02: one claim (the $4.50 surge difference), primary.",
+    "case_evidence": "dispute_ticket.dispute_type = fare_dispute; surge_pricing_log present; fare_breakdown.actual_fare.surge_multiplier = 1.5."
+   },
+   {
+    "step": "INTAKE 4 (PB-INTAKE n4)",
+    "rule_id": "CLS-03",
+    "finding": "Not applicable: a charge is contested and a refund is requested, so the case is not routed to support.",
+    "case_evidence": "description: 'The rider requests a refund of the $4.50 difference.'"
+   },
+   {
+    "step": "INTAKE 5 (PB-INTAKE n5)",
+    "rule_id": "MAT-01",
+    "finding": "Resolves to exactly one trip.",
+    "case_evidence": "dispute_ticket.trip_id = trip_data.trip_id = TRIP-2026-10023; rider R-9001 and driver D-3456 match the profiles."
+   },
+   {
+    "step": "INTAKE 6-7 (PB-INTAKE n6, n7)",
+    "rule_id": "MAT-02, MAT-03",
+    "finding": "NEW claim. No other ticket on the trip is in the case file, so no duplicate, update, appeal or counter-claim can be found. Not an appeal, so MAT-03 does not apply.",
+    "case_evidence": "dispute_ticket.status = open; no ticket index or earlier ruling in the case; rider_profile.dispute_history.total_disputes = 0."
+   },
+   {
+    "step": "INTAKE 8 (PB-INTAKE n8)",
+    "rule_id": "META-01, META-02",
+    "finding": "A dispute_id of the form DISP-nnn is judged under profile organizer_v2_1. The trip date is on or after the effective date 2026-01-01, so no policy gap. The case embeds no policy object.",
+    "case_evidence": "dispute_id DISP-003; trip_data.start_time 2026-09-14T21:05:00+08:00; reference_data profiles.organizer_v2_1.effective_from 2026-01-01."
+   },
+   {
+    "step": "INTAKE 9 (PB-INTAKE n9)",
+    "rule_id": "DQ-03, DQ-04",
+    "finding": "Coordinates are inside SG_BBOX [1.15, 103.59, 1.48, 104.10]. Timeline is in order: surge activated, trip start, trip end, rider chat, dispute filed. No event precedes booking.",
+    "case_evidence": "pickup 1.3, 103.8556 and dropoff 1.2834, 103.8607; surge_activated_at 21:04:30 < start 21:05:00 < end 21:18:00 < MSG-003 21:18:30 < filed_at 21:30:00."
+   },
+   {
+    "step": "PB-FC-SURGE n1",
+    "rule_id": "DQ-05",
+    "finding": "The figures agree. Quote 12.00 = surgeable 9.00 + surge 0.00 + booking fee 3.00. Actual 16.50 = 9.00 + surge 4.50 (9.00 x (1.5 - 1.0)) + booking fee 3.00. The difference 4.50 equals the trip record's fare_difference, the comparison's total_difference and surge_amount_difference. The booking fee is surge exempt. No FIGURES_DISAGREE, no gate G1.",
+    "case_evidence": "fare_breakdown.upfront_quote and actual_fare; trip_data.upfront_quote 12.0, actual_fare 16.5, fare_difference 4.5; comparison.surge_amount_difference 4.5, booking_fee_surge_exempt true."
+   },
+   {
+    "step": "PB-FC-SURGE n2",
+    "rule_id": "FC-F07",
+    "finding": "The surge rose (F-SURGE-CHANGE): 1.0x at quote to 1.5x at trip start. The fare breakdown multipliers equal the platform record's. The surge was activated at 21:04:30, before the trip start at 21:05:00, so it can be in the fare. No data inconsistency.",
+    "case_evidence": "surge_pricing_log.quote_time_surge 1.0, trip_start_surge 1.5, surge_activated_at 21:04:30; fare_breakdown surge_multiplier 1.0 and 1.5; trip_data.start_time 21:05:00."
+   },
+   {
+    "step": "PB-FC-SURGE n3",
+    "rule_id": "FC-F08",
+    "finding": "The rider was NOT notified (F-SURGE-NOTICE). The platform's record decides and says not notified, with no method and no timestamp. The rider's message at 21:18:30 supports it but is not needed.",
+    "case_evidence": "surge_pricing_log.rider_notified false, notification_method null, notification_timestamp null; MSG-003 'Just noticed the fare is $16.50'."
+   },
+   {
+    "step": "PB-FC-SURGE n4",
+    "rule_id": "FC-R14",
+    "finding": "The difference is solely the surge (F-SURGE-SOLELY), checked from the amounts. The difference 4.50 equals the difference of the two surge amounts (4.50 - 0.00). The surgeable subtotal is 9.00 in both. The booking fee is the same in both.",
+    "case_evidence": "upfront_quote.surgeable_subtotal 9.0 and actual_fare.surgeable_subtotal 9.0; surge_amount 0.0 and 4.5; total 12.0 and 16.5."
+   },
+   {
+    "step": "PB-FC-SURGE n5",
+    "rule_id": "FC-R15",
+    "finding": "Surge rose and the rider was not notified, and the difference is solely the surge: full refund of the surge differential (actual minus quoted fare) = S$4.50. Outcome FULL_REFUND, reason FC-R-SURGE-UNNOTIFIED, paid to the original payment method (REMEDY_FORM = ORIGINAL_PAYMENT_METHOD).",
+    "case_evidence": "fare_difference 4.5; payment_method credit_card (TX-PAYMETHOD CARD); reference_data organizer_v2_1.REMEDY_FORM."
+   },
+   {
+    "step": "PB-FC-SURGE n6",
+    "rule_id": "FC-R12, GEN-R07",
+    "finding": "No escalation. Evidence is sufficient: surge record, fare breakdown and trip record are all present and readable. rider_notified has a clear yes/no value. The surge evidence exists, so this is FC-SURGE and not FC-FAREMISMATCH. The difference is only the surge.",
+    "case_evidence": "surge_pricing_log and fare_breakdown present; rider_notified is boolean false; FC-R14 finding is solely surge."
+   },
+   {
+    "step": "PB-FC-SURGE n7",
+    "rule_id": "GEN-R08",
+    "finding": "Precedent PREC-7.2 (Policy v2.1 Section 7.2, Section 3.3) is ALIGNED: surge_increased true, rider_notified false, difference_solely_surge true. It ruled FULL_REFUND of the differential (S$3.20 there). Cite Section 3.3 (and 3.1, 3.2, 3.4).",
+    "case_evidence": "precedents.yaml PREC-7.2 key_factors [surge_increased, rider_notified]; case values true and false."
+   },
+   {
+    "step": "PB-FC-SURGE n8",
+    "rule_id": "GEN-R05",
+    "finding": "The Rider Advocate's and Driver Advocate's briefs are to be gathered from the findings and evidence IDs only. They are not in the case file, and they change neither the outcome nor the amount.",
+    "case_evidence": "Case file has no advocate briefs; the ruling does not depend on them (GEN-R05 is procedural)."
+   },
+   {
+    "step": "PB-FC-SURGE n9 (fraud and history)",
+    "rule_id": "FRD-01, FRD-02, GEN-R03",
+    "finding": "No fraud signal on either party. The rider has 0 disputes. The driver's history (2 disputes, 0 upheld against) is not a signal. No amount of overcharge by the driver is alleged; the surge is a platform price. History never decides the outcome and was not used.",
+    "case_evidence": "rider_profile.fraud_flags 0, total_disputes 0; driver_profile.fraud_flags 0, dispute_history.upheld_against 0."
+   },
+   {
+    "step": "PB-FC-SURGE n9 (tier)",
+    "rule_id": "AUTH-07, AUTH-01, AUTH-02, AUTH-04, AUTH-05",
+    "finding": "Dispute value S$4.50 is under S$10 (RULING_FINAL_BELOW_SGD), so the AI ruling is final at any confidence (Section 6.1) and a fare dispute follows Section 6.1 (Section 6.2). Neither party has a fraud flag of 1 or more, so the 95% rule (Section 6.3) is not raised. Nothing is decisive: every rule on the path (FC-F07, FC-F08, FC-R14, FC-R15) is HARD and rated A, and DQ-05's D tolerance (0.01 to 0.05) cannot change the outcome at these amounts. No FRAUD_SIGNAL, no RECORDS_MISSING, no SOURCE_CONFLICT, no gate G1 or G4. Composite confidence (offline) C = 1.0: A 1, M 1 (no numeric threshold decides), E 1 (all four required evidence items present, no soft flags), R 1. Tier AUTO.",
+    "case_evidence": "fare_difference 4.5; rider_profile.fraud_flags 0 and driver_profile.fraud_flags 0; all required evidence present (ticket, trip, fare breakdown, surge record)."
+   },
+   {
+    "step": "PB-FC-SURGE n10",
+    "rule_id": "EXP-01, EXP-02, EXP-03, META-05, AUTH-00",
+    "finding": "Explanation to both parties: outcome FULL_REFUND of S$4.50 'eligible for' (AUTH-00); rules used with source and credibility labels; no C or D rule decisive, so no GENERIC_ASSUMPTION_USED flag; decisive evidence: surge_pricing_log (1.0 to 1.5, rider_notified false) and fare_breakdown (surge_amount 4.5 = difference); history not used; how to ask for human review; policy sections 3.1 to 3.4 and precedent 7.2 cited.",
+    "case_evidence": "All numbers in the explanation equal findings: 12.00, 16.50, 4.50, 1.0, 1.5, 9.00."
+   }
+  ],
+  "outcome": "FULL_REFUND",
+  "amount_sgd": 4.5,
+  "payer": "PLATFORM (Ryde); the KB does not say who funds the refund, so the platform is assumed as the party that collected the fare",
+  "payee": "Rider R-9001, refunded to the original payment method (credit card)",
+  "reasons": [
+   "FC-R-SURGE-UNNOTIFIED"
+  ],
+  "tier": "AUTO",
+  "tier_basis": "AUTH-07 (policy v2.1 Section 6.1): dispute value S$4.50 is under RULING_FINAL_BELOW_SGD (S$10), so the AI ruling is final at any confidence. A fare dispute follows Section 6.1 (6.2). No fraud flag on either party (fraud_flags 0 and 0), so Section 6.3 does not raise the threshold to 95%. AUTH-01 and AUTH-02: no decisive rule (FC-F07, FC-F08, FC-R14 and FC-R15 are HARD and rated A), no FRAUD_SIGNAL, no RECORDS_MISSING, no SOURCE_CONFLICT, no gate G1 or G4, not an appeal. Offline confidence C = 1.0 (AUTH-05).",
+  "rules_cited": [
+   "META-01",
+   "META-02",
+   "GEN-R04",
+   "CLS-01",
+   "CLS-02",
+   "CLS-03",
+   "CLS-05",
+   "MAT-01",
+   "MAT-02",
+   "MAT-03",
+   "DQ-03",
+   "DQ-04",
+   "DQ-05",
+   "FC-F07",
+   "FC-F08",
+   "FC-R14",
+   "FC-R15",
+   "FC-R12",
+   "GEN-R03",
+   "GEN-R05",
+   "GEN-R07",
+   "GEN-R08",
+   "FRD-01",
+   "FRD-02",
+   "AUTH-00",
+   "AUTH-01",
+   "AUTH-02",
+   "AUTH-04",
+   "AUTH-05",
+   "AUTH-07",
+   "EXP-01",
+   "EXP-02",
+   "EXP-03",
+   "META-05"
+  ],
+  "kb_silent": [
+   "Who funds the surge refund (payer): FC-R15 says only 'paid to the original payment method', with no payer named. The platform is assumed.",
+   "The quote time stamp is not in the case, and FC-F07/FC-F08 do not need it. Only quote_time_surge, the activation time and the trip start are recorded.",
+   "FC-F08 content of the notice (new multiplier, revised fare, option to cancel without penalty) cannot be checked: the record says not notified, so the question does not arise (limitation D55 applies only to a 'notified' record).",
+   "PB-INTAKE step 6 / MAT-02: no ticket index is supplied in the case file, so duplicates and related tickets cannot be searched; treated as NEW.",
+   "GEN-R05 advocate briefs are not part of the case file; the KB gives no fallback beyond 'gather them', and they cannot change the outcome.",
+   "The KB has no rule for the S$3.00 booking fee beyond the exemption in FC-R14/Section 3.5, and none is needed: the booking fee is the same in both fares."
+  ],
+  "confidence": 3,
+  "note": "Straight application of policy v2.1 Section 3.3 and Precedent 7.2 (ALIGNED). The fare breakdown, trip record and surge record all agree. The surge rose 1.0 to 1.5, was activated at 21:04:30 (before the 21:05:00 start), the rider was not notified, and the whole S$4.50 difference is the surge. The ticket's request (refund S$4.50) is granted in full. The organizer's own label (root_cause surge_multiplier_increase) was not relied on; the amounts were checked."
+ }
+]

@@ -51,12 +51,12 @@ def notice_valid(log: dict, start: str | None) -> tuple[bool | None, str]:
     if not method or not ts or not start:
         return None, "the record says notified, without both the method and the time (Section 3.2 needs an in-app notification before or at pickup)"
     tokens = set(re.findall(r"[a-z]+", method))
-    if tokens & {"sms", "email", "mail", "whatsapp", "telegram", "call", "phone", "text", "letter"}:
+    deny = tokens & {"sms", "email", "mail", "whatsapp", "telegram", "call", "phone", "text", "letter", "os", "system", "banner", "web"}
+    app = tokens & {"app", "push", "inapp"}
+    if tokens & {"not", "no", "failed", "undelivered", "unsent", "never", "without", "pending"} or (app and deny) or (not app and not deny):
+        return None, f"the notification method ({log.get('notification_method')}) does not clearly say it was an in-app notification"
+    if deny:
         return False, f"the notification method ({log.get('notification_method')}) is not an in-app notification (Section 3.2)"
-    if not tokens & {"app", "push", "inapp", "notification"}:
-        return False, f"the notification method ({log.get('notification_method')}) is not an in-app notification (Section 3.2)"
-    if not tokens & {"app", "push", "inapp"}:
-        return None, f"the notification method ({log.get('notification_method')}) does not say it was in the app"
     if E.T(ts) > E.T(start):
         return False, "the notification came after the trip started (Section 3.2: before or at the point of pickup)"
     return True, "an in-app notification before the trip started"

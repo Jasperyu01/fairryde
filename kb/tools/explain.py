@@ -302,7 +302,9 @@ def noshow(kb, run: dict) -> dict:
         out_d = f"Outcome: the {amount} cancellation fee is waived for the rider."
     else:
         row = next((x for x in kb.y["rules"]["decision_tables"]["DT-CW-NOSHOW"]["rows"] if x["row"] == t.dt_row), {})
-        why = "no written rule covers this case" if reason == "GEN-R-POLICY-GAP" else row.get("plain", "the facts need a person's judgment").split(", so ")[0]
+        why = ("no written rule covers this case" if reason == "GEN-R-POLICY-GAP" else
+               "the records of the wait disagree about whether the limit was met, and the result depends on which record is right" if reason == "GEN-R-SOURCE-CONFLICT"
+               else row.get("plain", "the facts need a person's judgment").split(", so ")[0])
         out_r = out_d = f"Outcome: a Ryde staff member will decide this case, because {why}."
     status = {"AUTO": "This decision was made automatically.",
               "APPROVE": "This is a provisional decision; a Ryde staff member checks it before it takes effect.",
@@ -470,13 +472,13 @@ def _why_person(tier: dict, N) -> str:
         return _sec6_line({**tier, "section6": s6}, N)
     trig = (tier["triggers"] or [""])[0]
     if trig.startswith("fraud signal"):
-        why = "the case file holds a signal that only the reviewer sees (Section 6.3)"
+        why = "the case file holds a signal that only the reviewer sees"
     elif trig.startswith("decisive"):
         why = "the outcome rests on an assumption FairRyde made where Ryde has published nothing, listed below (AUTH-01)"
     elif trig.startswith("margin"):
         why = "the wait is so close to the limit that a difference in the records could change the result"
     else:
-        why = "FairRyde's approval rules ask for a person's check of this kind of case (AUTH-07)"
+        why = "FairRyde's approval rules ask for a person's check of this case"
     return "Why a person reviews it: " + why + "."
 
 
@@ -503,7 +505,7 @@ def policy_v21(kb, run: dict) -> dict:
             extra.append(f"Under Section 2.3 the driver had to send at least one chat message and make at least one call before canceling; the trip record shows {N('calls_v', int(cd['driver_calls']))} call "
                          f"and {N('msgs_v', int(cd['driver_messages']))} messages, so the obligation was met. Precedent 7.3 voided a fee where the driver had made no contact, which is not the case here.")
         wait = f"Section 2.1 counts the free wait from the scheduled pickup time and Section 2.2 sets the fee at {N('fee_v', 5, 'S${:.2f}')}."
-        s6 = _why_person(tier, N)
+        s6 = _why_person(tier, N) if t.outcome != "ESCALATE_HUMAN" else ""
         add = " ".join(x for x in [wait] + extra + [s6] if x)
         rider, driver = base["rider"] + " " + add, base["driver"] + " " + add
         return _finish(kb, run, nums, rider, driver)

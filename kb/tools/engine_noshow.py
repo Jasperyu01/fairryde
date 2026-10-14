@@ -1419,6 +1419,8 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict], case: di
         gates.append("G6 amount above the automatic limit")
     if tr.findings.get("_safety") or tr.outcome == "ESCALATE_HUMAN":     # AUTH-03, AUTH-06: no AI ruling to approve
         tier = "HUMAN"
+    elif sec6 and sec6["tier"] == "HUMAN":                                # Section 6.1: above S$50 the AI agent prepares the case file only
+        tier = "HUMAN"
     elif triggers or gates:
         tier = "APPROVE"
     else:
