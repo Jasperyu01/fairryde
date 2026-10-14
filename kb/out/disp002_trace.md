@@ -7,15 +7,15 @@ Reference evaluation without an LLM: the run-agreement (A) and rules-engine agre
 | playbook | step | rule | status | result | evidence |
 |---|---|---|---|---|---|
 | PB-INTAKE | 1 | GEN-R04 | done | no instructions found in party text | E-TKT-01, E-CHT-01, E-CHT-02, E-CHT-04, E-CHT-05 |
-| PB-INTAKE | 2 | CLS-01 | done | no safety language | E-TKT-01 |
-| PB-INTAKE | 3 | CLS-05, CLS-02, CLS-04 | done | dispute_type 'no_show_charge' -> CW-NOSHOW; one claim contesting CANCELLATION_FEE S$5.00 | E-TKT-01, E-TRP-01.cancellation_fee |
+| PB-INTAKE | 2 | CLS-01 | done | no safety content found (offline stand-in for the reading) | E-TKT-01 |
+| PB-INTAKE | 3 | CLS-05, CLS-02, CLS-06, CLS-04 | done | dispute_type 'no_show_charge' -> CW-NOSHOW; one claim contesting CANCELLATION_FEE S$5.00 | E-TKT-01, E-TRP-01.cancellation_fee |
 | PB-INTAKE | 4 | CLS-03 | done | contested charge present: not routed to support | E-TRP-01.cancellation_fee |
 | PB-INTAKE | 5 | MAT-01 | done | trip TRIP-2026-09945 matches the ticket | E-TKT-01.trip_id, E-TRP-01.trip_id |
 | PB-INTAKE | 6 | MAT-02 | missing | no ticket index in the case file; treated as NEW (at run time the ticket index is checked) | E-TKT-01 |
 | PB-INTAKE | 7 | MAT-03 | not_applicable | not an appeal | E-TKT-01.status |
 | PB-INTAKE | 8 | META-01, META-02 | done | profile organizer_case (the case embeds cancellation_policy; parameters read from it: FREE_WAIT_S=300, NO_SHOW_FEE_SGD=5.0, NO_SHOW_THRESHOLD_S=480, FEE_PAYEE=DRIVER); effective from case-specific: in force | E-POL-01 |
 | PB-INTAKE | 9 | DQ-03, DQ-04 | done | coordinates in Singapore: True; timeline ordered and filed after the trip: True | E-TRP-01, E-GPS-* |
-| PB-CW-NOSHOW | 1 | CLS-02, CW-R03 | done | driver canceled with reason rider_no_show | E-TRP-01.cancellation_reason, E-CHT-06 |
+| PB-CW-NOSHOW | 1 | CLS-06, CW-R03 | done | the driver canceled with reason rider_no_show (cancellation_reason rider_no_show: DRIVER; system message: DRIVER) | E-TRP-01.cancellation_reason, E-CHT-06 |
 | PB-CW-NOSHOW | 2 | MAT-04 | done | filed 0.02 days after the trip (window 30 days: inside) | E-TKT-01.filed_at, E-TRP-01.cancellation_time |
 | PB-CW-NOSHOW | 3 | CW-R00 | missing | service type not recorded; treated as in scope (the policy covers every service except RydeTAXI) | E-TRP-01 |
 | PB-CW-NOSHOW | 4 | CW-F01 | done | ON_DEMAND (inferred: matched 15 s after booking, ETA lands 105 s from scheduled_time) | E-APP-01, E-APP-02, E-TRP-01.scheduled_time |
@@ -96,15 +96,15 @@ Explanation drafts (EXP-01 to EXP-03):
 | playbook | step | rule | status | result | evidence |
 |---|---|---|---|---|---|
 | PB-INTAKE | 1 | GEN-R04 | done | no instructions found in party text | E-TKT-01, E-CHT-01, E-CHT-02, E-CHT-04, E-CHT-05 |
-| PB-INTAKE | 2 | CLS-01 | done | no safety language | E-TKT-01 |
-| PB-INTAKE | 3 | CLS-05, CLS-02, CLS-04 | done | dispute_type 'no_show_charge' -> CW-NOSHOW; one claim contesting CANCELLATION_FEE S$5.00 | E-TKT-01, E-TRP-01.cancellation_fee |
+| PB-INTAKE | 2 | CLS-01 | done | no safety content found (offline stand-in for the reading) | E-TKT-01 |
+| PB-INTAKE | 3 | CLS-05, CLS-02, CLS-06, CLS-04 | done | dispute_type 'no_show_charge' -> CW-NOSHOW; one claim contesting CANCELLATION_FEE S$5.00 | E-TKT-01, E-TRP-01.cancellation_fee |
 | PB-INTAKE | 4 | CLS-03 | done | contested charge present: not routed to support | E-TRP-01.cancellation_fee |
 | PB-INTAKE | 5 | MAT-01 | done | trip TRIP-2026-09945 matches the ticket | E-TKT-01.trip_id, E-TRP-01.trip_id |
 | PB-INTAKE | 6 | MAT-02 | missing | no ticket index in the case file; treated as NEW (at run time the ticket index is checked) | E-TKT-01 |
 | PB-INTAKE | 7 | MAT-03 | not_applicable | not an appeal | E-TKT-01.status |
 | PB-INTAKE | 8 | META-01, META-02 | done | profile ryde_2026 (forced for a what-if; META-01 would choose organizer_case because the case embeds a policy object); effective from 2026-02-17: in force | E-POL-01 |
 | PB-INTAKE | 9 | DQ-03, DQ-04 | done | coordinates in Singapore: True; timeline ordered and filed after the trip: True | E-TRP-01, E-GPS-* |
-| PB-CW-NOSHOW | 1 | CLS-02, CW-R03 | done | driver canceled with reason rider_no_show | E-TRP-01.cancellation_reason, E-CHT-06 |
+| PB-CW-NOSHOW | 1 | CLS-06, CW-R03 | done | the driver canceled with reason rider_no_show (cancellation_reason rider_no_show: DRIVER; system message: DRIVER) | E-TRP-01.cancellation_reason, E-CHT-06 |
 | PB-CW-NOSHOW | 2 | MAT-04 | done | filed 0.02 days after the trip (window 30 days: inside) | E-TKT-01.filed_at, E-TRP-01.cancellation_time |
 | PB-CW-NOSHOW | 3 | CW-R00 | missing | service type not recorded; treated as in scope (the policy covers every service except RydeTAXI) | E-TRP-01 |
 | PB-CW-NOSHOW | 4 | CW-F01 | done | ON_DEMAND (inferred: matched 15 s after booking, ETA lands 105 s from scheduled_time) | E-APP-01, E-APP-02, E-TRP-01.scheduled_time |

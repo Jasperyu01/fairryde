@@ -83,7 +83,7 @@ groups:
       - {name: reason_code_primary, fill: HUMAN, vocab: TX-REASON, example: CW-R-FREE-WINDOW}
       - {name: reason_codes_secondary, fill: HUMAN, vocab: TX-REASON, multi: true, example: ""}
       - {name: escalate, fill: HUMAN, values: [Y, N], note: "Y when a person must approve or decide (autonomy_tier APPROVE or HUMAN); N for AUTO. The coverage sheet counts rows where the two disagree.", example: N}
-      - {name: autonomy_tier, fill: HUMAN, vocab: TX-TIER-AUTONOMY, note: "AUTO, APPROVE (FairRyde has a ruling a person confirms or changes) or HUMAN (safety, or outcome ESCALATE_HUMAN: there is no ruling to approve, AUTH-06). An ESCALATE_HUMAN outcome is always HUMAN.", example: AUTO}
+      - {name: autonomy_tier, fill: HUMAN, vocab: TX-TIER-AUTONOMY, note: "AUTO, APPROVE (FairRyde has a ruling a person confirms or changes) or HUMAN (safety, or outcome ESCALATE_HUMAN: there is no ruling to approve, AUTH-06). An ESCALATE_HUMAN outcome is always HUMAN, and so is a REQUEST_INFO under CLS-06 (no ruling until the trip record arrives).", example: AUTO}
       - {name: required_flags, fill: HUMAN, vocab: TX-FLAG, multi: true, example: ""}
       - {name: difficulty, fill: HUMAN, values: [CLEAR, BOUNDARY, CONFLICT, MISSING_INFO, NEGATIVE, VAGUE, STATE_UPDATE, BAD_FAITH, ADVERSARIAL], example: CLEAR}
 

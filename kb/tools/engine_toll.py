@@ -6,10 +6,14 @@ detour ERP to its own FC-TOLL claim). It is a verification tool for the knowledg
 - there is no LLM: the READ part of FC-F03 (is the detour justified?) is an input of the case (route_review.justification),
   and the run-agreement and rules-engine confidence terms of AUTH-05 are not computed, so tier AUTO here means that no
   approval trigger fired, before the confidence test;
-- only the rules named above are applied (no MAT, DQ, META-02 date check or FC-R12 beyond missing gantry data).
+- only the rules named above are applied (no MAT, DQ or META-02 date check); FC-R12 applies to missing or unusable gantry
+  data, a missing recommended route, and a changed itinerary whose recommended route is not shown to follow it.
 Case fields read: trip_data.service_type, trip_data.is_carpool, trip_data.fare_type, trip_data.quoted_fare,
 fare_breakdown.erp_toll (the ERP line the rider was charged) and base_fare, erp_charges.gantry_passes (timestamp, gantry,
-active, rate_sgd), route_review.recommended_gantries (the gantries of the recommended route) and route_review.justification.
+active, rate_sgd), route_review.recommended_gantries (the gantries of the recommended route), route_review.justification and
+route_review.final_itinerary (true when that route follows the final itinerary, FC-F02), and the records of an itinerary that
+changed during the trip (itinerary_change: trip_data.destination_edit_accepted, the app events destination_edit_accepted,
+stop_added and destination_edit_requested, system messages, a destination-change fee line).
 """
 from __future__ import annotations
 
@@ -62,6 +66,63 @@ def _flag(x, default=None):
     if t in ("false", "no", "n", "0"):
         return False
     return None
+
+
+_CHANGE_ON = r"(?<![a-z])(destination|drop[_\- ]?off|stops?|itinerary)(?![a-z])"          # what changed
+_CHANGE_ACT = r"\b(edit\w*|chang\w*|add(ed|s|ing)?|new|updat\w*|modif\w*|request\w*|set)\b"          # that it was changed or asked for
+_ACCEPTED = r"accept|approv|confirm|changed|updated|recalculat"
+_DECLINED = r"declin|reject|refus|withdr|not accepted|not approved|cancel+ed (the |this |your )?(request|edit|change)"
+
+
+def _amount(v) -> float | None:
+    """A fee line as a number: 3, '3.00', '$3.00' or 'S$3.00'."""
+    return _num(re.sub(r"^[^\d\-.]*", "", str(v))) if v is not None else None
+
+
+def itinerary_change(case: dict) -> bool | None:
+    """FC-F01, FC-F02: did the itinerary change during the trip? Each record that is about a change of destination, drop-off
+    or stop (the trip flag, an app event's type or details, a system message, a destination-change fee line) is read as
+    accepted, declined or open. True when a record shows the change accepted and the flag does not deny it; None when a
+    record points to a change that no record shows accepted or declined (an unparseable flag, a request alone, wording
+    this reader cannot settle), or the records disagree: the fare may have been recalculated, so the caller sends it to
+    FC-R12; False otherwise (no such record, or every request declined: 'If the driver rejects, the previous trip details
+    remain'). Negation is read only in the sentence that carries the acceptance (A4 check round 2)."""
+    trip, fare = case.get("trip_data") or {}, case.get("fare_breakdown") or {}
+    flag = _flag(trip.get("destination_edit_accepted"), "absent")
+    accepted, opened, declined = 0, 0, 0
+
+    def read(text):
+        nonlocal accepted, opened, declined
+        for sent in re.split(r"(?<=[.;!?])\s+", text):
+            if re.search(_DECLINED, sent, re.I):
+                declined += 1
+                return
+            if re.search(_ACCEPTED, sent, re.I) and not re.search(r"\b(not|no longer)\b", sent, re.I):
+                accepted += 1
+                return
+        opened += 1
+    for ev in case.get("app_events") or []:
+        et = re.sub(r"[\s\-]+", "_", str(ev.get("event_type", "")).strip().lower())
+        txt = et.replace("_", " ") + ". " + str(ev.get("details") or "")
+        if re.search(_CHANGE_ON, et.replace("_", " ")) and re.search(_CHANGE_ACT, txt, re.I):
+            read(txt)
+    for c in case.get("chat_logs") or []:
+        if str(c.get("type", "")).strip().lower() == "system":
+            txt = str(c.get("content", ""))
+            if re.search(_CHANGE_ON, txt, re.I) and re.search(_CHANGE_ACT, txt, re.I):
+                read(txt)
+    for k, v in fare.items():
+        key = re.sub(r"[\s\-]+", "_", str(k).lower())
+        if (re.search(r"(^|_)(destination|dropoff|drop_off|stop|edit|add_stop|change)(_|$)", key)
+                and not re.search(r"credit|discount|promo|refund|voucher|card|bus", key) and (_amount(v) or 0) > 0):
+            accepted += 1                       # the add/edit destination fee applies only if the driver accepts (FC-F01)
+    if flag is True:
+        accepted += 1
+    if accepted:
+        return True if flag in (True, "absent") else None   # an explicit 'false' flag against an acceptance: the records disagree
+    if flag is None or opened > declined:
+        return None
+    return False
 
 
 def _active(g: dict) -> bool:
@@ -184,6 +245,15 @@ def run(kb: KB, case: dict) -> dict:
         if over:
             attach["fc_r07_overstatement"] = over
         return finish("ESCALATE_HUMAN")
+    changed = itinerary_change(case)                                                                  # FC-F02, FC-R12 (A4, FX7)
+    if (review is not None and changed is not False and _flag(review.get("final_itinerary"), False) is not True
+            and actual > 0 and charged > 0):                   # only when the recommended route can change the amount (FC-R08)
+        reasons[:] = ["FC-R-INSUFFICIENT-DATA"]
+        steps.append(("FC-R12", "the itinerary " + ("changed" if changed else "may have changed") + " during the trip and the recommended "
+                      "route on record is not shown to follow the final itinerary"))
+        if over:
+            attach["fc_r07_overstatement"] = over
+        return finish("ESCALATE_HUMAN")
     review = review or {}
     if review.get("recommended_gantries") is not None and actual > 0:
         rec = erp_of(kb, review["recommended_gantries"], share)
@@ -223,7 +293,10 @@ def fc_r01(kb: KB, case: dict) -> dict:
     recommended route avoids, or passed them more often (FairRyde's reading of the ERP difference, open item D35). Without the
     gantries of the recommended route the claim cannot be opened and FC-R12 applies."""
     trip, fare = case.get("trip_data", {}), case.get("fare_breakdown", {})
-    recalculated = _flag(trip.get("destination_edit_accepted"), False) is True                       # FC-F01: RECALCULATED
+    change = itinerary_change(case)                                                                   # FC-F01: RECALCULATED
+    if change is None and not is_metered(kb, trip):     # the fare may have been recalculated: FC-R01 cannot be applied (FC-R12)
+        return {"applies": None, "fare_refund": None, "reason": None, "toll_claim": None, "extra_gantries": [], "escalate": "FC-R12"}
+    recalculated = change is True
     quoted, base = _num(trip.get("quoted_fare")), _num(fare.get("base_fare"))
     fixed_same = (not is_metered(kb, trip) and not recalculated and quoted is not None and base is not None and abs(quoted - base) < 0.005)
     passes = (case.get("erp_charges") or {}).get("gantry_passes") or []

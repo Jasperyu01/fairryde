@@ -81,7 +81,7 @@ scope_v0_1:                # ONT.4 Step 6: minimum sufficient
     to the backlog below instead of into v0.1.
 
 backlog:                   # ONT.4 Step 6 / ONT.10 to-do: deliberately left out of v0.1
-  - "CW-DRIVERNOSHOW, CW-FEEMISSED, CW-OTHER, FC-SURCHARGE, FC-SURGE, FC-PROMO, FC-PAYMENT, FC-TIP, FC-OTHER, DM-OTHER, OT-OTHER: classified, then escalated by GEN-R07 when a charge is contested"
+  - "CW-DRIVERNOSHOW, CW-FEEMISSED, CW-OTHER, FC-SURCHARGE, FC-SURGE, FC-PROMO, FC-PAYMENT, FC-TIP, FC-FAREMISMATCH, FC-DRIVERCHARGE, FC-OTHER, DM-OTHER, OT-OTHER: classified, then escalated by GEN-R07 when a charge is contested"
   - "Cash payments and cash collection of fees"
   - "RydePOOL and carpool trips with several riders"
   - "Separate Booking entity (booking and trip are one entity in v0.1)"
@@ -107,7 +107,7 @@ runtime_mapping:           # ONT.7, not yet verified against chordx_core.md (nod
     ONT.10.4 names D nodes R/A/M/P and E nodes G/T/X/S/E/D, and gives three of them a meaning: Matching (D), Ranking (D),
     Generate (E) and eXecute (E). Other letters are left blank until chordx_core.md is available.
   rows:
-    - {node: Intake and classification, chordx_node: "D (letter to confirm)", reads: "TX-CASE, TX-ROLE, TX-SEVERITY; CLS-01 to CLS-05; GEN-R04", writes: "Claim(s) with primary and secondary types"}
+    - {node: Intake and classification, chordx_node: "D (letter to confirm)", reads: "TX-CASE, TX-ROLE, TX-SEVERITY; CLS-01 to CLS-06; GEN-R04", writes: "Claim(s) with primary and secondary types"}
     - {node: Matching (ticket to trip and to earlier tickets), chordx_node: "D: Matching", reads: "TX-RELATION; ontology events and new_vs_update; MAT-01 to MAT-03", writes: "relation_type, related_ticket, trip"}
     - {node: Evidence and facts (deterministic tools), chordx_node: "E (letter to confirm)", reads: "Ontology entities as the data contract; DQ and fact rules; reference_data", writes: "EvidenceItem IDs, Findings"}
     - {node: Rider Advocate and Driver Advocate, chordx_node: "E: Generate", reads: "Findings, evidence IDs, rule cards; READ rules retrieved verbatim (EXP-02)", writes: "Arguments (system artifact, never evidence)"}

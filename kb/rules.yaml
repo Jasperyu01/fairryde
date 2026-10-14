@@ -182,22 +182,50 @@ rules:
     type: classification
     applies_to: [ALL]
     statement: >-
-      If any free text in the case (description, chat, added evidence) contains safety language (assault, harassment, threats,
-      unsafe driving, accident, injury, intoxication), create an SE claim, set severity S0 or S1 and route it to a human,
-      whatever else the ticket contains.
-    zh: 任何自由文本出现安全相关内容，即单独建 SE 主张、定 S0/S1、转人工，不管工单里还有什么。
+      If any free text in the case (description, chat, added evidence) contains safety content, create an SE claim, set
+      severity S0 or S1 and route it to a human, whatever else the ticket contains. Safety content is any account, by either
+      party, of: violence or its threat (assault or an attempt, hitting, scratching, a weapon, threats and intimidation);
+      sexual misconduct (harassment, unwanted advances or touching); abuse or harassment of any kind toward a person (insults,
+      slurs or swearing at someone, overly personal questions, comments on someone's appearance, contacting a passenger after
+      the trip for personal reasons); being held or taken against one's will (kidnapping or abduction, a driver who will not
+      let the passenger out or will not stop when asked); being put in danger (reckless or dangerous driving, a driver under
+      the influence of drink or drugs, an unsafe drop-off such as being made to leave the car on an expressway or road
+      shoulder, or being made to leave the car, or left behind by the driver, at an isolated place or at night); an accident
+      or an injury; discrimination because of race, ethnicity, religion, nationality, disability or a similar ground; or any
+      other crime. It is judged by meaning, not by keywords: these are examples, not a closed list, and text that uses none of
+      these words can be safety content ("he stopped on the PIE and told me to get out"). When it is unclear whether text is
+      safety content, it is treated as safety content (S1), so a person sees it. Rudeness alone (an unfriendly or impatient
+      manner, a raised voice, a curt reply) with no abuse, threat, danger or discrimination is not safety content; it is
+      feedback (EX-FEEDBACK). A dispute about money (a fare, a fee, an overcharge, a charge the driver made up) or about damage
+      to the car is not safety content by itself, even where the conduct may be a crime; it becomes safety content when it
+      comes with violence, threats, danger, abuse or discrimination. Severity S0 when someone was hurt, held, assaulted, threatened with harm or put in immediate
+      danger; S1 otherwise. The SE type follows the taxonomy definitions (SE-CONDUCT for behavior toward a person,
+      SE-DRIVING, SE-ACCIDENT, SE-TERMINATED for a ride ended midway, SE-MISMATCH for a driver or car that does not match the
+      app, SE-RECORDING for an in-vehicle recording device, SE-OTHER otherwise).
+    zh: 案件里任何自由文本（描述、聊天、补充证据）含有安全相关内容时，单独建 SE 主张，定严重度 S0 或 S1，转人工，不管工单里还有什么。安全相关内容是任何一方讲述的以下情形：暴力或暴力威胁（攻击或企图攻击、打人、抓伤、凶器、威胁恐吓）；性不当行为（骚扰、不受欢迎的示好或触碰）；对人的任何形式的辱骂或骚扰（侮辱、带歧视的辱骂或冲人骂脏话、过分私人的问题、评论外貌、行程后因私联系乘客）；被违背意愿扣留或带走（绑架、劫持，司机不让乘客下车或要求停车也不停）；被置于危险之中（鲁莽或危险驾驶，司机受酒精或药物影响，不安全的下车，例如被赶下车留在快速公路或路肩上，或在偏僻处、夜里被司机赶下车或丢下）；事故或受伤；因种族、族裔、宗教、国籍、残疾或类似理由受到歧视；或其他犯罪。按意思判断，不按关键词：这些只是例子，不是封闭清单，没用这些词的文字也可能是安全内容（"他停在 PIE 上叫我下车"）。拿不准是不是安全内容时按安全内容处理（S1），让人工看到。只是态度不好（不友善或不耐烦、大声、回话生硬），没有辱骂、威胁、危险或歧视，不是安全内容，属于一般反馈（EX-FEEDBACK）。关于钱的争议（车费、费用、多收、司机自己加的收费）或车辆损坏，本身不是安全内容，即使这种行为可能构成犯罪；伴有暴力、威胁、危险、辱骂或歧视时才是安全内容。有人受伤、被扣留、被攻击、受到伤害威胁或处于紧迫危险时为 S0，其余为 S1。SE 类型按分类定义选（对人的行为为 SE-CONDUCT，另有 SE-DRIVING、SE-ACCIDENT，行程中途被终止为 SE-TERMINATED，司机或车辆与 App 不符为 SE-MISMATCH，车内录像设备为 SE-RECORDING，其余为 SE-OTHER）。
     produces: [SE-R-HUMAN-DECIDES]
     sources:
+      - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Assault, harassment, or abuse of any kind will not be tolerated.', note: "Ryde Code of Conduct item 5."}
       - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'We have a zero-tolerance approach to any form of misconduct or inappropriate behavior between drivers and passengers.'}
+      - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Attempted or Actual Physical Assault', note: "Ryde's Code of Conduct list also names 'Verbal or Physical Sexual Harassment', 'Kidnapping', 'Threats and Intimidation' and 'Unwanted Sexual Advances'."}
+      - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Kidnapping'}
+      - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Threats and Intimidation'}
+      - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: "drivers must not ask overly personal questions, comment on anyone's appearance, or contact passengers after a trip for personal reasons."}
+      - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Reckless or dangerous driving that endangers passengers, pedestrians, or other road users is strictly prohibited.'}
+      - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Alcohol, drugs, and weapons are not tolerated.'}
+      - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Do not commit crimes.', note: "Ryde Code of Conduct item 6."}
+      - {type: RYDE_POLICY, doc: RYDE-33362721809049, quote: 'Comments on race, ethnicity, national origin, disability, etc', note: "Driver Performance and Community Standards: errant behavior that disables an account."}
       - {type: INDUSTRY, doc: IND-BENCHMARK-NOTES, quote_kind: paraphrase, note: "Lyft, Grab and DiDi route safety incidents to humans (research note 02)."}
-      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "The list of safety words that triggers the rule and the S0 or S1 severity are FairRyde's design."}
+      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "FairRyde's design (step A4, round 1 finding FX6, and A4 check round 1): the definition by meaning; the examples Ryde's lists do not name (an unsafe drop-off, being made to leave or left behind by the driver at an isolated place or at night, a driver who will not stop, an accident or an injury, religion and similar grounds read into Ryde's 'etc'); treating these as safety content, not only as conduct Ryde prohibits (discrimination and abuse included); the rule that an unclear text counts as safety content; the line between rudeness and safety; and the S0 or S1 severity. Ryde's own help pages file 'rude and/or made me feel unsafe' and 'drove dangerously' under feedback; CLS-01 sends anything beyond rudeness to a person."}
     credibility: D
     credibility_note: >-
       The conduct norm is Ryde's (A); handling safety content as its own claim is industry practice (C), and a human decides
-      it as in AUTH-03 (B). What counts as safety language (the word list) and the severity scale are FairRyde's design, so
-      the rule is D by its weakest element (A3 census, validation/round2/census.csv; it was C in v0.1). Step A4 (FX6) replaces the word list
-      with a definition.
-    mode: HARD
+      it as in AUTH-03 (B). Most examples are Ryde's own Code of Conduct and community standards (A); the definition by
+      meaning, the examples Ryde does not name, the rule for unclear text and the severity scale are FairRyde's design, so the
+      rule is D by its weakest element (A3 census, validation/round2/census.csv; it was C in v0.1). Since step A4 (FX6) it is
+      a definition with examples, read for meaning, not a word list; the reference engine's patterns (SAFETY_PATTERNS in
+      kb/tools/engine_noshow.py) are only an offline stand-in for that reading.
+    mode: READ
     status: draft
 
   - id: CLS-02
@@ -206,11 +234,12 @@ rules:
     type: classification
     applies_to: [ALL]
     statement: >-
-      One claim per contested charge or issue. A safety claim (CLS-01) is always the primary claim; otherwise the primary claim
+      One claim per contested charge or issue. A safety claim (any SE type, whether CLS-01 created it or the classification
+      chose an SE type for it) is always the primary claim; otherwise the primary claim
       is the one contesting the largest charge; otherwise the first stated issue. Other claims are secondary. If the free text
       contradicts the organizer's dispute code, the code stays primary, the text's issue becomes a secondary claim, and the case
-      is flagged for review.
-    zh: 按争议款项或问题拆成多个主张；有安全主张时它永远是主项，否则金额最大的争议款项为主项；组织方代码与文字矛盾时代码为主项、文字问题为次项并标记复核。
+      is flagged for review; a safety claim still comes first.
+    zh: 每个争议款项或问题一个主张。安全主张（任何 SE 类型，不论是 CLS-01 建的还是分类时选的）永远是主项；没有安全主张时，争议金额最大的主张为主项；再没有时，以最先提出的问题为主项。其他主张为次项。自由文本与组织方争议代码矛盾时，代码仍为主项，文字所述问题列为次项，并标记复核（安全主张仍优先于代码）。
     sources:
       - {type: INTERNAL_STANDARD, doc: INT-CHORDX-ONT, clause: ONT.8, quote: '一封邮件/单据涉及多个事件，只选一个会丢信息，全多选又没主次'}
     credibility: D
@@ -222,12 +251,15 @@ rules:
     name: Not a dispute
     family: CLS
     type: classification
-    applies_to: [EX, OT-OTHER]
-    statement: A claim with no contested charge and no remedy beyond an explanation is routed to normal support, unless CLS-01 applies.
-    zh: 没有争议款项、只要解释的主张转普通客服（除非触发安全规则）。
+    applies_to: [EX, OT-OTHER, SE]
+    statement: >-
+      A claim with no contested charge and no remedy beyond an explanation is routed to normal support, unless CLS-01 applies
+      or the claim is any SE type: every SE type is TRIAGE_TO_HUMAN, so a person decides it (AUTH-03), whether or not the text
+      names a contested charge (a ride ended midway, SE-TERMINATED, goes to a person even when nothing was charged).
+    zh: 没有争议款项、只要解释的主张转普通客服；但触发 CLS-01，或主张属于任何 SE 类型时除外：所有 SE 类型都是 TRIAGE_TO_HUMAN，由人裁决（AUTH-03），不论文字里有没有争议款项（行程中途被终止 SE-TERMINATED 即使没有收费也转人工）。
     produces: [GEN-R-NOT-A-DISPUTE]
     sources:
-      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none}
+      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "The SE exception covers every SE type since step A4 (round 1 finding FX6: a mid-trip ejection with no listed word was sent to normal support)."}
     credibility: D
     mode: HARD
     status: draft
@@ -250,11 +282,37 @@ rules:
     family: CLS
     type: classification
     applies_to: [ALL]
-    statement: Map dispute_ticket.dispute_type through organizer_code (no_show_charge -> CW-NOSHOW). Contradictions between the code and the free text are handled by CLS-02.
-    zh: 用 organizer_code 映射组织方代码；代码与文字矛盾时按 CLS-02 处理。
+    statement: Map dispute_ticket.dispute_type through organizer_code (no_show_charge -> CW-NOSHOW). Contradictions between the code and the free text are handled by CLS-02. For a cancellation-fee claim, who canceled according to the trip record decides the type, over the code (CLS-06).
+    zh: 用 organizer_code 映射组织方代码；代码与文字矛盾时按 CLS-02 处理。取消费主张的类型按行程记录里是谁取消的来定，优先于代码（CLS-06）。
     sources:
       - {type: ORGANIZER, doc: ORG-DISP002, quote: '"dispute_type": "no_show_charge"'}
     credibility: A
+    mode: HARD
+    status: draft
+
+  - id: CLS-06
+    name: Who canceled decides the cancellation-fee type
+    family: CLS
+    type: classification
+    applies_to: [CW-NOSHOW, CW-RIDERCANCEL, CW-OTHER]
+    statement: >-
+      A cancellation-fee claim is classified by who canceled according to the trip record (trip_data.cancellation_reason, a
+      cancelled_by field when the record has one, the driver_cancelled or rider_cancelled event, the system message), not by
+      the parties' text. The driver canceled with reason rider_no_show: CW-NOSHOW. The rider canceled: CW-RIDERCANCEL. The
+      driver canceled for another reason (driver_cancelled_other, safety_termination, other), or the system canceled: CW-OTHER,
+      which a person decides (GEN-R07); a system cancellation goes there whether or not a reason is recorded. If these
+      records disagree, or a record names the canceling party in words that cannot be read, or none of them says who
+      canceled, or the driver canceled and the record gives no reason, the type cannot be set: the outcome is REQUEST_INFO
+      (reason GEN-R-NEED-INFO, tier HUMAN), the trip record is requested from the platform, and no ruling on the fee is made
+      until it arrives.
+    zh: 取消费主张按行程记录里是谁取消的来分类（trip_data.cancellation_reason、记录里有的 cancelled_by 字段、driver_cancelled 或 rider_cancelled 事件、系统消息），不按双方的文字。司机以 rider_no_show 取消：CW-NOSHOW。乘客取消：CW-RIDERCANCEL。司机因其他原因取消（driver_cancelled_other、safety_termination、other）或系统取消：CW-OTHER，由人裁决（GEN-R07）；系统取消不论有没有记录原因都归这里。这些记录互相矛盾、某条记录用读不懂的说法写了取消方、都没说谁取消、或司机取消但记录没有原因时，无法定类型：结果为 REQUEST_INFO（理由 GEN-R-NEED-INFO，人工处理），向平台调取行程记录，记录到之前不对收费作任何裁决。
+    produces: [GEN-R-NEED-INFO]
+    sources:
+      - {type: ORGANIZER, doc: ORG-DISP002, quote: '"cancellation_reason": "rider_no_show"'}
+      - {type: RYDE_POLICY, doc: RYDE-23534478435353, quote: 'Rider cancels after 3 minutes of matching OR'}
+      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "Taking the canceling party from the records, sending other cancellations to CW-OTHER and asking when the records are silent or disagree is FairRyde's classification design (step A4, round 1 finding FX8, complaint C04; A4 check round 1)."}
+    credibility: D
+    credibility_note: Ryde's policy distinguishes a rider cancellation from a driver's no-show cancellation (A); using the records, not the text, to tell them apart, and asking when they are silent or disagree, is FairRyde's design (D).
     mode: HARD
     status: draft
 
@@ -483,6 +541,7 @@ rules:
       - {type: INDUSTRY, doc: IND-GRAB-ADVANCE, quote: 'Your driver will arrive early and wait for you for up to 15 minutes starting from the indicated pickup time.'}
       - {type: INDUSTRY, doc: IND-BOLT-SCHEDULED, quote: 'The scheduled wait time of 5 minutes will be counted only from the scheduled start of the ride.'}
       - {type: RYDE_POLICY, doc: RYDE-23575142762393, quote: 'You arrived at the pickup location and the customer was not present within 3 minutes of your arrival.', note: "Driver article (2023), not specific to advance bookings; conflicts with the rule above for early drivers."}
+      - {type: RYDE_POLICY, doc: RYDE-20244064619161, quote: 'The driver pressed "I''m Here", waits for > 3 minutes for rider to arrive at the pick-up point and cancels the trip', note: "Driver policy pages (2024-04-23, and RYDE-33362932998937 of 2024-06-05 with the same words) count an advance trip's wait from 'I'm Here' too; they conflict with the rule above for early drivers in the same way (round 1 finding FX9)."}
     credibility: C
     mode: HARD
     status: draft
@@ -901,18 +960,24 @@ rules:
     applies_to: [CW-RIDERCANCEL]
     statement: >-
       If, when the rider canceled, the driver was already later than the assignment ETA plus DRIVER_LATE_GRACE_S, or was not
-      moving toward the pick-up point, the rider's cancellation fee is eligible for a waiver. Ryde publishes no rule on this.
-    zh: 乘客取消时司机已晚于派单 ETA 加宽限、或没有朝上车点移动，则乘客取消费可免除。Ryde 未公开此规则（通用假设）。
+      moving toward the pick-up point (a driver already waiting at the pick-up counts as moving toward it), the rider's
+      cancellation fee is eligible for a waiver. Ryde publishes no rule on this. For an advance booking the assignment ETA is
+      the scheduled time (FairRyde's reading: the driver is due at the pick-up then), except for a request accepted after the
+      cut-off of CW-R02, whose assignment ETA is the ETA the app gave at acceptance, if later than the scheduled time; and a
+      driver who is not moving gives this ground only when, by the app's ETA from where the driver was, the driver could no
+      longer reach the pick-up by the assignment ETA plus DRIVER_LATE_GRACE_S (an early driver waiting nearby is not a ground).
+    zh: 乘客取消时司机已晚于派单 ETA 加宽限、或没有朝上车点移动（已在上车点等候的司机算作朝上车点移动），则乘客取消费可免除。Ryde 未公开此规则（通用假设）。预约单的派单 ETA 取预约时间（FairRyde 的读法：司机应在那时到达上车点）；但在 CW-R02 的截止时间之后才被接的预约单，派单 ETA 取接单时 App 给出的 ETA（若晚于预约时间）；预约单的司机没有移动时，只有按 App 从司机所在位置算的 ETA 已无法在派单 ETA 加宽限内到达上车点，才构成免除理由（提前到附近等候的司机不构成）。
     params: [DRIVER_LATE_GRACE_S]
     produces: [CW-R-DRIVER-LATE]
     sources:
       - {type: INDUSTRY, doc: IND-BENCHMARK-NOTES, quote_kind: paraphrase, note: "Grab: a late driver (ETA + 3 min) forfeits the fee; Gojek ETA + 5 min (research note 02)."}
-      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "The 'not moving toward the pick-up point' condition has no source in the knowledge base (research note 02 covers the ETA only), so it is FairRyde's until a source is added."}
+      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "Two elements are FairRyde's: the 'not moving toward the pick-up point' condition has no source in the knowledge base (research note 02 covers the ETA only), and the assignment ETA of an advance booking (the scheduled time, or the app's ETA for a request accepted after the cut-off) is FairRyde's reading (step A4, FX9; A4 check round 1)."}
     credibility: D
     credibility_note: >-
       The late-driver waiver is other platforms' practice (C). The 'not moving toward the pick-up point' ground has no source
-      in the knowledge base (the round 1 reviewer found it on Grab's page, but research note 02 does not carry it), so the rule
-      is D by its weakest element (A3 census, validation/round2/census.csv; it was C in v0.1). A local source for that ground would make it C again.
+      in the knowledge base (the round 1 reviewer found it on Grab's page, but research note 02 does not carry it), and the
+      advance-booking ETA is FairRyde's reading (A4), so the rule is D by its weakest element (A3 census,
+      validation/round2/census.csv; it was C in v0.1). A local source for both would make it C again.
     mode: HARD
     status: draft
 
@@ -998,16 +1063,19 @@ rules:
     family: FC
     type: fact
     applies_to: [FC]
-    statement: RydeTAXI is METERED; every other service is FIXED_AT_BOOKING, becoming RECALCULATED if a destination edit was accepted.
-    zh: RydeTAXI 计程；其他服务下单时固定价，接受改目的地后重算。
+    statement: RydeTAXI is METERED; every other service is FIXED_AT_BOOKING, becoming RECALCULATED if a destination edit (a changed drop-off or an added drop-off stop) was accepted.
+    zh: RydeTAXI 计程；其他服务下单时固定价，接受改目的地（改下车点或加一个下车站）后重算。
     produces_finding: F-PRICING-MODE
     sources:
       - {type: RYDE_POLICY, doc: RYDE-30741244296217, quote: 'Fares quoted for our services are generally fixed, except for RydeTAXI.'}
       - {type: RYDE_POLICY, doc: RYDE-360004075214, quote: 'All fares are fixed at the time of booking but does not include toll charges such as ERP.'}
       - {type: RYDE_POLICY, doc: RYDE-51399796192921, quote: 'If the driver accepts your edit destination request, a $3.00 add/edit destination fee will apply.'}
       - {type: RYDE_POLICY, doc: RYDE-50798691815449, quote: 'Once the driver accepts, your trip fare will be recalculated, and your route will be updated to the new destination'}
+      - {type: RYDE_POLICY, doc: RYDE-34883561600025, quote: 'You will receive a notification or a request pop up on your Ryde Driver app when riders request to change the drop-off and/or add an additional drop-off stop.', note: "Driver article: an added stop is the same request as a changed drop-off."}
+      - {type: RYDE_POLICY, doc: RYDE-51399674412441, quote: 'The rider can add another destination, leading to a map confirmation (for multiple stops).', note: "Rider article: an added stop goes through the same edit request as a changed destination."}
+      - {type: RYDE_POLICY, doc: RYDE-51399674412441, quote: 'New destination and fare confirmation will be displayed.', note: "The next step of the same article: the edit, an added stop included, ends with a fare confirmation."}
     credibility: B
-    credibility_note: "'Fares are fixed' comes from rider articles edited more than 12 months ago, and a driver FAQ describes earnings from driven distance and time (META-04 known conflict). The destination-edit part is A (the recalculation quote was added by the A3 census)."
+    credibility_note: "'Fares are fixed' comes from rider articles edited more than 12 months ago, and a driver FAQ describes earnings from driven distance and time (META-04 known conflict). The changed-drop-off part is A (the recalculation quote was added by the A3 census). The added-stop part rests on a driver article and a rider article whose dates and rollout status differ, so it is B, which the rule's B already covers."
     mode: HARD
     status: draft
 
@@ -1017,15 +1085,26 @@ rules:
     type: fact
     applies_to: [FC-ROUTE, FC-TOLL]
     statement: >-
-      Detour ratio DR = actual distance / recommended-route distance; extra distance = actual minus recommended. Actual distance
+      The recommended route runs through the trip's final itinerary: from the pick-up through every drop-off in order
+      (ENT-TRIP has_dropoff, 1:N). At each change the driver accepted during the trip (a changed drop-off or an added stop,
+      destination_edit_accepted), the recommended route is split at the point C nearest to where the car was at that moment,
+      taken on the part of the route the car had not yet passed (where the car was is its GPS position at the acceptance,
+      interpolated between the pings around it): up to C it is the recommended route toward the drop-offs then in force, and from C it runs through the new
+      drop-offs in order. The actual path is measured whole, so a deviation driven before the change stays in it. Only the
+      distance the change itself requires (the route from C through the new drop-offs instead of the rest of the old route)
+      is not a detour; a deviation on the way to an added stop is measured like any other. If the itinerary changed and the
+      recommended route on record does not follow it, the measurement is unusable (FC-R12). Detour ratio DR = actual
+      distance / recommended-route distance; extra distance = actual minus recommended. Actual distance
       comes from the recorded trip distance, else a road-matched path, never the sum of straight lines between sparse pings
       (that sum may only prove a detour, never disprove one). Spatial confirmation needs at least CORRIDOR_MIN_CONSEC_PINGS
       consecutive pings beyond CORRIDOR_HALF_WIDTH_M of the recommended route, ignoring ENDPOINT_EXCLUSION_M at both ends.
-    zh: 绕路比 = 实际里程 / 推荐路线里程；实际里程用行程记录或道路匹配，不用稀疏定位点直线和（只能单向证明）；连续若干定位点出走廊才算空间确认。
+    zh: 推荐路线按行程的最终行程单走：从上车点按顺序经过每个下车点（ENT-TRIP has_dropoff，一对多）。行程中司机每接受一次改动（改下车点或加站，destination_edit_accepted），推荐路线就在离车当时位置最近的点 C 分段，C 取在车还没有经过的那段路线上（车当时的位置取接受时的 GPS 位置，在前后定位点之间插值）：C 之前是朝当时有效下车点的推荐路线，C 之后按顺序经过新的下车点。实际路径整段计量，所以改动之前已经开出的绕路仍算在内。只有改动本身需要的里程（从 C 经过新下车点、代替旧路线剩下部分）不算绕路；去乘客加的站途中的偏离照常计量。行程单改过、而记录里的推荐路线没有按它走，测量不可用（FC-R12）。绕路比 DR = 实际里程 / 推荐路线里程；多开里程 = 实际里程减推荐路线里程。实际里程用行程记录，否则用道路匹配路径，不用稀疏定位点之间直线距离之和（这个和只能证明有绕路，不能证明没有）。空间确认需要至少 CORRIDOR_MIN_CONSEC_PINGS 个连续定位点落在推荐路线两侧 CORRIDOR_HALF_WIDTH_M 之外，两端各 ENDPOINT_EXCLUSION_M 不计。
     params: [CORRIDOR_HALF_WIDTH_M, CORRIDOR_MIN_CONSEC_PINGS, ENDPOINT_EXCLUSION_M]
     produces_finding: F-DETOUR
     sources:
+      - {type: RYDE_POLICY, doc: RYDE-50798691815449, quote: 'Once the driver accepts, your trip fare will be recalculated, and your route will be updated to the new destination'}
       - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "Method from research note 08 (sparse-ping simulation)."}
+      - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "The final-itinerary baseline and the split at the point nearest the car at each accepted change are FairRyde's design (step A4, FX7; A4 check round 1), built on Ryde's text that the route is updated to the new destination once the driver accepts."}
     credibility: D
     mode: HARD
     status: draft
@@ -1134,10 +1213,10 @@ rules:
       If the pricing mode is FIXED_AT_BOOKING and the fare charged equals the quoted fare, a longer route did not change what the
       rider paid for the trip: no fare refund. The deviation is recorded as driver-conduct information only, with one
       exception: a fixed fare does not include ERP (FC-F01; RydeSEND fares do, and for a few services Ryde's pages disagree, FC-R06), so ERP that the longer route caused is a
-      separate charge that FC-R01 never decides or closes. Whenever the actual path passed active gantries that the recommended route avoids (or passed them more often),
+      separate charge that FC-R01 never decides or closes. Whenever the actual path passed active gantries that the recommended route (through the final itinerary, FC-F02) avoids (or passed them more often),
       FC-R01 sends that ERP to its own FC-TOLL claim (a secondary claim under CLS-02, opened without waiting for the rider to
       name the ERP), decided by PB-FC-TOLL with FC-R08.
-    zh: 固定价且实收等于报价时，绕路没有改变乘客为行程付的钱：不退车费；绕路只记作司机行为信息。有一个例外：固定价不含 ERP（FC-F01；RydeSEND 车费已含，且有些服务各页面说法不一，见 FC-R06），绕路造成的 ERP 是另一笔费用，FC-R01 既不裁决也不因此结案。只要实际路径经过了推荐路线避开的有效闸门，FC-R01 就把这部分 ERP 交给单独的 FC-TOLL 主张（按 CLS-02 作为次项，不必等乘客提出 ERP），按 PB-FC-TOLL 用 FC-R08 裁决。
+    zh: 固定价且实收等于报价时，绕路没有改变乘客为行程付的钱：不退车费；绕路只记作司机行为信息。有一个例外：固定价不含 ERP（FC-F01；RydeSEND 车费已含，且有些服务各页面说法不一，见 FC-R06），绕路造成的 ERP 是另一笔费用，FC-R01 既不裁决也不因此结案。只要实际路径经过了推荐路线（按最终行程单走，FC-F02）避开的有效闸门（或经过次数更多），FC-R01 就把这部分 ERP 交给单独的 FC-TOLL 主张（按 CLS-02 作为次项，不必等乘客提出 ERP），按 PB-FC-TOLL 用 FC-R08 裁决。
     produces: [FC-R-FIXED-FARE]
     sources:
       - {type: RYDE_POLICY, doc: RYDE-4412121982745, quote: 'The trip fare is fixed based on pick-up and drop-off points, hence the driver may decide to take the most efficient route according to GPS.'}
@@ -1184,9 +1263,11 @@ rules:
     applies_to: [FC-ROUTE]
     statement: >-
       For RECALCULATED fares: DR at least DETOUR_RATIO_MIN, extra distance at least DETOUR_EXTRA_KM_MIN, spatial
-      confirmation, and no justification (FC-F03) means a confirmed detour; refund per FC-R05. METERED fares (RydeTAXI) are
+      confirmation, and no justification (FC-F03) means a confirmed detour; refund per FC-R05. DR and the extra distance are
+      measured against the recommended route through the final itinerary (FC-F02), so a stop or a destination change the
+      rider made is never a detour. METERED fares (RydeTAXI) are
       excluded by FC-R00.
-    zh: 重算车费：绕路比和多出里程都达阈值、空间确认且无正当理由，即认定绕路，按 FC-R05 退款。计程车费（RydeTAXI）按 FC-R00 排除。
+    zh: 重算车费：绕路比和多出里程都达阈值、空间确认且无正当理由，即认定绕路，按 FC-R05 退款。绕路比和多出里程以经过最终行程单的推荐路线为准（FC-F02），所以乘客自己加的站或改的目的地不算绕路。计程车费（RydeTAXI）按 FC-R00 排除。
     params: [DETOUR_RATIO_MIN, DETOUR_EXTRA_KM_MIN]
     produces: [FC-R-DETOUR-CONFIRMED, FC-R-DETOUR-JUSTIFIED]
     sources:
@@ -1223,11 +1304,12 @@ rules:
     type: remedy
     applies_to: [FC-ROUTE]
     statement: >-
-      Refund = fare charged minus the fare recomputed on the recommended route with the same tariff, fee tiers and surcharges;
+      Refund = fare charged minus the fare recomputed on the recommended route through the final itinerary (FC-F02) with the
+      same tariff, fee tiers and surcharges;
       floor 0, capped at the fare charged; paid only if at least MIN_REFUND_SGD. Not for METERED fares (RydeTAXI, FC-R00):
       there the same formula gives a difference that is attached for the reviewer as information and is never proposed as a
       refund.
-    zh: 退款 = 实收车费减按推荐路线、用同一费率、费用档位和附加费重算的车费；不低于 0、不超过实收；低于最小金额不退。计程车费（RydeTAXI，见 FC-R00）不适用：同一公式算出的差额只作为参考附给审核人，不作为退款建议。
+    zh: 退款 = 实收车费减按经过最终行程单的推荐路线（FC-F02）、用同一费率、费用档位和附加费重算的车费；不低于 0、不超过实收；低于最小金额不退。计程车费（RydeTAXI，见 FC-R00）不适用：同一公式算出的差额只作为参考附给审核人，不作为退款建议。
     params: [MIN_REFUND_SGD, TAXI_TARIFF, PLATFORM_FEE_TIERS, TRANSACTION_FEE_LOCAL]
     sources:
       - {type: INDUSTRY, doc: IND-BENCHMARK-NOTES, quote_kind: paraphrase, note: "DiDi charges only the estimated fare when a detour is found (research notes 02 and 08)."}
@@ -1312,8 +1394,8 @@ rules:
     type: outcome
     applies_to: [FC-TOLL]
     statement: >-
-      If the actual path passed gantries that the recommended route avoids, or passed them more often (FairRyde's reading of the ERP
-      difference), and the deviation is unjustified (FC-F03), refund
+      If the actual path passed gantries that the recommended route (through the final itinerary, FC-F02) avoids, or passed
+      them more often (FairRyde's reading of the ERP difference), and the deviation is unjustified (FC-F03), refund
       what the rider paid above the ERP the recommended route would have cost, up to the extra ERP the detour caused:
       min(ERP(actual), ERP charged to the rider) minus ERP(recommended), floor 0, with ERP(actual) and ERP(recommended)
       computed as in FC-F04 (FC-R06 first: nothing for RydeSEND, whose fare includes ERP; half on a carpool trip). FC-R07's
@@ -1326,7 +1408,7 @@ rules:
       offense list as at 1 Apr 2023 and no taxi (TDVL) list was found. FC-R08 does not check which kind of driver served the
       trip (a RydeX trip may be served by a taxi driver, and a carpool driver may not hold a PDVL), which is one more reason
       the refund needs approval (open item D35).
-    zh: 实际路径经过推荐路线避开的闸门（或经过的次数更多，这是 FairRyde 对 ERP 差额的读法）且绕路无正当理由，退乘客实付超出推荐路线 ERP 的部分，最多为绕路多出的 ERP：min(ERP(实际), 乘客被收的 ERP) 减 ERP(推荐)，不低于 0；ERP(实际) 和 ERP(推荐) 都按 FC-F04 计算（先 FC-R06：RydeSEND 车费已含 ERP，不退；拼车退一半）。FC-R07 对超收 ERP 的退款另算，两者合计最多为乘客被收的 ERP 减 ERP(实际) 与 ERP(推荐) 中较小的一个，不会是负数。若没有超出 ERP(推荐) 的部分，退款为 0，ERP 收费成立（FC-R-TOLL-VALID）。FC-R08 不适用于计程车费（METERED，RydeTAXI），与 FC-R00 一致（D32）：FairRyde 不作裁决，按 GEN-R07 转人工（原因 GEN-R-POLICY-GAP，按 AUTH-06 为 HUMAN），并附 ERP(实际)、ERP(推荐)、两者差额（仅供参考，不作为退款建议）、FC-R07 的认定（如有）和司机的回应（GEN-R05）。它所依据的 LTA 义务只核实到私召车（PDVL）司机：所用 LTA 清单是截至 2023 年 4 月 1 日的 PDVL 违规清单，没有找到出租车（TDVL）清单。FC-R08 不核对服务该行程的是哪类司机（RydeX 行程可能由出租车司机服务，拼车司机可能没有 PDVL），这也是退款须经批准的原因之一（见 D35）。
+    zh: 实际路径经过推荐路线（按最终行程单，FC-F02）避开的闸门（或经过的次数更多，这是 FairRyde 对 ERP 差额的读法）且绕路无正当理由，退乘客实付超出推荐路线 ERP 的部分，最多为绕路多出的 ERP：min(ERP(实际), 乘客被收的 ERP) 减 ERP(推荐)，不低于 0；ERP(实际) 和 ERP(推荐) 都按 FC-F04 计算（先 FC-R06：RydeSEND 车费已含 ERP，不退；拼车退一半）。FC-R07 对超收 ERP 的退款另算，两者合计最多为乘客被收的 ERP 减 ERP(实际) 与 ERP(推荐) 中较小的一个，不会是负数。若没有超出 ERP(推荐) 的部分，退款为 0，ERP 收费成立（FC-R-TOLL-VALID）。FC-R08 不适用于计程车费（METERED，RydeTAXI），与 FC-R00 一致（D32）：FairRyde 不作裁决，按 GEN-R07 转人工（原因 GEN-R-POLICY-GAP，按 AUTH-06 为 HUMAN），并附 ERP(实际)、ERP(推荐)、两者差额（仅供参考，不作为退款建议）、FC-R07 的认定（如有）和司机的回应（GEN-R05）。它所依据的 LTA 义务只核实到私召车（PDVL）司机：所用 LTA 清单是截至 2023 年 4 月 1 日的 PDVL 违规清单，没有找到出租车（TDVL）清单。FC-R08 不核对服务该行程的是哪类司机（RydeX 行程可能由出租车司机服务，拼车司机可能没有 PDVL），这也是退款须经批准的原因之一（见 D35）。
     params: [ERP_RIDER_SHARE]
     produces: [FC-R-TOLL-FROM-DETOUR, FC-R-TOLL-VALID, GEN-R-POLICY-GAP]
     sources:
@@ -1400,10 +1482,14 @@ rules:
     type: outcome
     applies_to: [FC-ROUTE, FC-TOLL]
     statement: >-
-      If the recorded distance, a usable road-matched path, the fare breakdown or the recommended route is missing, or pings are
+      If the recorded distance, a usable road-matched path, the fare breakdown or the recommended route is missing, or the
+      itinerary changed (an accepted destination change or added stop, or a record that points to one without showing it was
+      accepted) and the recommended route on record does not follow the final itinerary (FC-F02) while that route could
+      change the amount (for ERP: an ERP amount was charged to the rider and the rider's share of the ERP of the actual
+      path is above zero, FC-R06 and FC-F04), or pings are
       too sparse to locate the deviation, or, for an ERP claim, the service type, the gantry log, a gantry's rate or the gantries of the
       recommended route are missing or unusable, make no adverse finding against either party and escalate.
-    zh: 缺少里程、可用路径、车费明细或推荐路线，或定位点太稀疏无法判断，或（ERP 争议）服务类型、闸门记录、某闸门的费率或推荐路线的闸门缺失或不可用时，不对任何一方作不利认定，转人工。
+    zh: 缺少里程、可用路径、车费明细或推荐路线，或行程单改过（接受了改目的地或加站，或有记录指向改动但看不出是否被接受）而记录里的推荐路线没有按最终行程单走（FC-F02）、且推荐路线会影响金额（ERP：向乘客收了 ERP，且按乘客份额算的实际路径 ERP 大于零，FC-R06、FC-F04），或定位点太稀疏无法判断，或（ERP 争议）服务类型、闸门记录、某闸门的费率或推荐路线的闸门缺失或不可用时，不对任何一方作不利认定，转人工。
     produces: [FC-R-INSUFFICIENT-DATA]
     sources:
       - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none}
@@ -1911,8 +1997,8 @@ rules:
     family: EXP
     type: explanation
     applies_to: [ALL]
-    statement: Every number in an explanation must equal a Finding value or a reference-data value; the verifier rejects the explanation otherwise.
-    zh: 解释里的每个数字必须等于事实认定或参考数据的值，否则校验器拒绝。
+    statement: Every number in an explanation must equal a Finding value or a reference-data value; the verifier rejects the explanation otherwise. Numbers inside a verbatim quote of a clause (EXP-02) are exempt, because the quote must stay exact.
+    zh: 解释里的每个数字必须等于事实认定或参考数据的值，否则校验器拒绝。逐字引用的条款（EXP-02）里的数字除外，因为引文必须保持原样。
     sources:
       - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none}
     credibility: D
@@ -1924,8 +2010,12 @@ decision_tables:
   DT-CW-NOSHOW:
     name: No-show fee outcome
     precondition: >-
-      The trip record shows a cancellation with reason rider_no_show, and no system message says the rider canceled.
-      Otherwise the claim is reclassified (CLS-02: usually CW-RIDERCANCEL) and handled by that playbook; the table is not used.
+      The trip record shows that the driver canceled with reason rider_no_show, and no record says otherwise (CLS-06: the
+      reason, a cancelled_by field, the cancel events and the system message all agree). Otherwise the table is not used: a
+      rider cancellation is reclassified to CW-RIDERCANCEL; a driver cancellation for another reason, or a system
+      cancellation, to CW-OTHER; and when the records disagree, a record cannot be read, none says who canceled, or the
+      driver canceled with no reason recorded, the outcome is REQUEST_INFO (GEN-R-NEED-INFO, tier HUMAN) with no ruling on
+      the fee.
     hit_policy: UNIQUE      # every combination of inputs hits exactly one row (checked by enumeration)
     credibility_note: >-
       Each row lists in 'rules' every rule its conclusion depends on, and its credibility is the weakest of them (the build

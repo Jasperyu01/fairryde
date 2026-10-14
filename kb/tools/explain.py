@@ -67,21 +67,42 @@ def _rule_label(kb, rid: str, profile: str, decisive: set) -> str:
     return f"{rid} {r['name']} ({words}; credibility {cred}" + ("; decisive for the approval step" if rid in decisive else "") + ")"
 
 
-def exp03_check(text: str, allowed: set) -> list[str]:
-    """Numbers in the text that are not registered values (identifiers such as CW-R03 or E-GPS-05 are removed first)."""
+QUOTE_RE = re.compile(r'"([^"]+)"|\u201c([^\u201d]+)\u201d')
+
+
+def clause_quotes(kb) -> set:
+    """The verbatim clause quotes on the rule cards (EXP-02): the only quoted text whose numbers EXP-03 exempts."""
+    return {" ".join(str(s["quote"]).split()) for r in kb.rules.values() for s in r.get("sources") or [] if s.get("quote")}
+
+
+def exp03_check(text: str, allowed: set, quotes: set | None = None) -> list[str]:
+    """Numbers in the text that are not registered values (identifiers such as CW-R03 or E-GPS-05 are removed first). A span
+    in double quotes is exempt only when it is a verbatim clause quote from a rule card with at least three words (EXP-03,
+    A4); any other quoted span, such as a bare quoted number, is checked like the rest of the text."""
+    def exempt(m):
+        span = " ".join((m.group(1) or m.group(2)).split())
+        words = re.findall(r"[A-Za-z]{2,}", span)            # a quote of a clause has words; a bare quoted number or amount is not one
+        return " " if len(words) >= 3 and any(span in q for q in quotes) else m.group(0)
+    if quotes:
+        text = QUOTE_RE.sub(exempt, text)
     return [n for n in NUM_RE.findall(ID_RE.sub(" ", text)) if n not in allowed]
 
 
 def noshow(kb, run: dict) -> dict:
     t, tier, case = run["trace"], run["tier"], run["case"]
-    if t.reclassified_to:
-        msg = f"This claim is not a driver no-show cancellation, so it is handled under {t.reclassified_to}."
-        return {"rider": msg, "driver": msg, "numbers_used": {}, "tier": tier["tier"], "exp03_unmatched": []}
-    if t.findings.get("_safety"):          # AUTH-03, SE-R01: no automatic decision and no finding of fault
-        msg = ("Your report includes a safety concern, so a Ryde staff member will review the whole case and decide it. "
+    if t.findings.get("_safety"):          # AUTH-03, SE-R01: no automatic decision and no finding of fault; either party may have raised it (CLS-01)
+        msg = ("The case includes a safety concern, so a Ryde staff member will review the whole case and decide it. "
                "FairRyde makes no automatic decision here, and the trip records have been preserved for the review.")
-        return {"rider": msg, "driver": "The rider's report includes a safety concern, so a Ryde staff member will review the whole case and decide it. "
-                "FairRyde makes no automatic decision here.", "numbers_used": {}, "tier": tier["tier"], "exp03_unmatched": []}
+        return {"rider": msg, "driver": msg, "numbers_used": {}, "tier": tier["tier"], "exp03_unmatched": []}
+    if t.reclassified_to:                  # CLS-06
+        what = {"CW-RIDERCANCEL": "the trip record shows that the rider canceled, so this is a rider cancellation fee case and is handled as one",
+                "CW-OTHER": "the trip record shows a cancellation that was not a driver's no-show cancellation, so a Ryde staff member will handle it"}
+        msg = f"This claim is not about a driver's no-show cancellation: {what.get(t.reclassified_to, 'it is handled under another case type')}."
+        return {"rider": msg, "driver": msg, "numbers_used": {}, "tier": tier["tier"], "exp03_unmatched": []}
+    if t.outcome == "REQUEST_INFO":        # CLS-06: the record does not settle who canceled
+        msg = ("The trip record does not settle who canceled the trip, so FairRyde makes no decision on the fee yet. "
+               "Ryde will check the trip record, and the case is decided once it shows who canceled.")
+        return {"rider": msg, "driver": msg, "numbers_used": {}, "tier": tier["tier"], "exp03_unmatched": []}
     f, P = t.findings, t.params_used
     nums = {}
 
@@ -375,5 +396,6 @@ def noshow(kb, run: dict) -> dict:
     driver = " ".join([out_d, status] + facts) + " " + rules_txt + " " + miss_common + pin_note_d + history + generic + review
     rider, driver = re.sub(r"\s+", " ", rider).strip(), re.sub(r"\s+", " ", driver).strip()
     allowed = set(nums.values())
-    unmatched = sorted(set(exp03_check(rider, allowed) + exp03_check(driver, allowed)))
+    quotes = clause_quotes(kb)
+    unmatched = sorted(set(exp03_check(rider, allowed, quotes) + exp03_check(driver, allowed, quotes)))
     return {"rider": rider, "driver": driver, "numbers_used": nums, "tier": tier["tier"], "exp03_unmatched": unmatched}

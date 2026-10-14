@@ -5,7 +5,9 @@ evidence item produced each step. It is a verification tool for the knowledge ba
 - there is no LLM, so the run-agreement (A) and rules-engine agreement (R) confidence terms are set to 1.0 and marked;
 - the READ parts of CW-F06 (does the rider's statement contest presence, timing or place? does a rider call or message
   during the wait place the rider at the pick-up or contest presence?) are approximated by phrase lists here; at run time
-  an LLM reads the text, and the decisive test checks whether another reading would matter.
+  an LLM reads the text, and the decisive test checks whether another reading would matter;
+- CLS-01 (safety content, read for meaning) is approximated by the whole-word patterns SAFETY_PATTERNS, and CLS-06 (who
+  canceled) reads the trip record: the reason, a cancelled_by field, the cancel events and the system messages.
 """
 from __future__ import annotations
 
@@ -16,8 +18,44 @@ from datetime import datetime, timedelta
 
 from kbload import KB
 
-SAFETY_WORDS = ["assault", "harass", "threat", "unsafe", "accident", "injur", "drunk", "intoxicat", "grope",
-                "weapon", "sexual", "abuse", "crash", "touched me", "police", "hit me", "fight"]
+# CLS-01 is read for meaning (A4, FX6); these patterns are only the offline stand-in the self-tests use. They err toward
+# safety, but ordinary no-show chat must not fire them ("let me go down", "the grape stall", "the app crashed",
+# "cannot stop here, unsafe"): phrases in SAFETY_IGNORE are removed first, and most patterns need the whole word or a
+# person as the object (A4 check rounds 1 and 2). They still miss paraphrases (open item D40 (a)).
+SAFETY_IGNORE = [r"\b(app|phone|application|system)\b(\s+\w+){0,2}\s+crash\w*", r"\bby accident\b", r"\baccidentally\b",
+                 r"\bthreaten(ed|s|ing)? to (cancel|report|rate|complain|give|charge)\w*", r"\bfight(ing)? (this|the|my|your|a) (charge|fee|case|dispute|claim)\b"]
+SAFETY_PATTERNS = [
+    r"\bassault", r"\bharass", r"\bthreat", r"\b(feel|felt|feeling|made me feel|was|i'?m|am|so|very|really|totally) unsafe\b",
+    r"\bunsafe (driving|drop-?off|place|area|situation|location|spot)\b", r"\baccidents?\b", r"\binjur", r"\bdrunk", r"\bintoxicat",
+    r"\bgrop(e|ed|es|ing)\b", r"\bweapon", r"\bsexual", r"\babus(e|ed|es|ive|ing)\b", r"\bcrash(ed|es|ing)?\b", r"\btouched me\b",
+    r"\bpolice\b", r"\bhit me\b", r"\bfight", r"\bkidnap", r"\babduct", r"\blet me out\b",
+    r"\b(won'?t|wouldn'?t|would not|will not|refused to|did ?n[o']t) let me (go|leave|get out)\b", r"\blocked me in\b",
+    r"\b(he|she|driver|the driver) locked the (car )?doors?\b", r"\b(told|asked|made|forced|ordered) me (to )?get out\b",
+    r"\b(forced|kicked|threw) me out\b", r"\b(would|will) ?n[o']?t stop (the car|when i asked|even when)|\brefused to stop\b",
+    r"\b(dropped|left|put) me (off )?(in the middle of |on |at )(the |a )?(expressway|highway|road shoulder|pie|cte|aye|bke|kje|tpe|sle|ecp|mce|kpe)\b",
+    r"\broad shoulder\b", r"\bstranded (at|on|in) (an? |the )?(isolated|deserted|dark|empty|remote|unlit)\b",
+    r"\bleft me (stranded |alone )?(at|on|in) (an? |the )?(dark|isolated|deserted|empty|remote|unlit)\b", r"\bleft me (stranded |alone )?at night\b",
+    r"\bknif(e|es)\b|\bknives\b", r"\bpunch(ed|es|ing)? (me|him|her|the (dashboard|window|door|seat|car))\b", r"\bslap(ped|s|ping)?\b",
+    r"\bmolest", r"\brap(e|ed|es|ist)\b", r"\bstalk(ed|er|ing|s)?\b", r"\b(followed|kept following|was following) me\b",
+    r"\b(drove|driving|drives|drive) (dangerously|recklessly)\b", r"\bdangerous driving\b", r"\breckless", r"\b(was|kept|keeps|is) speeding\b",
+    r"\bracis(t|m)\b", r"\bracial", r"\bdiscriminat", r"\bscared for my (life|safety)\b", r"\bslur",
+    r"\binsult(ed|ing)? me\b", r"\b(swore|swearing|cursed|cursing) at me\b", r"\bcalled me (names|stupid|an idiot|a bitch|a bastard)\b",
+    r"\bname-?calling\b", r"\bcomment(ed|ing|s)? on my (looks|body|appearance)\b", r"\bpersonal questions?\b",
+    r"\basked (me )?(if|whether) i (had|have) a (boy|girl)friend\b", r"\b(whether|if) i live(d)? alone\b", r"\b(asked|knows?) where i live\b",
+    r"\b(texted|messaged|called|contacted|whatsapp(ed)?) me (again )?after the (trip|ride)\b"]
+
+
+def safety_hits(texts: list[str]) -> list[str]:
+    """The stand-in for CLS-01's reading: the matched phrases, after removing the ordinary phrases in SAFETY_IGNORE."""
+    hits = set()
+    for x in texts:
+        y = x
+        for ig in SAFETY_IGNORE:
+            y = re.sub(ig, " ", y, flags=re.I)
+        hits |= {m.group(0).lower() for p in SAFETY_PATTERNS for m in [re.search(p, y, re.I)] if m}
+    return sorted(hits)
+
+
 INJECTION_PATTERNS = [r"ignore (all |any |the )?(previous|prior|above) instructions", r"system prompt", r"you are now",
                       r"as the judge", r"rule in my favou?r", r"disregard (the )?(policy|rules)", r"```", r"\{\s*\"ruling\""]
 CONTEST_PHRASES = [r"\bi was (at|there|on time|waiting|outside|at the)", r"never (showed|came|arrived)", r"\bwaited\b",
@@ -312,6 +350,63 @@ def before_arrival_reading(c: dict, place_names: list[str], answers_question: bo
     return "UNCLEAR" if (rest or any(n and n in t for n in place_names)) else None
 
 
+_PARTY_WORDS = [("RIDER", r"(?<![a-z])(rider|passenger|customer|user)"), ("DRIVER", r"(?<![a-z])driver"),
+                ("SYSTEM", r"(?<![a-z])(system|platform|ryde|auto|admin|ops)(?![a-z])")]
+_CANCEL_MSG = [("RIDER", r"\bcancel+ed by (the )?(rider|passenger|customer|user)\b|\b(rider|passenger|customer) (has )?cancel+ed\b"),
+               ("DRIVER", r"\bcancel+ed by (the )?driver\b|\bdriver (has )?cancel+ed\b"),
+               ("SYSTEM", r"\bauto-?\s?cancel+ed\b|\bcancel+ed automatically\b|\bcancel+ed by (the )?(system|platform|ryde)\b|\b(system|platform) (has )?cancel+ed\b")]
+_CANCEL_UNREAD = r"\bcancel+ed by\b|\byou (have )?cancel+ed\b"     # names a canceling party in words not read above
+
+
+def _norm(x) -> str:
+    return re.sub(r"[\s\-]+", "_", str(x or "").strip().lower()).replace("canceled", "cancelled")
+
+
+def no_show_reason(t: dict) -> bool:
+    """The record's reason is a driver's no-show cancellation (rider_no_show, in any spelling or with a suffix)."""
+    return _norm(t.get("cancellation_reason")).startswith("rider_no_show")
+
+
+def _who(text: str) -> str | None:
+    """The party a free-form record value names: RIDER, DRIVER, SYSTEM, or CONFLICT when it names several or none it can read."""
+    hits = {p for p, rx in _PARTY_WORDS if re.search(rx, text)}
+    return hits.pop() if len(hits) == 1 else "CONFLICT"
+
+
+def canceling_party(t: dict, ev: list[dict], chat: list[dict]) -> tuple[list, str | None]:
+    """CLS-06: who canceled, from the trip record (the reason, a cancelled_by field, the cancel events, system messages).
+    Returns what each record says and the party: DRIVER, RIDER, SYSTEM, None (no record says) or CONFLICT. A record that
+    names a party in words this reader cannot map counts as disagreeing (CONFLICT), never as silent (A4 check round 2)."""
+    said = []
+    reason = _norm(t.get("cancellation_reason"))
+    if reason:
+        p = ("DRIVER" if reason.startswith(("rider_no_show", "driver_cancel")) else "RIDER" if reason.startswith("rider_cancel")
+             else "SYSTEM" if reason.startswith(("system", "auto")) else None)      # safety_termination, other: no party named
+        said.append(("cancellation_reason " + str(t.get("cancellation_reason")), p))
+    by = _norm(t.get("cancelled_by"))
+    if by:
+        said.append(("cancelled_by " + str(t.get("cancelled_by")), _who(by)))
+    for a in ev:
+        et = _norm(a.get("event_type"))
+        if re.search(r"cancel+ed", et) and "fee" not in et:
+            hits = {p for p, rx in _PARTY_WORDS if re.search(rx, et)}
+            p = hits.pop() if len(hits) == 1 else "CONFLICT" if hits else None
+            if p is None:                                   # trip_cancelled and the like: read the details
+                d = str(a.get("details") or "")
+                hits = sorted({who for who, rx in _CANCEL_MSG if re.search(rx, d, re.I)})
+                p = hits[0] if len(hits) == 1 else "CONFLICT" if hits or re.search(_CANCEL_UNREAD, d, re.I) else None
+            said.append(("event " + str(a.get("event_type")), p))
+    for c in chat:
+        if str(c.get("type", "")).strip().lower() == "system":
+            hits = sorted({who for who, rx in _CANCEL_MSG if re.search(rx, c["content"], re.I)})
+            if hits:
+                said.append(("system message", hits[0] if len(hits) == 1 else "CONFLICT"))
+            elif re.search(_CANCEL_UNREAD, c["content"], re.I):
+                said.append(("system message", "CONFLICT"))
+    parties = {who for _, who in said if who}
+    return said, ("CONFLICT" if "CONFLICT" in parties or len(parties) > 1 else parties.pop() if parties else None)
+
+
 def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | None = None,
              force_reading: str | None = None, alt_start: str | None = None, contact_reading: str | None = None) -> Trace:
     """force_reading: NONE or WEAK to test another reading of the rider's statement (decisive test, clause 1).
@@ -359,13 +454,13 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
         tr.flag("INJECTION_SUSPECTED")
     tr.step("PB-INTAKE", 1, "GEN-R04", f"instruction-like text from {', '.join(tr.injection_authors)} flagged and ignored" if tr.injection_authors
             else "no instructions found in party text", ["E-TKT-01"] + _ev_id("E-CHT", case, "chat_logs", lambda c: c["type"] == "message"))
-    safety_hits = sorted({w for w in SAFETY_WORDS for x in free_text if w in x.lower()})
-    tr.findings["_safety"] = bool(safety_hits)
-    tr.step("PB-INTAKE", 2, "CLS-01", f"safety words: {safety_hits}" if safety_hits else "no safety language", ["E-TKT-01"])
+    hits_ = safety_hits(free_text)
+    tr.findings["_safety"] = bool(hits_)
+    tr.step("PB-INTAKE", 2, "CLS-01", f"safety content (offline stand-in for the reading): {hits_}" if hits_ else "no safety content found (offline stand-in for the reading)", ["E-TKT-01"])
     tr.claim_type = kb.resolve("TX-CASE", tk["dispute_type"])
-    tr.step("PB-INTAKE", 3, "CLS-05, CLS-02, CLS-04",
+    tr.step("PB-INTAKE", 3, "CLS-05, CLS-02, CLS-06, CLS-04",
             f"dispute_type {tk['dispute_type']!r} -> {tr.claim_type}; one claim contesting CANCELLATION_FEE S${t['cancellation_fee']:.2f}"
-            + ("; a safety claim is added as the primary claim" if safety_hits else ""), ["E-TKT-01", "E-TRP-01.cancellation_fee"])
+            + ("; a safety claim is added as the primary claim" if hits_ else ""), ["E-TKT-01", "E-TRP-01.cancellation_fee"])
     tr.step("PB-INTAKE", 4, "CLS-03", "contested charge present: not routed to support", ["E-TRP-01.cancellation_fee"])
     trip_ok = tk["trip_id"] == t["trip_id"]
     tr.step("PB-INTAKE", 5, "MAT-01", f"trip {t['trip_id']} {'matches' if trip_ok else 'DOES NOT match'} the ticket", ["E-TKT-01.trip_id", "E-TRP-01.trip_id"])
@@ -402,15 +497,30 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     tr.step("PB-INTAKE", 9, "DQ-03, DQ-04", f"coordinates in Singapore: {in_box}; timeline ordered and filed after the trip: {ordered}", ["E-TRP-01", "E-GPS-*"])
 
     pb = "PB-CW-NOSHOW"
-    # 1 precondition: driver no-show cancellation
-    by_rider = any(re.search(r"cancel+ed by (the )?rider", c["content"], re.I) for c in chat if c["type"] == "system")
-    drv_cancel = t.get("cancellation_reason") == "rider_no_show" and not by_rider
-    tr.step(pb, 1, "CLS-02, CW-R03", "driver canceled with reason rider_no_show" if drv_cancel else "not a driver no-show cancellation: reclassify",
-            ["E-TRP-01.cancellation_reason"] + _ev_id("E-CHT", case, "chat_logs", lambda c: c["type"] == "system"))
-    if not drv_cancel:
-        tr.reclassified_to = "CW-RIDERCANCEL" if t.get("cancellation_reason") == "rider_cancelled" else "CW-OTHER"
+    # 1 precondition (CLS-06): who canceled, from the trip record only, never from the parties' text
+    said, party = canceling_party(t, ev, chat)
+    reason = t.get("cancellation_reason")
+    tr.cancel_record = said
+    noshow = party == "DRIVER" and no_show_reason(t)
+    if noshow:
+        msg, tr.reclassified_to = f"the driver canceled with reason {reason}", None
+    elif party == "RIDER":
+        msg, tr.reclassified_to = "the rider canceled: reclassify", "CW-RIDERCANCEL"
+    elif party == "SYSTEM" or (party == "DRIVER" and reason):
+        msg, tr.reclassified_to = (f"canceled by the {party.lower()}" + (f" with reason {reason}" if reason else "") + ", not a driver's no-show cancellation: reclassify"), "CW-OTHER"
+    else:
+        msg = ("the records disagree on who canceled, or one cannot be read" if party == "CONFLICT" else "no record says who canceled" if party is None
+               else "the driver canceled, but the record gives no reason") + ": ask for the trip record (REQUEST_INFO)"
+    tr.step(pb, 1, "CLS-06, CW-R03", msg + (" (" + "; ".join(f"{src}: {who or 'no party named'}" for src, who in said) + ")" if said else " (no record names the canceling party)"),
+            (["E-TRP-01.cancellation_reason"] if reason else []) + (["E-TRP-01.cancelled_by"] if t.get("cancelled_by") else [])
+            + _ev_id("E-APP", case, "app_events", lambda a: re.search(r"cancel+ed", _norm(a.get("event_type"))) and "fee" not in _norm(a.get("event_type")))
+            + _ev_id("E-CHT", case, "chat_logs", lambda c: str(c.get("type", "")).lower() == "system"))
+    if not noshow:
         tr.amount_at_stake = float(t.get("cancellation_fee") or 0)
         tr.confidence = {"A": None, "M": None, "E": None, "R": None, "C": None, "assumed": [], "evidence_present": {}, "soft_flags": []}
+        if not tr.reclassified_to:
+            tr.outcome, tr.reasons = "REQUEST_INFO", ["GEN-R-NEED-INFO"]
+            tr.path("CLS-06")
         return tr
 
     # 2 MAT-04 window
@@ -1093,9 +1203,13 @@ def start_test(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
 def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
     tau = kb.pval("TAU", tr.profile, tr.overrides)
     limit = kb.pval("AUTO_LIMIT_SGD", tr.profile, tr.overrides)
-    if tr.reclassified_to:
-        return {"tier": f"n/a (reclassified to {tr.reclassified_to})", "decisive": [], "triggers": [], "gates": [], "runtime_only_gates": [],
-                "favoured_party": None, "tau": tau, "auto_limit": limit}
+    if tr.reclassified_to or tr.outcome == "REQUEST_INFO":             # CLS-06: not ruled under this table
+        safety = ["G4 safety content"] if tr.findings.get("_safety") else []   # CLS-01: whatever else the ticket contains
+        if tr.reclassified_to:
+            return {"tier": "HUMAN" if safety else f"n/a (reclassified to {tr.reclassified_to})", "decisive": [], "triggers": [],
+                    "gates": safety, "runtime_only_gates": [], "favoured_party": None, "tau": tau, "auto_limit": limit}
+        return {"tier": "HUMAN", "decisive": [], "triggers": ["who canceled is not settled by the trip record, so no fee ruling is made until it is (CLS-06)"],
+                "gates": safety, "runtime_only_gates": [], "favoured_party": None, "tau": tau, "auto_limit": limit}
     decisive = []
     for r in reads:
         if r["changes"] and r["rule"] == "CW-F03B":
@@ -1170,7 +1284,7 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
 
 def run(kb: KB, case: dict, profile: str | None = None) -> dict:
     base = evaluate(kb, copy.deepcopy(case), profile)
-    if base.reclassified_to:
+    if base.reclassified_to or base.outcome == "REQUEST_INFO":
         return {"trace": base, "sensitivity": [], "readings": [], "tier": decide_tier(kb, base, [], []), "case": case}
     sens = sensitivity(kb, case, base.profile, base)
     reads = reading_test(kb, case, base.profile, base) + start_test(kb, case, base.profile, base)

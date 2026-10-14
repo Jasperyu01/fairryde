@@ -2,14 +2,14 @@
 
 Generated from the YAML source files (knowledge base dated 2026-10-05).
 
-* Rules: 89; vocabularies: 22; TX-CASE leaves: 33; entities: 20; events: 35; playbooks: 11
-* Rule sources: 172; VERIFIED 132, NO_QUOTE (design assumption) 33, PARAPHRASE 7
-* Credibility: A 26, B 9, C 1, D 53; modes: HARD 75, HARD+READ 6, READ 8
+* Rules: 90; vocabularies: 22; TX-CASE leaves: 35; entities: 20; events: 35; playbooks: 11
+* Rule sources: 190; VERIFIED 148, NO_QUOTE (design assumption) 35, PARAPHRASE 7
+* Credibility: A 26, B 9, C 1, D 54; modes: HARD 75, READ 9, HARD+READ 6
 * DISP-002 fields mapped: 59 of 59 leaf paths
 * DT-CW-NOSHOW enumeration: {'combinations': 192, 'unique': 192, 'gaps': 0, 'overlaps': 0}
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
-* Engine self-test: 110/110 variants pass
-* ERP rules self-test: 39 ERP cases, the FC-R01 split, gate G3, the A2 and A3 rule-card checks and the census: all pass
+* Engine self-test: 125/125 variants pass
+* ERP rules self-test: 53 ERP cases, the FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: all pass
 * Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
 * Annotation workbook: workbooks skipped (--no-xlsx)
@@ -43,10 +43,10 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | V06 | clean baseline: pin at the venue, pings every 30 s, cancel at 08:52, rider without history | UPHOLD | R8 | AUTO | 0.964 | pass |
 | V07 | only two driver pings, 8 minutes apart (rider contests) | ESCALATE_HUMAN | R10 | HUMAN | 0.664 | pass |
 | V08 | as V07, and the rider's statement does not contest presence, timing or place | UPHOLD | R9 | APPROVE | 0.7 | pass |
-| V10 | trip canceled for another reason (rider_cancelled) | None | None | n/a (reclassified to CW-RIDERCANCEL) | None | pass |
+| V10 | the reason says rider_cancelled, the system message says the driver canceled: the records disagree, ask for the trip record (CLS-06) | REQUEST_INFO | None | HUMAN | None | pass |
 | V11 | V06, and the driver made no call and sent no message | UPHOLD | R8 | APPROVE | 0.964 | pass |
 | V12 | instruction injected in the rider's description | UPHOLD | R8 | APPROVE | 0.689 | pass |
-| V13 | safety language in the description | UPHOLD | R8 | HUMAN | 0.689 | pass |
+| V13 | safety content in the description | UPHOLD | R8 | HUMAN | 0.689 | pass |
 | V14 | V06, and the rider was charged S$7.00 against a S$5.00 policy | UPHOLD | R8 | APPROVE | 0.964 | pass |
 | V15 | dispute filed 40 days after the trip | UPHOLD | R8 | APPROVE | 0.689 | pass |
 | V16 | V06 with driver pings 290 s apart: inside the 300 s limit but outside the plausible range low end | UPHOLD | R8 | APPROVE | 0.964 | pass |
@@ -140,6 +140,21 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | V101 | Ryde advance booking for 08:45 with the platform check at 08:38; an outlier 10 s after the indication is the last ping before 08:38:30, so without the logic it would contradict the check: R11 (D29) | UPHOLD | R11 | APPROVE | 0.964 | pass |
 | V102 | Ryde on-demand trip: at the pin until 08:45:00, then the next ping (08:46:40, 400 m) comes 40 s after the 3-minute wait ended: the driver may have left before it ended, so approval | UPHOLD | R11 | APPROVE | 1.0 | pass |
 | V103 | Ryde advance booking for 08:45: 400 m away from 08:40:20 to 08:44:50 and first back at the pin at 08:45:50: the pings cannot show the driver at the pick-up when the counted wait started, so approval | UPHOLD | R11 | APPROVE | 0.767 | pass |
+| V104 | safety content without v0.1's words in the description: 'After that he stopped on the PIE and told me to get out of the car.' | UPHOLD | R8 | HUMAN | 0.689 | pass |
+| V105 | safety content without v0.1's words in the description: 'He then drove the wrong way and would not let me out, I felt kidnapped.' | UPHOLD | R8 | HUMAN | 0.689 | pass |
+| V106 | safety content without v0.1's words in the description: 'He made racist remarks about me.' | UPHOLD | R8 | HUMAN | 0.689 | pass |
+| V107 | rudeness alone in the description: not safety content, the no-show ruling stands as for DISP-002 | UPHOLD | R8 | APPROVE | 0.689 | pass |
+| V108 | every record says the rider canceled: a rider cancellation fee case (CW-RIDERCANCEL), not ruled here | None | None | n/a (reclassified to CW-RIDERCANCEL) | None | pass |
+| V109 | reason rider_no_show, but the app events record a rider cancellation: the records disagree (CLS-06) | REQUEST_INFO | None | HUMAN | None | pass |
+| V110 | no record says who canceled: ask for the trip record, no fee ruling (CLS-06) | REQUEST_INFO | None | HUMAN | None | pass |
+| V111 | the driver canceled for another reason (driver_cancelled_other): not a no-show, CW-OTHER (CLS-06) | None | None | n/a (reclassified to CW-OTHER) | None | pass |
+| V112 | a rider cancellation with safety content: reclassified, and still a person sees it (CLS-01, gate G4) | None | None | HUMAN | None | pass |
+| V113 | cancelled_by 'customer' against reason rider_no_show: the records disagree (CLS-06) | REQUEST_INFO | None | HUMAN | None | pass |
+| V114 | an app event spelled rider_canceled against reason rider_no_show: the records disagree | REQUEST_INFO | None | HUMAN | None | pass |
+| V115 | a system message 'Trip auto-cancelled' against reason rider_no_show: the records disagree | REQUEST_INFO | None | HUMAN | None | pass |
+| V116 | the system canceled and the record gives no reason: CW-OTHER (CLS-06) | None | None | n/a (reclassified to CW-OTHER) | None | pass |
+| V117 | the reason written RIDER_NO_SHOW is still a driver's no-show cancellation: as DISP-002 | UPHOLD | R8 | APPROVE | 0.689 | pass |
+| V118 | the driver canceled and the record gives no reason: ask for the trip record (CLS-06) | REQUEST_INFO | None | HUMAN | None | pass |
 
 ## Entity coverage (ONT.6)
 
@@ -177,13 +192,25 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | META-04 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  |  |
 | META-05 | 1 | INTERNAL_STANDARD | INT-CHORDX-ONT | 2026-09-25 |  | VERIFIED | sources/chordx_knowledge_base.md | 用行业通用规则先顶上，并显式标注来源为'通用假设' |  |
 | META-05 | 2 | INTERNAL_STANDARD | INT-CHORDX-ONT | 2026-09-25 |  | VERIFIED | sources/chordx_knowledge_base.md | 会让人误以为系统读了合同 |  |
-| CLS-01 | 1 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | We have a zero-tolerance approach to any form of misconduct or inappropriate behavior between drivers and pass |  |
-| CLS-01 | 2 | INDUSTRY | IND-BENCHMARK-NOTES | 2026-10-05 |  | PARAPHRASE |  |  | Lyft, Grab and DiDi route safety incidents to humans (research note 02). |
-| CLS-01 | 3 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | The list of safety words that triggers the rule and the S0 or S1 severity are FairRyde's d |
+| CLS-01 | 1 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | Assault, harassment, or abuse of any kind will not be tolerated. | Ryde Code of Conduct item 5. |
+| CLS-01 | 2 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | We have a zero-tolerance approach to any form of misconduct or inappropriate behavior between drivers and pass |  |
+| CLS-01 | 3 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | Attempted or Actual Physical Assault | Ryde's Code of Conduct list also names 'Verbal or Physical Sexual Harassment', 'Kidnapping |
+| CLS-01 | 4 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | Kidnapping |  |
+| CLS-01 | 5 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | Threats and Intimidation |  |
+| CLS-01 | 6 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | drivers must not ask overly personal questions, comment on anyone's appearance, or contact passengers after a  |  |
+| CLS-01 | 7 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | Reckless or dangerous driving that endangers passengers, pedestrians, or other road users is strictly prohibit |  |
+| CLS-01 | 8 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | Alcohol, drugs, and weapons are not tolerated. |  |
+| CLS-01 | 9 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | Do not commit crimes. | Ryde Code of Conduct item 6. |
+| CLS-01 | 10 | RYDE_POLICY | RYDE-33362721809049 | 2026-04-10 |  | VERIFIED | corpus body | Comments on race, ethnicity, national origin, disability, etc | Driver Performance and Community Standards: errant behavior that disables an account. |
+| CLS-01 | 11 | INDUSTRY | IND-BENCHMARK-NOTES | 2026-10-05 |  | PARAPHRASE |  |  | Lyft, Grab and DiDi route safety incidents to humans (research note 02). |
+| CLS-01 | 12 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | FairRyde's design (step A4, round 1 finding FX6, and A4 check round 1): the definition by  |
 | CLS-02 | 1 | INTERNAL_STANDARD | INT-CHORDX-ONT | 2026-09-25 |  | VERIFIED | sources/chordx_knowledge_base.md | 一封邮件/单据涉及多个事件，只选一个会丢信息，全多选又没主次 |  |
-| CLS-03 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  |  |
+| CLS-03 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | The SE exception covers every SE type since step A4 (round 1 finding FX6: a mid-trip eject |
 | CLS-04 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  |  |
 | CLS-05 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 |  | VERIFIED | sources/organizer/disp002.md | "dispute_type": "no_show_charge" |  |
+| CLS-06 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 |  | VERIFIED | sources/organizer/disp002.md | "cancellation_reason": "rider_no_show" |  |
+| CLS-06 | 2 | RYDE_POLICY | RYDE-23534478435353 | 2026-02-26 |  | VERIFIED | corpus body | Rider cancels after 3 minutes of matching OR |  |
+| CLS-06 | 3 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Taking the canceling party from the records, sending other cancellations to CW-OTHER and a |
 | MAT-01 | 1 | INTERNAL_STANDARD | INT-CHORDX-ONT | 2026-09-25 |  | VERIFIED | sources/chordx_knowledge_base.md | 关键实体不出现在正文里（靠线程、发件人、上下文推断） |  |
 | MAT-02 | 1 | INTERNAL_STANDARD | INT-CHORDX-ONT | 2026-09-25 |  | VERIFIED | sources/chordx_knowledge_base.md | "更新已有任务"比"新建任务"难，需要判断是不是同一件事 |  |
 | MAT-02 | 2 | RYDE_POLICY | RYDE-900004381243 | 2026-04-09 |  | VERIFIED | corpus body | You can appeal within 24 hours if you disagree with the outcome of your claim with any additional supporting e | Ryde lets drivers appeal a cleaning-claim outcome, so appeals of decided cases exist. |
@@ -204,6 +231,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | CW-F02B | 1 | INDUSTRY | IND-GRAB-ADVANCE | read 2026-10-05 |  | VERIFIED | sources/research/09_fact_check.md | Your driver will arrive early and wait for you for up to 15 minutes starting from the indicated pickup time. |  |
 | CW-F02B | 2 | INDUSTRY | IND-BOLT-SCHEDULED | read 2026-10-05 |  | VERIFIED | sources/research/09_fact_check.md | The scheduled wait time of 5 minutes will be counted only from the scheduled start of the ride. |  |
 | CW-F02B | 3 | RYDE_POLICY | RYDE-23575142762393 | 2023-10-02 |  | VERIFIED | corpus body | You arrived at the pickup location and the customer was not present within 3 minutes of your arrival. | Driver article (2023), not specific to advance bookings; conflicts with the rule above for |
+| CW-F02B | 4 | RYDE_POLICY | RYDE-20244064619161 | 2024-04-23 |  | VERIFIED | corpus body | The driver pressed "I'm Here", waits for > 3 minutes for rider to arrive at the pick-up point and cancels the  | Driver policy pages (2024-04-23, and RYDE-33362932998937 of 2024-06-05 with the same words |
 | CW-F03 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 | organizer_case | VERIFIED | sources/organizer/disp002.md | No-show threshold (8 min) reached. | Logged at exactly 8:00 after driver_wait_start, so the organizer counts 'at least 8 minute |
 | CW-F03 | 2 | RYDE_POLICY | RYDE-4407754403353 | 2026-02-26 | ryde_2026 | VERIFIED | corpus body | Has waited for more than 3 mins |  |
 | CW-F03B | 1 | RYDE_POLICY | RYDE-4407754403353 | 2026-02-26 |  | VERIFIED | corpus body | Drivers are only allowed to indicate arrival and impose the Waiting Time Fee only if he/she: |  |
@@ -238,7 +266,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | CW-R06 | 4 | ORGANIZER | ORG-DISP002 | 2026-09 | organizer_case | VERIFIED | sources/organizer/disp002.md | Driver GPS within 10m of pickup point. Speed 0 km/h. Auto-arrival confirmed. |  |
 | CW-R07 | 1 | RYDE_POLICY | RYDE-23534478435353 | 2026-02-26 |  | VERIFIED | corpus body | Rider cancels after 3 minutes of matching OR |  |
 | CW-R08 | 1 | INDUSTRY | IND-BENCHMARK-NOTES | 2026-10-05 |  | PARAPHRASE |  |  | Grab: a late driver (ETA + 3 min) forfeits the fee; Gojek ETA + 5 min (research note 02). |
-| CW-R08 | 2 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | The 'not moving toward the pick-up point' condition has no source in the knowledge base (r |
+| CW-R08 | 2 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Two elements are FairRyde's: the 'not moving toward the pick-up point' condition has no so |
 | CW-R09 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 | organizer_case | VERIFIED | sources/organizer/disp002.md | "fee_goes_to": "driver_compensation" |  |
 | CW-R09 | 2 | RYDE_POLICY | RYDE-4407761228825 | 2023-04-11 | ryde_2026 | VERIFIED | corpus body | Cancellation Fees compensate drivers for the time and effort they spend getting to your location. |  |
 | CW-R09 | 3 | RYDE_POLICY | RYDE-4408070838297 | 2026-09-25 | ryde_2026 | VERIFIED | corpus body | Drivers will receive a $4.50 cancellation fee automatically if they cancel after >3 minutes of waiting. |  |
@@ -251,7 +279,12 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | FC-F01 | 2 | RYDE_POLICY | RYDE-360004075214 | 2024-10-08 |  | VERIFIED | corpus body | All fares are fixed at the time of booking but does not include toll charges such as ERP. |  |
 | FC-F01 | 3 | RYDE_POLICY | RYDE-51399796192921 | 2025-10-10 |  | VERIFIED | corpus body | If the driver accepts your edit destination request, a $3.00 add/edit destination fee will apply. |  |
 | FC-F01 | 4 | RYDE_POLICY | RYDE-50798691815449 | 2025-10-09 |  | VERIFIED | corpus body | Once the driver accepts, your trip fare will be recalculated, and your route will be updated to the new destin |  |
-| FC-F02 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Method from research note 08 (sparse-ping simulation). |
+| FC-F01 | 5 | RYDE_POLICY | RYDE-34883561600025 | 2025-09-18 |  | VERIFIED | corpus body | You will receive a notification or a request pop up on your Ryde Driver app when riders request to change the  | Driver article: an added stop is the same request as a changed drop-off. |
+| FC-F01 | 6 | RYDE_POLICY | RYDE-51399674412441 | 2025-10-10 |  | VERIFIED | corpus body | The rider can add another destination, leading to a map confirmation (for multiple stops). | Rider article: an added stop goes through the same edit request as a changed destination. |
+| FC-F01 | 7 | RYDE_POLICY | RYDE-51399674412441 | 2025-10-10 |  | VERIFIED | corpus body | New destination and fare confirmation will be displayed. | The next step of the same article: the edit, an added stop included, ends with a fare conf |
+| FC-F02 | 1 | RYDE_POLICY | RYDE-50798691815449 | 2025-10-09 |  | VERIFIED | corpus body | Once the driver accepts, your trip fare will be recalculated, and your route will be updated to the new destin |  |
+| FC-F02 | 2 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Method from research note 08 (sparse-ping simulation). |
+| FC-F02 | 3 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | The final-itinerary baseline and the split at the point nearest the car at each accepted c |
 | FC-F03 | 1 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | If you have a preferred route, you may recommend this to your driver and reach a mutual agreement before you g |  |
 | FC-F03 | 2 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | hence the driver may decide to take the most efficient route according to GPS. |  |
 | FC-F03 | 3 | RYDE_POLICY | RYDE-4412122016153 | 2023-06-16 |  | VERIFIED | corpus body | So you may decide to take the fastest or most efficient route based on your GPS. |  |
@@ -352,11 +385,12 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | META-03 | meta | A | HARD |  | RYDE_TOU |  |
 | META-04 | meta | D | HARD |  | FAIRRYDE |  |
 | META-05 | meta | A | HARD |  | INTERNAL_STANDARD |  |
-| CLS-01 | classification | D | HARD |  | FAIRRYDE, INDUSTRY, RYDE_POLICY | The conduct norm is Ryde's (A); handling safety content as its own claim is industry practice (C), and a human decides i |
+| CLS-01 | classification | D | READ |  | FAIRRYDE, INDUSTRY, RYDE_POLICY | The conduct norm is Ryde's (A); handling safety content as its own claim is industry practice (C), and a human decides i |
 | CLS-02 | classification | D | HARD |  | INTERNAL_STANDARD | The protocol names the pitfall (A); the ordering of primary and secondary claims is FairRyde's design (D). |
 | CLS-03 | classification | D | HARD |  | FAIRRYDE |  |
 | CLS-04 | classification | D | HARD |  | FAIRRYDE |  |
 | CLS-05 | classification | A | HARD |  | ORGANIZER |  |
+| CLS-06 | classification | D | HARD |  | FAIRRYDE, ORGANIZER, RYDE_POLICY | Ryde's policy distinguishes a rider cancellation from a driver's no-show cancellation (A); using the records, not the te |
 | MAT-01 | matching | D | HARD |  | INTERNAL_STANDARD |  |
 | MAT-02 | matching | D | HARD |  | INTERNAL_STANDARD, RYDE_POLICY |  |
 | MAT-03 | procedural | D | HARD |  | GOV_GUIDANCE, RYDE_POLICY | Checkpoints are official guidance (B) and Ryde has appeal routes (A); sending every appeal of an automatic ruling to a h |
@@ -391,7 +425,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 | CW-R11 | procedural | D | HARD | D | FAIRRYDE, RYDE_TOU |  |
 | CW-R12 | outcome | D | HARD |  | FAIRRYDE |  |
 | FC-F01 | fact | B | HARD |  | RYDE_POLICY | 'Fares are fixed' comes from rider articles edited more than 12 months ago, and a driver FAQ describes earnings from dri |
-| FC-F02 | fact | D | HARD | D | FAIRRYDE |  |
+| FC-F02 | fact | D | HARD | D | FAIRRYDE, RYDE_POLICY |  |
 | FC-F03 | fact | D | READ |  | FAIRRYDE, INDUSTRY, REGULATION, RYDE_POLICY | Rider agreement and the GPS most-efficient route are Ryde text, but both route articles were edited more than 12 months  |
 | FC-F04 | fact | A | HARD | A | RYDE_POLICY | The gantry sum and both exceptions are Ryde text in a driver article edited 2026-09-02 (A). The order of application is  |
 | FC-R00 | eligibility | D | HARD | C | FAIRRYDE, RYDE_POLICY | The RydeTAXI facts are Ryde text (rider and driver articles edited 2026-01-26, A). Excluding metered fares from a platfo |
