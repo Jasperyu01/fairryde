@@ -1281,7 +1281,7 @@ def a3_check(kb) -> list:
     for row in dt.values():
         need(f"DT-{row['row']}", "CW-F04B" not in row["rules"] or row["credibility"] == "D", "a row resting on CW-F04B must be D")
     for vid, desc, case, exp, prof in variants(kb.disp002):
-        r = E.run(kb, case, prof)
+        r = E.run(kb, case, prof or ("organizer_case" if case.get("cancellation_policy") else "ryde_2026"))     # D29 as an approval trigger: the legacy and Ryde profiles (organizer_v2_1 has it as a penalty, D52)
         t = r["trace"]
         if t.outcome == "UPHOLD" and t.reasons and t.reasons[0] == "CW-R-NOSHOW-VALID" and t.findings.get("F-GPS-LOGIC", {}).get("value"):
             need(vid, r["tier"]["tier"] != "AUTO", "fee upheld automatically on FairRyde's own GPS logic (D29)")
@@ -1355,7 +1355,9 @@ def a4_check(kb) -> list:
 def run(kb) -> list[dict]:
     results = []
     for vid, desc, case, exp, profile in variants(kb.disp002):
-        r = E.run(kb, case, profile)
+        # The 126 one-factor variants test the decision table and the gates under the legacy profile that reads the case's own policy object
+        # (organizer_case, KB v0.2); organizer_v2_1 has its own variants below (V21-xx). A variant without an embedded object runs under ryde_2026.
+        r = E.run(kb, case, profile or ("organizer_case" if case.get("cancellation_policy") else "ryde_2026"))
         t, tier = r["trace"], r["tier"]
         got = {"outcome": t.outcome, "row": t.dt_row, "tier": tier["tier"], "reasons": t.reasons, "profile": t.profile,
                "reclassified": t.reclassified_to, "C": (t.confidence or {}).get("C")}

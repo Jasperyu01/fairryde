@@ -51,6 +51,17 @@ def dictionary(case: dict) -> list[tuple[str, str, str]]:
     return terms
 
 
+def dictionary_all(cases) -> list[tuple[str, str, str]]:
+    """The closed dictionary of several cases (the three organizer samples): one list, each term once (the leak scan of the outputs)."""
+    seen, out = set(), []
+    for case in cases:
+        for term, code, typ in dictionary(case):
+            if (term.lower(), typ) not in seen:
+                seen.add((term.lower(), typ))
+                out.append((term, code, typ))
+    return out
+
+
 def _strings(obj):
     if isinstance(obj, dict):
         for v in obj.values():
@@ -127,6 +138,15 @@ def dry_run(case: dict) -> dict:
     frag = fragment_scan(after_case)
     return {"dictionary_terms": len(terms), "before": before, "after": after, "fragments_after": frag,
             "clean": all(v == 0 for v in after.values()) and frag == 0}
+
+
+def dry_run_all(cases) -> dict:
+    """dry_run() over several cases, with the counts added up; clean only if every case is clean."""
+    runs = [dry_run(c) for c in cases]
+    keys = runs[0]["before"].keys()
+    return {"dictionary_terms": sum(r["dictionary_terms"] for r in runs), "before": {k: sum(r["before"][k] for r in runs) for k in keys},
+            "after": {k: sum(r["after"][k] for r in runs) for k in keys}, "fragments_after": sum(r["fragments_after"] for r in runs),
+            "clean": all(r["clean"] for r in runs), "cases": len(runs)}
 
 
 def output_scan(strings, terms, allow_numbers=frozenset(), dictionary_only=()) -> dict:

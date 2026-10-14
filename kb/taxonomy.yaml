@@ -5,7 +5,7 @@
 meta:
   kb: FairRyde Knowledge Base
   layer: Taxonomy
-  version: 0.2.0
+  version: 0.3.0
   status: draft            # draft -> approved after review by the team lead and, where possible, the organizer / Ryde
   updated: 2026-10-14
   owner: Jasper
@@ -213,11 +213,15 @@ vocabularies:
           - code: FC-SURGE
             label: Surge or dynamic price
             zh: 高峰加价或动态价格
-            definition: The claimant contests a surge or demand-based price component.
+            definition: The claimant contests a surge or demand-based price component, typically a final fare above the upfront quote because the surge multiplier rose between the quote and the start of the trip.
+            organizer_code: fare_dispute
+            organizer_code_note: "The organizer's code fare_dispute (DISP-003, policy v2.1 Section 6.2 'Fare dispute') is read as FC-SURGE when the case carries surge evidence (a surge_pricing_log or a surge multiplier in the fare breakdown); a fare_dispute without it is FC-FAREMISMATCH (CLS-05)."
             term_sources:
               - "Handbook MVP evidence: 'Payment & Fare Data' includes 'surge pricing disputes'"
               - "Ryde driver article 900005170043 'How are the trip fares calculated?'"
-            scope: BACKLOG
+              - "Policy v2.1 Section 3 'Fare & Surge Pricing Policy'"
+            scope: ADJUDICATE
+            playbook: PB-FC-SURGE
             rule_family: FC
           - code: FC-PROMO
             label: Promo code or discount not applied
@@ -467,7 +471,7 @@ vocabularies:
     zh: 支付方式
     values:
       - {code: E_WALLET, label: e-wallet, aliases: [e-wallet], term_source: "DISP-002 rider_profile.payment_method = e-wallet"}
-      - {code: CARD, label: Credit/debit card}
+      - {code: CARD, label: Credit/debit card, aliases: [credit_card, credit card, debit_card], term_source: "DISP-001 and DISP-003 rider_profile.payment_method = credit_card"}
       - {code: CASH, label: Cash, term_source: "Ryde article 4408070775193"}
       - {code: RYDECOINS, label: RydeCoins wallet, term_source: "Ryde article 115002153414"}
       - {code: APPLE_PAY, label: Apple Pay, term_source: "Ryde Terms of Use s.6.2"}
@@ -608,6 +612,7 @@ vocabularies:
     values:
       - {code: WALLET_VOUCHER, label: Ryde wallet voucher, term_source: "Ryde 18229758389017: 'a voucher** with a unique code worth $6.61 as a refund'"}
       - {code: CARD_REFUND, label: Refund to payment card, term_source: "Ryde Terms of Use cl. 7.2"}
+      - {code: ORIGINAL_PAYMENT_METHOD, label: Refund to the original payment method (card, e-wallet or other), term_source: "DISP-001 recommended_ruling.actions: 'original_payment_method'"}
       - {code: RYDECOINS_CREDIT, label: RydeCoins credit}
       - {code: DRIVER_WALLET_CREDIT, label: Credit to driver wallet}
       - {code: NONE, label: None}
@@ -634,6 +639,8 @@ vocabularies:
       - {code: CW-R-RIDERCANCEL-VALID, label: Rider canceled after the free window, outcome: UPHOLD}
       - {code: CW-R-DRIVER-LATE, label: "Driver was late or not approaching when the rider canceled (generic assumption)", outcome: WAIVE_FEE}
       - {code: CW-R-OUT-OF-WINDOW, label: Waiver request filed after 30 days, outcome: UPHOLD}
+      - {code: CW-R-NOCONTACT-VOID, label: "Driver cancelled for no-show without both a chat message and a call: the fee is voided (policy v2.1 Section 2.3)", outcome: WAIVE_FEE}
+      - {code: CW-R-DRIVER-NOSHOW, label: "Driver did not arrive within the scheduled pickup time plus 5 minutes and made no contact: goodwill credit (policy v2.1 Section 2.4)", outcome: GOODWILL_CREDIT}
       - {code: FC-R-FIXED-FARE, label: Fare fixed at booking; route length did not change the amount charged, outcome: UPHOLD}
       - {code: FC-R-DETOUR-CONFIRMED, label: Unjustified detour increased a recalculated fare, outcome: PARTIAL_REFUND}
       - {code: FC-R-DETOUR-JUSTIFIED, label: "Deviation justified (traffic, closure, rider request, app reroute)", outcome: UPHOLD}
@@ -645,6 +652,13 @@ vocabularies:
       - {code: FC-R-DEST-FEE-INVALID, label: Destination fee charged without an accepted edit or on a service that cannot edit, outcome: PARTIAL_REFUND}
       - {code: FC-R-NOPICKUP-CONFIRMED, label: Trip completed without the rider onboard, outcome: FULL_REFUND}
       - {code: FC-R-NOPICKUP-NOT-SUPPORTED, label: Records show the rider was picked up, outcome: UPHOLD}
+      - {code: FC-R-DEVIATION-UNNOTIFIED, label: "Reroute justified by traffic but the rider was not informed and the deviation is over 1 km: partial refund of the excess distance fare (policy v2.1 Section 1.3)", outcome: PARTIAL_REFUND}
+      - {code: FC-R-DEVIATION-UNJUSTIFIED, label: "Reroute without traffic justification and over 1 km: refund of the excess distance fare (policy v2.1 Section 1.3, the word full is ambiguous, decision D46)", outcome: FULL_REFUND}
+      - {code: FC-R-DEVIATION-AGREED, label: "Rider informed of the reroute and agreed: no refund (policy v2.1 Section 1.3)", outcome: UPHOLD}
+      - {code: FC-R-DEVIATION-TOLERANCE, label: "Deviation of 1 km or less: within tolerance, no refund (policy v2.1 Section 1.3)", outcome: UPHOLD}
+      - {code: FC-R-SURGE-UNNOTIFIED, label: "Surge rose between quote and trip start and the rider was not notified: refund of the surge differential (policy v2.1 Section 3.3)", outcome: FULL_REFUND}
+      - {code: FC-R-SURGE-NOTIFIED, label: "Surge rose and the rider was notified: the higher fare applies (policy v2.1 Section 3.3)", outcome: UPHOLD}
+      - {code: FC-R-SURGE-NOT-HIGHER, label: "Surge did not rise between quote and trip start: the quoted fare, or the lower fare, applies (policy v2.1 Section 3.3)", outcome: UPHOLD}
       - {code: FC-R-INSUFFICIENT-DATA, label: Route or fare evidence insufficient, outcome: ESCALATE_HUMAN}
       - {code: DM-R-CLAIM-ELIGIBLE, label: Cleaning claim meets documentary requirements (human approval needed), outcome: COMPENSATE_DRIVER}
       - {code: DM-R-CLAIM-INELIGIBLE, label: Cleaning claim misses a deadline or required proof, outcome: UPHOLD}
@@ -744,6 +758,7 @@ vocabularies:
       - {code: GPS_AMBIGUOUS, label: "The driver's GPS cannot settle whether the driver left during the wait (a stretch set aside between inside pings far apart, a departure around the window end, a wait that starts while the driver was last seen away, or a single ping); human approval (CW-F04B, AUTH-02)"}
       - {code: GPS_DATA_ERROR, label: Driver GPS implies a speed above SPEED_MAX_KMH; the jump is set aside and gate G1 fires (DQ-02)}
       - {code: ARRIVAL_UNCONFIRMED, label: "GPS did not confirm the driver at the pick-up point when arrival was indicated; the wait counts from the first confirming ping (CW-R06, CW-F03B)"}
+      - {code: FIGURES_DISAGREE, label: "Two records of the same figure (a stated excess distance, a stated fare difference, a surge amount) disagree beyond MONEY_TOLERANCE_SGD or 0.05 km (DQ-05, organizer cases)"}
       - {code: OTHER, label: Other}
 
   - id: TX-SOURCE-TYPE

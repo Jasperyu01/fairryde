@@ -6,8 +6,8 @@
 # fact-check note (sources/research/09_fact_check.md); quotes are verified against that record, not the live page.
 
 meta:
-  version: 0.2.0
-  updated: 2026-10-05
+  version: 0.3.0
+  updated: 2026-10-14
   note: Ryde Help Centre articles (125 of them; 2 added on 2026-10-05 to verify taxonomy term sources) are registered automatically from the corpus with title, URL, audience and edited date.
 
 documents:
@@ -28,6 +28,41 @@ documents:
     verify_against: sources/organizer/disp002.md
     credibility_default: A
     note: The embedded cancellation_policy object is treated as a case-level contract (rule META-01).
+
+  - id: ORG-POLICY-V21
+    title: "Ryde Dispute Resolution Policy v2.1 (organizer, uploaded 14 Oct 2026)"
+    publisher: "Organizer (Ryde track); document owner Ryde Operations, Dispute Resolution Team"
+    date: 2026-01-01
+    type: ORGANIZER
+    verify_against: sources/organizer/policy_v2.1.md
+    credibility_default: A
+    note: >-
+      The policy says it applies to the Rider Advocate, the Driver Advocate, the Judge and human reviewers in RydeResolve, so for the hackathon it is
+      the primary policy (profile organizer_v2_1, rule META-01). Quoted by section ("Section 1.3", "Precedent 7.1"). The file is classified
+      "Internal - Agent Training Reference": it stays in this private repository.
+
+  - id: ORG-DISP001
+    title: "RydeResolve Route Deviation Dataset, DISP-001 (SG), with the organizer's expected ruling"
+    publisher: Organizer (Ryde track)
+    date: 2026-09
+    type: ORGANIZER
+    verify_against: sources/organizer/disp001.md
+    credibility_default: A
+    note: >-
+      The case_metadata (expected ruling and rationale), chat_log_analysis, traffic_analysis, evidence_summary and recommended_ruling blocks are the
+      organizer's reference answer. They are used to score the engine and never as input to a ruling. The recommended ruling cites "Driver Policy
+      4.2", which does not exist in policy v2.1; FairRyde cites Section 1.2 instead (open item D44).
+
+  - id: ORG-DISP003
+    title: "Fare Dispute Sample Data, DISP-003 (surge pricing, SG)"
+    publisher: Organizer (Ryde track)
+    date: 2026-09
+    type: ORGANIZER
+    verify_against: sources/organizer/disp003.md
+    credibility_default: A
+    note: >-
+      The file carries no expected ruling. The expected ruling (refund of the S$4.50 surge differential) was stated by Jasper on 14 Oct 2026 as
+      given by the organizer; it follows Section 3.3 and precedent 7.2 of policy v2.1.
 
   - id: RYDE-TOU
     title: Ryde Terms of Use (Section A Terms of Service; Section B)

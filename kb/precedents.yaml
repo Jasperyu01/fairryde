@@ -1,0 +1,86 @@
+# FairRyde Knowledge Base - PRECEDENT RULINGS (policy v2.1 Section 7)
+# ENT-PRECEDENT records. Policy v2.1 Section 7 says: "Agents should search precedent rulings by dispute type and key facts, and cite the relevant
+# precedent in their ruling rationale." The three precedents below are the organizer's own (ORG-POLICY-V21 Precedents 7.1 to 7.3); they are policy text,
+# not evaluation cases. They are matched by taxonomy code and key factors (kb/tools/policy_v21.py: match_precedents) and cited in a ruling.
+# A precedent is never an outcome by itself: the rules decide, the precedent is cited for consistency and as one input of the confidence (Section 6.3).
+
+meta:
+  version: 0.3.0
+  updated: 2026-10-14
+  owner: Jasper
+  source: ORG-POLICY-V21
+  note: >-
+    These precedent records come from the organizer's policy document. Whether a person reviewed them is not stated (human_reviewed null). Evaluation
+    cases (DISP-001 to DISP-003 and the held-out set) are never added here (ONT.10.3, scope.yaml eval_separation); DISP-001 and DISP-003 resemble
+    Precedents 7.1 and 7.2 closely and are scored against the organizer's expected rulings instead.
+
+precedents:
+
+  - id: PREC-7.1
+    section: "Precedent 7.1"
+    source: ORG-POLICY-V21
+    case_id: DISP-2026-0089
+    date: 2026-02-12
+    dispute_type_raw: route_deviation
+    taxonomy_code: FC-ROUTE
+    title: Route deviation without notification
+    facts: "Driver rerouted from Geylang to Orchard via Nicoll Highway due to traffic. Deviation was 1.8km beyond recommended route. Rider was not informed. GPS telemetry confirmed traffic congestion on original route."
+    ruling: "Partial refund of excess distance fare. Rationale: Driver had valid traffic justification (confirmed via traffic API), but failed to notify rider per Section 1.2. Refund applies only to the excess distance fare, not the entire trip."
+    outcome: PARTIAL_REFUND
+    refund_amount_sgd: 3.20
+    confidence: 0.91
+    policy_profile: organizer_v2_1
+    factor_vector:
+      rider_informed: false
+      deviation_km: 1.8
+      traffic_justified: true
+    key_factors: [rider_informed, traffic_justified]
+    cited_sections: ["Section 1.2", "Section 1.3"]
+    human_reviewed: null
+    eval_excluded: false
+
+  - id: PREC-7.2
+    section: "Precedent 7.2"
+    source: ORG-POLICY-V21
+    case_id: DISP-2026-0142
+    date: 2026-04-03
+    dispute_type_raw: fare_dispute
+    taxonomy_code: FC-SURGE
+    title: Surge pricing without rider notification
+    facts: "Rider received upfront quote of $9.50 at 1.0x surge. Surge increased to 1.4x between quote and pickup. Rider was not notified. Actual fare was $12.70 - a difference of $3.20 entirely attributable to surge differential."
+    ruling: "Full refund of surge differential. Rationale: Per Section 3.3, if surge increases between quote and trip start and rider is not notified, rider is eligible for full refund of the surge differential. The $3.20 difference was solely attributable to surge multiplier change."
+    outcome: FULL_REFUND
+    refund_amount_sgd: 3.20
+    confidence: 0.96
+    policy_profile: organizer_v2_1
+    factor_vector:
+      surge_increased: true
+      rider_notified: false
+      difference_solely_surge: true
+    key_factors: [surge_increased, rider_notified]
+    cited_sections: ["Section 3.3"]
+    human_reviewed: null
+    eval_excluded: false
+
+  - id: PREC-7.3
+    section: "Precedent 7.3"
+    source: ORG-POLICY-V21
+    case_id: DISP-2026-0211
+    date: 2026-05-18
+    dispute_type_raw: cancellation_fee
+    taxonomy_code: CW-NOSHOW
+    title: No-show cancellation without contact attempt
+    facts: "Driver arrived at pickup, waited 6 minutes, and cancelled as no-show. $5.00 fee charged to rider. Review of chat logs and call records showed the driver sent zero messages and made zero calls before cancelling. Rider arrived at the pickup point 1 minute after cancellation."
+    ruling: "Cancellation fee voided. Rationale: Per Section 2.3, the driver must attempt at least 1 in-app message and 1 call before cancelling for no-show. The driver failed to meet both contact obligations. The $5.00 fee is reversed and refunded to the rider."
+    outcome: WAIVE_FEE
+    refund_amount_sgd: 5.00
+    confidence: 0.98
+    policy_profile: organizer_v2_1
+    factor_vector:
+      driver_messages: 0
+      driver_calls: 0
+      wait_min: 6
+    key_factors: [driver_messages, driver_calls]
+    cited_sections: ["Section 2.3"]
+    human_reviewed: null
+    eval_excluded: false

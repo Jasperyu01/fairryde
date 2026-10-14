@@ -629,6 +629,49 @@ def check_disp002_mapping(kb: KB, rep: Report):
     rep.tables["disp002_leaf_count"] = len(leaves)
 
 
+def check_case_mapping(kb: KB, rep: Report, case_id: str, key: str):
+    """The same completeness check as for DISP-002, for the two samples uploaded on 14 Oct 2026: every leaf field of the case file is
+    mapped, every entity.attribute target exists, and a mapped vocabulary resolves every value."""
+    ont = kb.y["ontology"]
+    data = kb.organizer_cases[case_id]
+    leaves = leaf_paths(data)
+    mapped = {m["path"]: m for m in ont[key]}
+    rows = []
+    tag = key.replace("_mapping", "-mapping")
+    for p in leaves:
+        if p not in mapped:
+            rep.add("ERROR", tag, p, f"{case_id} field not mapped to the ontology")
+    for p, m in mapped.items():
+        vals = leaves.get(p)
+        status = "ok"
+        if vals is None:
+            rep.add("ERROR", tag, p, f"mapping path does not exist in {case_id}")
+            status, vals = "missing path", []
+        for ent_name, attr in re.findall(r"\b([A-Z][A-Za-z]+)\.([a-z_]+)\b", str(m["maps_to"])):
+            e = kb.entity_by_name.get(ent_name)
+            if e is None:
+                rep.add("ERROR", tag, p, f"{ent_name} is not an entity of the ontology")
+                status = "bad target"
+                continue
+            if attr not in {a["name"] for a in e.get("attributes", []) or []}:
+                rep.add("ERROR", tag, p, f"{ent_name}.{attr} is not an attribute of {e['id']}")
+                status = "bad target"
+        vocab = m.get("vocab")
+        resolved = []
+        if vocab:
+            vid = vocab.split()[0]
+            for v in vals:
+                code = kb.resolve(vid, v)
+                resolved.append(f"{v} -> {code}")
+                if code is None:
+                    rep.add("ERROR", tag.replace("mapping", "vocab"), p, f"value {v!r} does not resolve in {vid}")
+                    status = "unresolved value"
+        rows.append({"path": p, "maps_to": m["maps_to"], "vocab": vocab or "", "sample": vals[0] if vals else "", "n_values": len(vals),
+                     "resolved": "; ".join(dict.fromkeys(resolved)), "status": status, "note": m.get("note", "")})
+    rep.tables[key] = rows
+    rep.tables[key + "_leaf_count"] = len(leaves)
+
+
 def check_annotation(kb: KB, rep: Report, evidence_ids: set = frozenset()):
     """The example row belongs to the made-up case EXAMPLE-01, so evidence examples are checked against the ID pattern."""
     ann = kb.y["annotation_schema"]
@@ -692,8 +735,12 @@ def check_entity_coverage(kb: KB, rep: Report, cases: dict):
     rows = []
     for e in ont["entities"]:
         row = {"entity": e["id"], "name": e["name"], "kind": e.get("kind", ""), "covered_by": "", "status": ""}
-        paths = [m["path"] for m in ont["disp002_mapping"] if re.search(r"\b" + re.escape(e["name"]) + r"\b", str(m["maps_to"]))]
-        cov = [cid for cid, c in cases.items() if any(v not in (None, "", []) for p in paths for v in collect_values(c, p))]
+        maps = {"DISP-001": ont["disp001_mapping"], "DISP-003": ont["disp003_mapping"]}
+        cov = []
+        for cid, c in cases.items():
+            paths = [m["path"] for m in maps.get(cid, ont["disp002_mapping"]) if re.search(r"\b" + re.escape(e["name"]) + r"\b", str(m["maps_to"]))]
+            if any(v not in (None, "", []) for p in paths for v in collect_values(c, p)):
+                cov.append(cid)
         if e.get("present_in_every_case"):
             row["covered_by"], row["status"] = "every case", "ok"
         elif cov:
@@ -781,8 +828,10 @@ def run_all(kb: KB, evidence_ids: set = frozenset(), cases: dict | None = None) 
     check_playbooks(kb, rep)
     check_ontology(kb, rep)
     check_disp002_mapping(kb, rep)
+    check_case_mapping(kb, rep, "DISP-001", "disp001_mapping")
+    check_case_mapping(kb, rep, "DISP-003", "disp003_mapping")
     check_annotation(kb, rep, evidence_ids)
-    check_entity_coverage(kb, rep, cases or {"DISP-002": kb.disp002})
+    check_entity_coverage(kb, rep, cases or {"DISP-001": kb.disp001, "DISP-002": kb.disp002, "DISP-003": kb.disp003})
     check_inventory(kb, rep)
     check_reference_data(kb, rep)
     check_scope(kb, rep)

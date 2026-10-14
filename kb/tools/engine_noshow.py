@@ -1,5 +1,10 @@
 """Reference evaluation of playbook PB-INTAKE + PB-CW-NOSHOW on an organizer-format case (DISP-002 and its variants).
 
+Profiles: organizer_v2_1 (the default for an organizer case since KB v0.3: policy v2.1 Sections 2 and 6), ryde_2026 (the public help center,
+the regression profile) and organizer_case (legacy: the case's own policy object, META-01). Under organizer_v2_1 the wait counts from the
+scheduled pickup time (CW-F02C), a driver who did not send a message AND make a call voids the fee (CW-R13), D29 is a confidence penalty
+(AUTH-07) and the tier follows Section 6.
+
 Purpose: prove that the knowledge base is complete enough to decide a real sample, and show which rule, parameter and
 evidence item produced each step. It is a verification tool for the knowledge base, not the product engine:
 - there is no LLM, so the run-agreement (A) and rules-engine agreement (R) confidence terms are set to 1.0 and marked;
@@ -16,7 +21,8 @@ import math
 import re
 from datetime import datetime, timedelta
 
-from kbload import KB
+import policy_v21 as P21
+from kbload import KB, ORGANIZER_PROFILE, default_profile
 
 # CLS-01 is read for meaning (A4, FX6); these patterns are only the offline stand-in the self-tests use. They err toward
 # safety, but ordinary no-show chat must not fire them ("let me go down", "the grape stall", "the app crashed",
@@ -153,6 +159,10 @@ RIDER_ACK = r"\s*(?:ok(?:ay|ie|ies)?|k|kk|okok|noted|ok noted|ok can|thanks?(?: 
 SOFT_FLAGS = ("SPEED_INCONSISTENT", "PIN_VENUE_MISMATCH", "SPARSE_GPS", "TIMER_ANCHOR_MISMATCH", "GPS_OUTLIER")
 
 
+# reasons that override the decision-table row, which is then recorded for information only: the row is not what decides, so its rating is not decisive
+OVERRIDING_REASONS = ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP", "CW-R-NOCONTACT-VOID", "GEN-R-SOURCE-CONFLICT")
+
+
 def T(s: str) -> datetime:
     return datetime.fromisoformat(s)
 
@@ -256,6 +266,10 @@ class Trace:
         self.margin = 0
         self.spread_max = 0
         self.contact_detail = {}
+        self.source_check = []        # organizer_v2_1: the other readings of the wait that the case's own records give (META-04)
+        self.precedents = []          # organizer_v2_1: Section 7 precedents matched to the case (GEN-R08)
+        self.matrix_row = None
+        self.attach = None
 
     def flag(self, f):
         if f not in self.flags:
@@ -419,6 +433,31 @@ def canceling_party(t: dict, ev: list[dict], chat: list[dict]) -> tuple[list, st
     return said, ("CONFLICT" if "CONFLICT" in parties or len(parties) > 1 else parties.pop() if parties else None)
 
 
+def source_check(kb: KB, case: dict, t: dict, ev: list, start, t_confirm, arrival: str, end, met: bool, thr: int, cmp_: str) -> list[dict]:
+    """META-04 under organizer_v2_1 (decision D42): the other readings of the wait that the case's own records give. (a) the app's timer, which
+    starts at the driver's arrival (driver_wait_start, wait_timer_started) and not at the scheduled time; (b) the case's embedded policy object
+    (cancellation_policy.no_show_threshold_min, counted from driver_wait_start). Each is compared with the v2.1 reading (the same free wait of
+    5 minutes, counted from the scheduled time); the conflict matters only when it changes whether the threshold was met."""
+    out = []
+    app_start = T(t["driver_wait_start"]) if t.get("driver_wait_start") else next((T(a["timestamp"]) for a in ev if a["event_type"] == "wait_timer_started"), None)
+    if app_start is None or not t.get("scheduled_time"):
+        return out
+    start_app = max(app_start, t_confirm) if (arrival == "TRUE" and t_confirm) else app_start
+    if abs((start_app - start).total_seconds()) > 1:
+        el = (end - start_app).total_seconds()
+        out.append({"reading": "the app's wait timer, which starts at the driver's arrival", "start": start_app.isoformat(), "threshold_s": thr, "elapsed_s": el,
+                    "met": (el >= thr if cmp_ == "at_least" else el > thr)})
+    pol = case.get("cancellation_policy") or {}
+    if pol.get("no_show_threshold_min") is not None:
+        thr_b = float(pol["no_show_threshold_min"]) * 60
+        el = (end - start_app).total_seconds()
+        out.append({"reading": "the case's embedded policy object (no_show_threshold_min), counted from driver_wait_start", "start": start_app.isoformat(), "threshold_s": thr_b,
+                    "elapsed_s": el, "met": el >= thr_b})
+    for a in out:
+        a["agrees"] = a["met"] == met
+    return out
+
+
 def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | None = None,
              force_reading: str | None = None, alt_start: str | None = None, contact_reading: str | None = None) -> Trace:
     """force_reading: NONE or WEAK to test another reading of the rider's statement (decisive test, clause 1).
@@ -433,7 +472,8 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     gid = lambda g: f"E-GPS-{gps_no[id(g)]:02d}"
     forced = profile is not None
     if profile is None:
-        profile = "organizer_case" if case.get("cancellation_policy") else "ryde_2026"
+        profile = default_profile(case)
+    v21 = profile == ORGANIZER_PROFILE
     case_ov = case_overrides(kb, case) if profile == "organizer_case" else {}
     ov = dict(case_ov)
     ov.update(overrides or {})
@@ -481,8 +521,10 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     tr.relation = "NEW"
     tr.step("PB-INTAKE", 6, "MAT-02", "no ticket index in the case file; treated as NEW (at run time the ticket index is checked)", ["E-TKT-01"], status="missing")
     tr.step("PB-INTAKE", 7, "MAT-03", "not an appeal", ["E-TKT-01.status"], status="not_applicable")
-    if forced and profile != "organizer_case" and case.get("cancellation_policy"):
+    if forced and profile not in ("organizer_case", ORGANIZER_PROFILE) and case.get("cancellation_policy"):
         why = "forced for a what-if; META-01 would choose organizer_case because the case embeds a policy object"
+    elif v21:
+        why = "organizer case: policy v2.1 governs; the embedded cancellation_policy object is only a cross-check (D41)"
     elif profile == "organizer_case":
         why = "the case embeds cancellation_policy; parameters read from it: " + ", ".join(f"{k}={v}" for k, v in case_ov.items())
     else:
@@ -567,7 +609,9 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     match_s = (T(assigned["timestamp"]) - T(booked["timestamp"])).total_seconds() if booked and assigned else None
     recorded = t.get("booking_type")
     infer_match, infer_eta = P("BOOKING_INFER_MATCH_S"), P("BOOKING_INFER_ETA_S")
-    if recorded:
+    if v21:                                      # policy v2.1 counts the wait from the scheduled pickup time for every booking: no booking type is needed
+        btype, bnote = "n/a", "not needed: policy v2.1 Section 2.1 counts the free wait from the scheduled pickup time for every booking"
+    elif recorded:
         btype, bnote = kb.resolve("TX-BOOKING", recorded), "recorded"
     elif match_s is None or not t.get("scheduled_time"):   # nothing to infer from: CW-F01's "otherwise ADVANCE", and a person checks
         btype, bnote = "ADVANCE", "not recorded and not inferable (booking or assignment record missing); ADVANCE as CW-F01 says, records missing"
@@ -579,9 +623,10 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
         bnote = f"inferred: matched {match_s:.0f} s after booking, ETA lands {eta_gap:.0f} s from scheduled_time"
         tr.flag("BOOKING_TYPE_INFERRED")
     i_book = _ev_id("E-APP", case, "app_events", lambda a: a["event_type"] in ("booking_confirmed", "driver_assigned"))
-    tr.finding("F-BOOKING-TYPE", btype, basis=i_book + ["E-TRP-01.scheduled_time"], rule="CW-F01",
-               params=[] if recorded else ["BOOKING_INFER_MATCH_S", "BOOKING_INFER_ETA_S"], status="established" if recorded else "inferred")
-    tr.step(pb, 4, "CW-F01", f"{btype} ({bnote})", i_book + ["E-TRP-01.scheduled_time"])
+    if not v21:
+        tr.finding("F-BOOKING-TYPE", btype, basis=i_book + ["E-TRP-01.scheduled_time"], rule="CW-F01",
+                   params=[] if recorded else ["BOOKING_INFER_MATCH_S", "BOOKING_INFER_ETA_S"], status="established" if recorded else "inferred")
+    tr.step(pb, 4, "CW-F01", f"{btype} ({bnote})", i_book + ["E-TRP-01.scheduled_time"], status="not_applicable" if v21 else "done")
 
     # 5 CW-F02 / CW-F02B anchor
     arrived_ev = next((a for a in ev if a["event_type"] == "driver_arrived"), None)
@@ -590,7 +635,14 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     anchor_field = P("WAIT_ANCHOR_FIELD")
     end = T(t["cancellation_time"])
     anchor_note = ""
-    if profile == "organizer_case" and t.get("driver_wait_start"):
+    if v21 and t.get("scheduled_time"):
+        anchor, anchor_rule, anchor_basis = T(t["scheduled_time"]), "CW-F02C", ["E-TRP-01.scheduled_time"]
+        anchor_note = "policy v2.1 Section 2.1: the free wait runs from the scheduled pickup time"
+    elif v21 and t_arr:                          # no scheduled time on record: the driver's arrival is the only start there is (CW-F02C, D42)
+        anchor, anchor_rule, anchor_basis = t_arr, "CW-F02C", i_arr
+        anchor_note = "no scheduled pickup time on record, so the wait counts from the driver's arrival"
+        tr.flag("RECORDS_MISSING")
+    elif profile == "organizer_case" and t.get("driver_wait_start"):
         anchor, anchor_rule, anchor_basis = T(t["driver_wait_start"]), "CW-F02", ["E-TRP-01.driver_wait_start"]
         anchor_note = anchor_field
     elif btype == "ADVANCE" and t.get("scheduled_time") and t_arr:
@@ -602,7 +654,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     no_wait = t_arr is None and anchor == end
     tr.finding("F-WAIT-ANCHOR", anchor.isoformat(), basis=anchor_basis, rule=anchor_rule, params=["WAIT_ANCHOR_FIELD"])
     tr.path(anchor_rule)
-    if profile != "organizer_case":
+    if profile not in ("organizer_case", ORGANIZER_PROFILE):
         tr.path("CW-F01")
     tr.step(pb, 5, anchor_rule, f"wait anchor {anchor.strftime('%H:%M:%S')} ({anchor_note})", anchor_basis)
 
@@ -613,7 +665,9 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
         + [("gps.arrived", g["timestamp"]) for g in gps if g["status"] == "arrived"]
     rec_start = [("trip_data.driver_wait_start", t.get("driver_wait_start"))] \
         + [("app_events.wait_timer_started", a["timestamp"]) for a in ev if a["event_type"] == "wait_timer_started"]
-    if t_arr is not None and abs((anchor - t_arr).total_seconds()) <= tol:
+    if v21:
+        rec_start = [("trip_data.scheduled_time", t.get("scheduled_time"))]      # the app's own timer is a separate source (the conflict is recorded in the source check below, D42)
+    elif t_arr is not None and abs((anchor - t_arr).total_seconds()) <= tol:
         rec_start = rec_start + rec_arrival          # the wait starts at the arrival
     rec_end = [("trip_data.cancellation_time", t["cancellation_time"])] \
         + [(f"app_events.{a['event_type']}", a["timestamp"]) for a in ev if a["event_type"] in ("cancellation_fee_applied", "driver_cancelled")] \
@@ -729,6 +783,8 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     # 8 CW-F03 elapsed from the confirmed wait start, margin, spread of the records
     start = max(anchor, t_confirm) if (arrival == "TRUE" and t_confirm and alt_start != "anchor") else anchor     # CW-F03B
     elapsed = (end - start).total_seconds()
+    if v21:
+        elapsed = max(0.0, elapsed)              # cancelled before the free wait began (before the scheduled time): no wait yet
     thr, cmp_, band = P("NO_SHOW_THRESHOLD_S"), P("THRESHOLD_COMPARISON"), P("BOUNDARY_BAND_S")
     margin = elapsed - thr
     met = elapsed >= thr if cmp_ == "at_least" else elapsed > thr
@@ -914,18 +970,25 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
 
     # 10 CW-F05 contact
     t_arr = t_arr or anchor
-    calls = [c for c in chat if c["sender"] == "driver" and c["type"] == "call" and t_arr <= T(c["timestamp"]) <= end]
-    msgs = [c for c in chat if c["sender"] == "driver" and c["type"] == "message" and t_arr <= T(c["timestamp"]) <= end]
+    c_from = t_arr
+    if v21:                       # Section 2.3: "Before cancelling for no-show, the driver MUST attempt to contact the rider": any time from the assignment on
+        starts_c = [T(a["timestamp"]) for a in ev if a["event_type"] in ("driver_assigned", "booking_confirmed")]
+        c_from = min([t_arr] + starts_c)
+    calls = [c for c in chat if c["sender"] == "driver" and c["type"] == "call" and c_from <= T(c["timestamp"]) <= end]
+    msgs = [c for c in chat if c["sender"] == "driver" and c["type"] == "message" and c_from <= T(c["timestamp"]) <= end]
     rider_contacts = [c for c in chat if c["sender"] == "rider" and t_arr <= T(c["timestamp"]) <= end]
     min_calls, min_msgs = P("CONTACT_MIN_CALLS"), P("CONTACT_MIN_MESSAGES")
-    contact = "ADEQUATE" if (len(calls) >= min_calls or len(msgs) >= min_msgs or rider_contacts) else ("INSUFFICIENT" if (calls or msgs) else "NONE")
+    if v21:                       # at least 1 message AND at least 1 call (CW-R13); the rider's own contact does not replace the driver's obligation
+        contact = "ADEQUATE" if (len(calls) >= min_calls and len(msgs) >= min_msgs) else ("INSUFFICIENT" if (calls or msgs) else "NONE")
+    else:
+        contact = "ADEQUATE" if (len(calls) >= min_calls or len(msgs) >= min_msgs or rider_contacts) else ("INSUFFICIENT" if (calls or msgs) else "NONE")
     if t_arr >= end:              # no arrival and no anchor before the cancellation: CW-F05 has no window to count in
         contact = None
-    i_c = _ev_id("E-CHT", case, "chat_logs", lambda c: c["type"] in ("call", "message") and t_arr <= T(c["timestamp"]) <= end)
+    i_c = _ev_id("E-CHT", case, "chat_logs", lambda c: c["type"] in ("call", "message") and c_from <= T(c["timestamp"]) <= end)
     tr.finding("F-CONTACT", contact, basis=i_c, rule="CW-F05", params=["CONTACT_MIN_CALLS", "CONTACT_MIN_MESSAGES"],
                status="established" if contact else "not_applicable")
     tr.contact_detail = {"driver_calls": len(calls), "driver_messages": len(msgs), "rider_contacts": len(rider_contacts), "call_ids": _ev_id("E-CHT", case, "chat_logs", lambda c: c in calls), "message_ids": _ev_id("E-CHT", case, "chat_logs", lambda c: c in msgs)}
-    tr.step(pb, 10, "CW-F05", f"{contact}: driver {len(calls)} call(s) and {len(msgs)} message(s), rider {len(rider_contacts)} contact(s)" if contact
+    tr.step(pb, 10, "CW-F05", f"{contact}: driver {len(calls)} call(s) and {len(msgs)} message(s)" + (" (Section 2.3 needs at least one of each)" if v21 else f", rider {len(rider_contacts)} contact(s)") if contact
             else "not assessed: no arrival indication, so there is no wait in which to count contact attempts", i_c, status="done" if contact else "not_applicable")
 
     # 11 CW-F06 rider counter-evidence (HARD part from records, READ part from the statement)
@@ -1033,12 +1096,12 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     # 13 GEN-R05 advocates: not simulated here
     tr.step(pb, 13, "GEN-R05", "advocate briefs are produced at run time by the Rider and Driver Advocates; not simulated in this offline check", [], status="missing")
 
-    if tr.findings.get("_discrimination"):       # CLS-01, CLS-02, SE-R01 (D40 (c)): the case file only, no proposed outcome
+    if tr.findings.get("_discrimination") or (v21 and tr.findings.get("_safety")):       # CLS-01, CLS-02, SE-R01 (D40 (c)); under policy v2.1 Section 5.2 for every safety content: the case file only, no proposed outcome
         tr.outcome, tr.reasons = "ESCALATE_HUMAN", ["SE-R-HUMAN-DECIDES"]
         tr.secondary_claims = [{"claim": "CANCELLATION_FEE", "amount_sgd": float(t.get("cancellation_fee") or 0), "proposed_outcome": None}]
         tr.amount_at_stake = float(t.get("cancellation_fee") or 0)
         tr.confidence = {"A": None, "M": None, "E": None, "R": None, "C": None, "assumed": [], "evidence_present": {}, "soft_flags": []}
-        tr.step(pb, 14, "CLS-01, CLS-02, SE-R01", "the complaint mentions discrimination: the whole case goes to a person; the findings above are "
+        tr.step(pb, 14, "CLS-01, CLS-02, SE-R01", ("the complaint mentions discrimination" if tr.findings.get("_discrimination") else "the case contains safety content (policy v2.1 Section 5.2: the AI agent may only prepare a case file)") + ": the whole case goes to a person; the findings above are "
                 "the case file, no outcome, amount or measure is proposed, and the contested fee is a secondary claim in the file", ["E-TKT-01"])
         tr.path("CLS-01", "SE-R01")
         return tr
@@ -1057,19 +1120,43 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     tr.path(*row.get("rules", []))
     tr.also = list(row.get("also", []) or [])
     override = ""
+    void = v21 and (contact == "NONE" or (contact == "INSUFFICIENT" and P("CONTACT_VOID_WHEN") == "either_missing"))   # CW-R13: Section 2.3, a message AND a call
     if tr.policy_gap:          # META-02 / CW-R00 then GEN-R07: no written rule applies, a human decides
         tr.outcome = "ESCALATE_HUMAN"
         tr.reasons = ["GEN-R-POLICY-GAP"]
         tr.path("GEN-R07")
         override = "; overridden by " + ", ".join(r for r, _ in tr.policy_gap) + " and GEN-R07 (policy gap)"
         tr.notes.append(f"decision table row {row['row']} recorded for information only; " + "; ".join(w for _, w in tr.policy_gap))
+    elif void:                 # the fee is voided whatever the facts of the wait show, so the other findings are moot
+        tr.path("CW-R13")
+        if tr.outcome != "WAIVE_FEE":
+            tr.notes.append(f"decision table row {row['row']} ({row['outcome']}) recorded for information only; CW-R13 voids the fee")
+            tr.outcome, tr.reasons = "WAIVE_FEE", ["CW-R-NOCONTACT-VOID"]
+            override = "; overridden by CW-R13 (Section 2.3: no message AND call before cancelling voids the fee; Precedent 7.3)"
+        else:
+            tr.reasons.append("CW-R-NOCONTACT-VOID")
+            override = "; the fee is also voided by CW-R13 (Section 2.3)"
+    elif v21 and (alts := source_check(kb, case, t, ev, start, t_confirm, arrival, end, met, thr, cmp_)) and tr.dt_row in ("R6", "R8", "R9", "R11") \
+            and any(a["met"] != met for a in alts):
+        tr.flag("SOURCE_CONFLICT")
+        tr.path("META-04")
+        tr.notes.append(f"decision table row {row['row']} ({row['outcome']}) recorded for information only; the sources disagree about the wait and the outcome depends on it")
+        tr.outcome, tr.reasons = "ESCALATE_HUMAN", ["GEN-R-SOURCE-CONFLICT"]
+        override = "; overridden by META-04 (the sources disagree and the outcome depends on it)"
     elif days > window:        # MAT-04: a waiver request after the window is not considered
         tr.outcome = "UPHOLD"
         tr.reasons = ["CW-R-OUT-OF-WINDOW"]
         override = "; overridden by MAT-04 (out of window)"
         tr.notes.append(f"decision table row {row['row']} recorded for information only; MAT-04 decides")
+    if v21:
+        tr.source_check = source_check(kb, case, t, ev, start, t_confirm, arrival, end, met, thr, cmp_)
     tr.step(pb, 14, "DT-CW-NOSHOW", f"row {row['row']} (credibility {row.get('credibility')}): {row['outcome']} ({row['reason']})" + override,
             ["F-ARRIVAL-VALID", "F-PRESENCE", "F-GPS-LOGIC", "F-WAIT-MARGIN", "F-RIDER-EVIDENCE"])
+
+    if v21 and tr.source_check:
+        tr.step(pb, "14b", "META-04", "other readings of the wait: " + "; ".join(f"{a['reading']}: {a['elapsed_s']:.0f} s against {a['threshold_s']:.0f} s, "
+                f"threshold {'met' if a['met'] else 'NOT met'} ({'same outcome' if a['agrees'] else 'DIFFERENT outcome'})" for a in tr.source_check)
+                + ("" if all(a["agrees"] for a in tr.source_check) else "; the outcome depends on the conflict"), ["E-TRP-01", "E-APP-*", "E-POL-01"])
 
     # 15 CW-R11 pin, CW-R04 contact, DQ-06 amount
     if mismatch:
@@ -1081,7 +1168,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     amount = float(t["cancellation_fee"])
     if contact == "NONE":
         tr.flag("CONTACT_NOT_ATTEMPTED")
-        tr.use("CW-R04")
+        tr.use("CW-R13" if v21 else "CW-R04")
     policy_amount, tol_m = P("NO_SHOW_FEE_SGD"), P("MONEY_TOLERANCE_SGD")
     amt_status = "equal" if abs(amount - policy_amount) <= tol_m else ("overcharged" if amount > policy_amount else "undercharged")
     if amt_status != "equal":
@@ -1125,6 +1212,11 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     tr.step(pb, 17, "FRD-01, FRD-02, GEN-R03, GEN-R06", "signals: " + ("; ".join(f"{who} ({r}: {tr.fraud_detail[who]})" for who, r in frd) if frd else "none")
             + "; for the reviewer only; history never enters the outcome; no account action", ["E-PRF-R", "E-PRF-D"])
 
+    if v21:                                      # Section 7 / GEN-R08: search the precedents by dispute type and key facts
+        tr.precedents = P21.match_precedents(kb, "CW-NOSHOW", {"driver_messages": len(msgs), "driver_calls": len(calls)})
+        tr.step(pb, "17b", "GEN-R08", "precedents: " + ("; ".join(f"{p_['section']} ({p_['case_id']}) {'aligned' if p_['aligned'] else 'distinguished on ' + ', '.join(p_['differs'])}: "
+                f"{p_['outcome']} S${p_['refund_amount_sgd']:.2f}" for p_ in tr.precedents) or "none"), [])
+
     # 18 AUTH-05 confidence (AUTH-01..04 applied in decide_tier after the decisive tests)
     w = P("CONFIDENCE_WEIGHTS")
     penalty = P("SOFT_FLAG_PENALTY")
@@ -1144,7 +1236,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     E_ = max(0.0, sum(req.values()) / len(req) - penalty * len(soft_flags))
     A_, R_ = 1.0, 1.0
     C = w["A_run_agreement"] * A_ + w["M_threshold_margin"] * M + w["E_evidence_completeness"] * E_ + w["R_rules_engine_agreement"] * R_
-    tr.confidence = {"A": A_, "M": round(M, 3), "E": round(E_, 3), "R": R_, "C": round(C, 3),
+    tr.confidence = {"A": A_, "M": round(M, 3), "E": round(E_, 3), "R": R_, "C": round(C, 3), "d29_penalty": 0.0, "C_effective": round(C, 3),
                      "assumed": ["A = 1.0 (no LLM runs in this check)", "R = 1.0 (no LLM Judge in this check)"],
                      "soft_flags": soft_flags, "evidence_present": req}
     tr.step(pb, 18, "AUTH-05", f"C = {C:.3f} (A {A_}, M {M:.2f}, E {E_:.2f}, R {R_}; soft flags {soft_flags})", ["F-WAIT-MARGIN", "F-PRESENCE"])
@@ -1161,7 +1253,7 @@ def sensitivity(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
     rows = []
     cred = {r["row"]: r.get("credibility") for r in kb.y["rules"]["decision_tables"]["DT-CW-NOSHOW"]["rows"]}
     weak = lambda row: cred.get(row) in ("C", "D")
-    overridden = lambda tr_: bool(tr_.reasons) and tr_.reasons[0] in ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP")
+    overridden = lambda tr_: bool(tr_.reasons) and tr_.reasons[0] in OVERRIDING_REASONS
     for name, info in base.params_used.items():
         pr = info.get("plausible_range")
         if info.get("credibility") not in ("C", "D") or not pr or info.get("flag_only"):
@@ -1210,6 +1302,16 @@ def reading_test(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
     return out
 
 
+def contact_test(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
+    """Clause 1 for CW-R13 (D44): a driver who did only one of the two contacts is the case where 'fails to meet both contact obligations' can be read two ways."""
+    if profile != ORGANIZER_PROFILE or base.findings.get("F-CONTACT", {}).get("value") != "INSUFFICIENT":
+        return []
+    other = "both_missing" if base.params_used.get("CONTACT_VOID_WHEN", {}).get("value") == "either_missing" else "either_missing"
+    t2 = evaluate(kb, copy.deepcopy(case), profile, {**base.overrides, "CONTACT_VOID_WHEN": other})
+    return [{"rule": "CW-R13", "kind": "contact_obligation", "reading": f"CONTACT_VOID_WHEN = {base.params_used['CONTACT_VOID_WHEN']['value']}", "other_reading": f"CONTACT_VOID_WHEN = {other}",
+             "outcome_other": t2.outcome, "changes": t2.outcome != base.outcome or t2.reasons != base.reasons}]
+
+
 def start_test(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
     """Clause 1 for CW-F03B, a FairRyde reading (D): do the other readings of where the wait starts change the outcome?"""
     if base.wait_start_from not in ("arrival", "ping"):
@@ -1224,13 +1326,15 @@ def start_test(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
     return out
 
 
-def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
+def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict], case: dict | None = None) -> dict:
+    v21 = tr.profile == ORGANIZER_PROFILE
     tau = kb.pval("TAU", tr.profile, tr.overrides)
     limit = kb.pval("AUTO_LIMIT_SGD", tr.profile, tr.overrides)
-    if tr.findings.get("_discrimination"):                              # CLS-01, SE-R01 (D40 (c)): no proposed outcome, a person decides
+    if tr.findings.get("_discrimination") or (v21 and tr.findings.get("_safety")):   # CLS-01, SE-R01 (D40 (c)); policy v2.1 Section 5.2: no proposed outcome, a person decides
         return {"tier": "HUMAN", "decisive": [], "gates": ["G4 safety content"], "runtime_only_gates": [], "favoured_party": None,
-                "triggers": ["the complaint mentions discrimination: the whole case goes to a person with the case file only (CLS-01, SE-R01)"],
-                "tau": tau, "auto_limit": limit}
+                "triggers": ["the complaint mentions discrimination: the whole case goes to a person with the case file only (CLS-01, SE-R01)" if tr.findings.get("_discrimination") else
+                             "safety content: the AI agent may only prepare a case file (policy v2.1 Section 5.2); no outcome, amount or measure is proposed (CLS-01, SE-R01)"],
+                "tau": tau, "auto_limit": limit, "section6": None}
     if tr.reclassified_to or tr.outcome == "REQUEST_INFO":             # CLS-06: not ruled under this table
         safety = ["G4 safety content"] if tr.findings.get("_safety") else []   # CLS-01: whatever else the ticket contains
         if tr.reclassified_to:
@@ -1240,7 +1344,9 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
                 "gates": safety, "runtime_only_gates": [], "favoured_party": None, "tau": tau, "auto_limit": limit}
     decisive = []
     for r in reads:
-        if r["changes"] and r["rule"] == "CW-F03B":
+        if r["changes"] and r.get("kind") == "contact_obligation":
+            decisive.append((r["rule"], f"Section 2.3 can be read as {r['reading']} or {r['other_reading']}; the other reading gives {r['outcome_other']}"))
+        elif r["changes"] and r["rule"] == "CW-F03B":
             decisive.append((r["rule"], f"the other reading ({r['other_reading']}) gives {r['outcome_other']}"))
         elif r["changes"] and r.get("kind") == "contact":
             decisive.append((r["rule"], f"reading the rider's call, message or GPS ({', '.join(r['ids'])}) as placing the rider at the pick-up gives {r['outcome_other']}"))
@@ -1252,7 +1358,7 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
                    f"the ruling would rest on a decision-table row rated C or D when {s['param']} moves within {s['range']}")
             for rid in s["rules_using"] or ["(parameter " + s["param"] + ")"]:
                 decisive.append((rid, why))
-    if tr.dt_row_credibility in ("C", "D") and tr.reasons and tr.reasons[0] not in ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP"):
+    if tr.dt_row_credibility in ("C", "D") and tr.reasons and tr.reasons[0] not in OVERRIDING_REASONS:
         decisive.append((f"DT-CW-NOSHOW {tr.dt_row}", f"decision-table row rated {tr.dt_row_credibility}"))
     triggers = []
     if tr.policy_gap:
@@ -1262,13 +1368,14 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
     if tr.fraud:
         triggers.append("fraud signal on " + ", ".join(f"{who} ({getattr(tr, 'fraud_detail', {}).get(who, '')})" for who, _ in tr.fraud)
                         + " (symmetric trigger; the detail is for the reviewer, not for the parties)")
-    if tr.amount_at_stake > limit:
-        triggers.append(f"amount S${tr.amount_at_stake:.2f} above AUTO_LIMIT_SGD S${limit:.2f}")
-    if tr.confidence["C"] is not None and tr.confidence["C"] < tau:
-        triggers.append(f"confidence {tr.confidence['C']:.2f} below TAU {tau}")
+    if not v21:
+        if tr.amount_at_stake > limit:
+            triggers.append(f"amount S${tr.amount_at_stake:.2f} above AUTO_LIMIT_SGD S${limit:.2f}")
+        if tr.confidence["C"] is not None and tr.confidence["C"] < tau:
+            triggers.append(f"confidence {tr.confidence['C']:.2f} below TAU {tau}")
     for f, why in (("CONTACT_NOT_ATTEMPTED", "no contact attempt"), ("RECORDS_MISSING", "records missing"),
                    ("GPS_AMBIGUOUS", "GPS cannot settle whether the driver left (GPS_AMBIGUOUS)")):
-        if f in tr.flags:
+        if f in tr.flags and not (v21 and f == "CONTACT_NOT_ATTEMPTED"):      # under v2.1 no contact voids the fee (CW-R13): the outcome changes, it is not an approval trigger
             triggers.append(why)
     if tr.findings.get("F-CHARGE-AMOUNT", {}).get("value", {}).get("status") == "overcharged":
         triggers.append("overcharge (CHARGE_AMOUNT_MISMATCH)")
@@ -1276,10 +1383,24 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
     gl_now = tr.findings.get("F-GPS-LOGIC", {}).get("value")
     gps_params = set(kb.rules.get("CW-F04B", {}).get("params") or [])
     gl_param = [s["param"] for s in sens if s.get("gps_logic_at") and s["param"] in gps_params]
+    d29_penalty = 0.0
     if upheld and (gl_now or gl_param):                                    # AUTH-02 trigger 12, decision D29
-        triggers.append("fee upheld on FairRyde's own GPS logic, not on the pings alone (CW-F04B, D29)" if gl_now else
-                        "fee upheld, and FairRyde's own GPS logic would decide it with " + ", ".join(gl_param)
-                        + " at an end of its plausible range (CW-F04B, D29)")
+        if v21:                                                            # AUTH-07, D52: policy v2.1 Section 6.2 makes a no-show ruling final, so D29 lowers the confidence instead
+            d29_penalty = float(kb.pval("D29_CONFIDENCE_PENALTY", tr.profile, tr.overrides))
+        else:
+            triggers.append("fee upheld on FairRyde's own GPS logic, not on the pings alone (CW-F04B, D29)" if gl_now else
+                            "fee upheld, and FairRyde's own GPS logic would decide it with " + ", ".join(gl_param)
+                            + " at an end of its plausible range (CW-F04B, D29)")
+    sec6 = None
+    if v21 and tr.confidence.get("C") is not None:
+        tr.confidence["d29_penalty"] = d29_penalty
+        tr.confidence["C_effective"] = round(tr.confidence["C"] - d29_penalty, 3)
+        if tr.outcome != "ESCALATE_HUMAN":
+            sec6 = P21.ruling_path(kb, tr.profile, category="no_show", value=tr.amount_at_stake, confidence=tr.confidence["C_effective"],
+                                   fraud_flags=P21.fraud_flag_count(case or {}))
+            triggers = ([r for r in sec6["reasons"]] if sec6["tier"] != "AUTO" else []) + triggers
+            if d29_penalty and sec6["tier"] != "AUTO":
+                triggers.insert(1, f"FairRyde's own GPS logic decides the presence (CW-F04B, D29): a confidence penalty of {d29_penalty:.2f} under this profile (D52)")
     if "BOUNDARY_MARGIN" in tr.flags and "MARGIN_WITHIN_SPREAD" in tr.flags:
         triggers.append(f"margin {tr.margin:+.0f} s within the boundary band, and the records disagree by up to {tr.spread_max:.0f} s")
     if upheld and tr.pin_mismatch and tr.rider_at_venue_claim:
@@ -1292,9 +1413,9 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
         gates.append("G1 data inconsistency" + (" (GPS implies an impossible speed)" if "GPS_DATA_ERROR" in tr.flags else ""))
     if tr.findings.get("_safety"):
         gates.append("G4 safety content")
-    if tr.confidence["C"] is not None and tr.confidence["C"] < tau:
+    if not v21 and tr.confidence["C"] is not None and tr.confidence["C"] < tau:
         gates.append("G5 low confidence")
-    if tr.amount_at_stake > limit:
+    if not v21 and tr.amount_at_stake > limit:
         gates.append("G6 amount above the automatic limit")
     if tr.findings.get("_safety") or tr.outcome == "ESCALATE_HUMAN":     # AUTH-03, AUTH-06: no AI ruling to approve
         tier = "HUMAN"
@@ -1306,17 +1427,17 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
                or any(s["decisive"] and r in s["rules_using"] for s in sens)]
     if generic:
         tr.flag("GENERIC_ASSUMPTION_USED")
-    return {"tier": tier, "decisive": decisive, "triggers": triggers, "gates": gates, "favoured_party": favoured, "tau": tau, "auto_limit": limit,
+    return {"tier": tier, "decisive": decisive, "triggers": triggers, "gates": gates, "favoured_party": favoured, "tau": tau, "auto_limit": limit, "section6": sec6,
             "runtime_only_gates": ["G2 rule conflict", "G3 history-aware vs history-blind Judge", "G7 citation and number verification", "G8 Judge runs vs rules engine"]}
 
 
 def run(kb: KB, case: dict, profile: str | None = None) -> dict:
     base = evaluate(kb, copy.deepcopy(case), profile)
-    if base.reclassified_to or base.outcome == "REQUEST_INFO" or base.findings.get("_discrimination"):
-        return {"trace": base, "sensitivity": [], "readings": [], "tier": decide_tier(kb, base, [], []), "case": case}
+    if base.reclassified_to or base.outcome == "REQUEST_INFO" or base.findings.get("_discrimination") or (base.profile == ORGANIZER_PROFILE and base.findings.get("_safety")):
+        return {"trace": base, "sensitivity": [], "readings": [], "tier": decide_tier(kb, base, [], [], case), "case": case}
     sens = sensitivity(kb, case, base.profile, base)
-    reads = reading_test(kb, case, base.profile, base) + start_test(kb, case, base.profile, base)
-    tier = decide_tier(kb, base, sens, reads)
+    reads = reading_test(kb, case, base.profile, base) + start_test(kb, case, base.profile, base) + contact_test(kb, case, base.profile, base)
+    tier = decide_tier(kb, base, sens, reads, case)
     base.step("PB-CW-NOSHOW", 19, "AUTH-01 to AUTH-04, AUTH-06", f"tier {tier['tier']}" + (f"; {len(tier['triggers'])} approval trigger(s)" if tier["triggers"] else ""),
               ["F-WAIT-MARGIN", "F-PRESENCE", "F-RIDER-EVIDENCE", "F-PIN-VENUE"])
     base.step("PB-CW-NOSHOW", 20, "EXP-01 to EXP-03, META-05", "explanations drafted from findings only (see the explanation drafts)", ["F-*"])

@@ -1,20 +1,22 @@
-# FairRyde knowledge base v0.2: check report
+# FairRyde knowledge base v0.3: check report
 
 Generated from the YAML source files (knowledge base dated 2026-10-14).
 
-* Rules: 90; vocabularies: 22; TX-CASE leaves: 35; entities: 20; events: 35; playbooks: 11
-* Rule sources: 191; VERIFIED 149, NO_QUOTE (design assumption) 35, PARAPHRASE 7
-* Credibility: A 26, B 9, C 1, D 54; modes: HARD 75, READ 9, HARD+READ 6
+* Rules: 104; vocabularies: 22; TX-CASE leaves: 35; entities: 25; events: 35; playbooks: 12
+* Rule sources: 256; VERIFIED 208, NO_QUOTE (design assumption) 41, PARAPHRASE 7
+* Credibility: A 35, B 9, C 1, D 59; modes: HARD 86, READ 10, HARD+READ 8
 * DISP-002 fields mapped: 59 of 59 leaf paths
 * DT-CW-NOSHOW enumeration: {'combinations': 192, 'unique': 192, 'gaps': 0, 'overlaps': 0}
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
 * Engine self-test: 128/128 variants pass
 * ERP rules self-test: 53 ERP cases, the FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: all pass
-* Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
+* Policy v2.1 self-test (A6): 56/56 pass (the three organizer samples pinned to their expected rulings, one-factor variants, tolls pass-through, regression E01 to E04 and E11, and the reconciliation records)
+* Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 13, 'PERSON_NAME_TOKEN': 29, 'VEHICLE_PLATE': 5, 'SG_PLATE': 5, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
-* Annotation workbook: FairRyde_Annotation_v0.2.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.2.20261014T125627.xlsx
-* Issues: ERROR 0, WARN 0, INFO 3
+* Annotation workbook: FairRyde_Annotation_v0.3.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.3.20261014T135417.xlsx
+* Issues: ERROR 0, WARN 0, INFO 7
 
+* DISP-002 under organizer_v2_1: **UPHOLD** (row R8), reasons CW-R-NOSHOW-VALID, CW-R-PIN-AMBIGUOUS, flags NO_RIDER_EVIDENCE, PIN_VENUE_MISMATCH, FRAUD_SIGNAL, GENERIC_ASSUMPTION_USED, confidence 0.939, tier **APPROVE**
 * DISP-002 under organizer_case: **UPHOLD** (row R8), reasons CW-R-NOSHOW-VALID, CW-R-PIN-AMBIGUOUS, flags BOOKING_TYPE_INFERRED, BOUNDARY_MARGIN, MARGIN_WITHIN_SPREAD, NO_RIDER_EVIDENCE, PIN_VENUE_MISMATCH, FRAUD_SIGNAL, GENERIC_ASSUMPTION_USED, confidence 0.689, tier **APPROVE**
 * DISP-002 under ryde_2026: **UPHOLD** (row R8), reasons CW-R-NOSHOW-VALID, CW-R-PIN-AMBIGUOUS, flags BOOKING_TYPE_INFERRED, NO_RIDER_EVIDENCE, PIN_VENUE_MISMATCH, CHARGE_AMOUNT_MISMATCH, FRAUD_SIGNAL, GENERIC_ASSUMPTION_USED, confidence 0.939, tier **APPROVE**
 
@@ -24,6 +26,10 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 |---|---|---|---|
 | INFO | rule-credibility | CW-R06 | rated B but essential parameter(s) are D: ARRIVAL_GEOFENCE_M=D, TS_TOLERANCE_S=D, PING_MAX_GAP_S=D |
 | INFO | rule-credibility | CW-R10 | rated A but essential parameter(s) are D: REMEDY_FORM=D |
+| INFO | rule-credibility | CW-R14 | rated A but essential parameter(s) are C: DRIVER_LATE_GRACE_S=C |
+| INFO | rule-credibility | FC-R13 | rated A but essential parameter(s) are D: TOLLS_TREATMENT=D, REMEDY_FORM=D |
+| INFO | rule-credibility | FC-R14 | rated A but essential parameter(s) are D: MONEY_TOLERANCE_SGD=D |
+| INFO | rule-credibility | FC-R15 | rated A but essential parameter(s) are D: MONEY_TOLERANCE_SGD=D, REMEDY_FORM=D |
 | INFO | reason-outcome | CW-R-PIN-AMBIGUOUS | outcome field is descriptive: "secondary note; the outcome is unchanged, and human approval is required when the rider's statement places the rider at the named venue (AUTH-02)" |
 
 ## Engine self-test (unit tests of the reference engine, not ground truth)
@@ -163,25 +169,30 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 
 | entity | name | kind | covered by | status |
 |---|---|---|---|---|
-| ENT-ACCOUNT | Account | business | DISP-002 | ok (from the case file) |
-| ENT-DISPUTEHISTORY | DisputeHistory | value_object | DISP-002 | ok (from the case file) |
-| ENT-VEHICLE | Vehicle | business | DISP-002 | ok (from the case file) |
+| ENT-ACCOUNT | Account | business | DISP-001, DISP-002, DISP-003 | ok (from the case file) |
+| ENT-DISPUTEHISTORY | DisputeHistory | value_object | DISP-001, DISP-002, DISP-003 | ok (from the case file) |
+| ENT-VEHICLE | Vehicle | business | DISP-001, DISP-002, DISP-003 | ok (from the case file) |
 | ENT-PLATFORM | Platform (Ryde) | business | every case | ok |
-| ENT-TRIP | Trip | business | DISP-002 | ok (from the case file) |
-| ENT-PLACE | Place | business | DISP-002 | ok (from the case file) |
+| ENT-TRIP | Trip | business | DISP-001, DISP-002, DISP-003 | ok (from the case file) |
+| ENT-PLACE | Place | business | DISP-001, DISP-002, DISP-003 | ok (from the case file) |
 | ENT-EVENT | TripEvent | business | DISP-002 | ok (from the case file) |
-| ENT-GPSPING | GPSPing | business | DISP-002 | ok (from the case file) |
-| ENT-COMM | Communication | business | DISP-002 | ok (from the case file) |
+| ENT-GPSPING | GPSPing | business | DISP-001, DISP-002, DISP-003 | ok (from the case file) |
+| ENT-COMM | Communication | business | DISP-001, DISP-002, DISP-003 | ok (from the case file) |
 | ENT-CHARGE | Charge | business | DISP-002 | ok (from the case file) |
 | ENT-POLICYDOC | PolicyDocument | business | DISP-002 | ok (from the case file) |
 | ENT-CLAUSE | PolicyClause | business | DISP-002 | ok (from the case file) |
-| ENT-TICKET | DisputeTicket | case | DISP-002 | ok (from the case file) |
+| ENT-ROUTE | Route | business | DISP-001 | ok (from the case file) |
+| ENT-INCIDENT | TrafficIncident | business | DISP-001 | ok (from the case file) |
+| ENT-FARE | FareBreakdown | value_object | DISP-001, DISP-003 | ok (from the case file) |
+| ENT-SURGE | SurgeEvent | business | DISP-003 | ok (from the case file) |
+| ENT-TICKET | DisputeTicket | case | DISP-001, DISP-002, DISP-003 | ok (from the case file) |
 | ENT-CLAIM | Claim | case |  | created by the pipeline for every case |
 | ENT-EVIDENCE | EvidenceItem | case |  | created by the pipeline for every case |
 | ENT-FINDING | Finding | case |  | created by the pipeline for every case |
 | ENT-RULING | Ruling | case |  | created by the pipeline for every case |
 | ENT-REVIEW | HumanReview | case |  | created when a person reviews a ruling (APPROVE and HUMAN tiers) |
 | ENT-PRECEDENT | Precedent | case |  | created only from human-reviewed rulings |
+| ENT-ORGREF | OrganizerReference | case | DISP-001 | ok (from the case file) |
 | ENT-ARGUMENT | Argument | system_artifact |  | created by the pipeline for every case |
 
 ## Rule sources and quote verification
@@ -189,6 +200,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | rule | # | type | doc | doc date | profile | status | where | quote | note |
 |---|---|---|---|---|---|---|---|---|---|
 | META-01 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Organizer cases are scored against the organizer's expected ruling, computed under the emb |
+| META-01 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | All AI dispute resolution agents (Rider Advocate, Driver Advocate, Judge) and human reviewers in the RydeResol |  |
 | META-02 | 1 | RYDE_POLICY | RYDE-18229758389017 | 2026-02-26 |  | VERIFIED | corpus body | The increase is due to the platform fee changes effective 17 Feb 2026. |  |
 | META-03 | 1 | RYDE_TOU | RYDE-TOU | last modified 6 Apr 2022 (contains later content, such as the S$200 cleaning cap) |  | VERIFIED | Section A, 1. Introduction | These Terms of Service and the Ryde Policies (as defined below) constitute a legally binding agreement ("Agree |  |
 | META-03 | 2 | RYDE_TOU | RYDE-TOU | last modified 6 Apr 2022 (contains later content, such as the S$200 cleaning cap) |  | VERIFIED | Section A, 2. Definitions ("Ryde Policies") | frequently asked questions (FAQs), in-app or website product/service descriptions and information cards |  |
@@ -207,10 +219,15 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | CLS-01 | 10 | RYDE_POLICY | RYDE-33362721809049 | 2026-04-10 |  | VERIFIED | corpus body | Comments on race, ethnicity, national origin, disability, etc | Driver Performance and Community Standards: errant behavior that disables an account. |
 | CLS-01 | 11 | INDUSTRY | IND-BENCHMARK-NOTES | 2026-10-05 |  | PARAPHRASE |  |  | Lyft, Grab and DiDi route safety incidents to humans (research note 02). |
 | CLS-01 | 12 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | FairRyde's design (step A4, round 1 finding FX6, and A4 check round 1): the definition by  |
+| CLS-01 | 13 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | issue rulings, determine fault, or recommend resolutions on safety incidents. |  |
+| CLS-01 | 14 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | flag any dispute that contains safety-related keywords or indicators for immediate human escalation, regardles |  |
+| CLS-01 | 15 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | automatically escalated to human review |  |
 | CLS-02 | 1 | INTERNAL_STANDARD | INT-CHORDX-ONT | 2026-09-25 |  | VERIFIED | sources/chordx_knowledge_base.md | 一封邮件/单据涉及多个事件，只选一个会丢信息，全多选又没主次 |  |
 | CLS-03 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | The SE exception covers every SE type since step A4 (round 1 finding FX6: a mid-trip eject |
 | CLS-04 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  |  |
 | CLS-05 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 |  | VERIFIED | sources/organizer/disp002.md | "dispute_type": "no_show_charge" |  |
+| CLS-05 | 2 | ORGANIZER | ORG-DISP001 | 2026-09 |  | VERIFIED | sources/organizer/disp001.md | "dispute_type": "route_deviation" |  |
+| CLS-05 | 3 | ORGANIZER | ORG-DISP003 | 2026-09 |  | VERIFIED | sources/organizer/disp003.md | "dispute_type": "fare_dispute" |  |
 | CLS-06 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 |  | VERIFIED | sources/organizer/disp002.md | "cancellation_reason": "rider_no_show" |  |
 | CLS-06 | 2 | RYDE_POLICY | RYDE-23534478435353 | 2026-02-26 |  | VERIFIED | corpus body | Rider cancels after 3 minutes of matching OR |  |
 | CLS-06 | 3 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Taking the canceling party from the records, sending other cancellations to CW-OTHER and a |
@@ -228,6 +245,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | DQ-05 | 1 | RYDE_POLICY | RYDE-30741244296217 | 2025-07-17 |  | VERIFIED | corpus body | For a detailed breakdown of your fare, please refer to your receipt. |  |
 | DQ-06 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 | organizer_case | VERIFIED | sources/organizer/disp002.md | "cancellation_fee": 5.00 |  |
 | DQ-06 | 2 | RYDE_POLICY | RYDE-23534478435353 | 2026-02-26 | ryde_2026 | VERIFIED | corpus body | Rider will be charged a Cancellation Fee of $6.61* if: | Quoted for the amount only. [clause is one side of a META-04 known conflict: does not coun |
+| DQ-06 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | is charged to the rider when the driver cancels after the free wait period. | Quoted for the amount: the fee of Section 2.2 is S$5.00. |
 | CW-F01 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 |  | VERIFIED | sources/organizer/disp002.md | Scheduled pickup 08:45. | DISP-002 says 'Scheduled pickup' yet assigns in 15 s with a 13-minute ETA; booking type is |
 | CW-F02 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 | organizer_case | VERIFIED | sources/organizer/disp002.md | "driver_wait_start": "2026-09-13T08:43:00+08:00" |  |
 | CW-F02 | 2 | RYDE_POLICY | RYDE-23534478435353 | 2026-02-26 | ryde_2026 | VERIFIED | corpus body | waits for > 3 minutes for the rider to arrive at the pick-up point and cancels the trip (Rider NO SHOW and no  |  |
@@ -235,8 +253,11 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | CW-F02B | 2 | INDUSTRY | IND-BOLT-SCHEDULED | read 2026-10-05 |  | VERIFIED | sources/research/09_fact_check.md | The scheduled wait time of 5 minutes will be counted only from the scheduled start of the ride. |  |
 | CW-F02B | 3 | RYDE_POLICY | RYDE-23575142762393 | 2023-10-02 |  | VERIFIED | corpus body | You arrived at the pickup location and the customer was not present within 3 minutes of your arrival. | Driver article (2023), not specific to advance bookings; conflicts with the rule above for |
 | CW-F02B | 4 | RYDE_POLICY | RYDE-20244064619161 | 2024-04-23 |  | VERIFIED | corpus body | The driver pressed "I'm Here", waits for > 3 minutes for rider to arrive at the pick-up point and cancels the  | Driver policy pages (2024-04-23, and RYDE-33362932998937 of 2024-06-05 with the same words |
+| CW-F02C | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | from the scheduled pickup time. |  |
+| CW-F02C | 2 | ORGANIZER | ORG-DISP002 | 2026-09 | organizer_v2_1 | VERIFIED | sources/organizer/disp002.md | Free wait timer started. 5 min free wait period ends at 08:48. | The app's timer in DISP-002 starts at the driver's arrival (08:43), not at the scheduled t |
 | CW-F03 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 | organizer_case | VERIFIED | sources/organizer/disp002.md | No-show threshold (8 min) reached. | Logged at exactly 8:00 after driver_wait_start, so the organizer counts 'at least 8 minute |
 | CW-F03 | 2 | RYDE_POLICY | RYDE-4407754403353 | 2026-02-26 | ryde_2026 | VERIFIED | corpus body | Has waited for more than 3 mins |  |
+| CW-F03 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | After 5 minutes, the driver may cancel the trip as a "rider no-show." |  |
 | CW-F03B | 1 | RYDE_POLICY | RYDE-4407754403353 | 2026-02-26 |  | VERIFIED | corpus body | Drivers are only allowed to indicate arrival and impose the Waiting Time Fee only if he/she: |  |
 | CW-F03B | 2 | RYDE_POLICY | RYDE-4407754403353 | 2026-02-26 |  | VERIFIED | corpus body | Is at the pick-up location according to GPS data |  |
 | CW-F03B | 3 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Where the wait starts when GPS confirms the driver only after the arrival indication is Fa |
@@ -248,6 +269,8 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | CW-F04B | 2 | RYDE_POLICY | RYDE-4407754403353 | 2026-02-26 |  | VERIFIED | corpus body | Is at the pick-up location according to GPS data | The condition the logic serves (CW-F04, CW-R06); Ryde does not say how GPS presence is che |
 | CW-F05 | 1 | RYDE_POLICY | RYDE-115001438754 | 2021-09-20 |  | VERIFIED | corpus body | Try to contact the rider by in-app chat or call. |  |
 | CW-F05 | 2 | INDUSTRY | IND-BENCHMARK-NOTES | 2026-10-05 |  | VERIFIED | sources/research/02_industry_dispute_benchmark.md | Attempted to contact you (or you contacted them) | Lyft's no-show conditions (research note 02). |
+| CW-F05 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | At least 1 in-app chat message |  |
+| CW-F05 | 4 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | At least 1 phone call |  |
 | CW-F06 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Content-based reading of rider calls and messages since KB v0.2 (fix FX1, validation round |
 | CW-F07 | 1 | RYDE_TOU | RYDE-TOU | last modified 6 Apr 2022 (contains later content, such as the S$200 cleaning cap) |  | VERIFIED | Section A, 7. Cancellation, 7.2 Cancellation Terms for Users (paragraph 2) | If you decide to cancel your ride booking or do not show up at the designated location, you may be charged a C |  |
 | CW-R00 | 1 | RYDE_POLICY | RYDE-4407761313305 | 2024-03-18 |  | VERIFIED | corpus body | Cancellation Policy applies to all Service Types * in the Ryde app and is executed on a service level, not dri |  |
@@ -259,6 +282,8 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | CW-R03 | 2 | ORGANIZER | ORG-DISP002 | 2026-09 | organizer_case | VERIFIED | sources/organizer/disp002.md | "cancellation_fee_after_wait": 5.00 |  |
 | CW-R03 | 3 | RYDE_POLICY | RYDE-23534478435353 | 2026-02-26 | ryde_2026 | VERIFIED | corpus body | Rider will be charged a Cancellation Fee of $6.61* if: | Quoted for the amount; the operative condition is the next quote. [clause is one side of a |
 | CW-R03 | 4 | RYDE_POLICY | RYDE-23534478435353 | 2026-02-26 | ryde_2026 | VERIFIED | corpus body | The driver presses "I'm Here", waits for > 3 minutes for the rider to arrive at the pick-up point and cancels  |  |
+| CW-R03 | 5 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | is charged to the rider when the driver cancels after the free wait period. |  |
+| CW-R03 | 6 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | After 5 minutes, the driver may cancel the trip as a "rider no-show." |  |
 | CW-R04 | 1 | RYDE_POLICY | RYDE-115001438754 | 2021-09-20 |  | VERIFIED | corpus body | If the rider still cannot be reached, you may need to cancel the trip. |  |
 | CW-R05 | 1 | RYDE_POLICY | RYDE-23534478435353 | 2026-02-26 |  | VERIFIED | corpus body | Riders may be charged a Waiting Time Fee of $5 at the end of the trip if: |  |
 | CW-R05 | 2 | RYDE_POLICY | RYDE-23534478435353 | 2026-02-26 |  | VERIFIED | corpus body | The driver presses "I'm Here", waits for > 3 minutes for the rider to board, and continues the trip (Rider boa |  |
@@ -270,14 +295,25 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | CW-R07 | 1 | RYDE_POLICY | RYDE-23534478435353 | 2026-02-26 |  | VERIFIED | corpus body | Rider cancels after 3 minutes of matching OR |  |
 | CW-R08 | 1 | INDUSTRY | IND-BENCHMARK-NOTES | 2026-10-05 |  | PARAPHRASE |  |  | Grab: a late driver (ETA + 3 min) forfeits the fee; Gojek ETA + 5 min (research note 02). |
 | CW-R08 | 2 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Two elements are FairRyde's: the 'not moving toward the pick-up point' condition has no so |
+| CW-R08 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | (defined as scheduled pickup time + 5 minutes), the rider may cancel at no charge. |  |
 | CW-R09 | 1 | ORGANIZER | ORG-DISP002 | 2026-09 | organizer_case | VERIFIED | sources/organizer/disp002.md | "fee_goes_to": "driver_compensation" |  |
 | CW-R09 | 2 | RYDE_POLICY | RYDE-4407761228825 | 2023-04-11 | ryde_2026 | VERIFIED | corpus body | Cancellation Fees compensate drivers for the time and effort they spend getting to your location. |  |
 | CW-R09 | 3 | RYDE_POLICY | RYDE-4408070838297 | 2026-09-25 | ryde_2026 | VERIFIED | corpus body | Drivers will receive a $4.50 cancellation fee automatically if they cancel after >3 minutes of waiting. |  |
+| CW-R09 | 4 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | The cancellation fee is transferred to the driver as compensation for time and fuel. |  |
 | CW-R10 | 1 | RYDE_POLICY | RYDE-18229758389017 | 2026-02-26 |  | VERIFIED | corpus body | If you are eligible, we will issue you a voucher** with a unique code worth $6.61 as a refund for the incurred |  |
 | CW-R10 | 2 | RYDE_POLICY | RYDE-27085468660505 | 2026-09-25 |  | VERIFIED | corpus body | If you are eligible, we will issue you a voucher** with a unique code worth $5.00 as a refund for the incurred |  |
+| CW-R10 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | The $5.00 fee is reversed and refunded to the rider. |  |
+| CW-R10 | 4 | ORGANIZER | ORG-DISP001 | 2026-09 | organizer_v2_1 | VERIFIED | sources/organizer/disp001.md | "method": "original_payment_method" |  |
 | CW-R11 | 1 | RYDE_TOU | RYDE-TOU | last modified 6 Apr 2022 (contains later content, such as the S$200 cleaning cap) |  | VERIFIED | Section A, 7. Cancellation, 7.2 Cancellation Terms for Users (paragraph 2) | If you decide to cancel your ride booking or do not show up at the designated location, you may be charged a C |  |
 | CW-R11 | 2 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Approval trigger and goodwill option are FairRyde's design (D5). |
 | CW-R12 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  |  |
+| CW-R13 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | At least 1 in-app chat message |  |
+| CW-R13 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | At least 1 phone call |  |
+| CW-R13 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | If the driver fails to meet both contact obligations, the cancellation fee is |  |
+| CW-R13 | 4 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | The driver failed to meet both contact obligations. The $5.00 fee is reversed and refunded to the rider. |  |
+| CW-R13 | 5 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Reading 'fails to meet both contact obligations' as failing either of the two is FairRyde' |
+| CW-R14 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | (defined as scheduled pickup time + 5 minutes), the rider may cancel at no charge. |  |
+| CW-R14 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | fails to attempt contact, the rider is eligible for a |  |
 | FC-F01 | 1 | RYDE_POLICY | RYDE-30741244296217 | 2025-07-17 |  | VERIFIED | corpus body | Fares quoted for our services are generally fixed, except for RydeTAXI. | [clause is one side of a META-04 known conflict: does not count toward A] |
 | FC-F01 | 2 | RYDE_POLICY | RYDE-360004075214 | 2024-10-08 |  | VERIFIED | corpus body | All fares are fixed at the time of booking but does not include toll charges such as ERP. |  |
 | FC-F01 | 3 | RYDE_POLICY | RYDE-51399796192921 | 2025-10-10 |  | VERIFIED | corpus body | If the driver accepts your edit destination request, a $3.00 add/edit destination fee will apply. |  |
@@ -288,6 +324,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | FC-F02 | 1 | RYDE_POLICY | RYDE-50798691815449 | 2025-10-09 |  | VERIFIED | corpus body | Once the driver accepts, your trip fare will be recalculated, and your route will be updated to the new destin |  |
 | FC-F02 | 2 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Method from research note 08 (sparse-ping simulation). |
 | FC-F02 | 3 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | The final-itinerary baseline and the split at the point nearest the car at each accepted c |
+| FC-F02 | 4 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Route deviation distance is calculated as: |  |
 | FC-F03 | 1 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | If you have a preferred route, you may recommend this to your driver and reach a mutual agreement before you g |  |
 | FC-F03 | 2 | RYDE_POLICY | RYDE-4412121982745 | 2024-10-01 |  | VERIFIED | corpus body | hence the driver may decide to take the most efficient route according to GPS. |  |
 | FC-F03 | 3 | RYDE_POLICY | RYDE-4412122016153 | 2023-06-16 |  | VERIFIED | corpus body | So you may decide to take the fastest or most efficient route based on your GPS. |  |
@@ -297,6 +334,18 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | FC-F04 | 1 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | Please key in ERP based on the ERP gantry you passed during the journey. |  |
 | FC-F04 | 2 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The fares for RydeSEND include ERP. |  |
 | FC-F04 | 3 | RYDE_POLICY | RYDE-115001438614 | 2026-09-02 |  | VERIFIED | corpus body | The driver bears 50% of the ERP charge, and the passenger pays the remaining 50%. |  |
+| FC-F05 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | before or at the point of deviation |  |
+| FC-F05 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | A brief reason (e.g., "traffic jam ahead onNicoll Highway, taking alternate route") is sufficient. |  |
+| FC-F05 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | If the driver's in-app chat or call recording confirms rider acknowledgment, the deviation is considered agree |  |
+| FC-F05 | 4 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | The phrase-list stand-in for the reading, and counting a call as UNCLEAR, are FairRyde's i |
+| FC-F06 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | for the route segment at the trip time. |  |
+| FC-F06 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | traffic justification (no evidence of congestion) |  |
+| FC-F06B | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Matching an incident to a route by name, direction and time, because the sample's incident |
+| FC-F06B | 2 | ORGANIZER | ORG-DISP001 | 2026-09 | organizer_v2_1 | VERIFIED | sources/organizer/disp001.md | Vehicle fire on PIE eastbound between Paya Lebar and Hougang. | An incident record of the sample: road, direction and stretch by name. |
+| FC-F07 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | binding at the surge multiplier in effect at quote time |  |
+| FC-F07 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | calculated using actual distance, actual time, and the surge multiplier in effect at trip start |  |
+| FC-F08 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | before or at the point of pickup. |  |
+| FC-F08 | 2 | ORGANIZER | ORG-DISP003 | 2026-09 | organizer_v2_1 | VERIFIED | sources/organizer/disp003.md | "rider_notified": false | The platform's own record in DISP-003. |
 | FC-R00 | 1 | RYDE_POLICY | RYDE-900003406966 | 2026-01-26 |  | VERIFIED | corpus body | Do note that all fees for Standard and/or Premium Taxi Services follow that of the respective taxi company. |  |
 | FC-R00 | 2 | RYDE_POLICY | RYDE-900003406966 | 2026-01-26 |  | VERIFIED | corpus body | Please do note that the payment method accepted for RydeTAXI is only via cash. |  |
 | FC-R00 | 3 | RYDE_POLICY | RYDE-900004230226 | 2026-01-26 |  | VERIFIED | corpus body | Key in the fare as indicated on your meter. |  |
@@ -327,6 +376,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | FC-R07 | 5 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | The refund of the difference is FairRyde's remedy (a recommendation under Ryde's discretio |
 | FC-R08 | 1 | REGULATION | LTA-PDVL-OFFENCES | 2023-04-01 |  | VERIFIED | sources/research/09_fact_check.md | Failing, without reasonable cause, to proceed to destination named by a passenger by shortest and most direct  | LTA's list is the PDVL (private-hire driver's vocational license) offense list as at 1 Apr |
 | FC-R08 | 2 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Turning the route duty into an ERP refund, and escalating a metered fare instead (D32), ar |
+| FC-R08 | 3 | ORGANIZER | ORG-DISP001 | 2026-09 | organizer_v2_1 | VERIFIED | sources/organizer/disp001.md | Only the excess distance fare is refunded. Tolls are passed through at cost. |  |
 | FC-R09 | 1 | RYDE_POLICY | RYDE-51399796192921 | 2025-10-10 |  | VERIFIED | corpus body | If the driver accepts your edit destination request, a $3.00 add/edit destination fee will apply. |  |
 | FC-R09 | 2 | RYDE_POLICY | RYDE-50798691815449 | 2025-10-09 |  | VERIFIED | corpus body | *RydePOOL, RydeTAXI & Multiple stop bookings are not allowed to make any changes in destination. |  |
 | FC-R10 | 1 | RYDE_POLICY | RYDE-18230976652185 | 2025-12-03 |  | VERIFIED | corpus body | If you have been charged for a trip that you have not taken, kindly share the details with us to investigate t |  |
@@ -335,6 +385,21 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | FC-R11 | 2 | RYDE_POLICY | RYDE-22836370596377 | 2026-02-26 |  | VERIFIED | corpus body | *Second Tier Platform Fee: $1.47 (including GST) for fares above $18. |  |
 | FC-R11 | 3 | RYDE_POLICY | RYDE-52594357168281 | 2025-11-23 |  | VERIFIED | corpus body | 1.96% + $0.24 for Local Visa, Mastercard, and Rydecoins |  |
 | FC-R12 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  |  |
+| FC-R13 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Driver reroutes for traffic, rider informed and agrees / Yes / Yes / No refund |  |
+| FC-R13 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Driver reroutes for traffic, rider **not** informed / No / Yes / Partial refund of excess distance fare |  |
+| FC-R13 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Driver reroutes for traffic, rider not informed / No / No (≤ 1km) / No refund (within tolerance) |  |
+| FC-R13 | 4 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Partial refund of excess distance fare. Rationale: Driver had valid traffic justification (confirmed via traff |  |
+| FC-R13 | 5 | ORGANIZER | ORG-DISP001 | 2026-09 | organizer_v2_1 | VERIFIED | sources/organizer/disp001.md | Only the excess distance fare is refunded. Tolls are passed through at cost. | DISP-001's recommended ruling: the refund base is the excess distance fare, not the whole  |
+| FC-R13 | 6 | ORGANIZER | ORG-DISP001 | 2026-09 | organizer_v2_1 | VERIFIED | sources/organizer/disp001.md | "excess_distance_fare": 3.44 |  |
+| FC-R13B | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | / N/A / Yes / **Full refund** of excess distance fare |  |
+| FC-R13B | 2 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Reading 'Full refund of excess distance fare' as the same base as the partial refund, with |
+| FC-R14 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Where the difference is attributable solely to a surge multiplier change (all other fare components unchanged) |  |
+| FC-R14 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | from surge pricing and remain fixed regardless of multiplier: |  |
+| FC-R15 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Surge increases, rider notified, rider proceeds / Yes / No refund |  |
+| FC-R15 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Surge increases, rider **not** notified / No / **Full refund of the surge differential** (actual fare − quoted |  |
+| FC-R15 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Surge decreases between quote and trip start / N/A / Lower fare applies automatically (rider benefits) |  |
+| FC-R15 | 4 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Surge unchanged / N/A / Quoted fare applies |  |
+| FC-R15 | 5 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Full refund of surge differential. Rationale: Per Section 3.3, if surge increases between quote and trip start |  |
 | DM-R01 | 1 | RYDE_POLICY | RYDE-900004381243 | 2026-04-09 |  | VERIFIED | corpus body | Your vehicle must be professionally cleaned within 24 hours from the incident |  |
 | DM-R01 | 2 | RYDE_POLICY | RYDE-900004381243 | 2026-04-09 |  | VERIFIED | corpus body | Submit your claim via the driver app within 48 hours from the affected trip |  |
 | DM-R02 | 1 | RYDE_POLICY | RYDE-900004381243 | 2026-04-09 |  | VERIFIED | corpus body | At least one photo must show the vehicle's car plate number to verify the vehicle |  |
@@ -347,6 +412,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | DM-R06 | 2 | RYDE_TOU | RYDE-TOU | last modified 6 Apr 2022 (contains later content, such as the S$200 cleaning cap) |  | VERIFIED | Section A, 11. Repair and Cleaning Fees for Users (paragraph 2) | Ryde may, subject to verification under its Vehicle Contamination Policy, reimburse the driver for the applica |  |
 | SE-R01 | 1 | RYDE_POLICY | RYDE-15395890865561 | 2026-04-10 |  | VERIFIED | corpus body | Violations of these guidelines will result in immediate termination and legal action where applicable. |  |
 | SE-R01 | 2 | GOV_GUIDANCE | GOV-IMDA-AGENTIC | 2026-01-22 |  | VERIFIED | sources/research/09_fact_check.md | Organisations should define significant checkpoints or action boundaries that require human approval, especial |  |
+| SE-R01 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | AI agents (Rider Advocate, Driver Advocate, Judge) **MAY** gather evidence, summarize accounts, and prepare ca |  |
 | SE-R02 | 1 | RYDE_POLICY | RYDE-16925196526489 | 2023-04-26 |  | VERIFIED | corpus body | The driver may terminate a ride in progress if there is a safety concern or if the rider is violating the comm |  |
 | SE-R02 | 2 | RYDE_POLICY | RYDE-16925196526489 | 2023-04-26 |  | VERIFIED | corpus body | This could include situations where the rider is verbally or physically abusive towards the driver, is intoxic |  |
 | SE-R02 | 3 | RYDE_POLICY | RYDE-16925196526489 | 2023-04-26 |  | VERIFIED | corpus body | Additionally, a driver may also terminate a ride in progress if their vehicle breaks down or malfunctions, and |  |
@@ -363,6 +429,9 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | GEN-R06 | 1 | RYDE_TOU | RYDE-TOU | last modified 6 Apr 2022 (contains later content, such as the S$200 cleaning cap) |  | VERIFIED | Section A, 28. Suspension and Termination; Modification of Platform Content (a)-(c) | modify, suspend or terminate operation of or access to the Platform, or any portion of the Platform (including | Account suspension is Ryde's power under the contract, not FairRyde's. |
 | GEN-R06 | 2 | GOV_GUIDANCE | GOV-IMDA-AGENTIC | 2026-01-22 |  | VERIFIED | sources/research/09_fact_check.md | Organisations should define significant checkpoints or action boundaries that require human approval, especial |  |
 | GEN-R07 | 1 | INTERNAL_STANDARD | INT-CHORDX-ONT | 2026-09-25 |  | VERIFIED | sources/chordx_knowledge_base.md | 把规则库偷偷换成"通用预设规则"，会让人误以为系统读了合同 |  |
+| GEN-R08 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Agents should search precedent rulings by dispute type and key facts, and cite the relevant precedent in their |  |
+| GEN-R08 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | All AI agents must cite the applicable policy section in their ruling rationale. |  |
+| GEN-R08 | 3 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Aligned and distinguished by equal key factors is FairRyde's matching method; the policy o |
 | FRD-01 | 1 | RYDE_POLICY | RYDE-33362721809049 | 2026-04-10 |  | VERIFIED | corpus body | 5. Remaining stationary and uncontactable after accepting a ride to trigger cancellation or waiting fees |  |
 | FRD-01 | 2 | RYDE_POLICY | RYDE-33362721809049 | 2026-04-10 |  | VERIFIED | corpus body | 8. Abuse of Cancellation and Waiting Fee Policy |  |
 | FRD-01 | 3 | RYDE_POLICY | RYDE-33362721809049 | 2026-04-10 |  | VERIFIED | corpus body | Drivers who overcharge riders and/or complete the trip without the rider onboard. | Community standards, 'Fraudulent Activity': the basis for the signal on a charge the drive |
@@ -375,6 +444,13 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | AUTH-04 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  |  |
 | AUTH-05 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Weights, margin scale and penalty are to be calibrated on the dev set. The 4 Oct report us |
 | AUTH-06 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | One tier per outcome, so annotators and reviewers get one answer (second independent revie |
+| AUTH-07 | 1 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Under $10 / AI agent ruling is **final** / Any confidence level |  |
+| AUTH-07 | 2 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | $10 - $50 / AI agent ruling with **80%+ confidence** / If confidence < 80%, escalate to human review |  |
+| AUTH-07 | 3 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Above $50 / **Always human review** / N/A - AI agent prepares case file only |  |
+| AUTH-07 | 4 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | Route deviation / AI agent ruling if confidence ≥ 80% and deviation ≤ 2km, else escalate |  |
+| AUTH-07 | 5 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | No-show / cancellation / AI agent ruling is final (fee is fixed at $5.00) |  |
+| AUTH-07 | 6 | ORGANIZER | ORG-POLICY-V21 | 2026-01-01 | organizer_v2_1 | VERIFIED | sources/organizer/policy_v2.1.md | If any party has a fraud flag ≥ 1, the confidence threshold is raised to 95% regardless of dispute value. |  |
+| AUTH-07 | 7 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | Mapping the policy's ruling paths to the three tiers, keeping FairRyde's other approval tr |
 | EXP-01 | 1 | GOV_GUIDANCE | GOV-MGF2 | 2020-01-21 |  | PARAPHRASE |  |  | Model Framework paras 3.48, 3.51 and 3.54 (explanations and requests for review); PDPC AI  |
 | EXP-01 | 2 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  | The content list (which rules decided the outcome, two to four decisive evidence items, mi |
 | EXP-02 | 1 | INTERNAL_STANDARD | INT-CHORDX-ONT | 2026-09-25 |  | VERIFIED | sources/chordx_knowledge_base.md | 分"可以写死的规则"和"必须回头读原文的规则" |  |
@@ -384,12 +460,12 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 
 | rule | type | credibility | mode | weakest essential parameter | source types | note |
 |---|---|---|---|---|---|---|
-| META-01 | meta | D | HARD | D | FAIRRYDE |  |
+| META-01 | meta | D | HARD | D | FAIRRYDE, ORGANIZER |  |
 | META-02 | meta | D | HARD |  | RYDE_POLICY | Ryde states effective dates (A); choosing parameters by trip date is FairRyde's rule (D). |
 | META-03 | meta | A | HARD |  | RYDE_TOU |  |
 | META-04 | meta | D | HARD |  | FAIRRYDE |  |
 | META-05 | meta | A | HARD |  | INTERNAL_STANDARD |  |
-| CLS-01 | classification | D | READ |  | FAIRRYDE, INDUSTRY, RYDE_POLICY | The conduct norm is Ryde's (A); handling safety content as its own claim is industry practice (C), and a human decides i |
+| CLS-01 | classification | D | READ |  | FAIRRYDE, INDUSTRY, ORGANIZER, RYDE_POLICY | The conduct norm is Ryde's (A); handling safety content as its own claim is industry practice (C), and a human decides i |
 | CLS-02 | classification | D | HARD |  | INTERNAL_STANDARD | The protocol names the pitfall (A); the ordering of primary and secondary claims is FairRyde's design (D). |
 | CLS-03 | classification | D | HARD |  | FAIRRYDE |  |
 | CLS-04 | classification | D | HARD |  | FAIRRYDE |  |
@@ -408,11 +484,12 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | CW-F01 | fact | D | HARD | D | ORGANIZER |  |
 | CW-F02 | fact | A | HARD | A | ORGANIZER, RYDE_POLICY |  |
 | CW-F02B | fact | C | HARD |  | INDUSTRY, RYDE_POLICY |  |
+| CW-F02C | fact | A | HARD | A | ORGANIZER |  |
 | CW-F03 | fact | A | HARD | A | ORGANIZER, RYDE_POLICY | Threshold and comparison are A; the 30 s boundary band is a FairRyde parameter (D) that only adds a flag. |
 | CW-F03B | fact | D | HARD |  | FAIRRYDE, RYDE_POLICY | The GPS condition is Ryde text (B, see CW-R06); where the wait starts when that condition fails is FairRyde's inference, |
 | CW-F04 | fact | B | HARD |  | ORGANIZER, RYDE_POLICY | The GPS condition is in a Ryde rider article whose wording about the fee name conflicts with the main policy page (META- |
 | CW-F04B | fact | D | HARD | D | FAIRRYDE, RYDE_POLICY | FairRyde's design (D): Ryde does not say how GPS presence at the pick-up is checked (radius, ping gap, outliers). The ra |
-| CW-F05 | fact | D | HARD | D | INDUSTRY, RYDE_POLICY | Ryde's driver guidance (an older article) asks drivers to try to contact the rider (B); the minimum counts are FairRyde  |
+| CW-F05 | fact | D | HARD | D | INDUSTRY, ORGANIZER, RYDE_POLICY | Ryde's driver guidance (an older article) asks drivers to try to contact the rider (B); the minimum counts are FairRyde  |
 | CW-F06 | fact | D | HARD+READ | D | FAIRRYDE | FairRyde's design (D). Until v0.1 any rider call or message during the wait was STRONG whatever it said, which sent rout |
 | CW-F07 | fact | D | HARD | D | RYDE_TOU | The 'designated location' concept is contractual (A); the 200 m threshold is FairRyde's (D). |
 | CW-R00 | eligibility | B | HARD |  | RYDE_POLICY | Ryde text edited 2024-03-18 (older than 12 months). |
@@ -423,15 +500,22 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | CW-R05 | outcome | A | HARD | A | RYDE_POLICY |  |
 | CW-R06 | eligibility | B | HARD | D | ORGANIZER, RYDE_POLICY | The article calls the S$6.61 charge a "Waiting Time Fee", while the main policy page calls S$6.61 the Cancellation Fee ( |
 | CW-R07 | outcome | A | HARD | A | RYDE_POLICY |  |
-| CW-R08 | eligibility | D | HARD | C | FAIRRYDE, INDUSTRY | The late-driver waiver is other platforms' practice (C). The 'not moving toward the pick-up point' ground has no source  |
+| CW-R08 | eligibility | D | HARD | C | FAIRRYDE, INDUSTRY, ORGANIZER | The late-driver waiver is other platforms' practice (C). The 'not moving toward the pick-up point' ground has no source  |
 | CW-R09 | remedy | A | HARD | A | ORGANIZER, RYDE_POLICY | Under ryde_2026 the rider pays S$6.61 (S$5.00 base + S$1.25 platform fee + S$0.36 transaction fee, reference table CANCE |
-| CW-R10 | remedy | A | HARD | D | RYDE_POLICY | For organizer cases the voucher form is assumed (D) because the organizer data does not say how refunds are paid. |
+| CW-R10 | remedy | A | HARD | D | ORGANIZER, RYDE_POLICY | For organizer cases the voucher form is assumed (D) because the organizer data does not say how refunds are paid. |
 | CW-R11 | procedural | D | HARD | D | FAIRRYDE, RYDE_TOU |  |
 | CW-R12 | outcome | D | HARD |  | FAIRRYDE |  |
+| CW-R13 | outcome | D | HARD+READ | D | FAIRRYDE, ORGANIZER | The obligation, the voiding and the refund are the organizer's (A). The sentence 'fails to meet both contact obligations |
+| CW-R14 | outcome | A | HARD | C | ORGANIZER | The grace of 300 s and the S$5.00 credit are the organizer's (A, profile organizer_v2_1). DRIVER_LATE_GRACE_S is rated C |
 | FC-F01 | fact | B | HARD |  | RYDE_POLICY | 'Fares are fixed' comes from rider articles edited more than 12 months ago, and a driver FAQ describes earnings from dri |
-| FC-F02 | fact | D | HARD | D | FAIRRYDE, RYDE_POLICY |  |
+| FC-F02 | fact | D | HARD | D | FAIRRYDE, ORGANIZER, RYDE_POLICY |  |
 | FC-F03 | fact | D | READ |  | FAIRRYDE, INDUSTRY, REGULATION, RYDE_POLICY | Rider agreement and the GPS most-efficient route are Ryde text, but both route articles were edited more than 12 months  |
 | FC-F04 | fact | A | HARD | A | RYDE_POLICY | The gantry sum and both exceptions are Ryde text in a driver article edited 2026-09-02 (A). The order of application is  |
+| FC-F05 | fact | A | READ |  | FAIRRYDE, ORGANIZER | The duty, the timing, the reason and the agreement test are the organizer's text (A). How a message is read is the READ  |
+| FC-F06 | fact | A | HARD |  | ORGANIZER |  |
+| FC-F06B | fact | D | HARD+READ |  | FAIRRYDE, ORGANIZER | The data and the need for it are the organizer's (A, FC-F06); locating an incident on the route by name, direction and t |
+| FC-F07 | fact | A | HARD |  | ORGANIZER |  |
+| FC-F08 | fact | A | HARD |  | ORGANIZER | The duty, its timing and the in-app channel are the organizer's text (A). Checking the notice's content is not possible  |
 | FC-R00 | eligibility | D | HARD | C | FAIRRYDE, RYDE_POLICY | The RydeTAXI facts are Ryde text (rider and driver articles edited 2026-01-26, A). Excluding metered fares from a platfo |
 | FC-R01 | outcome | B | HARD |  | FAIRRYDE, RYDE_POLICY | Both rider articles were edited more than 12 months ago (2024-10-01, 2025-07-17), and the article saying fixed fares exc |
 | FC-R02 | eligibility | D | READ |  | FAIRRYDE, RYDE_POLICY | Both articles were edited more than 12 months ago (2023-06-16, 2024-10-01), so Ryde's text is B. Both give the permissio |
@@ -440,18 +524,22 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | FC-R05 | remedy | D | HARD | D | INDUSTRY |  |
 | FC-R06 | eligibility | A | HARD | A | RYDE_POLICY | Every share is Ryde text in a driver article edited 2026-09-02 (A). The order of application, the default for an unrecor |
 | FC-R07 | outcome | D | HARD+READ | D | FAIRRYDE, RYDE_POLICY | The overstatement rule and its fraud consequence are Ryde's (A), with the rider's share from FC-R06 (A). Refunding the d |
-| FC-R08 | outcome | D | HARD+READ | A | FAIRRYDE, REGULATION | The route duty is regulatory (B) and verified for PDVL drivers only; turning it into a platform-computed ERP refund is F |
+| FC-R08 | outcome | D | HARD+READ | D | FAIRRYDE, ORGANIZER, REGULATION | The route duty is regulatory (B) and verified for PDVL drivers only; turning it into a platform-computed ERP refund is F |
 | FC-R09 | eligibility | A | HARD | A | RYDE_POLICY |  |
 | FC-R10 | outcome | D | HARD+READ |  | RYDE_POLICY | Investigation and sanctions are Ryde's (A); the full-refund remedy is FairRyde's inference (D). |
 | FC-R11 | remedy | A | HARD | A | RYDE_POLICY |  |
 | FC-R12 | outcome | D | HARD |  | FAIRRYDE |  |
+| FC-R13 | outcome | A | HARD | D | ORGANIZER | Rows (1), (2) except its amount, (3) and (4) are the organizer's matrix (A), and the refund base follows DISP-001 and Pr |
+| FC-R13B | outcome | D | HARD |  | FAIRRYDE, ORGANIZER | The outcome word (a full refund) is the organizer's; what 'full' covers is ambiguous and FairRyde's reading decides the  |
+| FC-R14 | fact | A | HARD | D | ORGANIZER | The rule and its test are the organizer's (A); the S$0.01 rounding tolerance only absorbs cents (MONEY_TOLERANCE_SGD, D) |
+| FC-R15 | outcome | A | HARD | D | ORGANIZER | The table of Section 3.3 and the amount are the organizer's (A). MONEY_TOLERANCE_SGD (D) only absorbs cents, and REMEDY_ |
 | DM-R01 | eligibility | A | HARD | A | RYDE_POLICY |  |
 | DM-R02 | eligibility | A | HARD |  | RYDE_POLICY |  |
 | DM-R03 | remedy | A | HARD+READ | A | RYDE_POLICY |  |
 | DM-R04 | authority | A | READ |  | RYDE_POLICY |  |
 | DM-R05 | procedural | A | HARD | A | RYDE_POLICY |  |
 | DM-R06 | remedy | A | HARD |  | RYDE_POLICY, RYDE_TOU |  |
-| SE-R01 | authority | D | HARD |  | GOV_GUIDANCE, RYDE_POLICY | That a human decides is official guidance (B) and sanctions are Ryde's (B); the triage steps (preserve and hash evidence |
+| SE-R01 | authority | D | HARD |  | GOV_GUIDANCE, ORGANIZER, RYDE_POLICY | That a human decides is official guidance (B) and sanctions are Ryde's (B); the triage steps (preserve and hash evidence |
 | SE-R02 | eligibility | B | READ |  | RYDE_POLICY | Every element is in one Ryde rider article edited 2023-04-26 (older than 12 months), so B. |
 | SE-R03 | eligibility | A | HARD |  | RYDE_POLICY |  |
 | SE-R04 | procedural | B | READ | B | RYDE_POLICY | Both reporting duties are in one Ryde driver article edited 2023-09-19 (older than 12 months), so B; routing accidents t |
@@ -462,6 +550,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | GEN-R05 | procedural | D | READ |  | RYDE_POLICY | Ryde's sentence sits in its misconduct section ("Ryde is committed to investigating all reports of misconduct fairly and |
 | GEN-R06 | authority | B | HARD |  | GOV_GUIDANCE, RYDE_TOU |  |
 | GEN-R07 | procedural | D | HARD |  | INTERNAL_STANDARD | The protocol names the risk (A); escalating as the response is FairRyde's design (D). |
+| GEN-R08 | procedural | D | HARD |  | FAIRRYDE, ORGANIZER | The duty to search and cite is the organizer's (A); how a precedent is matched (equal key factors) is FairRyde's (D). |
 | FRD-01 | fraud | D | READ | D | RYDE_POLICY | Ryde defines the prohibited behavior (A). The detection signals (arrival marked without GPS presence, repeated no-shows  |
 | FRD-02 | fraud | D | HARD | D | FAIRRYDE |  |
 | AUTH-00 | authority | A | READ |  | RYDE_TOU |  |
@@ -471,6 +560,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | AUTH-04 | authority | D | HARD | D | FAIRRYDE |  |
 | AUTH-05 | authority | D | HARD | D | FAIRRYDE |  |
 | AUTH-06 | authority | D | HARD |  | FAIRRYDE |  |
+| AUTH-07 | authority | D | HARD | D | FAIRRYDE, ORGANIZER | The thresholds and the fraud-flag rule are the organizer's (A). Reading 'escalate to human review' as tier APPROVE or HU |
 | EXP-01 | explanation | D | HARD |  | FAIRRYDE, GOV_GUIDANCE | Official guidance (B) asks for explanations and a way to request a review; the specific content list and the 30-day posi |
 | EXP-02 | explanation | A | HARD |  | INTERNAL_STANDARD |  |
 | EXP-03 | explanation | D | HARD |  | FAIRRYDE |  |

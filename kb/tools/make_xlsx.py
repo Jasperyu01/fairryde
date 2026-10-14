@@ -25,6 +25,7 @@ import explain
 import privacy_scan
 import stats as statsmod
 from engine_noshow import evidence_index
+from kbload import default_profile
 
 FONT = "Arial"
 F_BASE = Font(name=FONT, size=10)
@@ -202,7 +203,7 @@ def s_readme(wb, kb, st, runs, rep, tests, ann_status, dt_enum, out_scan=None):
     ws.title = "00_说明"
     r = title(ws, f"FairRyde 知识库 {kb.vtag}（Taxonomy · Ontology · Rules）",
               f"按 ChordX 知识库协议 ONT.1 到 ONT.11 编写；生成日期 {kb.y['rules']['meta']['updated']}；状态 draft，待曹老师审核")
-    org = runs["organizer_case"]
+    org = runs["organizer_v2_1"]
     t, tier = org["trace"], org["tier"]
     n_ok = sum(x["ok"] for x in tests)
     lines = [
@@ -273,7 +274,7 @@ def s_scope(wb, kb, runs):
     ], widths=[22, 110])
     r = heading(ws, r, "赛题原文要求（手册第 5 节，逐字核对）")
     r = table(ws, r, ["原文", "来源"], [(x["quote"], x["source"]) for x in dg["track_requirements"]], widths=[100, 16])
-    run = runs["organizer_case"]
+    run = runs["organizer_v2_1"]
     org = run["trace"]
     answers = {
         0: f"{org.claim_type}", 1: f"{kb.disp002['trip_data']['trip_id']}，{org.relation}", 2: org.profile,
@@ -401,12 +402,44 @@ def s_events(wb, kb, rep):
 
 
 def s_mapping(wb, kb, rep):
-    ws = wb.create_sheet("08_DISP-002映射")
-    r = title(ws, "DISP-002 每个字段映射到本体（ONT.1：用真实样本验证）",
-              f"{len(rep.tables['disp002_mapping'])} 条映射覆盖全部 {rep.tables['disp002_leaf_count']} 个叶子字段；有词表的字段逐个值检查能否落进词表；样例值里的姓名和车牌已替换成代码（ONT.11）")
-    rows = [(m["path"], m["maps_to"], m["vocab"], m["sample"], m["n_values"], m["resolved"], m["status"], m["note"]) for m in rep.tables["disp002_mapping"]]
-    table(ws, r, ["DISP-002 路径", "映射到", "词表", "示例值", "值个数", "落词表结果", "状态", "备注"], rows, widths=[38, 46, 16, 40, 7, 44, 10, 16])
-    finish(ws, freeze=f"B{r+1}", filter_ref=f"A{r}:H{r+len(rows)}")
+    for cid, key, name in (("DISP-002", "disp002_mapping", "08_DISP-002映射"), ("DISP-001", "disp001_mapping", "08b_DISP-001映射"), ("DISP-003", "disp003_mapping", "08c_DISP-003映射")):
+        ws = wb.create_sheet(name)
+        r = title(ws, f"{cid} 每个字段映射到本体（ONT.1：用真实样本验证）",
+                  f"{len(rep.tables[key])} 条映射覆盖全部 {rep.tables[key + '_leaf_count'] if key + '_leaf_count' in rep.tables else rep.tables['disp002_leaf_count']} 个叶子字段；有词表的字段逐个值检查能否落进词表；"
+                  "样例值里的姓名和车牌已替换成代码（ONT.11）" + ("；组织方自己的分析和参考答案映射到 OrganizerReference，引擎从不读取它们" if cid != "DISP-002" else ""))
+        rows = [(m["path"], m["maps_to"], m["vocab"], m["sample"], m["n_values"], m["resolved"], m["status"], m["note"]) for m in rep.tables[key]]
+        table(ws, r, [f"{cid} 路径", "映射到", "词表", "示例值", "值个数", "落词表结果", "状态", "备注"], rows, widths=[38, 46, 16, 40, 7, 44, 10, 16])
+        finish(ws, freeze=f"B{r+1}", filter_ref=f"A{r}:H{r+len(rows)}")
+
+
+def s_organizer(wb, kb, org_runs):
+    """The three organizer samples under profile organizer_v2_1: the ruling, the expected ruling, the steps and the explanation drafts."""
+    import engines
+    ws = wb.create_sheet("15b_组织方三案例")
+    r = title(ws, "组织方三个样本案例在政策 v2.1 下的裁决（参数档 organizer_v2_1）",
+              "参考引擎没有调用 LLM，置信度的 A、R 两项按 1.0 计；组织方的参考答案只用来打分，引擎看不到它（case_adapter）；DISP-003 的参考裁决由负责人在 2026 年 10 月 14 日转述，文件里没有")
+    rows = []
+    for cid, res in org_runs.items():
+        t, tier, sc, ex = res["trace"], res["tier"], engines.score(kb, cid, res), kb.expected[cid]
+        rows.append((cid, ex["taxonomy_code"], f"{ex['expected_outcome']} {ex['expected_amount_sgd'] if ex['expected_amount_sgd'] is not None else ''}".strip(), ex["expected_tier"],
+                     f"{t.outcome} {(t.remedy or {}).get('amount_sgd') if (t.remedy or {}).get('amount_sgd') else ''}".strip(), tier["tier"], "、".join(t.reasons),
+                     "一致" if sc["ok"] else f"不一致：{sc['problems']}", "、".join(f"{p['section']}（{'吻合' if p['aligned'] else '区别对待'}）" for p in t.precedents),
+                     "；".join(tier["triggers"][:2])))
+    r = table(ws, r, ["案件", "类型", "组织方参考裁决", "要求的等级", "FairRyde 裁决", "等级", "理由代码", "是否一致", "先例", "等级的原因（前两条）"], rows,
+              widths=[10, 12, 24, 10, 24, 10, 34, 14, 34, 90])
+    for cid, res in org_runs.items():
+        t, tier = res["trace"], res["tier"]
+        r = heading(ws, r, f"{cid} 的步骤")
+        r = table(ws, r, ["指引", "步", "规则", "状态", "结果", "证据"], [(s["playbook"], s["n"], s["rule"], s["status"], s["result"], ", ".join(s["evidence"])) for s in t.steps],
+                  widths=[14, 6, 30, 10, 110, 40])
+        r = heading(ws, r, f"{cid} 的事实认定、第 6 节路径与解释草稿")
+        fnd = [(k, v["value"], v["unit"], v["status"], v["rule"]) for k, v in t.findings.items() if not k.startswith("_")]
+        r = table(ws, r, ["事实", "值", "单位", "状态", "规则"], fnd)
+        ex = explain.policy_v21(kb, res)
+        r = table(ws, r, ["项目", "内容"], [("第 6 节路径", tier.get("section6")), ("决定性", [f"{a}: {b}" for a, b in tier["decisive"]] or "无"), ("人工批准的原因", tier["triggers"] or "无"),
+                                         ("乘客解释", ex["rider"]), ("司机解释", ex["driver"]),
+                                         ("数字核对（EXP-03）", "全部数字都对得上" if not ex["exp03_unmatched"] else f"对不上：{ex['exp03_unmatched']}")], cols=[1, 4])
+    finish(ws, freeze=None)
 
 
 def s_rules(wb, kb, rep):
@@ -570,10 +603,10 @@ def s_sources(wb, kb, rep):
 
 def s_disp002(wb, kb, runs):
     ws = wb.create_sheet("15_DISP-002三层视图")
-    run = runs["organizer_case"]
+    run = runs["organizer_v2_1"]
     t, tier, sens = run["trace"], run["tier"], run["sensitivity"]
     d = kb.disp002
-    r = title(ws, "同一份单据在三层里的样子：DISP-002（ONT.2）", "参数档 organizer_case（逐案读取案件自带的政策对象，META-01）；参考引擎没有调用 LLM，置信度的 A、R 两项按 1.0 计")
+    r = title(ws, "同一份单据在三层里的样子：DISP-002（ONT.2）", "参数档 organizer_v2_1（组织方政策 v2.1，组织方案例的默认参数档，META-01）；参考引擎没有调用 LLM，置信度的 A、R 两项按 1.0 计")
     r = heading(ws, r, "第一层 Taxonomy：它属于哪一类")
     tax = [
         ("争议类型", "TX-CASE", d["dispute_ticket"]["dispute_type"], f"{t.claim_type}（类别 CW Cancellation and Waiting Fee）"),
@@ -581,7 +614,7 @@ def s_disp002(wb, kb, runs):
         ("被争议的收费", "TX-CHARGE", f"cancellation_fee {d['trip_data']['cancellation_fee']}", "CANCELLATION_FEE"),
         ("诉求", "TX-REMEDY-REQUESTED", "I want the charge reversed immediately.", "FEE_WAIVER"),
         ("支付方式", "TX-PAYMETHOD", d["rider_profile"]["payment_method"], "E_WALLET"),
-        ("下单类型", "TX-BOOKING", "未记录", f"UNKNOWN，推断 {t.findings['F-BOOKING-TYPE']['value']}（标记 BOOKING_TYPE_INFERRED）"),
+        ("下单类型", "TX-BOOKING", "未记录", "UNKNOWN（政策 v2.1 从预约上车时间起算等候，不需要下单类型）"),
         ("服务类型", "TX-SERVICE", "未记录", "UNKNOWN（按 CW-R00 视为在政策范围内）"),
         ("取消原因", "TX-CANCELREASON", d["trip_data"]["cancellation_reason"], "rider_no_show"),
         ("事件类型", "TX-EVENT", sorted({a["event_type"] for a in d["app_events"]}), "全部在受控词表里"),
@@ -643,8 +676,8 @@ def s_disp002(wb, kb, runs):
                                      ("软标记（每个扣 E 0.1）", t.confidence["soft_flags"] or "无"),
                                      ("决定性", [f"{a}: {b}" for a, b in tier["decisive"]] or "无"), ("人工批准条件", tier["triggers"] or "无"),
                                      ("升级门", tier["gates"] or "无"), ("只在运行时检查的门", tier["runtime_only_gates"]), ("自治等级", tier["tier"])], cols=[1, 4])
-    ex = explain.noshow(kb, run)
-    r = heading(ws, r, "给双方的解释草稿（EXP-01 到 EXP-03：每个数字都登记并核对；不用姓名）")
+    ex = explain.policy_v21(kb, run)
+    r = heading(ws, r, "给双方的解释草稿（EXP-01 到 EXP-03：每个数字都登记并核对；不用姓名；引用政策 v2.1 的条款）")
     r = table(ws, r, ["对象", "解释"], [("乘客", ex["rider"]), ("司机", ex["driver"]), ("登记的数字", ex["numbers_used"]),
                                      ("数字核对（EXP-03）", "全部数字都对得上" if not ex["exp03_unmatched"] else f"对不上：{ex['exp03_unmatched']}")], cols=[1, 4])
     r2 = runs["ryde_2026"]
@@ -713,7 +746,7 @@ def s_open(wb, kb):
     finish(ws, freeze=None)
 
 
-def build_kb_workbook(kb, rep, runs, dt_enum, priv, tests, path, ann_status, out_scan=None):
+def build_kb_workbook(kb, rep, runs, dt_enum, priv, tests, path, ann_status, out_scan=None, org_runs=None):
     st = statsmod.compute(kb, rep, priv)
     wb = Workbook()
     s_readme(wb, kb, st, runs, rep, tests, ann_status, dt_enum, out_scan)
@@ -732,10 +765,12 @@ def build_kb_workbook(kb, rep, runs, dt_enum, priv, tests, path, ann_status, out
     s_auth(wb, kb)
     s_sources(wb, kb, rep)
     s_disp002(wb, kb, runs)
+    if org_runs:
+        s_organizer(wb, kb, org_runs)
     s_selftest(wb, kb, tests)
     s_annotation_design(wb, kb, rep)
     s_open(wb, kb)
-    replaced = _pseudo_pass(wb, privacy_scan.dictionary(kb.disp002))
+    replaced = _pseudo_pass(wb, privacy_scan.dictionary_all(list(kb.organizer_cases.values())))
     _finalize(wb)
     wb.save(path)
     return {"path": str(path), "pseudonymized_cells": replaced}
@@ -771,14 +806,48 @@ def _lists_sheet(wb, kb):
 
 
 def _auto_inputs(kb, case):
-    """Mechanical extraction of the INPUT columns from a pseudonymized organizer-format case (fill mode AUTO)."""
+    """Mechanical extraction of the INPUT columns from a pseudonymized organizer-format case (fill mode AUTO). Works for the three organizer samples:
+    the no-show case (DISP-002) and, with the cancellation columns left blank, the route (DISP-001) and surge (DISP-003) cases."""
     t, tk = case["trip_data"], case["dispute_ticket"]
-    ev = {a["event_type"]: a for a in case["app_events"]}
+    code = kb.resolve("TX-CASE", tk["dispute_type"])
+    profile = default_profile(case)
+    ev = {a["event_type"]: a for a in case.get("app_events", [])}
     T = lambda s: datetime.fromisoformat(s).replace(tzinfo=None) if s else None
+    chat = case.get("chat_logs", [])
+    exp = kb.expected.get(tk["dispute_id"], {})
+    common = {
+        "case_id": tk["dispute_id"], "case_source": "ORGANIZER", "split": "ORGANIZER_PUBLIC", "seed_family": f"SEED-{tk['dispute_id']}", "policy_profile": profile,
+        "filed_by": kb.resolve("TX-ROLE", tk["filed_by"]), "dispute_type_raw": tk["dispute_type"], "description": tk["description"],
+        "service_type": kb.resolve("TX-SERVICE", t.get("service_type")) or "UNKNOWN",
+        "booking_type_recorded": kb.resolve("TX-BOOKING", t.get("booking_type")) or "UNKNOWN",
+        "payment_method": kb.resolve("TX-PAYMETHOD", case["rider_profile"].get("payment_method")), "filed_at": T(tk.get("filed_at")),
+        "pickup_name": t["pickup_location"]["name"],
+        "driver_calls": sum(1 for c in chat if c["sender"] == "driver" and c["type"] == "call"),
+        "driver_messages": sum(1 for c in chat if c["sender"] == "driver" and c["type"] == "message"),
+        "seed_case_id": tk["dispute_id"], "varied_factor": "none (seed)", "guideline_version": "G-0.1", "rulebook_version": f"KB-{kb.version}",
+        "labeling_mode": "STANDARD",      # organizer cases are public to the team, so they cannot be labeled blind
+        "organizer_expected_outcome": exp.get("expected_outcome"), "organizer_expected_amount_sgd": exp.get("expected_amount_sgd"),
+    }
+    if code != "CW-NOSHOW":               # a route or surge sample: a fare is contested, there is no cancellation
+        start, end = T(t.get("start_time")), T(t.get("end_time"))
+        stamps = [T(c["timestamp"]) for c in chat]
+        assigned_at = min(stamps + [start]) if start else (min(stamps) if stamps else None)
+        in_chat = lambda ts: assigned_at is not None and end is not None and assigned_at <= T(ts) <= end
+        fb = case.get("fare_breakdown") or {}
+        contested = (fb.get("delta") or {}).get("total") if isinstance(fb.get("delta"), dict) else None
+        if contested is None:
+            contested = t.get("fare_difference")
+        rider_sys = any(c["sender"] == "rider" and in_chat(c["timestamp"]) for c in chat)
+        return {**common, "contested_charge_type": "FARE", "contested_amount_sgd": contested,
+                "rider_contacts": sum(1 for c in chat if c["sender"] == "rider" and in_chat(c["timestamp"])),
+                "wait_pings": sum(1 for g in case.get("gps_telemetry", []) if start and end and start <= T(g["timestamp"]) <= end),
+                "rider_side_evidence": "system_records" if rider_sys else ("statement_only" if tk.get("description") else "none")}
     pol = case.get("cancellation_policy") or {}
     end = datetime.fromisoformat(t["cancellation_time"])
     arr = datetime.fromisoformat(t["driver_arrival_time"]) if t.get("driver_arrival_time") else None
-    if pol and t.get("driver_wait_start"):                      # same anchor rule as the wait_elapsed_s formula (CW-F02, CW-F02B)
+    if profile == "organizer_v2_1" and t.get("scheduled_time"):          # same anchor rule as the wait_elapsed_s formula (CW-F02C)
+        start = max(x for x in (arr, datetime.fromisoformat(t["scheduled_time"])) if x)
+    elif pol and t.get("driver_wait_start"):                              # CW-F02 of the legacy organizer_case profile
         start = datetime.fromisoformat(t["driver_wait_start"])
     elif (t.get("booking_type") or "").upper() == "ADVANCE" and t.get("scheduled_time"):
         start = max(x for x in (arr, datetime.fromisoformat(t["scheduled_time"])) if x)
@@ -787,22 +856,17 @@ def _auto_inputs(kb, case):
     assigned_at = min([datetime.fromisoformat(a["timestamp"]) for a in case["app_events"] if a["event_type"] == "driver_assigned"]
                       or [datetime.fromisoformat(a["timestamp"]) for a in case["app_events"] if a["event_type"] == "booking_confirmed"] or [start])
     from_assignment = lambda ts: assigned_at <= datetime.fromisoformat(ts) <= end      # CW-F06 with D30: placements before arrival count
-    thr = pol["no_show_threshold_min"] * 60 if "no_show_threshold_min" in pol else kb.pval("NO_SHOW_THRESHOLD_S", "ryde_2026")
-    fee = pol.get("cancellation_fee_after_wait", kb.pval("NO_SHOW_FEE_SGD", "ryde_2026"))
+    if profile == "organizer_v2_1":
+        thr, fee = kb.pval("NO_SHOW_THRESHOLD_S", profile), kb.pval("NO_SHOW_FEE_SGD", profile)
+    else:
+        thr = pol["no_show_threshold_min"] * 60 if "no_show_threshold_min" in pol else kb.pval("NO_SHOW_THRESHOLD_S", "ryde_2026")
+        fee = pol.get("cancellation_fee_after_wait", kb.pval("NO_SHOW_FEE_SGD", "ryde_2026"))
     return {
-        "case_id": tk["dispute_id"], "case_source": "ORGANIZER", "split": "ORGANIZER_PUBLIC", "seed_family": f"SEED-{tk['dispute_id']}",
-        "policy_profile": "organizer_case" if pol else "ryde_2026",
-        "filed_by": kb.resolve("TX-ROLE", tk["filed_by"]), "dispute_type_raw": tk["dispute_type"], "description": tk["description"],
-        "service_type": kb.resolve("TX-SERVICE", t.get("service_type")) or "UNKNOWN",
-        "booking_type_recorded": kb.resolve("TX-BOOKING", t.get("booking_type")) or "UNKNOWN",
-        "payment_method": kb.resolve("TX-PAYMETHOD", case["rider_profile"].get("payment_method")),
+        **common,
         "booked_at": T(ev.get("booking_confirmed", {}).get("timestamp")), "matched_at": T(ev.get("driver_assigned", {}).get("timestamp")),
         "scheduled_time": T(t.get("scheduled_time")), "driver_arrival_time": T(t.get("driver_arrival_time")),
-        "driver_wait_start": T(t.get("driver_wait_start")), "cancellation_time": T(t.get("cancellation_time")), "filed_at": T(tk.get("filed_at")),
+        "driver_wait_start": T(t.get("driver_wait_start")), "cancellation_time": T(t.get("cancellation_time")),
         "cancellation_reason": t.get("cancellation_reason"), "contested_charge_type": "CANCELLATION_FEE", "contested_amount_sgd": t.get("cancellation_fee"),
-        "pickup_name": t["pickup_location"]["name"],
-        "driver_calls": sum(1 for c in case["chat_logs"] if c["sender"] == "driver" and c["type"] == "call"),
-        "driver_messages": sum(1 for c in case["chat_logs"] if c["sender"] == "driver" and c["type"] == "message"),
         "rider_contacts": sum(1 for c in case["chat_logs"] if c["sender"] == "rider" and from_assignment(c["timestamp"])),
         "wait_pings": sum(1 for g in case["gps_telemetry"] if start <= datetime.fromisoformat(g["timestamp"]) <= end),
         "policy_threshold_s": thr, "policy_fee_sgd": fee,
@@ -810,8 +874,6 @@ def _auto_inputs(kb, case):
                                                      or any(c["sender"] == "rider" and from_assignment(c["timestamp"]) for c in case["chat_logs"])
                                                      or any(re.search(r"fail|not delivered|undelivered", a["details"], re.I) for a in case["app_events"] if a["event_type"] == "rider_notified"))
                                 else ("statement_only" if tk.get("description") else "none")),
-        "seed_case_id": tk["dispute_id"], "varied_factor": "none (seed)", "guideline_version": "G-0.1", "rulebook_version": f"KB-{kb.version}",
-        "labeling_mode": "STANDARD",      # organizer cases are public to the team, so they cannot be labeled blind
     }
 
 
@@ -834,7 +896,8 @@ def a_instructions(wb, kb):
         ("自治等级", "AUTO 自动执行；APPROVE 有裁决、需人确认或修改；HUMAN 安全类，或结果为 ESCALATE_HUMAN（没有可批准的裁决，AUTH-06）。结果填 ESCALATE_HUMAN 时自治等级必须填 HUMAN；escalate 列在 APPROVE 或 HUMAN 时填 Y，AUTO 时填 N。"),
         ("颜色", "黄色 = 人填；灰色 = 自动抄录或公式，不要改；浅蓝 = AI 可起草的辅助列；绿色第 5 行 = 示例（虚构案件，只示范格式，不计入统计）。"),
         ("难例类型", "MISSING_INFO 关键信息缺失；NEGATIVE 无需处理的负样本；VAGUE 措辞含糊；STATE_UPDATE 需要状态更新（协议要求的四类），另有 BOUNDARY 边界值、CONFLICT 冲突、BAD_FAITH 恶意、ADVERSARIAL 注入攻击、CLEAR 清晰案例。"),
-        ("证据编号", "E-TKT-01 工单；E-PRF-R / E-PRF-D 乘客 / 司机档案；E-TRP-01(.字段) 行程记录；E-GPS-nn 司机定位；E-RGPS-nn 乘客定位；E-CHT-nn 聊天与通话；E-APP-nn app 事件；E-POL-01 案件自带政策；E-GEO-nn OneMap 查询（参考，不算证据）。"),
+        ("证据编号", "E-TKT-01 工单；E-PRF-R / E-PRF-D 乘客 / 司机档案；E-TRP-01(.字段) 行程记录；E-GPS-nn 司机定位；E-RGPS-nn 乘客定位；E-CHT-nn 聊天与通话；E-APP-nn app 事件；E-POL-01 案件自带政策；E-GEO-nn OneMap 查询（参考，不算证据）；E-PAY-01 费用明细；E-RTE-01 系统推荐路线；E-TRF-nn 交通事件；E-SRG-01 平台加价记录。"),
+        ("组织方参考答案", "organizer_expected_outcome 与 organizer_expected_amount_sgd 是组织方给出的参考裁决（DISP-001、DISP-002 来自文件本身，DISP-003 由负责人在 2026 年 10 月 14 日转述），由脚本抄录，不是标注，也不能抄进答案列；盲标时随最后几列一起折叠。FairRyde 引擎的结果与它们逐案比对在 build 的固定测试里完成。"),
         ("示例来源", ann["meta"]["example_note"]),
         ("脱敏", "案件文字里的姓名、车牌已换成代码（RIDER-NAME-1、DRIVER-NAME-1、PLATE-1）；对照表只放在负责人本机（kb/private/），不进仓库。"),
     ]
@@ -897,9 +960,9 @@ def a_table(wb, kb, lists, cases):
         if name == "wait_elapsed_s":
             ws_, arr, sch, end = (f"{L[k]}{row}" for k in ("driver_wait_start", "driver_arrival_time", "scheduled_time", "cancellation_time"))
             prof, book = f"{L['policy_profile']}{row}", f"{L['booking_type_recorded']}{row}"
-            return (f'=IF(NOT(ISNUMBER({end})),"",IF({prof}="organizer_case",IF(ISNUMBER({ws_}),ROUND(({end}-{ws_})*86400,0),""),'
+            return (f'=IF(NOT(ISNUMBER({end})),"",IF({prof}="organizer_v2_1",IF(ISNUMBER({sch}),ROUND(MAX(0,{end}-MAX({sch},IF(ISNUMBER({arr}),{arr},{sch})))*86400,0),""),IF({prof}="organizer_case",IF(ISNUMBER({ws_}),ROUND(({end}-{ws_})*86400,0),""),'
                     f'IF({book}="ADVANCE",IF(ISNUMBER({arr}),ROUND(({end}-MAX({arr},{sch}))*86400,0),""),'
-                    f'IF(ISNUMBER({arr}),ROUND(({end}-{arr})*86400,0),""))))')
+                    f'IF(ISNUMBER({arr}),ROUND(({end}-{arr})*86400,0),"")))))')
         if name == "wait_margin_s":
             e, t = L["wait_elapsed_s"], L["policy_threshold_s"]
             return f'=IF(AND(ISNUMBER({e}{row}),ISNUMBER({t}{row})),{e}{row}-{t}{row},"")'
@@ -1102,7 +1165,7 @@ def build_annotation(kb, path: Path, cases: list[dict]) -> dict:
     L = a_table(wb, kb, lists, cases)
     a_coverage(wb, kb, L)
     wb.move_sheet("lists", offset=len(wb.sheetnames))
-    replaced = _pseudo_pass(wb, privacy_scan.dictionary(kb.disp002))
+    replaced = _pseudo_pass(wb, privacy_scan.dictionary_all(list(kb.organizer_cases.values())))
     _finalize(wb, skip_autofit=(ANN_SHEET,))
     wb.save(path)
     msg = f"{path.name} 已生成（没有人工填写过）" + (f"，旧文件备份到 backup/{backup.name}" if backup else "")

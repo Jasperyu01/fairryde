@@ -3,7 +3,7 @@
 # Organizer data is synthetic, but the same pipeline must run on it so the flow is proven before any real data appears.
 
 meta:
-  version: 0.2.0
+  version: 0.3.0
   status: draft
   updated: 2026-10-05
   owner: Jasper
@@ -61,7 +61,7 @@ leak_scan:               # ONT.11.4: zero name hits does not mean clean
     - "Singapore plates (for example SBA 1234 A, SBA1234A)"
     - "NRIC or FIN; e-mail addresses; 12 to 19 digit numbers passing Luhn"
     - "Unit numbers (#12-345)"
-    - "Name fragments right after a code (for example 'DRIVER-NAME-1 Kumar') or right before it (for example 'Mr Tan DRIVER-NAME-1'), ONT.11.4 items 4 and 6"
+    - "Name fragments right after a code (for example 'DRIVER-NAME-1 Nair') or right before it (for example 'Mr Pillai DRIVER-NAME-1'), ONT.11.4 items 4 and 6"
     - "Generated outputs and our own YAML files too: the build scans both workbooks, the reports and kb/*.yaml for the dictionary terms and patterns and expects zero hits (sources/ keeps the organizer's original file)"
   same_rules_as_runtime: "The leak scan uses the same patterns as the runtime boundary check that blocks unredacted text from cloud calls, so a case that passes one passes the other."
   report: "Counts per check only."

@@ -186,15 +186,17 @@ def erp_of(kb: KB, gantries: list[dict], share: float) -> float | None:
     return _r2(share * total)
 
 
-def run(kb: KB, case: dict) -> dict:
+def run(kb: KB, case: dict, profile: str = PROFILE) -> dict:
+    """profile: ryde_2026 (the default and the regression profile) or organizer_v2_1, where TOLLS_TREATMENT = PASS_THROUGH means FC-R08 refunds nothing (D47)."""
     trip, fare = case.get("trip_data", {}), case.get("fare_breakdown", {})
+    pass_through = kb.pval("TOLLS_TREATMENT", profile) == "PASS_THROUGH"
     steps, flags, reasons, fraud, triggers, decisive, attach = [], [], [], [], [], [], {}
     out = {"steps": steps, "flags": flags, "reasons": reasons, "fraud": fraud, "attach": attach, "amount": None}
 
     def finish(outcome, amount=None):
         if decisive:
             flags.append("GENERIC_ASSUMPTION_USED")           # META-05: a rule rated C or D (FC-F03) or a D parameter is decisive
-        limit = kb.pval("AUTO_LIMIT_SGD", PROFILE)
+        limit = kb.pval("AUTO_LIMIT_SGD", profile)
         if outcome != "ESCALATE_HUMAN" and amount is not None and amount > limit:
             triggers.append(f"amount S${amount:.2f} above AUTO_LIMIT_SGD S${limit:.2f}")
         tier = "HUMAN" if outcome == "ESCALATE_HUMAN" else ("APPROVE" if triggers or decisive else "AUTO")
@@ -226,8 +228,8 @@ def run(kb: KB, case: dict) -> dict:
     charged = _r2(charged)
     steps.append(("FC-F04", f"expected ERP {actual:.2f} for the rider (charged {charged:.2f})"))
     out["expected"] = actual
-    tol_lo, tol_hi = kb.param("TOLL_TOLERANCE_SGD", PROFILE)["plausible_range"]
-    tol = kb.pval("TOLL_TOLERANCE_SGD", PROFILE)
+    tol_lo, tol_hi = kb.param("TOLL_TOLERANCE_SGD", profile)["plausible_range"]
+    tol = kb.pval("TOLL_TOLERANCE_SGD", profile)
     over = _r2(charged - actual) if charged - actual > tol + 1e-9 else 0.0                              # PB-FC-TOLL 3: FC-R07
     if over:
         reasons.append("FC-R-TOLL-OVERSTATED")
@@ -273,7 +275,9 @@ def run(kb: KB, case: dict) -> dict:
                 steps.append(("GEN-R07", "FC-R08 does not rule on a metered fare (D32)"))
                 return finish("ESCALATE_HUMAN")
             potential = _r2(max(0.0, min(actual, charged) - rec))     # what the rider paid above ERP(recommended), up to diff
-            if potential > 0:
+            if potential > 0 and pass_through:                                                       # organizer_v2_1: tolls pass through at cost (D47)
+                steps.append(("FC-R08", "the tolls of the longer route pass through at cost under this profile: nothing is refunded for the detour (D47)"))
+            elif potential > 0:
                 decisive.append(("FC-F03", "reading the justification the other way would change the amount"))
                 if not review.get("justification"):
                     detour = potential
@@ -287,7 +291,7 @@ def run(kb: KB, case: dict) -> dict:
     return finish("UPHOLD", 0.0)
 
 
-def fc_r01(kb: KB, case: dict) -> dict:
+def fc_r01(kb: KB, case: dict, profile: str = PROFILE) -> dict:
     """FC-R01 on a route ticket: fixed fare and charged = quoted means no fare refund, and the ERP the longer route caused is
     never closed here: it goes to its own FC-TOLL claim (run above) whenever the actual path passed gantries that the
     recommended route avoids, or passed them more often (FairRyde's reading of the ERP difference, open item D35). Without the
@@ -304,6 +308,6 @@ def fc_r01(kb: KB, case: dict) -> dict:
     rg = (case.get("route_review") or {}).get("recommended_gantries")
     extra = sorted((actual - Counter(g.get("gantry") for g in rg if _active(g))).elements(), key=str) if rg is not None else []
     needs_r12 = fixed_same and rg is None and bool(actual)
-    claim = run(kb, case) if (fixed_same and extra) else None
+    claim = run(kb, case, profile) if (fixed_same and extra and kb.pval("TOLLS_TREATMENT", profile) != "PASS_THROUGH") else None
     return {"applies": fixed_same, "fare_refund": 0.0 if fixed_same else None, "reason": "FC-R-FIXED-FARE" if fixed_same else None,
             "toll_claim": claim, "extra_gantries": extra, "escalate": "FC-R12" if needs_r12 else None}

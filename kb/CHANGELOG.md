@@ -1,5 +1,49 @@
 # Knowledge base changelog
 
+## v0.3.0 (14 Oct 2026)
+
+Step A6 (Jasper, 14 Oct). The organizer uploaded Ryde Dispute Resolution Policy v2.1 and the sample cases DISP-001 (route deviation) and DISP-003 (fare and surge). Policy v2.1 says it applies to the Rider Advocate, Driver Advocate and Judge, so it is the primary policy for the hackathon. v0.2 is unchanged in the Ryde profile: E01 to E04 and E11 give the same results as in the A4 rerun (`validation/build_checks/A6/01_engine_rerun.json`).
+
+Decisions D41 to D55 and organizer questions O17 to O25 are in `kb/open_items.yaml`.
+
+### Sources, profiles and data
+
+- **Sources:** ORG-POLICY-V21 (`kb/sources/organizer/policy_v2.1.md`, SHA-256 827c4d2c...8699), ORG-DISP001 and ORG-DISP003. Credibility A, quotes verified by section.
+- **Profile `organizer_v2_1`:** the default for organizer cases (a DISP-nnn id). Free wait 5 minutes from the scheduled time, no-show fee S$5.00 paid to the driver, route tolerance 1.0 km, AI limit 2.0 km, final ruling below S$10, human review above S$50, confidence 0.80 (0.95 with a fraud flag). `organizer_case` stays as the legacy profile for E04's embedded policy object, and `ryde_2026` stays as the regression profile for E01 to E15. Tolls: `TOLLS_TREATMENT` is PASS_THROUGH under v2.1 and REFUND_DETOUR_ERP under ryde_2026.
+- **Precedents:** `kb/precedents.yaml` holds PREC-7.1 (route, partial refund), PREC-7.2 (surge differential) and PREC-7.3 (no-show fee waived).
+- **Expected rulings:** `kb/organizer_cases.yaml`: DISP-001 PARTIAL_REFUND S$3.44, tier APPROVE; DISP-002 UPHOLD, tier APPROVE; DISP-003 FULL_REFUND S$4.50, tier AUTO. The DISP-003 expectation was stated by Jasper and is not in the file.
+
+### Taxonomy, ontology, rules and playbooks
+
+- **Taxonomy:** FC-SURGE is now adjudicated (PB-FC-SURGE). New reasons CW-R-NOCONTACT-VOID, CW-R-DRIVER-NOSHOW, FC-R-DEVIATION-UNNOTIFIED, FC-R-DEVIATION-UNJUSTIFIED, FC-R-DEVIATION-AGREED, FC-R-DEVIATION-TOLERANCE, FC-R-SURGE-UNNOTIFIED, FC-R-SURGE-NOTIFIED and FC-R-SURGE-NOT-HIGHER. New remedy form ORIGINAL_PAYMENT_METHOD and flag FIGURES_DISAGREE.
+- **Ontology:** the entities ENT-ROUTE, ENT-INCIDENT, ENT-FARE, ENT-SURGE and ENT-ORGREF; new attributes; finding types F-DEVIATION-KM, F-DEVIATION-CONFIRMED, F-FARE-FIGURES, F-NOTICE, F-AGREED, F-JUSTIFIED, F-SURGE-CHANGE, F-SURGE-NOTICE and F-SURGE-SOLELY. Field mappings for the DISP-001 and DISP-003 formats (`disp001_mapping`, `disp003_mapping`), including chat logs with a "message" field.
+- **New rules:** CW-F02C, CW-R13 (D), CW-R14, FC-F05, FC-F06, FC-F06B (D), FC-F07, FC-F08, FC-R13, FC-R13B (D), FC-R14, FC-R15, AUTH-07 (D) and GEN-R08 (D).
+- **Rules with v2.1 text and sources added (existing wording kept):** META-01, CLS-01, CLS-05, SE-R01, CW-F02, CW-F03, CW-F05, CW-R03, CW-R04, CW-R08, CW-R09, CW-R10, DQ-05, DQ-06, FC-F02, FC-F03, FC-R01, FC-R03, FC-R04, FC-R05, FC-R08, AUTH-01, AUTH-02, AUTH-04 and EXP-01.
+- **Playbooks:** PB-CW-NOSHOW, PB-CW-RIDERCANCEL, PB-FC-ROUTE and PB-INTAKE take v2.1 steps; PB-FC-SURGE is new.
+- **Conflicts between v2.1 and the earlier rules (each with its choice):**
+  - D41: v2.1 is the primary policy; ryde_2026 is the fallback.
+  - D42: free wait 5 minutes from the scheduled time (v2.1), against 3 minutes from arrival (Ryde pages).
+  - D43: fee S$5.00, against S$6.61.
+  - D44: Section 2.3 voids the fee when the driver made no contact (CW-R13).
+  - D45: Section 2.4 driver no-show replaces DRIVER_LATE_GRACE_S in this profile.
+  - D46: Section 1.3 gives a partial refund where the older rules gave a full one. "Full" in Section 1.3 is ambiguous and the choice is recorded.
+  - D47: tolls pass through under v2.1; FC-R08 and the FC-R01 toll claim do not refund.
+  - D48: Section 6 thresholds replace the AUTH limits; the tier mapping is final to AUTO, escalate with a proposed ruling to APPROVE, above S$50, safety or case file only to HUMAN.
+  - D49: Section 5.2, safety content is case file only.
+  - D50: Section 4.4 against Section 6.2 for damage.
+  - D51: DISP-001 cites a nonexistent "Driver Policy 4.2"; Section 1.2 is cited instead.
+  - D52: D29 stays as a confidence penalty of 0.10 (D, plausible range 0.05 to 0.25).
+  - D53: DISP-001 is under S$10 but 4.3 km exceeds 2 km, so the tier is APPROVE with S$3.44 recommended.
+  - D54: the new readings, and the rule that organizer answer blocks are removed before the engines read a case.
+  - D55: known limitations.
+
+### Tools and outputs
+
+- **Engines:** `engine_route.py` and `engine_surge.py` are new. `engine_noshow.py` has a v2.1 branch, `engine_toll.py` honors TOLLS_TREATMENT, and `engines.py` picks the engine and scores a sample against its expected ruling. `case_adapter.py` removes the organizer answer blocks and normalizes chat logs. `policy_v21.py` holds the Section 6 path, the composite confidence, precedent matching and the evidence index.
+- **Tests:** `kb/tools/selftest_v21.py`, 56 tests: the three samples pinned to their rulings, one-factor variants, tolls pass-through, regression E01 to E04 and E11, and the reconciliation records. The 128 no-show variants, 53 ERP cases and 565 message readings pass as before.
+- **Workbooks:** `FairRyde_Annotation_v0.3.xlsx` carries DISP-001, DISP-002 and DISP-003 with the columns organizer_expected_outcome and organizer_expected_amount_sgd; `FairRyde_KB_v0.3.xlsx` has a sheet for the three organizer cases. Both are pseudonymized, and the leak scan is clean. The recalculation script was not available in this environment, so formulas were not recalculated.
+- **Privacy:** example names in `privacy.yaml` changed so they do not collide with names in the new cases.
+
 ## v0.2.0 (14 Oct 2026)
 
 v0.1 (7 Oct, commit b94bc63) was validated in round 1 and rated NO-GO. v0.2 applies the round 1 fix list, `validation/V5_scorecard/54_fix_list.json` (FX1 to FX9), in steps A1 to A4 of `docs/NEXT_STEPS.md`, and A5 freezes it for validation round 2.
