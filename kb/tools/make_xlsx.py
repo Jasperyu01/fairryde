@@ -407,7 +407,7 @@ def s_mapping(wb, kb, rep):
         r = title(ws, f"{cid} 每个字段映射到本体（ONT.1：用真实样本验证）",
                   f"{len(rep.tables[key])} 条映射覆盖全部 {rep.tables[key + '_leaf_count'] if key + '_leaf_count' in rep.tables else rep.tables['disp002_leaf_count']} 个叶子字段；有词表的字段逐个值检查能否落进词表；"
                   "样例值里的姓名和车牌已替换成代码（ONT.11）" + ("；组织方自己的分析和参考答案映射到 OrganizerReference，引擎从不读取它们" if cid != "DISP-002" else ""))
-        rows = [(m["path"], m["maps_to"], m["vocab"], m["sample"], m["n_values"], m["resolved"], m["status"], m["note"]) for m in rep.tables[key]]
+        rows = [(m["path"], m["maps_to"], m["vocab"], re.sub(r"(\bending(?:\s+in)?\s+)\d{4}\b", r"\1CARD-X", str(m["sample"]), flags=re.I), m["n_values"], m["resolved"], m["status"], m["note"]) for m in rep.tables[key]]
         table(ws, r, [f"{cid} 路径", "映射到", "词表", "示例值", "值个数", "落词表结果", "状态", "备注"], rows, widths=[38, 46, 16, 40, 7, 44, 10, 16])
         finish(ws, freeze=f"B{r+1}", filter_ref=f"A{r}:H{r+len(rows)}")
 
@@ -561,6 +561,8 @@ def s_auth(wb, kb):
              ("APPROVE 人工批准", "FairRyde 已给出裁决，且 AUTH-02 任一触发或 AUTH-04 中等级为 APPROVE 的升级门（G1、G3、G5、G6、G7）触发；或类型范围是 ADJUDICATE_WITH_APPROVAL（改目的地费、未接到乘客、清洁费）",
               "AI 给出暂定裁决和一页摘要，人确认、修改或驳回，写入 HumanReview 日志；10% 独立审计（复核人先自己判，再看 AI 建议）；确认率异常偏高时审计"),
              ("HUMAN 人工裁决", "AUTH-03：安全、可能涉刑、任何账户处罚；AUTH-04 中等级为 HUMAN 的升级门（G2、G4、G8）；AUTH-06：结果为 ESCALATE_HUMAN（事实有争议、乘客强反证、无成文规则），没有可批准的 AI 裁决", "AI 只分类、保全证据、写中立摘要和规则决定不了的那一点，不认定过错")]
+    tiers.append(("组织方案例 (organizer_v2_1)", "组织方政策 v2.1 第 6 节取代上面的金额上限和置信度 τ（AUTH-07）：低于 S$10 AI 裁决为终局；S$10 到 S$50 需要 80% 置信度；高于 S$50 一律人工，AI 只准备案卷；路线偏离需要 80% 且偏离不超过 2 km；有欺诈标记 (fraud_flags 至少 1) 时门槛 95%；取最严的一条。FairRyde 的其他批准触发和升级门 G1、G4 仍然有效，G5、G6 由第 6 节代替",
+                  "终局→AUTO；升级且 FairRyde 提出裁决→APPROVE；高于 S$50、安全、只准备案卷→HUMAN"))
     r = table(ws, r, ["等级", "条件", "执行方式"], tiers, cols=[1, 3, 4])
     rows = [(rid, kb.rules[rid]["name"], kb.rules[rid].get("zh", ""), kb.rules[rid]["statement"], kb.rules[rid]["credibility"])
             for rid in kb.rule_order if kb.rules[rid]["family"] == "AUTH"]

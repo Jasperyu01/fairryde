@@ -26,7 +26,7 @@ ORGANIZER_PROFILE = "organizer_v2_1"          # the default profile of an organi
 
 def is_organizer_case(case: dict) -> bool:
     """An organizer case carries the organizer's own dispute id (DISP-nnn); the regression and synthetic cases do not."""
-    return bool(re.fullmatch(r"DISP-\d+", str((case.get("dispute_ticket") or {}).get("dispute_id", ""))))
+    return bool(re.fullmatch(r"DISP-(\d{4}-)?\d+", str((case.get("dispute_ticket") or {}).get("dispute_id", ""))))
 
 
 def default_profile(case: dict) -> str:

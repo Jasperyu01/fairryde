@@ -4,7 +4,7 @@
 
 Step A6 (Jasper, 14 Oct). The organizer uploaded Ryde Dispute Resolution Policy v2.1 and the sample cases DISP-001 (route deviation) and DISP-003 (fare and surge). Policy v2.1 says it applies to the Rider Advocate, Driver Advocate and Judge, so it is the primary policy for the hackathon. v0.2 is unchanged in the Ryde profile: E01 to E04 and E11 give the same results as in the A4 rerun (`validation/build_checks/A6/01_engine_rerun.json`).
 
-Decisions D41 to D55 and organizer questions O17 to O25 are in `kb/open_items.yaml`.
+Decisions D41 to D56 and organizer questions O17 to O28 are in `kb/open_items.yaml`. D56 records the step check of A6 (round 1) and the limitations it left.
 
 ### Sources, profiles and data
 
@@ -17,7 +17,7 @@ Decisions D41 to D55 and organizer questions O17 to O25 are in `kb/open_items.ya
 
 - **Taxonomy:** FC-SURGE is now adjudicated (PB-FC-SURGE). New reasons CW-R-NOCONTACT-VOID, CW-R-DRIVER-NOSHOW, FC-R-DEVIATION-UNNOTIFIED, FC-R-DEVIATION-UNJUSTIFIED, FC-R-DEVIATION-AGREED, FC-R-DEVIATION-TOLERANCE, FC-R-SURGE-UNNOTIFIED, FC-R-SURGE-NOTIFIED and FC-R-SURGE-NOT-HIGHER. New remedy form ORIGINAL_PAYMENT_METHOD and flag FIGURES_DISAGREE.
 - **Ontology:** the entities ENT-ROUTE, ENT-INCIDENT, ENT-FARE, ENT-SURGE and ENT-ORGREF; new attributes; finding types F-DEVIATION-KM, F-DEVIATION-CONFIRMED, F-FARE-FIGURES, F-NOTICE, F-AGREED, F-JUSTIFIED, F-SURGE-CHANGE, F-SURGE-NOTICE and F-SURGE-SOLELY. Field mappings for the DISP-001 and DISP-003 formats (`disp001_mapping`, `disp003_mapping`), including chat logs with a "message" field.
-- **New rules:** CW-F02C, CW-R13 (D), CW-R14, FC-F05, FC-F06, FC-F06B (D), FC-F07, FC-F08, FC-R13, FC-R13B (D), FC-R14, FC-R15, AUTH-07 (D) and GEN-R08 (D).
+- **New rules:** CW-F02C (D), CW-R13 (D), CW-R14 (rule only, no engine path; it goes beyond replacing DRIVER_LATE_GRACE_S by adding the S$5.00 goodwill credit of Section 2.4), FC-F05 (D), FC-F06 (D), FC-F06B (D), FC-F07, FC-F08, FC-R13, FC-R13B (D), FC-R14, FC-R15, AUTH-07 (D) and GEN-R08 (D). CW-F02C, FC-F05 and FC-F06 are D because parts of them are FairRyde's (the arrival fallback, the point of deviation, the missing-traffic-data choice); TOLLS_TREATMENT is D.
 - **Rules with v2.1 text and sources added (existing wording kept):** META-01, CLS-01, CLS-05, SE-R01, CW-F02, CW-F03, CW-F05, CW-R03, CW-R04, CW-R08, CW-R09, CW-R10, DQ-05, DQ-06, FC-F02, FC-F03, FC-R01, FC-R03, FC-R04, FC-R05, FC-R08, AUTH-01, AUTH-02, AUTH-04 and EXP-01.
 - **Playbooks:** PB-CW-NOSHOW, PB-CW-RIDERCANCEL, PB-FC-ROUTE and PB-INTAKE take v2.1 steps; PB-FC-SURGE is new.
 - **Conflicts between v2.1 and the earlier rules (each with its choice):**
@@ -40,8 +40,8 @@ Decisions D41 to D55 and organizer questions O17 to O25 are in `kb/open_items.ya
 ### Tools and outputs
 
 - **Engines:** `engine_route.py` and `engine_surge.py` are new. `engine_noshow.py` has a v2.1 branch, `engine_toll.py` honors TOLLS_TREATMENT, and `engines.py` picks the engine and scores a sample against its expected ruling. `case_adapter.py` removes the organizer answer blocks and normalizes chat logs. `policy_v21.py` holds the Section 6 path, the composite confidence, precedent matching and the evidence index.
-- **Tests:** `kb/tools/selftest_v21.py`, 56 tests: the three samples pinned to their rulings, one-factor variants, tolls pass-through, regression E01 to E04 and E11, and the reconciliation records. The 128 no-show variants, 53 ERP cases and 565 message readings pass as before.
-- **Workbooks:** `FairRyde_Annotation_v0.3.xlsx` carries DISP-001, DISP-002 and DISP-003 with the columns organizer_expected_outcome and organizer_expected_amount_sgd; `FairRyde_KB_v0.3.xlsx` has a sheet for the three organizer cases. Both are pseudonymized, and the leak scan is clean. The recalculation script was not available in this environment, so formulas were not recalculated.
+- **Tests:** `kb/tools/selftest_v21.py`, 60 tests: the three samples pinned to their rulings, one-factor variants, tolls pass-through, regression E01 to E04 and E11, and the reconciliation records. The 128 no-show variants, 53 ERP cases and 565 message readings pass as before.
+- **Workbooks:** `FairRyde_Annotation_v0.3.xlsx` carries DISP-001, DISP-002 and DISP-003 with the columns organizer_expected_outcome and organizer_expected_amount_sgd; `FairRyde_KB_v0.3.xlsx` has a sheet for the three organizer cases. Both are pseudonymized (names, plates and the card tail are replaced; the organizer's own ids such as R-4521 are kept because they are already pseudonymous), and the leak scan is clean. The recalculation script was not available in this environment, so formulas were not recalculated.
 - **Privacy:** example names in `privacy.yaml` changed so they do not collide with names in the new cases.
 
 ## v0.2.0 (14 Oct 2026)

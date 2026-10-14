@@ -48,7 +48,7 @@ decision_goal:            # ONT.4 Step 1: which decision does this knowledge bas
 competency_questions:      # questions the three layers must let us answer on DISP-002 (ONT.1: verify with a real sample)
   - {q: "Which category and type is the claim?", answered_by: "TX-CASE via CLS-05 (no_show_charge -> CW-NOSHOW)"}
   - {q: "Which trip, and is the ticket new?", answered_by: "MAT-01, MAT-02"}
-  - {q: "Which policy parameters apply?", answered_by: "META-01 (organizer_case), META-02"}
+  - {q: "Which policy parameters apply?", answered_by: "META-01 (organizer_v2_1; organizer_case is the legacy profile), META-02"}
   - {q: "When did the wait start and how long did the driver wait?", answered_by: "CW-F02, CW-F03, CW-F03B"}
   - {q: "Was the driver at the pick-up point, and for the whole wait?", answered_by: "CW-R06, CW-F04, CW-F04B"}
   - {q: "Did anyone try to make contact?", answered_by: "CW-F05"}

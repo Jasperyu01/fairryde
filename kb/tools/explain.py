@@ -63,6 +63,8 @@ def _rule_label(kb, rid: str, profile: str, decisive: set) -> str:
     want = {"C": "INDUSTRY", "D": "FAIRRYDE"}.get(cred)
     pick = next((s for s in srcs if s["type"] == want), srcs[0])
     words = SRC_WORDS.get(pick["type"], pick["type"])
+    if pick["type"] == "ORGANIZER" and profile != "organizer_v2_1":
+        words = "the policy attached to this trip"
     if cred in ("C", "D") and pick["type"] not in ("INDUSTRY", "FAIRRYDE"):
         words += ", extended by FairRyde"
     return f"{rid} {r['name']} ({words}; credibility {cred}" + ("; decisive for the approval step" if rid in decisive else "") + ")"
@@ -262,7 +264,7 @@ def noshow(kb, run: dict) -> dict:
     elif reason == "GEN-R-POLICY-GAP":          # no written policy applies, so no limit is quoted
         facts.append(f"The wait lasted {elapsed} seconds, from {start} to {end} (E-TRP-01).")
     elif t.wait_start and datetime.fromisoformat(case["trip_data"]["cancellation_time"]) < t.wait_start:
-        facts.append(f"The driver cancelled at {end}, before the free wait began at {start}; the policy for this trip requires {cmp_words} {thr} seconds (E-TRP-01).")
+        facts.append(f"The driver canceled at {end}, before the free wait began at {start}; the policy for this trip requires {cmp_words} {thr} seconds (E-TRP-01).")
     else:
         facts.append(f"The wait lasted {elapsed} seconds, from {start} to {end}; the policy for this trip requires {cmp_words} {thr} seconds (E-TRP-01).")
     if "BOUNDARY_MARGIN" in t.flags and not no_wait and reason != "GEN-R-POLICY-GAP":
@@ -279,8 +281,9 @@ def noshow(kb, run: dict) -> dict:
                 line += f" (the app's wait timer started at {N('timer', _hms(timer['timestamp']))})"
         facts.append(line + ".")
     if not no_wait:
-        facts.append(f"The driver called {_plural(int(calls), 'time')} and sent {_plural(int(msgs), 'message')} during the wait ({_ids(cd['call_ids'] + cd['message_ids'])})."
-                     if cd["call_ids"] or cd["message_ids"] else "The trip record shows no call or message from the driver during the wait.")
+        win = "from the driver's assignment to the cancellation" if t.profile == "organizer_v2_1" else "during the wait"
+        facts.append(f"The driver called {_plural(int(calls), 'time')} and sent {_plural(int(msgs), 'message')} {win} ({_ids(cd['call_ids'] + cd['message_ids'])})."
+                     if cd["call_ids"] or cd["message_ids"] else f"The trip record shows no call or message from the driver {win}.")
 
     # outcome lines
     if reason == "CW-R-OUT-OF-WINDOW":
@@ -316,6 +319,8 @@ def noshow(kb, run: dict) -> dict:
         row_rules = ["MAT-04"]
     elif reason == "GEN-R-POLICY-GAP":
         row_rules = [r for r, _ in t.policy_gap] + ["GEN-R07"]
+    if reason == "CW-R-NOCONTACT-VOID":
+        row_rules = ["CW-R13"] + [r for r in row_rules if r not in ("CW-R03", "CW-R13")]
     others = [r for r in t.rules_on_path + t.rules_used if r not in row_rules]
     rules_txt = ("Rules that decided the outcome: " + "; ".join(_rule_label(kb, r, t.profile, decisive) for r in row_rules) + ". "
                  + ("Also used: " + "; ".join(_rule_label(kb, r, t.profile, decisive) for r in others) + "." if others else ""))
@@ -390,6 +395,8 @@ def noshow(kb, run: dict) -> dict:
                 what = ("calls, messages and phone GPS" if "E-RGPS" in why and "E-CHT" in why else
                         "phone GPS" if "E-RGPS" in why else "calls or messages")
                 items.append(f"how the rider's {what} {'was' if what == 'phone GPS' else 'were'} read ({rid})")
+            elif rid == "CW-R13":
+                items.append("reading Section 2.3 as voiding the fee when either the call or the message is missing (CW-R13)")
             elif "reading" in why:
                 items.append(f"how the rider's statement was read ({rid})")
         generic = " Part of this decision rests on assumptions FairRyde made where Ryde has published nothing: " + "; ".join(dict.fromkeys(items)) + "."
@@ -414,7 +421,7 @@ def _status(tier: dict, outcome: str) -> str:
 
 
 def _prec_line(t, N) -> str:
-    p = next((x for x in getattr(t, "precedents", []) if x["aligned"]), None)
+    p = next((x for x in getattr(t, "precedents", []) if x["aligned"] and x["outcome"] == t.outcome), None)
     if not p:
         return ""
     return (f"Precedent {p['section'].split()[-1]} ({p['case_id']}) ruled the same way on the same key facts, a refund of {N('prec_amount', p['refund_amount_sgd'], 'S${:.2f}')}.")
@@ -451,7 +458,26 @@ def _sec6_line(tier: dict, N) -> str:
     if s6["tier"] == "AUTO":
         return (f"The disputed amount, {N('value', s6['value'], 'S${:.2f}')}, is under {N('final_below', 10, 'S${}')}, so the AI ruling is final (Section 6.1)."
                 if s6["band"] == "FINAL" and s6["threshold"] is None else "The ruling meets the confidence the policy asks for (Section 6).")
-    return "Why a person reviews it: " + " ".join(r.replace("this ruling's confidence", "the confidence of this ruling") for r in s6["reasons"][:1]) + "."
+    return "Why a person reviews it: " + " ".join(re.sub(r"a party has a fraud flag \(\d+\)", "the case file holds a signal that only the reviewer sees", r.replace("this ruling's confidence", "the confidence of this ruling")) for r in s6["reasons"][:1]) + "."
+
+
+def _why_person(tier: dict, N) -> str:
+    """The reason a person looks at the ruling: the Section 6 reason when Section 6 asks for it, else the first trigger that did (AUTH-07)."""
+    s6 = tier.get("section6")
+    if tier["tier"] == "AUTO":
+        return _sec6_line(tier, N)
+    if s6 and s6["tier"] != "AUTO":
+        return _sec6_line({**tier, "section6": s6}, N)
+    trig = (tier["triggers"] or [""])[0]
+    if trig.startswith("fraud signal"):
+        why = "the case file holds a signal that only the reviewer sees (Section 6.3)"
+    elif trig.startswith("decisive"):
+        why = "the outcome rests on an assumption FairRyde made where Ryde has published nothing, listed below (AUTH-01)"
+    elif trig.startswith("margin"):
+        why = "the wait is so close to the limit that a difference in the records could change the result"
+    else:
+        why = "FairRyde's approval rules ask for a person's check of this kind of case (AUTH-07)"
+    return "Why a person reviews it: " + why + "."
 
 
 def policy_v21(kb, run: dict) -> dict:
@@ -470,13 +496,14 @@ def policy_v21(kb, run: dict) -> dict:
         cd = t.contact_detail
         extra = []
         if t.reasons and t.reasons[0] == "CW-R-NOCONTACT-VOID":
-            extra.append(f"Under Section 2.3 the driver must send at least {N('min_msgs', 1)} chat message and make at least {N('min_calls', 1)} call before cancelling for a no-show; the trip record shows "
-                         f"{N('calls_v', int(cd['driver_calls']))} calls and {N('msgs_v', int(cd['driver_messages']))} messages, so the fee is voided (Precedent 7.3).")
+            extra.append(f"Under Section 2.3 the driver must send at least {N('min_msgs', 1)} chat message and make at least {N('min_calls', 1)} call before canceling for a no-show; the trip record shows "
+                         f"{_plural(int(cd['driver_calls']), 'call')} and {_plural(int(cd['driver_messages']), 'message')}, so the fee is voided (Precedent 7.3).")
+            nums["calls_v"], nums["msgs_v"] = str(int(cd["driver_calls"])), str(int(cd["driver_messages"]))
         elif t.outcome == "UPHOLD":
-            extra.append(f"Under Section 2.3 the driver had to send at least one chat message and make at least one call before cancelling; the trip record shows {N('calls_v', int(cd['driver_calls']))} call "
+            extra.append(f"Under Section 2.3 the driver had to send at least one chat message and make at least one call before canceling; the trip record shows {N('calls_v', int(cd['driver_calls']))} call "
                          f"and {N('msgs_v', int(cd['driver_messages']))} messages, so the obligation was met. Precedent 7.3 voided a fee where the driver had made no contact, which is not the case here.")
         wait = f"Section 2.1 counts the free wait from the scheduled pickup time and Section 2.2 sets the fee at {N('fee_v', 5, 'S${:.2f}')}."
-        s6 = _sec6_line(tier, N)
+        s6 = _why_person(tier, N)
         add = " ".join(x for x in [wait] + extra + [s6] if x)
         rider, driver = base["rider"] + " " + add, base["driver"] + " " + add
         return _finish(kb, run, nums, rider, driver)
@@ -514,12 +541,24 @@ def policy_v21(kb, run: dict) -> dict:
             facts.append(f"The driver told the rider about the route change before or at the deviation ({_ids(nd['on_time'])}), as Section 1.2 requires.")
         else:
             facts.append(f"A driver message or call before the deviation may have told the rider ({_ids(nd['unclear'])}), but its words do not settle it.")
+        ag = f.get("F-AGREED")
+        if f["F-NOTICE"]["value"] == "YES" and ag:
+            if ag["value"] == "YES":
+                facts.append(f"The rider agreed to the route change in the chat ({_ids(ag['basis'])}), so Section 1.3 gives no refund when the reroute is justified.")
+            elif ag["value"] == "NO":
+                facts.append(f"The rider objected to the route change in the chat ({_ids(ag['basis'])}).")
+            else:
+                facts.append("The chat does not show whether the rider agreed to the route change (Section 1.4).")
         amt = t.remedy.get("amount_sgd") if t.remedy else None
         if t.outcome in ("PARTIAL_REFUND", "FULL_REFUND"):
             tolls = fare_fig.get("excess_tolls")
             tail = (f" The tolls of {N('tolls', tolls, 'S${:.2f}')} for the longer route pass through at cost and are not refunded." if tolls else "")
-            out_r = f"Outcome: you are eligible for a refund of {N('amount', amt, 'S${:.2f}')}, the fare charged for the extra distance, to your original payment method (Section 1.3)."
-            out_d = f"Outcome: {N('amount_d', amt, 'S${:.2f}')}, the fare charged for the extra distance, is refunded to the rider (Section 1.3)."
+            if tier["tier"] == "HUMAN":
+                out_r = f"Outcome: FairRyde proposes a refund of {N('amount', amt, 'S${:.2f}')}, the fare charged for the extra distance, to your original payment method (Section 1.3); a Ryde staff member decides."
+                out_d = f"Outcome: FairRyde proposes to refund {N('amount_d', amt, 'S${:.2f}')}, the fare charged for the extra distance, to the rider (Section 1.3); a Ryde staff member decides."
+            else:
+                out_r = f"Outcome: you are eligible for a refund of {N('amount', amt, 'S${:.2f}')}, the fare charged for the extra distance, to your original payment method (Section 1.3)."
+                out_d = f"Outcome: {N('amount_d', amt, 'S${:.2f}')}, the fare charged for the extra distance, is refunded to the rider (Section 1.3)."
             if t.outcome == "PARTIAL_REFUND":
                 out_d += " The reroute was accepted as justified by traffic, so the tolls and the rest of the fare stand; the refund is for the missing notice to the rider."
             facts.append(tail.strip())
@@ -528,7 +567,7 @@ def policy_v21(kb, run: dict) -> dict:
         else:
             out_r = out_d = "Outcome: a Ryde staff member will decide this case, because " + ("no written rule covers it" if "GEN-R-POLICY-GAP" in t.reasons else "the records do not settle it") + "."
         facts.append(_prec_line(t, N))
-        facts.append(_sec6_line(tier, N) if tier["tier"] == "AUTO" else "Why a person reviews it: " + (tier["section6"]["reasons"][0] if tier.get("section6") else "; ".join(tier["triggers"][:1])) + ".")
+        facts.append(_why_person(tier, N))
         rules = "Rules used: " + "; ".join(_rule_label(kb, r, t.profile, {d[0] for d in tier["decisive"]}) for r in dict.fromkeys(list(t.rules_on_path) + list(t.rules_used)) if r in kb.rules) + "."
         generic = ""
         if "GENERIC_ASSUMPTION_USED" in t.flags:
@@ -552,14 +591,18 @@ def policy_v21(kb, run: dict) -> dict:
         facts.append(f"The difference of {N('diff', fig['difference'], 'S${:.2f}')} is entirely the surge: the surgeable subtotal is unchanged and the booking fee is exempt from surge (Sections 3.4 and 3.5).")
     if t.outcome == "FULL_REFUND":
         amt = t.remedy["amount_sgd"]
-        out_r = f"Outcome: you are eligible for a refund of the surge differential, {N('amount', amt, 'S${:.2f}')}, to your original payment method (Section 3.3)."
-        out_d = f"Outcome: the surge differential, {N('amount_d', amt, 'S${:.2f}')}, is refunded to the rider because the rider was not notified (Section 3.3)."
+        if tier["tier"] == "HUMAN":
+            out_r = f"Outcome: FairRyde proposes a refund of the surge differential, {N('amount', amt, 'S${:.2f}')}, to your original payment method (Section 3.3); a Ryde staff member decides."
+            out_d = f"Outcome: FairRyde proposes to refund the surge differential, {N('amount_d', amt, 'S${:.2f}')}, to the rider because the rider was not notified (Section 3.3); a Ryde staff member decides."
+        else:
+            out_r = f"Outcome: you are eligible for a refund of the surge differential, {N('amount', amt, 'S${:.2f}')}, to your original payment method (Section 3.3)."
+            out_d = f"Outcome: the surge differential, {N('amount_d', amt, 'S${:.2f}')}, is refunded to the rider because the rider was not notified (Section 3.3)."
     elif t.outcome == "UPHOLD":
         out_r = out_d = "Outcome: the final fare stands and no refund is due (Section 3.3)."
     else:
         out_r = out_d = "Outcome: a Ryde staff member will decide this case, because " + ("no written rule covers it" if "GEN-R-POLICY-GAP" in t.reasons else "the records do not settle it") + "."
     facts.append(_prec_line(t, N))
-    facts.append(_sec6_line(tier, N) if tier["tier"] == "AUTO" else "Why a person reviews it: " + (tier["section6"]["reasons"][0] if tier.get("section6") else "; ".join(tier["triggers"][:1])) + ".")
+    facts.append(_why_person(tier, N))
     rules = "Rules used: " + "; ".join(_rule_label(kb, r, t.profile, {d[0] for d in tier["decisive"]}) for r in dict.fromkeys(list(t.rules_on_path) + list(t.rules_used)) if r in kb.rules) + "."
     text = " ".join(x for x in [out_r, status] + facts if x)
     textd = " ".join(x for x in [out_d, status] + facts if x)

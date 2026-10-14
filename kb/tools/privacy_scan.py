@@ -17,6 +17,7 @@ PATTERNS = {
     "EMAIL": re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b"),
     "NRIC_FIN": re.compile(r"\b[STFGM]\d{7}[A-Z]\b"),
     "UNIT_NUMBER": re.compile(r"#\d{1,3}-\d{1,5}\b"),
+    "CARD_TAIL": re.compile(r"(\bending(?:\s+in)?\s+)\d{4}\b", re.I),
     "LONG_NUMBER": re.compile(r"\b(?:\d[ -]?){12,19}\b"),
 }
 CODE = r"(?:RIDER|DRIVER)-NAME-\d+"
@@ -104,6 +105,7 @@ def pseudonymize(case: dict, terms) -> dict:
         s = PATTERNS["EMAIL"].sub("EMAIL-X", s)
         s = PATTERNS["NRIC_FIN"].sub("ID-X", s)
         s = PATTERNS["UNIT_NUMBER"].sub("#UNIT-X", s)
+        s = PATTERNS["CARD_TAIL"].sub(lambda m: m.group(1) + "CARD-X", s)
         return s
 
     def walk(o):

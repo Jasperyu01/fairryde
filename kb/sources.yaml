@@ -51,7 +51,7 @@ documents:
     note: >-
       The case_metadata (expected ruling and rationale), chat_log_analysis, traffic_analysis, evidence_summary and recommended_ruling blocks are the
       organizer's reference answer. They are used to score the engine and never as input to a ruling. The recommended ruling cites "Driver Policy
-      4.2", which does not exist in policy v2.1; FairRyde cites Section 1.2 instead (open item D44).
+      4.2", which does not exist in policy v2.1; FairRyde cites Section 1.2 instead (open item D51).
 
   - id: ORG-DISP003
     title: "Fare Dispute Sample Data, DISP-003 (surge pricing, SG)"

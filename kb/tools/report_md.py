@@ -29,7 +29,7 @@ def check_report(kb, rep, runs, dt_enum, priv, tests, out_scan=None, ann_status=
     lines.append(f"* Engine self-test: {sum(t['ok'] for t in tests)}/{len(tests)} variants pass")
     if erp_line:
         lines.append(f"* {erp_line}")
-    lines.append(f"* Privacy dry run on DISP-002 (counts only): before {priv['before']}; after {priv['after']}; fragments after {priv['fragments_after']}; clean {priv['clean']}")
+    lines.append(f"* Privacy dry run on the organizer cases (counts only): before {priv['before']}; after {priv['after']}; fragments after {priv['fragments_after']}; clean {priv['clean']}")
     if out_scan is not None:
         lines.append(f"* Leak scan of generated outputs (counts only): {out_scan}")
     if ann_status is not None:

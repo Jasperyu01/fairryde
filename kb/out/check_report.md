@@ -4,16 +4,16 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 
 * Rules: 104; vocabularies: 22; TX-CASE leaves: 35; entities: 25; events: 35; playbooks: 12
 * Rule sources: 256; VERIFIED 208, NO_QUOTE (design assumption) 41, PARAPHRASE 7
-* Credibility: A 35, B 9, C 1, D 59; modes: HARD 86, READ 10, HARD+READ 8
+* Credibility: A 32, B 9, C 1, D 62; modes: HARD 86, READ 10, HARD+READ 8
 * DISP-002 fields mapped: 59 of 59 leaf paths
 * DT-CW-NOSHOW enumeration: {'combinations': 192, 'unique': 192, 'gaps': 0, 'overlaps': 0}
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
 * Engine self-test: 128/128 variants pass
 * ERP rules self-test: 53 ERP cases, the FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: all pass
-* Policy v2.1 self-test (A6): 56/56 pass (the three organizer samples pinned to their expected rulings, one-factor variants, tolls pass-through, regression E01 to E04 and E11, and the reconciliation records)
-* Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 13, 'PERSON_NAME_TOKEN': 29, 'VEHICLE_PLATE': 5, 'SG_PLATE': 5, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
-* Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
-* Annotation workbook: FairRyde_Annotation_v0.3.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.3.20261014T135417.xlsx
+* Policy v2.1 self-test (A6): 60/60 pass (the three organizer samples pinned to their expected rulings, one-factor variants, tolls pass-through, regression E01 to E04 and E11, and the reconciliation records)
+* Privacy dry run on the organizer cases (counts only): before {'PERSON_NAME': 13, 'PERSON_NAME_TOKEN': 29, 'VEHICLE_PLATE': 5, 'SG_PLATE': 5, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'CARD_TAIL': 1, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'CARD_TAIL': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
+* Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'CARD_TAIL': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
+* Annotation workbook: FairRyde_Annotation_v0.3.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.3.20261014T143404.xlsx
 * Issues: ERROR 0, WARN 0, INFO 7
 
 * DISP-002 under organizer_v2_1: **UPHOLD** (row R8), reasons CW-R-NOSHOW-VALID, CW-R-PIN-AMBIGUOUS, flags NO_RIDER_EVIDENCE, PIN_VENUE_MISMATCH, FRAUD_SIGNAL, GENERIC_ASSUMPTION_USED, confidence 0.939, tier **APPROVE**
@@ -484,7 +484,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | CW-F01 | fact | D | HARD | D | ORGANIZER |  |
 | CW-F02 | fact | A | HARD | A | ORGANIZER, RYDE_POLICY |  |
 | CW-F02B | fact | C | HARD |  | INDUSTRY, RYDE_POLICY |  |
-| CW-F02C | fact | A | HARD | A | ORGANIZER |  |
+| CW-F02C | fact | D | HARD | A | ORGANIZER | The wait start at the scheduled pickup time is the organizer's (Section 2.1, A). Counting from the driver's arrival when |
 | CW-F03 | fact | A | HARD | A | ORGANIZER, RYDE_POLICY | Threshold and comparison are A; the 30 s boundary band is a FairRyde parameter (D) that only adds a flag. |
 | CW-F03B | fact | D | HARD |  | FAIRRYDE, RYDE_POLICY | The GPS condition is Ryde text (B, see CW-R06); where the wait starts when that condition fails is FairRyde's inference, |
 | CW-F04 | fact | B | HARD |  | ORGANIZER, RYDE_POLICY | The GPS condition is in a Ryde rider article whose wording about the fee name conflicts with the main policy page (META- |
@@ -511,8 +511,8 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | FC-F02 | fact | D | HARD | D | FAIRRYDE, ORGANIZER, RYDE_POLICY |  |
 | FC-F03 | fact | D | READ |  | FAIRRYDE, INDUSTRY, REGULATION, RYDE_POLICY | Rider agreement and the GPS most-efficient route are Ryde text, but both route articles were edited more than 12 months  |
 | FC-F04 | fact | A | HARD | A | RYDE_POLICY | The gantry sum and both exceptions are Ryde text in a driver article edited 2026-09-02 (A). The order of application is  |
-| FC-F05 | fact | A | READ |  | FAIRRYDE, ORGANIZER | The duty, the timing, the reason and the agreement test are the organizer's text (A). How a message is read is the READ  |
-| FC-F06 | fact | A | HARD |  | ORGANIZER |  |
+| FC-F05 | fact | D | READ |  | FAIRRYDE, ORGANIZER | The duty, the timing, the reason and the agreement test are the organizer's text (A). The point of deviation (the first  |
+| FC-F06 | fact | D | HARD |  | ORGANIZER | That a traffic incident justifies a reroute is the organizer's (Section 1.4, A). Treating a case with no traffic data at |
 | FC-F06B | fact | D | HARD+READ |  | FAIRRYDE, ORGANIZER | The data and the need for it are the organizer's (A, FC-F06); locating an incident on the route by name, direction and t |
 | FC-F07 | fact | A | HARD |  | ORGANIZER |  |
 | FC-F08 | fact | A | HARD |  | ORGANIZER | The duty, its timing and the in-app channel are the organizer's text (A). Checking the notice's content is not possible  |

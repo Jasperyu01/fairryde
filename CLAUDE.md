@@ -11,7 +11,7 @@ Tencent Cloud x AI Singapore hackathon 2026, Ryde track: multi-agent resolution 
 ## Commands
 
 - Build and check the KB: `python3 kb/build_kb.py` (must end with `ERROR 0 | WARN 0`). Faster: `--no-xlsx --no-fuzz`.
-- Self-tests only: `python3 kb/tools/selftest.py`. Privacy scan: `python3 kb/tools/privacy_scan.py`.
+- Self-tests only: `python3 kb/tools/selftest.py` and `python3 kb/tools/selftest_v21.py` (policy v2.1, A6). Privacy scan: `python3 kb/tools/privacy_scan.py`.
 - Validation scripts: `validation/tools/` (`freeze.py`, `evidence_check.py`, `scorecard.py`, `timeline.py`, `render_page.py`).
 
 ## Rules for every session

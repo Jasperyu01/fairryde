@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from pathlib import Path
 
 import engine_noshow as E
@@ -204,6 +205,16 @@ def variants(kb: KB) -> list[tuple]:
     v("S04", "the log has no notified flag: the record cannot be read, FC-R12", D3, lambda c: c["surge_pricing_log"].pop("rider_notified"),
       {"outcome": "ESCALATE_HUMAN", "reasons": ["FC-R-INSUFFICIENT-DATA"], "tier": "HUMAN"})
 
+    v("S16", "notified by 'SMS notification': the word notification does not make it in-app (Section 3.2)", D3,
+      rec(rider_notified=True, notification_method="SMS notification", notification_timestamp="2026-09-14T21:04:50+08:00"),
+      {"outcome": "FULL_REFUND", "amount": 4.50})
+    v("S17", "the log says 'failed' with an in-app method: not a plain yes, so the record is not read as notified", D3,
+      rec(rider_notified="failed", notification_method="push_notification", notification_timestamp="2026-09-14T21:04:50+08:00"),
+      {"outcome": "ESCALATE_HUMAN", "tier": "HUMAN"})
+    v("S18", "notified in the app but the record has no time: Section 3.2 needs before or at pickup, so it is not read as notified", D3,
+      rec(rider_notified=True, notification_method="in_app", notification_timestamp=None),
+      {"outcome": "ESCALATE_HUMAN", "tier": "HUMAN"})
+
     def unchanged(c):
         c["surge_pricing_log"]["trip_start_surge"] = 1.0
         fb = c["fare_breakdown"]
@@ -266,6 +277,9 @@ def variants(kb: KB) -> list[tuple]:
     v("S15", "the organizer's label root_cause says driver_error: never read, the amounts decide", D3, lambda c: c["fare_breakdown"]["comparison"].update(root_cause="driver_error"),
       {"outcome": "FULL_REFUND", "amount": 4.50})
 
+    v("R16", "a negative excess distance fare in the fare breakdown: the figures disagree, no refund of a negative amount", D1,
+      lambda c: c["fare_breakdown"].update(excess_distance_fare=-3.44), {"flags": ["FIGURES_DISAGREE"], "tier": "HUMAN"})
+
     # ---- DISP-002 (no-show) under policy v2.1
     def drop_driver(kinds):
         def m(c):
@@ -319,6 +333,23 @@ def variants(kb: KB) -> list[tuple]:
     return out
 
 
+def _explanation_problems(ex_: dict, res: dict) -> list[str]:
+    """Party-facing text must not contradict the ruling (kb-step-check A6 round 1: C1, C2, C5, C10)."""
+    t, tier = res["trace"], res["tier"]
+    out = []
+    for who in ("rider", "driver"):
+        x = ex_[who]
+        if "ruled the same way" in x and t.outcome not in ("PARTIAL_REFUND", "FULL_REFUND", "WAIVE_FEE"):
+            out.append(f"{who} text cites a precedent as ruling the same way for the outcome {t.outcome}")
+        if tier["tier"] != "AUTO" and "so the AI ruling is final" in x:
+            out.append(f"{who} text says the AI ruling is final at tier {tier['tier']}")
+        if tier["tier"] == "HUMAN" and "you are eligible" in x:
+            out.append(f"{who} text promises a refund at tier HUMAN")
+        if re.search(r"fraud flag|fraud signal", x, re.I):
+            out.append(f"{who} text names a fraud signal (FRD-01, FRD-02)")
+    return out
+
+
 def run_variants(kb: KB) -> list[dict]:
     out = []
     for vid, desc, case, exp in variants(kb):
@@ -340,6 +371,7 @@ def run_variants(kb: KB) -> list[dict]:
                 ex_ = explain.policy_v21(kb, res)
                 if ex_["exp03_unmatched"]:
                     problems.append(f"explanation numbers not registered (EXP-03): {ex_['exp03_unmatched']}")
+                problems += _explanation_problems(ex_, res)
             except Exception as e2:                                              # noqa: BLE001
                 problems.append(f"explanation crashed: {type(e2).__name__}: {e2}")
         t = res["trace"]
@@ -403,7 +435,7 @@ def reconciliation_check(kb: KB) -> list[dict]:
         if not ok:
             bad.append(_mk(tid, "A6 reconciliation", [msg]))
     dec = {d["id"]: d for d in kb.y["open_items"]["decisions"]}
-    for i in range(41, 56):
+    for i in range(41, 57):
         need(f"D{i}", f"D{i}" in dec, f"decision D{i} is missing from open_items.yaml")
     prof = kb.profiles[ORGANIZER_PROFILE]
     need("D42", prof["FREE_WAIT_S"]["value"] == 300 and prof["WAIT_ANCHOR_FIELD"]["value"] == "trip_data.scheduled_time" and prof["THRESHOLD_COMPARISON"]["value"] == "more_than",

@@ -63,7 +63,7 @@ def ruling_path(kb: KB, profile: str, *, category: str, value: float, confidence
     if band == "REVIEW":
         raise_to("HUMAN", f"Section 6.1: a dispute above S${above:.0f} (S${value:.2f}) is always human review; the AI agent prepares the case file only")
     if category == "route_deviation" and deviation_km is not None and deviation_km > p("ROUTE_AI_MAX_KM"):
-        raise_to("APPROVE", f"Section 6.2: the deviation of {deviation_km:.1f} km is above the {p('ROUTE_AI_MAX_KM'):.1f} km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends")
+        raise_to("APPROVE", f"Section 6.2: the deviation of {deviation_km:.{2 if round(deviation_km, 1) <= p('ROUTE_AI_MAX_KM') else 1}f} km is above the {p('ROUTE_AI_MAX_KM'):.1f} km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends")
     if needed is not None and confidence < needed - 1e-9:
         raise_to("APPROVE", f"{why_needed}; this ruling's confidence is {confidence:.2f}, so it goes to human review with the remedy FairRyde recommends")
     if not reasons:

@@ -141,7 +141,10 @@ def main(argv):
 
     fuzz = None
     if "--no-fuzz" not in argv:           # randomized GPS check: no automatic ruling may rest on GPS that leaves the question open
-        fuzz = fuzz_presence.run(kb, 150, 7)
+        fuzz = fuzz_presence.run(kb, 150, 7)                       # the default profile (organizer_v2_1 for these DISP-002 based cases)
+        for prof in ("organizer_case", "ryde_2026"):               # A6 round 1: the other profiles keep the guard
+            more = fuzz_presence.run(kb, 100, 7, prof)
+            fuzz = (fuzz[0] + more[0], fuzz[1] + more[1], fuzz[2] + more[2], fuzz[3] + more[3])
         for b in fuzz[3]:
             rep.add("ERROR", "gps-fuzz", f"case {b[0]}", str(b[1])[:200])
 

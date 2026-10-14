@@ -40,14 +40,24 @@ def notice_valid(log: dict, start: str | None) -> tuple[bool | None, str]:
     flag = log.get("rider_notified")
     if flag is None or isinstance(flag, str) and not flag.strip():
         return None, "the surge record does not say whether the rider was notified"
-    if str(flag).strip().lower() in ("false", "no", "0"):
+    word = str(flag).strip().lower()
+    if word in ("false", "no", "0"):
         return False, "the platform's surge record says the rider was not notified"
+    if word not in ("true", "yes", "1"):
+        return None, f"the surge record's notified value ({flag}) is not a plain yes or no"
     method, ts = str(log.get("notification_method") or "").lower(), log.get("notification_timestamp")
     if not method and not ts:
         return None, "the record says notified, without the method or the time"
-    if method and not re.search(r"app|push|notification", method):
+    if not method or not ts or not start:
+        return None, "the record says notified, without both the method and the time (Section 3.2 needs an in-app notification before or at pickup)"
+    tokens = set(re.findall(r"[a-z]+", method))
+    if tokens & {"sms", "email", "mail", "whatsapp", "telegram", "call", "phone", "text", "letter"}:
         return False, f"the notification method ({log.get('notification_method')}) is not an in-app notification (Section 3.2)"
-    if ts and start and E.T(ts) > E.T(start):
+    if not tokens & {"app", "push", "inapp", "notification"}:
+        return False, f"the notification method ({log.get('notification_method')}) is not an in-app notification (Section 3.2)"
+    if not tokens & {"app", "push", "inapp"}:
+        return None, f"the notification method ({log.get('notification_method')}) does not say it was in the app"
+    if E.T(ts) > E.T(start):
         return False, "the notification came after the trip started (Section 3.2: before or at the point of pickup)"
     return True, "an in-app notification before the trip started"
 

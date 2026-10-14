@@ -95,7 +95,7 @@ rules:
     zh: >-
       组织方案例自带政策对象时以它为准；否则用 Ryde 2026 参数档；两者都没写的点先用 Ryde 默认，再用 FairRyde 假设。 自 KB v0.3 起，组织方案件（dispute_id 形如 DISP-nnn）按 organizer_v2_1 参数档裁决：即组织方的 Ryde 争议解决政策
       v2.1，它自称适用于乘客代言人、司机代言人和裁判，所以是黑客松的首要政策（决定 D41，Jasper，2026 年 10 月 14 日）。组织方案件内嵌的政策对象（DISP-002 的 cancellation_policy）此后只作交叉核对。内嵌对象与 v2.1 结果不同时转人工（META-04）。organizer_case
-      参数档保留给不是组织方案件但内嵌政策对象的案件（回归案件 E04），ryde_2026 保留给其余回归案件以及 v2.1 未覆盖的事项。
+      参数档保留给不是组织方案件但内嵌政策对象的案件（回归案件 E04），ryde_2026 保留给其余回归案件以及 v2.1 未覆盖的事项。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [PROFILE]
     sources:
       - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "Organizer cases are scored against the organizer's expected ruling, computed under the embedded object. Confirm with the organizer (WhatsApp question 5)."}
@@ -210,7 +210,7 @@ rules:
       device, SE-OTHER otherwise). Under organizer_v2_1 the case-file-only handling of a discrimination complaint applies to every safety claim: policy v2.1 Section 5.2 allows
       the AI agents to gather evidence, summarize accounts and prepare case files, and says they CANNOT issue rulings, determine fault, or recommend resolutions on safety
       incidents, and Section 5.1 sends every safety dispute to human review (decision D49).
-    zh: 案件里任何自由文本（描述、聊天、补充证据）含有安全相关内容时，单独建 SE 主张，定严重度 S0 或 S1，转人工，不管工单里还有什么。安全相关内容是任何一方讲述的以下情形：暴力或暴力威胁（攻击或企图攻击、打人、抓伤、凶器、威胁恐吓）；性不当行为（骚扰、不受欢迎的示好或触碰）；对人的任何形式的辱骂或骚扰（侮辱、带歧视的辱骂或冲人骂脏话、过分私人的问题、评论外貌、行程后因私联系乘客）；被违背意愿扣留或带走（绑架、劫持，司机不让乘客下车或要求停车也不停）；被置于危险之中（鲁莽或危险驾驶，司机受酒精或药物影响，不安全的下车，例如被赶下车留在快速公路或路肩上，或在偏僻处、夜里被司机赶下车或丢下）；事故或受伤；因种族、族裔、宗教、国籍、残疾或类似理由受到歧视；或其他犯罪。按意思判断，不按关键词：这些只是例子，不是封闭清单，没用这些词的文字也可能是安全内容（"他停在 PIE 上叫我下车"）。拿不准是不是安全内容时按安全内容处理（S1），让人工看到。只是态度不好（不友善或不耐烦、大声、回话生硬），没有辱骂、威胁、危险或歧视，不是安全内容，属于一般反馈（EX-FEEDBACK）。关于钱的争议（车费、费用、多收、司机自己加的收费）或车辆损坏，本身不是安全内容，即使这种行为可能构成犯罪；伴有暴力、威胁、危险、辱骂或歧视时才是安全内容。有人受伤、被扣留、被攻击、受到伤害威胁或处于紧迫危险时为 S0，其余为 S1。提到歧视的投诉一律是安全内容，整个案子转人工：AI 只准备案卷（主张、证据、事实认定），对其中任何主张都不给结果、金额或措施建议；争议费用作为次要诉求写进案卷（CLS-02、SE-R01；Jasper，2026-10-14，待办 D40 (c)）。SE 类型按分类定义选（对人的行为为 SE-CONDUCT，另有 SE-DRIVING、SE-ACCIDENT，行程中途被终止为 SE-TERMINATED，司机或车辆与 App 不符为 SE-MISMATCH，车内录像设备为 SE-RECORDING，其余为 SE-OTHER）。
+    zh: 案件里任何自由文本（描述、聊天、补充证据）含有安全相关内容时，单独建 SE 主张，定严重度 S0 或 S1，转人工，不管工单里还有什么。安全相关内容是任何一方讲述的以下情形：暴力或暴力威胁（攻击或企图攻击、打人、抓伤、凶器、威胁恐吓）；性不当行为（骚扰、不受欢迎的示好或触碰）；对人的任何形式的辱骂或骚扰（侮辱、带歧视的辱骂或冲人骂脏话、过分私人的问题、评论外貌、行程后因私联系乘客）；被违背意愿扣留或带走（绑架、劫持，司机不让乘客下车或要求停车也不停）；被置于危险之中（鲁莽或危险驾驶，司机受酒精或药物影响，不安全的下车，例如被赶下车留在快速公路或路肩上，或在偏僻处、夜里被司机赶下车或丢下）；事故或受伤；因种族、族裔、宗教、国籍、残疾或类似理由受到歧视；或其他犯罪。按意思判断，不按关键词：这些只是例子，不是封闭清单，没用这些词的文字也可能是安全内容（"他停在 PIE 上叫我下车"）。拿不准是不是安全内容时按安全内容处理（S1），让人工看到。只是态度不好（不友善或不耐烦、大声、回话生硬），没有辱骂、威胁、危险或歧视，不是安全内容，属于一般反馈（EX-FEEDBACK）。关于钱的争议（车费、费用、多收、司机自己加的收费）或车辆损坏，本身不是安全内容，即使这种行为可能构成犯罪；伴有暴力、威胁、危险、辱骂或歧视时才是安全内容。有人受伤、被扣留、被攻击、受到伤害威胁或处于紧迫危险时为 S0，其余为 S1。提到歧视的投诉一律是安全内容，整个案子转人工：AI 只准备案卷（主张、证据、事实认定），对其中任何主张都不给结果、金额或措施建议；争议费用作为次要诉求写进案卷（CLS-02、SE-R01；Jasper，2026-10-14，待办 D40 (c)）。SE 类型按分类定义选（对人的行为为 SE-CONDUCT，另有 SE-DRIVING、SE-ACCIDENT，行程中途被终止为 SE-TERMINATED，司机或车辆与 App 不符为 SE-MISMATCH，车内录像设备为 SE-RECORDING，其余为 SE-OTHER）。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     produces: [SE-R-HUMAN-DECIDES]
     sources:
       - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Assault, harassment, or abuse of any kind will not be tolerated.', note: "Ryde Code of Conduct item 5."}
@@ -300,7 +300,7 @@ rules:
       FC-ROUTE; fare_dispute (DISP-003) is FC-SURGE when the case carries surge evidence (a surge record or a surge multiplier in the fare breakdown) and FC-FAREMISMATCH, a
       type with no rule in this version (GEN-R07), when it does not. The type comes from the code and the records, never from the organizer's own labels inside the case
       (scenario, root_cause).
-    zh: 用 organizer_code 映射组织方代码；代码与文字矛盾时按 CLS-02 处理。取消费主张的类型按行程记录里是谁取消的来定，优先于代码（CLS-06）。
+    zh: 用 organizer_code 映射组织方代码；代码与文字矛盾时按 CLS-02 处理。取消费主张的类型按行程记录里是谁取消的来定，优先于代码（CLS-06）。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     sources:
       - {type: ORGANIZER, doc: ORG-DISP002, quote: '"dispute_type": "no_show_charge"'}
       - {type: ORGANIZER, doc: ORG-DISP001, quote: "\"dispute_type\": \"route_deviation\""}
@@ -481,7 +481,7 @@ rules:
       DISP-001's fare lines) the figures of the trip record, the fare breakdown and the organizer's comparison lines must agree within MONEY_TOLERANCE_SGD (0.05 km for
       distances); each surge amount is the surge multiplier above 1.0 times the surgeable subtotal; the excess lines never add up to more than the whole difference. A
       disagreement flags FIGURES_DISAGREE and sends the case to a person (gate G1, reason GEN-R-DATA-INCONSISTENT). Finding F-FARE-FIGURES.
-    zh: 车费各项加总与实收差额不超过 0.01 新元。
+    zh: 车费各项加总与实收差额不超过 0.01 新元。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     sources:
       - {type: RYDE_POLICY, doc: RYDE-30741244296217, quote: 'For a detailed breakdown of your fare, please refer to your receipt.'}
     params: [MONEY_TOLERANCE_SGD]
@@ -500,7 +500,7 @@ rules:
       Compare the fee actually charged with the profile's policy amount for that fee. Equal within MONEY_TOLERANCE_SGD: consistent. Charged more: flag CHARGE_AMOUNT_MISMATCH;
       the ruling needs human approval (AUTH-02 trigger 7), so the excess is never upheld automatically. Charged less: flag only; the claimant was not disadvantaged. Profile
       organizer_v2_1: the policy amount of a no-show fee is the S$5.00 of Section 2.2 (the Ryde profile's S$6.61 includes platform and transaction fees, decision D43).
-    zh: 实收费用与参数档的政策金额比较；多收则打标记，裁决需人工批准（AUTH-02 第 7 条），多收部分不自动维持；少收只标记。
+    zh: 实收费用与参数档的政策金额比较；多收则打标记，裁决需人工批准（AUTH-02 第 7 条），多收部分不自动维持；少收只标记。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [NO_SHOW_FEE_SGD, RIDER_CANCEL_FEE_SGD, WAITING_FEE_SGD, MONEY_TOLERANCE_SGD]
     produces_finding: F-CHARGE-AMOUNT
     sources:
@@ -541,7 +541,7 @@ rules:
       Organizer profile: the wait starts at trip_data.driver_wait_start. Ryde profile, on-demand: the wait starts when the driver presses "I'm Here", provided the driver is at
       the pick-up point according to GPS (CW-R06). Profile organizer_v2_1: the wait counts from the scheduled pickup time (CW-F02C), not from driver_wait_start. Profile
       organizer_case is the v0.2 reading of DISP-002's embedded object.
-    zh: 组织方案例以 driver_wait_start 为等待起点；Ryde 即时单以司机按"I'm Here"为起点（须 GPS 在点）。
+    zh: 组织方案例以 driver_wait_start 为等待起点；Ryde 即时单以司机按"I'm Here"为起点（须 GPS 在点）。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [WAIT_ANCHOR_FIELD]
     produces_finding: F-WAIT-ANCHOR
     sources:
@@ -591,7 +591,8 @@ rules:
     sources:
       - {type: ORGANIZER, doc: ORG-POLICY-V21, clause: "Section 2.1", quote: 'from the scheduled pickup time.', profile: organizer_v2_1}
       - {type: ORGANIZER, doc: ORG-DISP002, quote: 'Free wait timer started. 5 min free wait period ends at 08:48.', profile: organizer_v2_1, note: "The app's timer in DISP-002 starts at the driver's arrival (08:43), not at the scheduled time (08:45): the recorded conflict of decision D42."}
-    credibility: A
+    credibility: D
+    credibility_note: The wait start at the scheduled pickup time is the organizer's (Section 2.1, A). Counting from the driver's arrival when the driver arrived later, and from the arrival when the case has no scheduled time (flag RECORDS_MISSING), are FairRyde's (D, decisions D42 and D54); the weakest essential element sets the credibility.
     mode: HARD
     status: draft
 
@@ -607,7 +608,7 @@ rules:
       |margin|, also add MARGIN_WITHIN_SPREAD. Profile organizer_v2_1: the threshold is the 5-minute free wait of Section 2.1 (NO_SHOW_THRESHOLD_S = FREE_WAIT_S = 300 s),
       compared as 'more than' ('After 5 minutes'); there is no separate 8-minute threshold. DISP-002: the wait counts from 08:45:00 (scheduled), the driver cancelled at
       08:51:00, 360 s, 60 s more than the threshold.
-    zh: 已等时长 = 取消（或上车）时间减等待起点：等待锚点（CW-F02、CW-F02B），适用 CW-F03B 时后移到 GPS 确认的时刻；余量 = 已等时长减该类主张的阈值（缺席取消费用 no-show 阈值，等候费用免费等待时长）；比较方式按参数档（组织方含等号，Ryde 严格大于）；余量落在边界带内打 BOUNDARY_MARGIN，各记录对起止时刻的差异大于余量时再打 MARGIN_WITHIN_SPREAD。
+    zh: 已等时长 = 取消（或上车）时间减等待起点：等待锚点（CW-F02、CW-F02B），适用 CW-F03B 时后移到 GPS 确认的时刻；余量 = 已等时长减该类主张的阈值（缺席取消费用 no-show 阈值，等候费用免费等待时长）；比较方式按参数档（组织方含等号，Ryde 严格大于）；余量落在边界带内打 BOUNDARY_MARGIN，各记录对起止时刻的差异大于余量时再打 MARGIN_WITHIN_SPREAD。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [NO_SHOW_THRESHOLD_S, FREE_WAIT_S, THRESHOLD_COMPARISON, BOUNDARY_BAND_S]
     flag_only_params: [BOUNDARY_BAND_S]
     produces_finding: [F-WAIT-ELAPSED, F-WAIT-MARGIN]
@@ -751,7 +752,7 @@ rules:
       INSUFFICIENT if fewer; NONE if no contact at all. Profile organizer_v2_1: ADEQUATE only if, from the driver's assignment to the cancellation, the driver made at least
       CONTACT_MIN_CALLS (1) call AND sent at least CONTACT_MIN_MESSAGES (1) message (Section 2.3); INSUFFICIENT if only one of the two; NONE if neither. The rider's own contact
       does not replace the driver's obligation. CW-R13 draws the consequence.
-    zh: 到达至取消之间司机至少打 1 通电话或发 2 条消息（或乘客联系过司机）为 ADEQUATE。
+    zh: 到达至取消之间司机至少打 1 通电话或发 2 条消息（或乘客联系过司机）为 ADEQUATE。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [CONTACT_MIN_CALLS, CONTACT_MIN_MESSAGES]
     produces_finding: F-CONTACT
     sources:
@@ -891,7 +892,7 @@ rules:
       8 minutes). Ryde profile: S$6.61 after more than 3 minutes. Profile organizer_v2_1: the same conditions with the fee of Section 2.2 (S$5.00), the wait of Section 2.1 (5
       minutes from the scheduled pickup, CW-F02C and CW-F03) and the contact obligation of Section 2.3 (CW-R13): the driver may cancel as a no-show only after the 5 minutes,
       and the fee is charged to the rider when the driver cancels after the free wait.
-    zh: Ryde 的条件全部成立时取消费成立：司机以乘客缺席取消、到达有效、等待期间在上车点、等待达到阈值。稀疏 GPS、记录缺失和乘客反证怎么处理，见决策表 DT-CW-NOSHOW 每一行（各行有自己的可信度）。组织方参数档用案件自带政策（DISP-002：S$5、8 分钟）；Ryde 参数档 S$6.61、超过 3 分钟。
+    zh: Ryde 的条件全部成立时取消费成立：司机以乘客缺席取消、到达有效、等待期间在上车点、等待达到阈值。稀疏 GPS、记录缺失和乘客反证怎么处理，见决策表 DT-CW-NOSHOW 每一行（各行有自己的可信度）。组织方参数档用案件自带政策（DISP-002：S$5、8 分钟）；Ryde 参数档 S$6.61、超过 3 分钟。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [NO_SHOW_THRESHOLD_S, THRESHOLD_COMPARISON, NO_SHOW_FEE_SGD]
     inputs: [Trip.cancellation_reason, F-ARRIVAL-VALID, F-PRESENCE, F-GPS-LOGIC, F-WAIT-MARGIN]
     produces: [CW-R-NOSHOW-VALID, CW-R-WAIT-SHORT, CW-R-DRIVER-LEFT]
@@ -916,7 +917,7 @@ rules:
       If F-CONTACT is NONE (no driver call or message and no rider contact), do not auto-uphold: keep the outcome from CW-R03, add flag CONTACT_NOT_ATTEMPTED and require human
       approval. Ryde's text does not make contact a condition of the fee, so FairRyde does not invent a waiver ground from it. Profiles ryde_2026 and organizer_case only. Under
       organizer_v2_1 a driver who made no contact (or only one kind) voids the fee instead (CW-R13, Section 2.3, Precedent 7.3), so this approval trigger does not apply.
-    zh: 完全没有联系记录时不自动维持，打标记并转人工批准；Ryde 未把联系列为收费条件，所以不据此直接免费。
+    zh: 完全没有联系记录时不自动维持，打标记并转人工批准；Ryde 未把联系列为收费条件，所以不据此直接免费。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     produces: []
     sources:
       - {type: RYDE_POLICY, doc: RYDE-115001438754, quote: 'If the rider still cannot be reached, you may need to cancel the trip.'}
@@ -1023,7 +1024,7 @@ rules:
       waiver under this rule always needs human approval (AUTH-02 trigger 13), never AUTO. Profile organizer_v2_1: DRIVER_LATE_GRACE_S is 300 s and counts from the scheduled
       pickup time (Section 2.4: 'scheduled pickup time + 5 minutes'), not from the assignment ETA; a rider who cancels because the driver did not arrive in time cancels at no
       charge under CW-R14. The waiver still needs approval (AUTH-02 trigger 13). Decision D45.
-    zh: 乘客取消时司机已晚于派单 ETA 加宽限、或没有朝上车点移动（已在上车点等候的司机算作朝上车点移动），则乘客取消费可免除。Ryde 未公开此规则（通用假设）。预约单的派单 ETA 取预约时间（FairRyde 的读法：司机应在那时到达上车点）；但在 CW-R02 的截止时间之后才被接的预约单，派单 ETA 取接单时 App 给出的 ETA（若晚于预约时间）；预约单的司机没有移动时，只有按 App 从司机所在位置算的 ETA 已无法在派单 ETA 加宽限内到达上车点，才构成免除理由（提前到附近等候的司机不构成）。按本规则免除一律需人工批准（AUTH-02 第 13 项），不能自动。
+    zh: 乘客取消时司机已晚于派单 ETA 加宽限、或没有朝上车点移动（已在上车点等候的司机算作朝上车点移动），则乘客取消费可免除。Ryde 未公开此规则（通用假设）。预约单的派单 ETA 取预约时间（FairRyde 的读法：司机应在那时到达上车点）；但在 CW-R02 的截止时间之后才被接的预约单，派单 ETA 取接单时 App 给出的 ETA（若晚于预约时间）；预约单的司机没有移动时，只有按 App 从司机所在位置算的 ETA 已无法在派单 ETA 加宽限内到达上车点，才构成免除理由（提前到附近等候的司机不构成）。按本规则免除一律需人工批准（AUTH-02 第 13 项），不能自动。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [DRIVER_LATE_GRACE_S]
     produces: [CW-R-DRIVER-LATE]
     sources:
@@ -1045,7 +1046,7 @@ rules:
     type: remedy
     applies_to: [CW]
     statement: Cancellation and waiting fees compensate the driver (payee DRIVER).
-    zh: 取消费与等候费归司机。
+    zh: 取消费与等候费归司机。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [FEE_PAYEE]
     sources:
       - {type: ORGANIZER, doc: ORG-DISP002, quote: '"fee_goes_to": "driver_compensation"', profile: organizer_case}
@@ -1069,7 +1070,7 @@ rules:
       A granted waiver returns the fee charged as a non-cash Ryde wallet voucher (S$6.61 for a cancellation fee, S$5.00 for a waiting fee under the Ryde profile; the amount
       charged under the organizer profile). Profile organizer_v2_1: the amount charged (S$5.00, Section 2.2) is reversed and refunded to the rider's original payment method
       (Precedent 7.3: 'reversed and refunded to the rider'; DISP-001's recommended ruling: method original_payment_method), not a voucher.
-    zh: 免除费用时以不可兑现的钱包券退还所收金额（Ryde 档：取消费 S$6.61，等候费 S$5.00；组织方档：退所收金额）。
+    zh: 免除费用时以不可兑现的钱包券退还所收金额（Ryde 档：取消费 S$6.61，等候费 S$5.00；组织方档：退所收金额）。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [RIDER_CANCEL_FEE_SGD, WAITING_FEE_SGD, REMEDY_FORM]
     sources:
       - {type: RYDE_POLICY, doc: RYDE-18229758389017, quote: 'If you are eligible, we will issue you a voucher** with a unique code worth $6.61 as a refund for the incurred Cancellation Charges.'}
@@ -1218,7 +1219,7 @@ rules:
       tolerance of Section 1.3 (DEVIATION_TOLERANCE_KM), which replaces DETOUR_RATIO_MIN and DETOUR_EXTRA_KM_MIN; the spatial confirmation is used as stated, and the 'point of
       deviation' of Section 1.2 is the first GPS ping beyond the corridor, wherever it is (the endpoint exclusion applies only to the confirmation). Findings F-DEVIATION-KM and
       F-DEVIATION-CONFIRMED. The waypoints of a recommended route are the corners of a polyline, so the corridor test is rough (decision D54).
-    zh: 推荐路线按行程的最终行程单走：从上车点按顺序经过每个下车点（ENT-TRIP has_dropoff，一对多）。行程中司机每接受一次改动（改下车点或加站，destination_edit_accepted），推荐路线就在离车当时位置最近的点 C 分段，C 取在车还没有经过的那段路线上（车当时的位置取接受时的 GPS 位置，在前后定位点之间插值）：C 之前是朝当时有效下车点的推荐路线，C 之后按顺序经过新的下车点。实际路径整段计量，所以改动之前已经开出的绕路仍算在内。只有改动本身需要的里程（从 C 经过新下车点、代替旧路线剩下部分）不算绕路；去乘客加的站途中的偏离照常计量。行程单改过、而记录里的推荐路线没有按它走，测量不可用（FC-R12）。绕路比 DR = 实际里程 / 推荐路线里程；多开里程 = 实际里程减推荐路线里程。实际里程用行程记录，否则用道路匹配路径，不用稀疏定位点之间直线距离之和（这个和只能证明有绕路，不能证明没有）。空间确认需要至少 CORRIDOR_MIN_CONSEC_PINGS 个连续定位点落在推荐路线两侧 CORRIDOR_HALF_WIDTH_M 之外，两端各 ENDPOINT_EXCLUSION_M 不计。
+    zh: 推荐路线按行程的最终行程单走：从上车点按顺序经过每个下车点（ENT-TRIP has_dropoff，一对多）。行程中司机每接受一次改动（改下车点或加站，destination_edit_accepted），推荐路线就在离车当时位置最近的点 C 分段，C 取在车还没有经过的那段路线上（车当时的位置取接受时的 GPS 位置，在前后定位点之间插值）：C 之前是朝当时有效下车点的推荐路线，C 之后按顺序经过新的下车点。实际路径整段计量，所以改动之前已经开出的绕路仍算在内。只有改动本身需要的里程（从 C 经过新下车点、代替旧路线剩下部分）不算绕路；去乘客加的站途中的偏离照常计量。行程单改过、而记录里的推荐路线没有按它走，测量不可用（FC-R12）。绕路比 DR = 实际里程 / 推荐路线里程；多开里程 = 实际里程减推荐路线里程。实际里程用行程记录，否则用道路匹配路径，不用稀疏定位点之间直线距离之和（这个和只能证明有绕路，不能证明没有）。空间确认需要至少 CORRIDOR_MIN_CONSEC_PINGS 个连续定位点落在推荐路线两侧 CORRIDOR_HALF_WIDTH_M 之外，两端各 ENDPOINT_EXCLUSION_M 不计。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [CORRIDOR_HALF_WIDTH_M, CORRIDOR_MIN_CONSEC_PINGS, ENDPOINT_EXCLUSION_M, DEVIATION_TOLERANCE_KM]
     produces_finding: [F-DETOUR, F-DEVIATION-KM, F-DEVIATION-CONFIRMED]
     sources:
@@ -1242,7 +1243,7 @@ rules:
       does not establish it (GEN-R01); an in-app navigation reroute (generic assumption from DiDi's terms). Profile ryde_2026 only. Under organizer_v2_1 the justification is
       FC-F06 (the traffic data), the notice and the agreement are FC-F05, and the matrix is FC-R13; the grounds of this rule that policy v2.1 does not name (GPS navigation, ERP
       avoidance) have no row there.
-    zh: 推荐路线拥堵、事故或封路；乘客事先要求或同意的路线（需读聊天记录）；应乘客要求避开 ERP；司机的 GPS 导航显示为最快或最有效的路线（Ryde 写明司机"可按 GPS 选最有效路线"；需有行程的导航记录，司机单方面的说明属 C 或 D 级证据，不足以证明，见 GEN-R04 和 GEN-R01）；导航重新规划（来自 DiDi 条款的通用假设），均为正当理由。
+    zh: 推荐路线拥堵、事故或封路；乘客事先要求或同意的路线（需读聊天记录）；应乘客要求避开 ERP；司机的 GPS 导航显示为最快或最有效的路线（Ryde 写明司机"可按 GPS 选最有效路线"；需有行程的导航记录，司机单方面的说明属 C 或 D 级证据，不足以证明，见 GEN-R04 和 GEN-R01）；导航重新规划（来自 DiDi 条款的通用假设），均为正当理由。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     produces_finding: F-JUSTIFICATION
     sources:
       - {type: RYDE_POLICY, doc: RYDE-4412121982745, quote: 'If you have a preferred route, you may recommend this to your driver and reach a mutual agreement before you go.'}
@@ -1316,8 +1317,8 @@ rules:
       - {type: ORGANIZER, doc: ORG-POLICY-V21, clause: "Section 1.2", quote: 'A brief reason (e.g., "traffic jam ahead onNicoll Highway, taking alternate route") is sufficient.', profile: organizer_v2_1}
       - {type: ORGANIZER, doc: ORG-POLICY-V21, clause: "Section 1.4", quote: "If the driver's in-app chat or call recording confirms rider acknowledgment, the deviation is considered agreed.", profile: organizer_v2_1}
       - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "The phrase-list stand-in for the reading, and counting a call as UNCLEAR, are FairRyde's implementation; the norm is the organizer's (decision D54)."}
-    credibility: A
-    credibility_note: The duty, the timing, the reason and the agreement test are the organizer's text (A). How a message is read is the READ mode; the offline phrase lists are a stand-in, never the rule.
+    credibility: D
+    credibility_note: The duty, the timing, the reason and the agreement test are the organizer's text (A). The point of deviation (the first GPS ping beyond the corridor), requiring a reason in the message, and reading an objection as not agreed are FairRyde's (D, decision D54); the weakest essential element sets the credibility. How a message is read is the READ mode; the offline phrase lists are a stand-in, never the rule.
     mode: READ
     status: draft
 
@@ -1330,13 +1331,13 @@ rules:
       Profile organizer_v2_1. Traffic justification is verified via historical traffic data for the route segment at the trip time (Section 1.4). A reroute is justified when
       that data shows an incident or congestion on the recommended route during the trip (the match is FC-F06B). Otherwise it is a reroute 'without traffic justification (no
       evidence of congestion)' (Section 1.3). A case that has no traffic data at all is not 'no evidence of congestion': the data is missing and FC-R12 applies, so a person
-      decides. Under this profile the other grounds of FC-F03 (a route the rider requested, GPS navigation) have no row of their own: a route the rider agreed to is the 'informed
-      and agrees' row (FC-R13). Finding F-JUSTIFIED.
+      decides. Under this profile the other grounds of FC-F03 (a route the rider requested, GPS navigation) have no row of their own: a route the rider agreed to has no row of its own; it counts as justified only when the traffic data shows an incident (FC-R13 checks the traffic justification first, so an agreed reroute without it is refunded, decision D56 item 1). Finding F-JUSTIFIED.
     zh: organizer_v2_1 参数档。改道是否有交通理由，要靠该路段行程时间的历史交通数据核实（第 1.4 节）。数据显示行程期间推荐路线上有事故或拥堵（匹配见 FC-F06B）即为有理由；否则属于"无交通理由（没有拥堵证据）"（第 1.3 节）。案件完全没有交通数据不等于"没有拥堵证据"：数据缺失，适用 FC-R12，转人工。本参数档下 FC-F03 的其他理由（乘客要求的路线、GPS 导航）没有单独的行；乘客同意的路线属于"已告知并同意"一行（FC-R13）。事实认定 F-JUSTIFIED。
     sources:
       - {type: ORGANIZER, doc: ORG-POLICY-V21, clause: "Section 1.4", quote: 'for the route segment at the trip time.', profile: organizer_v2_1}
       - {type: ORGANIZER, doc: ORG-POLICY-V21, clause: "Section 1.3", quote: 'traffic justification (no evidence of congestion)', profile: organizer_v2_1}
-    credibility: A
+    credibility: D
+    credibility_note: That a traffic incident justifies a reroute is the organizer's (Section 1.4, A). Treating a case with no traffic data at all as missing data (FC-R12), and the offline match of an incident to the route (FC-F06B), are FairRyde's (D, decision D54); the weakest essential element sets the credibility.
     mode: HARD
     status: draft
 
@@ -1448,7 +1449,7 @@ rules:
       under CLS-02, opened without waiting for the rider to name the ERP), decided by PB-FC-TOLL with FC-R08. Profile ryde_2026 only. Under organizer_v2_1 FC-R01 does not
       apply: Section 1.3 refunds the excess distance fare the rider was charged (FC-R13), and the toll claim it opens is not opened because tolls pass through at cost
       (TOLLS_TREATMENT = PASS_THROUGH, decision D47).
-    zh: 固定价且实收等于报价时，绕路没有改变乘客为行程付的钱：不退车费；绕路只记作司机行为信息。有一个例外：固定价不含 ERP（FC-F01；RydeSEND 车费已含，且有些服务各页面说法不一，见 FC-R06），绕路造成的 ERP 是另一笔费用，FC-R01 既不裁决也不因此结案。只要实际路径经过了推荐路线（按最终行程单走，FC-F02）避开的有效闸门（或经过次数更多），FC-R01 就把这部分 ERP 交给单独的 FC-TOLL 主张（按 CLS-02 作为次项，不必等乘客提出 ERP），按 PB-FC-TOLL 用 FC-R08 裁决。
+    zh: 固定价且实收等于报价时，绕路没有改变乘客为行程付的钱：不退车费；绕路只记作司机行为信息。有一个例外：固定价不含 ERP（FC-F01；RydeSEND 车费已含，且有些服务各页面说法不一，见 FC-R06），绕路造成的 ERP 是另一笔费用，FC-R01 既不裁决也不因此结案。只要实际路径经过了推荐路线（按最终行程单走，FC-F02）避开的有效闸门（或经过次数更多），FC-R01 就把这部分 ERP 交给单独的 FC-TOLL 主张（按 CLS-02 作为次项，不必等乘客提出 ERP），按 PB-FC-TOLL 用 FC-R08 裁决。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     produces: [FC-R-FIXED-FARE]
     sources:
       - {type: RYDE_POLICY, doc: RYDE-4412121982745, quote: 'The trip fare is fixed based on pick-up and drop-off points, hence the driver may decide to take the most efficient route according to GPS.'}
@@ -1498,7 +1499,7 @@ rules:
       detour; refund per FC-R05. DR and the extra distance are measured against the recommended route through the final itinerary (FC-F02), so a stop or a destination change
       the rider made is never a detour. METERED fares (RydeTAXI) are excluded by FC-R00. Profile ryde_2026 only; under organizer_v2_1 the matrix of Section 1.3 (FC-R13) decides
       a route claim.
-    zh: 重算车费：绕路比和多出里程都达阈值、空间确认且无正当理由，即认定绕路，按 FC-R05 退款。绕路比和多出里程以经过最终行程单的推荐路线为准（FC-F02），所以乘客自己加的站或改的目的地不算绕路。计程车费（RydeTAXI）按 FC-R00 排除。
+    zh: 重算车费：绕路比和多出里程都达阈值、空间确认且无正当理由，即认定绕路，按 FC-R05 退款。绕路比和多出里程以经过最终行程单的推荐路线为准（FC-F02），所以乘客自己加的站或改的目的地不算绕路。计程车费（RydeTAXI）按 FC-R00 排除。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [DETOUR_RATIO_MIN, DETOUR_EXTRA_KM_MIN]
     produces: [FC-R-DETOUR-CONFIRMED, FC-R-DETOUR-JUSTIFIED]
     sources:
@@ -1522,7 +1523,7 @@ rules:
     statement: >-
       BORDERLINE_RATIO_MIN at or above DR below DETOUR_RATIO_MIN, or DR at least DETOUR_RATIO_MIN with extra distance from BORDERLINE_EXTRA_KM_MIN up to DETOUR_EXTRA_KM_MIN, is
       borderline; escalate with the computed difference shown. Profile ryde_2026 only; under organizer_v2_1 the matrix of Section 1.3 (FC-R13) decides a route claim.
-    zh: 绕路比或多出里程落在临界带内，转人工并显示计算出的差额。
+    zh: 绕路比或多出里程落在临界带内，转人工并显示计算出的差额。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [BORDERLINE_RATIO_MIN, BORDERLINE_EXTRA_KM_MIN, DETOUR_RATIO_MIN, DETOUR_EXTRA_KM_MIN]
     produces: [FC-R-DETOUR-BORDERLINE]
     sources:
@@ -1540,7 +1541,7 @@ rules:
       Refund = fare charged minus the fare recomputed on the recommended route through the final itinerary (FC-F02) with the same tariff, fee tiers and surcharges; floor 0,
       capped at the fare charged; paid only if at least MIN_REFUND_SGD. Not for METERED fares (RydeTAXI, FC-R00): there the same formula gives a difference that is attached for
       the reviewer as information and is never proposed as a refund. Profile ryde_2026 only; under organizer_v2_1 the matrix of Section 1.3 (FC-R13) decides a route claim.
-    zh: 退款 = 实收车费减按经过最终行程单的推荐路线（FC-F02）、用同一费率、费用档位和附加费重算的车费；不低于 0、不超过实收；低于最小金额不退。计程车费（RydeTAXI，见 FC-R00）不适用：同一公式算出的差额只作为参考附给审核人，不作为退款建议。
+    zh: 退款 = 实收车费减按经过最终行程单的推荐路线（FC-F02）、用同一费率、费用档位和附加费重算的车费；不低于 0、不超过实收；低于最小金额不退。计程车费（RydeTAXI，见 FC-R00）不适用：同一公式算出的差额只作为参考附给审核人，不作为退款建议。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [MIN_REFUND_SGD, TAXI_TARIFF, PLATFORM_FEE_TIERS, TRANSACTION_FEE_LOCAL]
     sources:
       - {type: INDUSTRY, doc: IND-BENCHMARK-NOTES, quote_kind: paraphrase, note: "DiDi charges only the estimated fare when a detour is found (research notes 02 and 08)."}
@@ -1637,7 +1638,7 @@ rules:
       not hold a PDVL), which is one more reason the refund needs approval (open item D35). Under organizer_v2_1 (TOLLS_TREATMENT is PASS_THROUGH) the tolls of a longer route pass
       through at cost, as DISP-001's recommended ruling states ('Tolls are passed through at cost'), so FC-R08 refunds nothing and the ERP charge stands (FC-R-TOLL-VALID);
       FC-R07's refund of an overstated ERP line is not affected, because an overstated line is not a pass-through at cost (decision D47).
-    zh: 实际路径经过推荐路线（按最终行程单，FC-F02）避开的闸门（或经过的次数更多，这是 FairRyde 对 ERP 差额的读法）且绕路无正当理由，退乘客实付超出推荐路线 ERP 的部分，最多为绕路多出的 ERP：min(ERP(实际), 乘客被收的 ERP) 减 ERP(推荐)，不低于 0；ERP(实际) 和 ERP(推荐) 都按 FC-F04 计算（先 FC-R06：RydeSEND 车费已含 ERP，不退；拼车退一半）。FC-R07 对超收 ERP 的退款另算，两者合计最多为乘客被收的 ERP 减 ERP(实际) 与 ERP(推荐) 中较小的一个，不会是负数。若没有超出 ERP(推荐) 的部分，退款为 0，ERP 收费成立（FC-R-TOLL-VALID）。FC-R08 不适用于计程车费（METERED，RydeTAXI），与 FC-R00 一致（D32）：FairRyde 不作裁决，按 GEN-R07 转人工（原因 GEN-R-POLICY-GAP，按 AUTH-06 为 HUMAN），并附 ERP(实际)、ERP(推荐)、两者差额（仅供参考，不作为退款建议）、FC-R07 的认定（如有）和司机的回应（GEN-R05）。它所依据的 LTA 义务只核实到私召车（PDVL）司机：所用 LTA 清单是截至 2023 年 4 月 1 日的 PDVL 违规清单，没有找到出租车（TDVL）清单。FC-R08 不核对服务该行程的是哪类司机（RydeX 行程可能由出租车司机服务，拼车司机可能没有 PDVL），这也是退款须经批准的原因之一（见 D35）。
+    zh: 实际路径经过推荐路线（按最终行程单，FC-F02）避开的闸门（或经过的次数更多，这是 FairRyde 对 ERP 差额的读法）且绕路无正当理由，退乘客实付超出推荐路线 ERP 的部分，最多为绕路多出的 ERP：min(ERP(实际), 乘客被收的 ERP) 减 ERP(推荐)，不低于 0；ERP(实际) 和 ERP(推荐) 都按 FC-F04 计算（先 FC-R06：RydeSEND 车费已含 ERP，不退；拼车退一半）。FC-R07 对超收 ERP 的退款另算，两者合计最多为乘客被收的 ERP 减 ERP(实际) 与 ERP(推荐) 中较小的一个，不会是负数。若没有超出 ERP(推荐) 的部分，退款为 0，ERP 收费成立（FC-R-TOLL-VALID）。FC-R08 不适用于计程车费（METERED，RydeTAXI），与 FC-R00 一致（D32）：FairRyde 不作裁决，按 GEN-R07 转人工（原因 GEN-R-POLICY-GAP，按 AUTH-06 为 HUMAN），并附 ERP(实际)、ERP(推荐)、两者差额（仅供参考，不作为退款建议）、FC-R07 的认定（如有）和司机的回应（GEN-R05）。它所依据的 LTA 义务只核实到私召车（PDVL）司机：所用 LTA 清单是截至 2023 年 4 月 1 日的 PDVL 违规清单，没有找到出租车（TDVL）清单。FC-R08 不核对服务该行程的是哪类司机（RydeX 行程可能由出租车司机服务，拼车司机可能没有 PDVL），这也是退款须经批准的原因之一（见 D35）。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [ERP_RIDER_SHARE, TOLLS_TREATMENT]
     produces: [FC-R-TOLL-FROM-DETOUR, FC-R-TOLL-VALID, GEN-R-POLICY-GAP]
     sources:
@@ -1930,7 +1931,7 @@ rules:
       even an interim measure, on any claim in the case (CLS-01; Jasper, 2026-10-14, open item D40 (c)). Under organizer_v2_1 the same holds for every SE claim: policy v2.1
       Section 5.2 lets the AI agents only gather evidence, summarize accounts and prepare case files, so FairRyde recommends no interim measure either; the interim measures of
       Section 5.3 (suspension, no new trips) are applied by the platform on escalation, not recommended by FairRyde (decision D49).
-    zh: 安全类主张由 AI 分类、保全证据、写中立摘要，可建议可逆的临时措施（如不再匹配二人），由人裁决。投诉提到歧视时，AI 只准备案卷，对案子里任何主张都不给任何建议，临时措施也不建议（CLS-01；Jasper，2026-10-14，待办 D40 (c)）。
+    zh: 安全类主张由 AI 分类、保全证据、写中立摘要，可建议可逆的临时措施（如不再匹配二人），由人裁决。投诉提到歧视时，AI 只准备案卷，对案子里任何主张都不给任何建议，临时措施也不建议（CLS-01；Jasper，2026-10-14，待办 D40 (c)）。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     produces: [SE-R-HUMAN-DECIDES]
     sources:
       - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Violations of these guidelines will result in immediate termination and legal action where applicable.'}
@@ -2197,7 +2198,7 @@ rules:
       Auto-resolve only if: nothing is decisive in the sense of decisive_definition; the amount is at most AUTO_LIMIT_SGD; confidence C (AUTH-05) is at least TAU; no AUTH-02
       trigger and no escalation gate fires; the case is not an appeal. Both parties can ask for a human review of an automatic ruling. Under organizer_v2_1 AUTH-07 replaces the
       amount limit and the confidence floor (policy v2.1 Section 6).
-    zh: 只有在：没有任何决定性的需读原文规则、C/D 级参数或 C/D 级决策表行；金额不超过自动上限；置信度达标；没有触发人工批准条件或升级门；不是申诉，才自动处理。双方都可申请人工复核。
+    zh: 只有在：没有任何决定性的需读原文规则、C/D 级参数或 C/D 级决策表行；金额不超过自动上限；置信度达标；没有触发人工批准条件或升级门；不是申诉，才自动处理。双方都可申请人工复核。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [AUTO_LIMIT_SGD, TAU]
     sources:
       - {type: GOV_GUIDANCE, doc: GOV-MGF2, quote_kind: paraphrase, note: "Model AI Governance Framework (2nd ed.) paras 3.14 to 3.16: human-over-the-loop for low-severity, reversible decisions (research note 07)."}
@@ -2225,7 +2226,7 @@ rules:
       CW-RIDERCANCEL has no decision table, so this trigger makes the waiver need approval, in line with D29; Jasper, 2026-10-14, open item D40 (k)). Under organizer_v2_1
       (AUTH-07): trigger (4) is Section 6 (the amount bands, 80% and 95% with a fraud flag, a route deviation over 2 km); trigger (12) is a confidence penalty, not an approval
       trigger (decision D52); trigger (7) CONTACT_NOT_ATTEMPTED does not apply (CW-R13 voids the fee); the other triggers stay.
-    zh: 任一即需人工批准：有决定性的规则或决策表行；任何一方带欺诈信号（对称）；清洁费及所有"需批准"类型；金额超限或置信度不足；裁决所依赖的点存在已知来源矛盾（若矛盾会改变结果或金额，则按 META-04 转人工、按 AUTH-06 为 HUMAN）；对自动裁决的申诉；无联系记录、多收费用、记录缺失；决定性余量落在边界带内且各记录对起止时刻的差异大于余量（不论结果有利于谁）；维持收费而 pin 与场馆不符且乘客说自己在该场馆；结果有利的一方的文字里有注入指令；司机 GPS 无法确定等待期间是否离开（GPS_AMBIGUOUS，见 CW-F04B）；按是非曲直维持缺席取消费或等候费，而让司机算作已到达并在场的是 FairRyde 自己的 GPS 判断逻辑、不是定位点本身（CW-F04B：F-GPS-LOGIC 为真），或 CW-F04B 某个参数取其合理区间任一端时会如此（D29 把定位间隔和半径参数列入），决定 D29；缺席取消费的决策表行 R9、R11（可信度 D）本身已使其成为决定性的（decisive_definition 第 2、3 条），等候费没有决策表（D31），由这一项覆盖这两部分；因司机迟到或没有朝上车点移动而免除乘客取消费（CW-R08，可信度 D；CW-RIDERCANCEL 没有决策表，由这一项使免除需人工批准，与 D29 一致；Jasper，2026-10-14，待办 D40 (k)）。
+    zh: 任一即需人工批准：有决定性的规则或决策表行；任何一方带欺诈信号（对称）；清洁费及所有"需批准"类型；金额超限或置信度不足；裁决所依赖的点存在已知来源矛盾（若矛盾会改变结果或金额，则按 META-04 转人工、按 AUTH-06 为 HUMAN）；对自动裁决的申诉；无联系记录、多收费用、记录缺失；决定性余量落在边界带内且各记录对起止时刻的差异大于余量（不论结果有利于谁）；维持收费而 pin 与场馆不符且乘客说自己在该场馆；结果有利的一方的文字里有注入指令；司机 GPS 无法确定等待期间是否离开（GPS_AMBIGUOUS，见 CW-F04B）；按是非曲直维持缺席取消费或等候费，而让司机算作已到达并在场的是 FairRyde 自己的 GPS 判断逻辑、不是定位点本身（CW-F04B：F-GPS-LOGIC 为真），或 CW-F04B 某个参数取其合理区间任一端时会如此（D29 把定位间隔和半径参数列入），决定 D29；缺席取消费的决策表行 R9、R11（可信度 D）本身已使其成为决定性的（decisive_definition 第 2、3 条），等候费没有决策表（D31），由这一项覆盖这两部分；因司机迟到或没有朝上车点移动而免除乘客取消费（CW-R08，可信度 D；CW-RIDERCANCEL 没有决策表，由这一项使免除需人工批准，与 D29 一致；Jasper，2026-10-14，待办 D40 (k)）。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     params: [AUTO_LIMIT_SGD, TAU, BOUNDARY_BAND_S]
     sources:
       - {type: GOV_GUIDANCE, doc: GOV-IMDA-AGENTIC, quote: 'Organisations should define significant checkpoints or action boundaries that require human approval, especially before sensitive actions are executed.'}
@@ -2263,7 +2264,7 @@ rules:
       outcome stays ESCALATE_HUMAN (tier HUMAN, AUTH-06). Gates G2 rule conflict and G8 the Judge passes disagree with each other or with the rules engine leave no single
       ruling: the outcome is ESCALATE_HUMAN with reason GEN-R-ESCALATED (tier HUMAN, AUTH-06). G4 safety content: a person decides (tier HUMAN, AUTH-03). Under organizer_v2_1
       gates G5 and G6 are replaced by Section 6 (AUTH-07); G1 and G4 stay (G4: the case file only, policy v2.1 Section 5.2).
-    zh: 任一升级门触发即转人工并附一页摘要。G1 数据矛盾（含 GPS 数据错误）、G3 含历史的 Judge 或欺诈检查与不含历史的结论不同、G5 低置信度、G6 金额超限、G7 引用或数字校验重试仍失败：FairRyde 的裁决作为暂定裁决交人批准（APPROVE）。G3 的暂定裁决是不含历史那一轮的裁决：历史不能决定结果（GEN-R03、FRD-02），所以含历史一轮的结论只展示给复核人，放在暂定裁决旁边，不改变结果和金额，不论该裁决对哪一方有利。含历史的一轮（或欺诈检查）与不含历史的一轮之间的分歧属 G3，不属 G8（尽管含历史的一轮也是 Judge 的一轮）；Judge 各轮之间或与规则引擎的分歧才是 G8。若不含历史的那一轮本身没有裁决（ESCALATE_HUMAN），结果仍为 ESCALATE_HUMAN（按 AUTH-06 为 HUMAN）。G2 规则冲突、G8 Judge 各轮之间或与规则引擎不一致：没有单一裁决，结果为 ESCALATE_HUMAN、理由 GEN-R-ESCALATED（按 AUTH-06 为 HUMAN）。G4 安全内容：由人裁决（按 AUTH-03 为 HUMAN）。
+    zh: 任一升级门触发即转人工并附一页摘要。G1 数据矛盾（含 GPS 数据错误）、G3 含历史的 Judge 或欺诈检查与不含历史的结论不同、G5 低置信度、G6 金额超限、G7 引用或数字校验重试仍失败：FairRyde 的裁决作为暂定裁决交人批准（APPROVE）。G3 的暂定裁决是不含历史那一轮的裁决：历史不能决定结果（GEN-R03、FRD-02），所以含历史一轮的结论只展示给复核人，放在暂定裁决旁边，不改变结果和金额，不论该裁决对哪一方有利。含历史的一轮（或欺诈检查）与不含历史的一轮之间的分歧属 G3，不属 G8（尽管含历史的一轮也是 Judge 的一轮）；Judge 各轮之间或与规则引擎的分歧才是 G8。若不含历史的那一轮本身没有裁决（ESCALATE_HUMAN），结果仍为 ESCALATE_HUMAN（按 AUTH-06 为 HUMAN）。G2 规则冲突、G8 Judge 各轮之间或与规则引擎不一致：没有单一裁决，结果为 ESCALATE_HUMAN、理由 GEN-R-ESCALATED（按 AUTH-06 为 HUMAN）。G4 安全内容：由人裁决（按 AUTH-03 为 HUMAN）。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     gate_tiers: {G1: APPROVE, G2: HUMAN, G3: APPROVE, G4: HUMAN, G5: APPROVE, G6: APPROVE, G7: APPROVE, G8: HUMAN}
     params: [TAU, AUTO_LIMIT_SGD]
     produces: [GEN-R-ESCALATED]
@@ -2325,8 +2326,7 @@ rules:
       constraint decides. FairRyde's tiers (decision D48): 'AI ruling is final' is AUTO; 'escalate to human review' with a ruling FairRyde proposes is APPROVE, a person confirms or changes the
       recommended remedy (DISP-001: 4.3 km above 2 km, S$3.44 recommended); 'always human review, case file only' and a safety claim are HUMAN. The confidence is AUTH-05's C; A and R are 1.0
       offline, and Section 6.3's precedent alignment and party credibility are not separate terms of C (limitation D55). Decision D29 (a ruling that rests on FairRyde's own GPS presence logic needs
-      approval) conflicts with 'no-show: AI ruling is final'; under this profile it is a confidence penalty D29_CONFIDENCE_PENALTY (0.10) on C, so the tier still follows Section 6 (decision D52;
-      with a fraud flag the penalty keeps the ruling below 95%, below S$10 without one Section 6.1 accepts any confidence). FairRyde's other approval triggers (AUTH-02 items 1, 2, 5 to 11, 13) and the
+      approval) conflicts with 'no-show: AI ruling is final'; under this profile it is a confidence penalty D29_CONFIDENCE_PENALTY (0.10) on C, so Section 6 decides the tier from C (decision D52). The penalty lowers C only: it changes the tier when it moves C across a Section 6 threshold, which needs a fraud flag (95%) or a deviation or fare dispute in the 80% band; below S$10 without a fraud flag Section 6.1 accepts any confidence. The D29 approval itself also remains, through the decision-table rows R9 and R11 (rated D) and the pin trigger, so a fee upheld on FairRyde's own GPS presence logic is still confirmed by a person; whether Section 6.2's 'a no-show ruling is final' should override that is the open question O26. FairRyde's other approval triggers (AUTH-02 items 1, 2, 5 to 11, 13) and the
       gates G1 and G4 stay: they can only send more cases to a person than Section 6 does, never fewer. CONTACT_NOT_ATTEMPTED is no longer a trigger (CW-R13 voids the fee instead).
     zh: organizer_v2_1 参数档。政策 v2.1 第 6.1 至 6.3 节取代组织方案件的 AUTO_LIMIT_SGD 与 TAU（AUTH-01、AUTH-02 第 4 项、关口 G5 与 G6）。争议金额指申诉方争议的金额（费用、车费差额或多收的车费）。第 6.1 节：低于 RULING_FINAL_BELOW_SGD（S$10）时 AI 裁决为终局，不论置信度；S$10 至 S$50（HUMAN_REVIEW_ABOVE_SGD，含）需要 CONFIDENCE_MIN（80%）置信度，否则转人工；高于 S$50 一律人工复核，AI 只准备案卷。第 6.2 节：绕路需要 80% 置信度且偏离不超过 ROUTE_AI_MAX_KM（2 公里），否则上报；未到场费 AI 终裁（费用固定 S$5.00）；车费争议按第 6.1 节；安全事件一律人工复核（第 5.2 节，CLS-01）。第 6.3 节：任何一方的欺诈标记（档案里的 fraud_flags，不是 FairRyde 的 FRD 信号）≥ 1 时，不论争议金额，置信度门槛提高到 CONFIDENCE_MIN_FRAUD_FLAG（95%），低于 S$10 的裁决也要达到。取最严格的约束。FairRyde 的等级（决定 D48）："AI 终裁"为 AUTO；"转人工复核"且 FairRyde 有拟议裁决为 APPROVE，由人确认或修改推荐补救（DISP-001：4.3 公里超过 2 公里，推荐 S$3.44）；"一律人工复核、只出案卷"和安全主张为 HUMAN。置信度为 AUTH-05 的 C，离线时 A 与 R 为 1.0，第 6.3 节的先例吻合度与当事人信用分不是 C 的独立项（局限 D55）。决定 D29（依赖 FairRyde 自己的 GPS 在场逻辑的裁决须经批准）与"未到场费 AI 终裁"冲突；本参数档把它改为对 C 扣 D29_CONFIDENCE_PENALTY（0.10），等级仍按第 6 节（决定 D52；有欺诈标记时该扣分使裁决低于 95%，低于 S$10 且无标记时第 6.1 节接受任何置信度）。FairRyde 的其他批准触发（AUTH-02 第 1、2、5 至 11、13 项）与关口 G1、G4 保留：它们只会比第 6 节多送人工，不会少。CONTACT_NOT_ATTEMPTED 不再是触发项（改由 CW-R13 作废费用）。
     params: [RULING_FINAL_BELOW_SGD, HUMAN_REVIEW_ABOVE_SGD, CONFIDENCE_MIN, CONFIDENCE_MIN_FRAUD_FLAG, ROUTE_AI_MAX_KM, D29_CONFIDENCE_PENALTY]
@@ -2354,7 +2354,7 @@ rules:
       items; what evidence was missing; whether history was used; and how to ask for a human review of the decision (AUTH-01). Ryde's 30-day limit applies to waiver requests,
       not to reviews of a FairRyde ruling, so it is not presented as an appeal deadline. Under organizer_v2_1 each party is also told the policy section on which the ruling
       rests and the precedent it follows or is distinguished from (GEN-R08).
-    zh: 双方各自收到：结果；用到的每条规则（含来源和可信度，标明哪些起了决定作用）；2 到 4 条决定性证据；缺失的证据；是否用了历史；如何申请人工复核。Ryde 的 30 天是免除申请的期限，不是复核期限，不写成申诉期限。
+    zh: 双方各自收到：结果；用到的每条规则（含来源和可信度，标明哪些起了决定作用）；2 到 4 条决定性证据；缺失的证据；是否用了历史；如何申请人工复核。Ryde 的 30 天是免除申请的期限，不是复核期限，不写成申诉期限。 （organizer_v2_1 参数档下新增的内容见英文条文，中文待译。）
     sources:
       - {type: GOV_GUIDANCE, doc: GOV-MGF2, quote_kind: paraphrase, note: "Model Framework paras 3.48, 3.51 and 3.54 (explanations and requests for review); PDPC AI guidelines para 9.5 (research note 07)."}
       - {type: FAIRRYDE, doc: FAIRRYDE-DECISIONS, quote_kind: none, note: "The content list (which rules decided the outcome, two to four decisive evidence items, missing evidence, whether history was used) and the reading that Ryde's 30-day waiver window is not an appeal deadline are FairRyde's design."}

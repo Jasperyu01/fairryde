@@ -191,6 +191,8 @@ def evaluate(kb: KB, case_in: dict, profile: str | None = None, overrides: dict 
         notes.append(f"the excess distance fare {exc_dist_fare:.2f} is more than the whole difference {diff:.2f}")
     if diff is not None and exc_dist_fare is not None and exc_tolls is not None and exc_dist_fare + exc_tolls - max(diff, 0) > tm:
         notes.append("the excess distance fare and the excess tolls together are more than the whole difference")
+    if (exc_dist_fare is not None and exc_dist_fare < 0) or (exc_tolls is not None and exc_tolls < 0):
+        notes.append("an excess line in the fare breakdown is negative")
     figures_ok = not notes
     tr.finding("F-FARE-FIGURES", {"quoted": quoted, "actual": actual, "difference": diff, "excess_distance_fare": exc_dist_fare, "excess_tolls": exc_tolls, "consistent": figures_ok},
                "SGD", basis=["E-TRP-01", "E-PAY-01"], rule="DQ-05", params=["MONEY_TOLERANCE_SGD"], status="established" if figures_ok else "contested")

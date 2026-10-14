@@ -26,6 +26,7 @@ replace:                 # pseudonymize (ONT.11.2 item 7: people, companies, con
   - {type: NRIC_FIN, method: "Pattern: one of S T F G M, seven digits, one letter"}
   - {type: CARD_OR_BANK_NUMBER, method: "Pattern: 12 to 19 digits (with spaces or hyphens) passing the Luhn check"}
   - {type: UNIT_NUMBER, method: "Pattern '#12-345': identifies a home; public venue names stay"}
+  - {type: CARD_TAIL, method: "Pattern 'ending 1234' (the last four digits of a payment card, DISP-001): replaced by CARD-X"}
 
 keep:                    # ONT.11.2 item 7: what the rules need
   - "Place names of public venues, and coordinates inside the deterministic tools"
