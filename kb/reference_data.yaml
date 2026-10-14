@@ -6,9 +6,9 @@
 meta:
   kb: FairRyde Knowledge Base
   layer: Rules / reference data
-  version: 0.1.0
+  version: 0.2.0
   status: draft
-  updated: 2026-10-05
+  updated: 2026-10-14
   owner: Jasper
   how_profiles_work: >-
     A case is evaluated under exactly one profile (rule META-01). Profile parameters override shared parameters.
@@ -86,8 +86,8 @@ profiles:
 shared_params:
   BOUNDARY_BAND_S: {value: 30, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [10, 60], flag_only: true, retrieved: 2026-10-05, note: "Adds the BOUNDARY_MARGIN flag and sets the margin term M of the confidence score."}
   TS_TOLERANCE_S: {value: 30, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [5, 60], retrieved: 2026-10-05, note: "Prior: server components usually log the same moment within a few seconds. DISP-002 shows 5 to 10 s lags; the range was not set from DISP-002."}
-  ARRIVAL_GEOFENCE_M: {value: 50, unit: m, source_type: FAIRRYDE, credibility: D, plausible_range: [10, 100], retrieved: 2026-10-05, note: "The organizer's own auto-arrival check uses 10 m (lower end); 50 m allows for GPS error near tall buildings."}
-  LEFT_MIN_OUTSIDE_S: {value: 60, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [30, 120], retrieved: 2026-10-05, note: "CW-F04 and CW-R06: an outside stretch shorter than this, measured from its first to its last ping, is a GPS outlier when the driver is seen inside again after it (a single such ping included). A stretch with no later inside ping, and the approach before the driver is first seen inside, are never outliers on duration. Measured in time, not in pings, so it means the same at 5-second and at 3-minute sampling."}
+  ARRIVAL_GEOFENCE_M: {value: 50, unit: m, source_type: FAIRRYDE, credibility: D, plausible_range: [25, 100], retrieved: 2026-10-14, note: "50 m allows for GPS error near tall buildings. The low end of the plausible range is 25 m (Jasper, 2026-10-14, open item D39 (g)). FairRyde's design reason, with no outside source: the GPS position of a car parked near tall buildings drifts while the car stands still, so at the low end that drift around a parked car must not count as being away. The organizer's auto-arrival check uses 10 m ('Driver GPS within 10m of pickup point.'); it is a check for arriving, not a tolerance for drift, so it is no longer the low end. FairRyde's choice, D."}
+  LEFT_MIN_OUTSIDE_S: {value: 60, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [30, 120], retrieved: 2026-10-05, note: "CW-F04B (used by CW-F04 and CW-R06): an outside stretch shorter than this, measured from its first to its last ping, is a GPS outlier when the driver is seen inside again after it (a single such ping included). A stretch with no later inside ping, and the approach before the driver is first seen inside, are never outliers on duration. Measured in time, not in pings, so it means the same at 5-second and at 3-minute sampling."}
   PING_MAX_GAP_S: {value: 300, unit: s, source_type: FAIRRYDE, credibility: D, plausible_range: [60, 420], retrieved: 2026-10-05, note: "Also the look-back window for the moment ping of CW-R06 (the last ping up to this long before the arrival event). Honest history: the only organizer telemetry is DISP-002 (gaps 120 to 240 s), and the value was chosen with it in view, so it is not independent of that case. The plausible range is a prior instead: from one ping a minute (sparse for real apps, which ping every few seconds) up to just below the 480 s organizer threshold. With this range DISP-002's presence finding is sensitive and the case needs human approval."}
   PIN_VENUE_MAX_M: {value: 200, unit: m, source_type: FAIRRYDE, credibility: D, plausible_range: [100, 500], retrieved: 2026-10-05}
   CONTACT_MIN_CALLS: {value: 1, source_type: FAIRRYDE, credibility: D, plausible_range: [1, 2], retrieved: 2026-10-05, note: "Ryde asks drivers to try to contact the rider (RYDE-115001438754, edited 2021); the count is FairRyde's."}

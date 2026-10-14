@@ -3,7 +3,7 @@
 # Sensitivity uses a provisional scale until aligned with ChordX SEC.6: PUBLIC, INTERNAL, PII (personal data), CONFIDENTIAL.
 
 meta:
-  version: 0.1.0
+  version: 0.2.0
   updated: 2026-10-05
   sensitivity_note: Provisional labels; replace with SEC.6 classes once chordx_security.md is available.
 

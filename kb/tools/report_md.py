@@ -14,7 +14,7 @@ def _tbl(headers, rows):
 
 
 def check_report(kb, rep, runs, dt_enum, priv, tests, out_scan=None, ann_status=None, erp_line=None) -> str:
-    lines = ["# FairRyde knowledge base v0.1: check report", "",
+    lines = [f"# FairRyde knowledge base {kb.vtag}: check report", "",
              f"Generated from the YAML source files (knowledge base dated {kb.y['rules']['meta']['updated']}).", ""]
     lines.append(f"* Rules: {len(kb.rules)}; vocabularies: {len(kb.vocab)}; TX-CASE leaves: {len(kb.case_leaves)}; "
                  f"entities: {len(kb.entities)}; events: {len(kb.y['ontology']['events'])}; playbooks: {len(kb.playbooks)}")

@@ -44,6 +44,8 @@ class KB:
         self.disp002_md = md
         self.disp002 = json.loads(re.search(r"```json\n(.*?)\n```", md, re.S).group(1))
         self.articles = {str(a["id"]): a for a in self.corpus["articles"]}
+        self.version = str(self.y["rules"]["meta"]["version"])             # e.g. 0.2.0; names the workbooks (v0.2)
+        self.vtag = "v" + ".".join(self.version.split(".")[:2])
         self._build_indexes()
 
     # ------------------------------------------------------------------ indexes

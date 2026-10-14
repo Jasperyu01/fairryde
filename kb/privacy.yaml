@@ -3,7 +3,7 @@
 # Organizer data is synthetic, but the same pipeline must run on it so the flow is proven before any real data appears.
 
 meta:
-  version: 0.1.0
+  version: 0.2.0
   status: draft
   updated: 2026-10-05
   owner: Jasper

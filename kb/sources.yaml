@@ -6,7 +6,7 @@
 # fact-check note (sources/research/09_fact_check.md); quotes are verified against that record, not the live page.
 
 meta:
-  version: 0.1.0
+  version: 0.2.0
   updated: 2026-10-05
   note: Ryde Help Centre articles (125 of them; 2 added on 2026-10-05 to verify taxonomy term sources) are registered automatically from the corpus with title, URL, audience and edited date.
 

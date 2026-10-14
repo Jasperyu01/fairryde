@@ -5,9 +5,9 @@
 meta:
   kb: FairRyde Knowledge Base
   layer: Ontology
-  version: 0.1.0
+  version: 0.2.0
   status: draft
-  updated: 2026-10-05
+  updated: 2026-10-14
   owner: Jasper
   reviewers: [Cao]
   authority: >-
@@ -91,12 +91,13 @@ entities:
       - {name: rider_account, type: "ref ENT-ACCOUNT", source_field: trip_data.rider_id}
       - {name: driver_account, type: "ref ENT-ACCOUNT", source_field: trip_data.driver_id}
       - {name: pickup, type: "ref ENT-PLACE", source_field: trip_data.pickup_location}
-      - {name: dropoff, type: "ref ENT-PLACE", source_field: trip_data.dropoff_location}
+      - {name: dropoffs, type: "ordered list of ref ENT-PLACE", source_field: "trip_data.dropoff_location (one drop-off, as in DISP-002); trip_data.stops for a multiple-stop booking (data gap)", note: "Relation has_dropoff (1:N, ordered). The last is the final destination. An accepted destination change or added stop replaces the list from the moment the driver accepts it (destination_edit_accepted; a stop_added or destination_edit_requested event alone changes nothing); route rules compare against the final itinerary (FC-F02)."}
       - {name: scheduled_time, type: datetime, source_field: trip_data.scheduled_time}
       - {name: driver_arrival_time, type: datetime, source_field: trip_data.driver_arrival_time}
       - {name: driver_wait_start, type: datetime, source_field: trip_data.driver_wait_start, note: "Organizer-provided canonical start of waiting (rule CW-F02)."}
       - {name: cancellation_time, type: datetime, source_field: trip_data.cancellation_time}
       - {name: cancellation_reason, type: "enum TX-CANCELREASON", source_field: trip_data.cancellation_reason}
+      - {name: cancelled_by, type: "ref TX-ROLE (optional)", source_field: trip_data.cancelled_by, note: "Who canceled, when the record has the field (not in the organizer's sample DISP-002; present in round 1 cases E05 and E06). CLS-06 reads it with the reason, the cancel events and the system message."}
       - {name: booking_type, type: "enum TX-BOOKING", data_gap: true, note: "Not in DISP-002; inferred by rule CW-F01."}
       - {name: service_type, type: "enum TX-SERVICE", data_gap: true}
       - {name: is_carpool, type: boolean, data_gap: true, note: "True for a carpool trip when the service type does not say so (rule FC-R06: the rider pays half of the ERP). With service_type CARPOOL it is implied. Not recorded reads as not carpool; for RYDEFLASH (offered to carpool drivers) that is RECORDS_MISSING and approval. With RYDESEND, or with a service that has no share, the share is undefined (GEN-R07)."}
@@ -107,7 +108,7 @@ entities:
       - {name: quoted_fare, type: money, data_gap: true}
       - {name: charged_total, type: money, data_gap: true}
       - {name: recorded_distance_km, type: number, data_gap: true, note: "Needed for route deviation (rule FC-F02)."}
-      - {name: recommended_route, type: polyline, data_gap: true, note: "Precomputed at booking for demo reliability."}
+      - {name: recommended_route, type: polyline, data_gap: true, note: "Precomputed at booking for demo reliability. After an accepted destination change or added stop it must follow the final itinerary (FC-F02); the case marks such a route with route_review.final_itinerary, otherwise FC-R12 applies when the route can change the amount (for ERP: ERP charged to the rider and the rider's share of the actual ERP above zero)."}
       - {name: status, type: "enum (state machine SM-TRIP)"}
 
   - id: ENT-PLACE
@@ -331,7 +332,8 @@ finding_types:
   - {code: F-WAIT-ANCHOR, label: Canonical start of waiting, produced_by: [CW-F02, CW-F02B]}
   - {code: F-WAIT-ELAPSED, label: Seconds from the confirmed wait start (later of the anchor and the GPS confirmation) to cancellation, unit: s, produced_by: CW-F03}
   - {code: F-WAIT-MARGIN, label: Elapsed minus threshold, unit: s, produced_by: CW-F03}
-  - {code: F-PRESENCE, label: Driver presence at the pick-up point during the wait, values: [CONSISTENT, SPARSE, LEFT, UNKNOWN], produced_by: CW-F04}
+  - {code: F-PRESENCE, label: "Driver presence at the pick-up point during the wait (Ryde's condition, CW-F04, read from the pings by FairRyde's logic, CW-F04B)", values: [CONSISTENT, SPARSE, LEFT, UNKNOWN], produced_by: [CW-F04, CW-F04B]}
+  - {code: F-GPS-LOGIC, label: "FairRyde's GPS logic, not the pings alone, makes the driver count as arrived and present (a ping set aside that could change the arrival or the presence, an outside ping not counted as leaving, a later GPS confirmation, SPARSE or GPS_AMBIGUOUS)", values: [false, true], produced_by: CW-F04B}
   - {code: F-CONTACT, label: Contact attempts after arrival, values: [ADEQUATE, INSUFFICIENT, NONE], produced_by: CW-F05}
   - {code: F-RIDER-EVIDENCE, label: Rider counter-evidence strength, values: [NONE, WEAK, STRONG], produced_by: CW-F06}
   - {code: F-PIN-VENUE, label: Pickup pin to OneMap venue distance, unit: m, produced_by: CW-F07}
@@ -381,7 +383,7 @@ relations:
   - {subject: ENT-ACCOUNT, predicate: plays_role_in, object: "ENT-TRIP | ENT-TICKET | ENT-CHARGE", cardinality: "many-to-many via role", source: "trip_data.rider_id / driver_id; dispute_ticket.filed_by"}
   - {subject: ENT-ACCOUNT, predicate: operates, object: ENT-VEHICLE, cardinality: "1 driver : 1 vehicle per trip", source: driver_profile.vehicle}
   - {subject: ENT-TRIP, predicate: has_pickup, object: ENT-PLACE, cardinality: "1:1", source: trip_data.pickup_location}
-  - {subject: ENT-TRIP, predicate: has_dropoff, object: ENT-PLACE, cardinality: "1:1", source: trip_data.dropoff_location}
+  - {subject: ENT-TRIP, predicate: has_dropoff, object: ENT-PLACE, cardinality: "1:N, ordered (stop sequence; the last is the final destination)", source: "trip_data.dropoff_location; trip_data.stops (multiple stops, data gap)", note: "Ryde lets a rider add another destination or change the drop-off after the trip starts, if the driver accepts (rider article 51399674412441, driver article 34883561600025); the list changes when the driver accepts (destination_edit_accepted; a stop the rider adds takes effect then). Round 1 finding FX7 (verdict O08: the 1:1 relation made an added stop read as a detour)."}
   - {subject: ENT-TRIP, predicate: has_event, object: ENT-EVENT, cardinality: "1:N ordered by time", source: app_events}
   - {subject: ENT-TRIP, predicate: has_telemetry, object: ENT-GPSPING, cardinality: "1:N", source: gps_telemetry}
   - {subject: ENT-TRIP, predicate: has_communication, object: ENT-COMM, cardinality: "1:N", source: chat_logs}
@@ -391,7 +393,7 @@ relations:
   - {subject: ENT-TICKET, predicate: contains, object: ENT-CLAIM, cardinality: "1:N (one primary)"}
   - {subject: ENT-CLAIM, predicate: contests, object: ENT-CHARGE, cardinality: "N:0..1", note: "No contested charge means ROUTE_TO_SUPPORT unless safety (rule CLS-03)."}
   - {subject: ENT-TICKET, predicate: related_to, object: ENT-TICKET, cardinality: "N:N", qualifier: "TX-RELATION", note: "Set by Matching."}
-  - {subject: ENT-EVIDENCE, predicate: wraps, object: "any business record", cardinality: "1:1"}
+  - {subject: ENT-EVIDENCE, predicate: wraps, object: "any business record", cardinality: "1:1", source: "FairRyde design (evidence IDs for citations; round 1 verdict O09: no source defines it)"}
   - {subject: ENT-FINDING, predicate: based_on, object: ENT-EVIDENCE, cardinality: "N:N"}
   - {subject: ENT-FINDING, predicate: produced_by, object: Rule, cardinality: "N:1"}
   - {subject: Rule, predicate: implements, object: ENT-CLAUSE, cardinality: "N:N", note: "A rule with no clause must be credibility C or D and labeled a generic assumption."}
@@ -399,7 +401,7 @@ relations:
   - {subject: ENT-RULING, predicate: cites, object: "Rule | ENT-FINDING | ENT-EVIDENCE", cardinality: "1:N"}
   - {subject: ENT-REVIEW, predicate: reviews, object: ENT-RULING, cardinality: "N:1"}
   - {subject: ENT-PRECEDENT, predicate: derived_from, object: ENT-RULING, cardinality: "1:1", note: "Only human-reviewed rulings."}
-  - {subject: ENT-ARGUMENT, predicate: rebuts, object: ENT-ARGUMENT, cardinality: "N:N"}
+  - {subject: ENT-ARGUMENT, predicate: rebuts, object: ENT-ARGUMENT, cardinality: "N:N", source: "FairRyde design (the handbook has each advocate present its own case; round 1 verdict O10)"}
 
 # =====================================================================
 # Events: who did what to whom, and which state it changed (ONT.4 Step 3)
@@ -419,9 +421,9 @@ events:
   - {code: cancellation_fee_applied, actor: PLATFORM, target: "RIDER (payer), DRIVER (payee)", changes: "SM-CHARGE: - -> APPLIED"}
   - {code: driver_released, actor: PLATFORM, target: DRIVER, changes: "none (assignment ends)"}
   - {code: rider_picked_up, actor: DRIVER, target: PLATFORM, changes: "SM-TRIP: ARRIVED -> ONBOARD; SM-TRIP: WAITING_* -> ONBOARD", note: "Ryde: tap PICK UP only when the rider has boarded; after it the driver cannot cancel."}
-  - {code: destination_edit_requested, actor: RIDER, target: DRIVER, changes: "none until accepted (Ryde: the fee applies only if the driver accepts, rule FC-R09)", is_update: true}
-  - {code: destination_edit_accepted, actor: DRIVER, target: RIDER, changes: "SM-TRIP: ONBOARD -> ONBOARD (fare recalculated); SM-CHARGE: DESTINATION_FEE APPLIED", is_update: true}
-  - {code: stop_added, actor: RIDER, target: PLATFORM, changes: "SM-TRIP: route updated (fare recalculated)", is_update: true}
+  - {code: destination_edit_requested, actor: RIDER, target: DRIVER, changes: "none until accepted (Ryde: the fee applies only if the driver accepts, rule FC-R09)", is_update: true, note: "A request to change the drop-off or to add a drop-off stop (Ryde treats both as one request; not allowed for multiple-stop bookings, RydePOOL or RydeTAXI)."}
+  - {code: destination_edit_accepted, actor: DRIVER, target: RIDER, changes: "SM-TRIP: ONBOARD -> ONBOARD (fare recalculated); SM-CHARGE: DESTINATION_FEE APPLIED", is_update: true, note: "The destination-change event: from this moment the trip's drop-off list (has_dropoff) is the new one, and route rules measure the rest of the trip against it (FC-F02)."}
+  - {code: stop_added, actor: RIDER, target: PLATFORM, changes: "none until the driver accepts; then as destination_edit_accepted (route updated, fare recalculated)", is_update: true, note: "A drop-off stop added during the trip takes effect when the driver accepts it, as a destination edit (destination_edit_accepted)."}
   - {code: toll_entered, actor: DRIVER, target: PLATFORM, changes: "SM-CHARGE: TOLL APPLIED"}
   - {code: waiting_fee_tapped, actor: DRIVER, target: PLATFORM, changes: "SM-CHARGE: WAITING_FEE APPLIED"}
   - {code: trip_completed, actor: DRIVER, target: PLATFORM, changes: "SM-TRIP: ONBOARD -> COMPLETED"}
@@ -496,9 +498,9 @@ disp002_mapping:
   - {path: trip_data.pickup_location.name, maps_to: Place.name (pickup)}
   - {path: trip_data.pickup_location.lat, maps_to: Place.pin_lat (pickup)}
   - {path: trip_data.pickup_location.lng, maps_to: Place.pin_lng (pickup)}
-  - {path: trip_data.dropoff_location.name, maps_to: Place.name (dropoff)}
-  - {path: trip_data.dropoff_location.lat, maps_to: Place.pin_lat (dropoff)}
-  - {path: trip_data.dropoff_location.lng, maps_to: Place.pin_lng (dropoff)}
+  - {path: trip_data.dropoff_location.name, maps_to: "Place.name (dropoffs: the one drop-off of the sample, which is the final destination)"}
+  - {path: trip_data.dropoff_location.lat, maps_to: "Place.pin_lat (dropoffs: the one drop-off of the sample, which is the final destination)"}
+  - {path: trip_data.dropoff_location.lng, maps_to: "Place.pin_lng (dropoffs: the one drop-off of the sample, which is the final destination)"}
   - {path: trip_data.scheduled_time, maps_to: Trip.scheduled_time}
   - {path: trip_data.driver_arrival_time, maps_to: Trip.driver_arrival_time}
   - {path: trip_data.driver_wait_start, maps_to: Trip.driver_wait_start}

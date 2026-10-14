@@ -32,9 +32,9 @@ Result: NO-GO for v0.1 as is (M1 0.90 good, M2 0.79 bad, M3 0.65 bad, M4 0.21 ba
 
 ## Rerun after the v0.2 fixes
 
-1. `python3 tools/freeze.py` on the new KB, then write and hash a new plan (new seed, doubled samples, same thresholds).
+1. KB v0.2 was frozen in step A5 (`python3 tools/freeze.py --out validation/round2/00_freeze.json`; what changed is in `kb/CHANGELOG.md`). Check it is unchanged (`python3 tools/freeze.py --out validation/round2/00_freeze.json --check`), then write and hash a new plan (new seed, doubled samples, same thresholds).
 2. Run the D steps with fresh agents using the prompts in `prompts/` (update paths and sample lists).
-3. `python3 tools/evidence_check.py`, `python3 tools/scorecard.py`, `python3 tools/freeze.py --check`, `python3 tools/render_page.py`.
+3. `python3 tools/evidence_check.py`, `python3 tools/scorecard.py`, `python3 tools/freeze.py --out validation/round2/00_freeze.json --check`, `python3 tools/render_page.py`.
 
 ## Before sharing outside the team
 

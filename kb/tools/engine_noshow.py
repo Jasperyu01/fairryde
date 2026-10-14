@@ -5,7 +5,9 @@ evidence item produced each step. It is a verification tool for the knowledge ba
 - there is no LLM, so the run-agreement (A) and rules-engine agreement (R) confidence terms are set to 1.0 and marked;
 - the READ parts of CW-F06 (does the rider's statement contest presence, timing or place? does a rider call or message
   during the wait place the rider at the pick-up or contest presence?) are approximated by phrase lists here; at run time
-  an LLM reads the text, and the decisive test checks whether another reading would matter.
+  an LLM reads the text, and the decisive test checks whether another reading would matter;
+- CLS-01 (safety content, read for meaning) is approximated by the whole-word patterns SAFETY_PATTERNS, and CLS-06 (who
+  canceled) reads the trip record: the reason, a cancelled_by field, the cancel events and the system messages.
 """
 from __future__ import annotations
 
@@ -16,8 +18,56 @@ from datetime import datetime, timedelta
 
 from kbload import KB
 
-SAFETY_WORDS = ["assault", "harass", "threat", "unsafe", "accident", "injur", "drunk", "intoxicat", "grope",
-                "weapon", "sexual", "abuse", "crash", "touched me", "police", "hit me", "fight"]
+# CLS-01 is read for meaning (A4, FX6); these patterns are only the offline stand-in the self-tests use. They err toward
+# safety, but ordinary no-show chat must not fire them ("let me go down", "the grape stall", "the app crashed",
+# "cannot stop here, unsafe"): phrases in SAFETY_IGNORE are removed first, and most patterns need the whole word or a
+# person as the object (A4 check rounds 1 and 2). They still miss paraphrases (open item D40 (a)).
+SAFETY_IGNORE = [r"\b(app|phone|application|system)\b(\s+\w+){0,2}\s+crash\w*", r"\bby accident\b", r"\baccidentally\b",
+                 r"\bthreaten(ed|s|ing)? to (cancel|report|rate|complain|give|charge)\w*", r"\bfight(ing)? (this|the|my|your|a) (charge|fee|case|dispute|claim)\b"]
+SAFETY_PATTERNS = [
+    r"\bassault", r"\bharass", r"\bthreat", r"\b(feel|felt|feeling|made me feel|was|i'?m|am|so|very|really|totally) unsafe\b",
+    r"\bunsafe (driving|drop-?off|place|area|situation|location|spot)\b", r"\baccidents?\b", r"\binjur", r"\bdrunk", r"\bintoxicat",
+    r"\bgrop(e|ed|es|ing)\b", r"\bweapon", r"\bsexual", r"\babus(e|ed|es|ive|ing)\b", r"\bcrash(ed|es|ing)?\b", r"\btouched me\b",
+    r"\bpolice\b", r"\bhit me\b", r"\bfight", r"\bkidnap", r"\babduct", r"\blet me out\b",
+    r"\b(won'?t|wouldn'?t|would not|will not|refused to|did ?n[o']t) let me (go|leave|get out)\b", r"\blocked me in\b",
+    r"\b(he|she|driver|the driver) locked the (car )?doors?\b", r"\b(told|asked|made|forced|ordered) me (to )?get out\b",
+    r"\b(forced|kicked|threw) me out\b", r"\b(would|will) ?n[o']?t stop (the car|when i asked|even when)|\brefused to stop\b",
+    r"\b(dropped|left|put) me (off )?(in the middle of |on |at )(the |a )?(expressway|highway|road shoulder|pie|cte|aye|bke|kje|tpe|sle|ecp|mce|kpe)\b",
+    r"\broad shoulder\b", r"\bstranded (at|on|in) (an? |the )?(isolated|deserted|dark|empty|remote|unlit)\b",
+    r"\bleft me (stranded |alone )?(at|on|in) (an? |the )?(dark|isolated|deserted|empty|remote|unlit)\b", r"\bleft me (stranded |alone )?at night\b",
+    r"\bknif(e|es)\b|\bknives\b", r"\bpunch(ed|es|ing)? (me|him|her|the (dashboard|window|door|seat|car))\b", r"\bslap(ped|s|ping)?\b",
+    r"\bmolest", r"\brap(e|ed|es|ist)\b", r"\bstalk(ed|er|ing|s)?\b", r"\b(followed|kept following|was following) me\b",
+    r"\b(drove|driving|drives|drive) (dangerously|recklessly)\b", r"\bdangerous driving\b", r"\breckless", r"\b(was|kept|keeps|is) speeding\b",
+    r"\bracis(t|m)\b", r"\bracial", r"\bdiscriminat", r"\bscared for my (life|safety)\b", r"\bslur",
+    r"\binsult(ed|ing)? me\b", r"\b(swore|swearing|cursed|cursing) at me\b", r"\bcalled me (names|stupid|an idiot|a bitch|a bastard)\b",
+    r"\bname-?calling\b", r"\bcomment(ed|ing|s)? on my (looks|body|appearance)\b", r"\bpersonal questions?\b",
+    r"\basked (me )?(if|whether) i (had|have) a (boy|girl)friend\b", r"\b(whether|if) i live(d)? alone\b", r"\b(asked|knows?) where i live\b",
+    r"\b(texted|messaged|called|contacted|whatsapp(ed)?) me (again )?after the (trip|ride)\b"]
+
+
+# CLS-01, SE-R01 (Jasper, 2026-10-14, D40 (c)): a complaint that mentions discrimination sends the whole case to a person,
+# with the case file only and no proposed outcome. Offline stand-in, like SAFETY_PATTERNS.
+_GROUND = r"(race|racial|religion|religious|skin|colou?r|nationality|accent|ethnicity|disab\w*|wheelchair|foreign\w*|muslim|hindu|christian|malay|indian|chinese|black)"
+DISCRIMINATION_PATTERNS = [
+    r"\bracis(t|m)\b", r"\bracial", r"\bdiscriminat", r"\bxenophob", r"\bslurs?\b",
+    r"\bcomment(ed|s|ing)? (about|on) my " + _GROUND + r"\b", r"\bbecause (of )?(my|i'?m|i am|we'?re|we are) " + _GROUND + r"\b"]
+
+
+def discrimination_hits(texts: list[str]) -> list[str]:
+    return sorted({m.group(0).lower() for x in texts for p in DISCRIMINATION_PATTERNS for m in [re.search(p, x, re.I)] if m})
+
+
+def safety_hits(texts: list[str]) -> list[str]:
+    """The stand-in for CLS-01's reading: the matched phrases, after removing the ordinary phrases in SAFETY_IGNORE."""
+    hits = set()
+    for x in texts:
+        y = x
+        for ig in SAFETY_IGNORE:
+            y = re.sub(ig, " ", y, flags=re.I)
+        hits |= {m.group(0).lower() for p in SAFETY_PATTERNS for m in [re.search(p, y, re.I)] if m}
+    return sorted(hits)
+
+
 INJECTION_PATTERNS = [r"ignore (all |any |the )?(previous|prior|above) instructions", r"system prompt", r"you are now",
                       r"as the judge", r"rule in my favou?r", r"disregard (the )?(policy|rules)", r"```", r"\{\s*\"ruling\""]
 CONTEST_PHRASES = [r"\bi was (at|there|on time|waiting|outside|at the)", r"never (showed|came|arrived)", r"\bwaited\b",
@@ -312,6 +362,63 @@ def before_arrival_reading(c: dict, place_names: list[str], answers_question: bo
     return "UNCLEAR" if (rest or any(n and n in t for n in place_names)) else None
 
 
+_PARTY_WORDS = [("RIDER", r"(?<![a-z])(rider|passenger|customer|user)"), ("DRIVER", r"(?<![a-z])driver"),
+                ("SYSTEM", r"(?<![a-z])(system|platform|ryde|auto|admin|ops)(?![a-z])")]
+_CANCEL_MSG = [("RIDER", r"\bcancel+ed by (the )?(rider|passenger|customer|user)\b|\b(rider|passenger|customer) (has )?cancel+ed\b"),
+               ("DRIVER", r"\bcancel+ed by (the )?driver\b|\bdriver (has )?cancel+ed\b"),
+               ("SYSTEM", r"\bauto-?\s?cancel+ed\b|\bcancel+ed automatically\b|\bcancel+ed by (the )?(system|platform|ryde)\b|\b(system|platform) (has )?cancel+ed\b")]
+_CANCEL_UNREAD = r"\bcancel+ed by\b|\byou (have )?cancel+ed\b"     # names a canceling party in words not read above
+
+
+def _norm(x) -> str:
+    return re.sub(r"[\s\-]+", "_", str(x or "").strip().lower()).replace("canceled", "cancelled")
+
+
+def no_show_reason(t: dict) -> bool:
+    """The record's reason is a driver's no-show cancellation (rider_no_show, in any spelling or with a suffix)."""
+    return _norm(t.get("cancellation_reason")).startswith("rider_no_show")
+
+
+def _who(text: str) -> str | None:
+    """The party a free-form record value names: RIDER, DRIVER, SYSTEM, or CONFLICT when it names several or none it can read."""
+    hits = {p for p, rx in _PARTY_WORDS if re.search(rx, text)}
+    return hits.pop() if len(hits) == 1 else "CONFLICT"
+
+
+def canceling_party(t: dict, ev: list[dict], chat: list[dict]) -> tuple[list, str | None]:
+    """CLS-06: who canceled, from the trip record (the reason, a cancelled_by field, the cancel events, system messages).
+    Returns what each record says and the party: DRIVER, RIDER, SYSTEM, None (no record says) or CONFLICT. A record that
+    names a party in words this reader cannot map counts as disagreeing (CONFLICT), never as silent (A4 check round 2)."""
+    said = []
+    reason = _norm(t.get("cancellation_reason"))
+    if reason:
+        p = ("DRIVER" if reason.startswith(("rider_no_show", "driver_cancel")) else "RIDER" if reason.startswith("rider_cancel")
+             else "SYSTEM" if reason.startswith(("system", "auto")) else None)      # safety_termination, other: no party named
+        said.append(("cancellation_reason " + str(t.get("cancellation_reason")), p))
+    by = _norm(t.get("cancelled_by"))
+    if by:
+        said.append(("cancelled_by " + str(t.get("cancelled_by")), _who(by)))
+    for a in ev:
+        et = _norm(a.get("event_type"))
+        if re.search(r"cancel+ed", et) and "fee" not in et:
+            hits = {p for p, rx in _PARTY_WORDS if re.search(rx, et)}
+            p = hits.pop() if len(hits) == 1 else "CONFLICT" if hits else None
+            if p is None:                                   # trip_cancelled and the like: read the details
+                d = str(a.get("details") or "")
+                hits = sorted({who for who, rx in _CANCEL_MSG if re.search(rx, d, re.I)})
+                p = hits[0] if len(hits) == 1 else "CONFLICT" if hits or re.search(_CANCEL_UNREAD, d, re.I) else None
+            said.append(("event " + str(a.get("event_type")), p))
+    for c in chat:
+        if str(c.get("type", "")).strip().lower() == "system":
+            hits = sorted({who for who, rx in _CANCEL_MSG if re.search(rx, c["content"], re.I)})
+            if hits:
+                said.append(("system message", hits[0] if len(hits) == 1 else "CONFLICT"))
+            elif re.search(_CANCEL_UNREAD, c["content"], re.I):
+                said.append(("system message", "CONFLICT"))
+    parties = {who for _, who in said if who}
+    return said, ("CONFLICT" if "CONFLICT" in parties or len(parties) > 1 else parties.pop() if parties else None)
+
+
 def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | None = None,
              force_reading: str | None = None, alt_start: str | None = None, contact_reading: str | None = None) -> Trace:
     """force_reading: NONE or WEAK to test another reading of the rider's statement (decisive test, clause 1).
@@ -322,7 +429,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     ev, chat = case.get("app_events", []), case.get("chat_logs", [])
     gps_raw = case.get("gps_telemetry", []) or []
     gps_no = {id(g): i + 1 for i, g in enumerate(gps_raw)}          # E-GPS-nn follows the case file's order
-    gps = sorted(gps_raw, key=lambda g: g["timestamp"])               # the rules read pings in time order
+    gps = sorted(gps_raw, key=lambda g: T(g["timestamp"]))            # the rules read pings in time order (by instant, not by text)
     gid = lambda g: f"E-GPS-{gps_no[id(g)]:02d}"
     forced = profile is not None
     if profile is None:
@@ -359,13 +466,15 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
         tr.flag("INJECTION_SUSPECTED")
     tr.step("PB-INTAKE", 1, "GEN-R04", f"instruction-like text from {', '.join(tr.injection_authors)} flagged and ignored" if tr.injection_authors
             else "no instructions found in party text", ["E-TKT-01"] + _ev_id("E-CHT", case, "chat_logs", lambda c: c["type"] == "message"))
-    safety_hits = sorted({w for w in SAFETY_WORDS for x in free_text if w in x.lower()})
-    tr.findings["_safety"] = bool(safety_hits)
-    tr.step("PB-INTAKE", 2, "CLS-01", f"safety words: {safety_hits}" if safety_hits else "no safety language", ["E-TKT-01"])
+    disc = discrimination_hits(free_text)
+    hits_ = sorted(set(safety_hits(free_text)) | set(disc))
+    tr.findings["_safety"] = bool(hits_)
+    tr.findings["_discrimination"] = bool(disc)
+    tr.step("PB-INTAKE", 2, "CLS-01", f"safety content (offline stand-in for the reading): {hits_}" if hits_ else "no safety content found (offline stand-in for the reading)", ["E-TKT-01"])
     tr.claim_type = kb.resolve("TX-CASE", tk["dispute_type"])
-    tr.step("PB-INTAKE", 3, "CLS-05, CLS-02, CLS-04",
+    tr.step("PB-INTAKE", 3, "CLS-05, CLS-02, CLS-06, CLS-04",
             f"dispute_type {tk['dispute_type']!r} -> {tr.claim_type}; one claim contesting CANCELLATION_FEE S${t['cancellation_fee']:.2f}"
-            + ("; a safety claim is added as the primary claim" if safety_hits else ""), ["E-TKT-01", "E-TRP-01.cancellation_fee"])
+            + ("; a safety claim is added as the primary claim" if hits_ else ""), ["E-TKT-01", "E-TRP-01.cancellation_fee"])
     tr.step("PB-INTAKE", 4, "CLS-03", "contested charge present: not routed to support", ["E-TRP-01.cancellation_fee"])
     trip_ok = tk["trip_id"] == t["trip_id"]
     tr.step("PB-INTAKE", 5, "MAT-01", f"trip {t['trip_id']} {'matches' if trip_ok else 'DOES NOT match'} the ticket", ["E-TKT-01.trip_id", "E-TRP-01.trip_id"])
@@ -402,15 +511,30 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     tr.step("PB-INTAKE", 9, "DQ-03, DQ-04", f"coordinates in Singapore: {in_box}; timeline ordered and filed after the trip: {ordered}", ["E-TRP-01", "E-GPS-*"])
 
     pb = "PB-CW-NOSHOW"
-    # 1 precondition: driver no-show cancellation
-    by_rider = any(re.search(r"cancel+ed by (the )?rider", c["content"], re.I) for c in chat if c["type"] == "system")
-    drv_cancel = t.get("cancellation_reason") == "rider_no_show" and not by_rider
-    tr.step(pb, 1, "CLS-02, CW-R03", "driver canceled with reason rider_no_show" if drv_cancel else "not a driver no-show cancellation: reclassify",
-            ["E-TRP-01.cancellation_reason"] + _ev_id("E-CHT", case, "chat_logs", lambda c: c["type"] == "system"))
-    if not drv_cancel:
-        tr.reclassified_to = "CW-RIDERCANCEL" if t.get("cancellation_reason") == "rider_cancelled" else "CW-OTHER"
+    # 1 precondition (CLS-06): who canceled, from the trip record only, never from the parties' text
+    said, party = canceling_party(t, ev, chat)
+    reason = t.get("cancellation_reason")
+    tr.cancel_record = said
+    noshow = party == "DRIVER" and no_show_reason(t)
+    if noshow:
+        msg, tr.reclassified_to = f"the driver canceled with reason {reason}", None
+    elif party == "RIDER":
+        msg, tr.reclassified_to = "the rider canceled: reclassify", "CW-RIDERCANCEL"
+    elif party == "SYSTEM" or (party == "DRIVER" and reason):
+        msg, tr.reclassified_to = (f"canceled by the {party.lower()}" + (f" with reason {reason}" if reason else "") + ", not a driver's no-show cancellation: reclassify"), "CW-OTHER"
+    else:
+        msg = ("the records disagree on who canceled, or one cannot be read" if party == "CONFLICT" else "no record says who canceled" if party is None
+               else "the driver canceled, but the record gives no reason") + ": ask for the trip record (REQUEST_INFO)"
+    tr.step(pb, 1, "CLS-06, CW-R03", msg + (" (" + "; ".join(f"{src}: {who or 'no party named'}" for src, who in said) + ")" if said else " (no record names the canceling party)"),
+            (["E-TRP-01.cancellation_reason"] if reason else []) + (["E-TRP-01.cancelled_by"] if t.get("cancelled_by") else [])
+            + _ev_id("E-APP", case, "app_events", lambda a: re.search(r"cancel+ed", _norm(a.get("event_type"))) and "fee" not in _norm(a.get("event_type")))
+            + _ev_id("E-CHT", case, "chat_logs", lambda c: str(c.get("type", "")).lower() == "system"))
+    if not noshow:
         tr.amount_at_stake = float(t.get("cancellation_fee") or 0)
         tr.confidence = {"A": None, "M": None, "E": None, "R": None, "C": None, "assumed": [], "evidence_present": {}, "soft_flags": []}
+        if not tr.reclassified_to:
+            tr.outcome, tr.reasons = "REQUEST_INFO", ["GEN-R-NEED-INFO"]
+            tr.path("CLS-06")
         return tr
 
     # 2 MAT-04 window
@@ -506,14 +630,14 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
         tr.flag("TIMER_ANCHOR_MISMATCH")
         tr.use("DQ-01")
 
-    # 7 CW-R06 arrival: outliers first (same rule as CW-F04), then the moment ping
+    # 7 CW-R06 arrival: outliers first (FairRyde's logic, CW-F04B, shared with CW-F04), then the moment ping
     pin = (t["pickup_location"]["lat"], t["pickup_location"]["lng"])
     gf, maxgap, lmin, vmax = P("ARRIVAL_GEOFENCE_M"), P("PING_MAX_GAP_S"), P("LEFT_MIN_OUTSIDE_S"), P("SPEED_MAX_KMH")
     smax_ratio = P("SPEED_RATIO_SOFT")
     dist = lambda g: hav(g["lat"], g["lng"], *pin)
     platform_check = bool(arrived_ev and re.search(r"GPS within (\d+) ?m of pickup", arrived_ev["details"]))
     # observations: pings, plus the platform's arrival check as an inside observation at the arrival
-    obs = [{"t": T(g["timestamp"]), "lat": g["lat"], "lng": g["lng"], "inside": dist(g) <= gf, "ping": g} for g in gps]
+    obs = [{"t": T(g["timestamp"]).astimezone(end.tzinfo), "lat": g["lat"], "lng": g["lng"], "inside": dist(g) <= gf, "ping": g} for g in gps]
     if platform_check and t_arr is not None:
         k = next((i for i, o in enumerate(obs) if o["t"] >= t_arr), len(obs))
         obs.insert(k, {"t": t_arr, "lat": pin[0], "lng": pin[1], "inside": True, "ping": None})
@@ -594,7 +718,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     else:
         arr_basis = i_arr
     tr.finding("F-ARRIVAL-VALID", arrival, status={"TRUE": "established", "FALSE": "established", "CONTESTED": "contested", "UNKNOWN": "unknown"}[arrival],
-               basis=arr_basis, rule="CW-R06", params=["ARRIVAL_GEOFENCE_M", "TS_TOLERANCE_S", "PING_MAX_GAP_S", "LEFT_MIN_OUTSIDE_S", "SPEED_MAX_KMH"])
+               basis=arr_basis, rule="CW-R06", params=["ARRIVAL_GEOFENCE_M", "TS_TOLERANCE_S", "PING_MAX_GAP_S"])
     tr.arrival_detail = {"t_arr": t_arr.isoformat() if t_arr else None, "t_confirm": t_confirm.isoformat() if t_confirm else None,
                          "platform_check": platform_check, "moment_ping": i_parr[0] if i_parr else None, "brief_inside": brief_in,
                          "confirm_ping": gid(obs[later_in[0]]["ping"]) if "ARRIVAL_UNCONFIRMED" in tr.flags else None,
@@ -633,7 +757,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
             + (f"; the records of the start or end differ by up to {spread_max:.0f} s, more than the margin" if "MARGIN_WITHIN_SPREAD" in tr.flags else ""),
             basis_start + ["E-TRP-01.cancellation_time"])
 
-    # 9 CW-F04 presence over the waiting the fee pays for
+    # 9 CW-F04 presence over the waiting the fee pays for (Ryde's condition), read from the pings by FairRyde's logic (CW-F04B)
     wend = min(end, start + timedelta(seconds=thr)) if met else end
     in_w = lambda k: start <= obs[k]["t"] <= wend
 
@@ -683,14 +807,23 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
             continue
         t_prev, t_first = obs[r["i0"] - 1]["t"], obs[r["i0"]]["t"]
         n_pings = sum(1 for k in range(r["i0"], r["i1"] + 1) if obs[k]["ping"] is not None)
-        if r["outlier"] and r["s_max"] > lmin and t_first <= wend + timedelta(seconds=tol) \
+        edge = {"last_in": t_prev.isoformat(), "first_out_t": t_first.isoformat(),
+                "first_out_id": gid(obs[r["i0"]]["ping"]) if obs[r["i0"]]["ping"] is not None else None}
+        last_seen = max(end, wend + timedelta(seconds=tol))   # first seen away before the cancellation, or within the tolerance of the window end
+        if r["outlier"] and r["s_max"] > lmin and t_first <= last_seen \
                 and t_prev < wend - timedelta(seconds=tol) and obs[r["i1"] + 1]["t"] > start:
-            ambiguous.append({"kind": "gap", "s": r["s_max"]})          # set aside, but the driver may have been away longer
+            ambiguous.append({"kind": "gap", "s": r["s_max"], **edge})  # set aside, but the driver may have been away longer
         elif not r["returned"] and r in left_runs and n_pings == 1:
             ambiguous.append({"kind": "single", "s": 0})
-        elif not r["outlier"] and r not in left_runs and start <= t_first <= wend + timedelta(seconds=tol) \
-                and t_prev < wend - timedelta(seconds=tol):
-            ambiguous.append({"kind": "end", "s": (t_first - t_prev).total_seconds()})
+        elif not r["outlier"] and r not in left_runs and start <= t_first <= last_seen \
+                and t_prev < wend - timedelta(seconds=tol):            # first seen away at any time before the cancellation or boarding
+            ambiguous.append({"kind": "end", "s": (t_first - t_prev).total_seconds(), **edge})
+    if arrival == "TRUE" and t_arr is not None and start > t_arr and presence in ("CONSISTENT", "SPARSE"):
+        before = [k for k in range(len(obs)) if k not in aside and obs[k]["t"] < start]     # the counted wait starts after the arrival
+        first_in_w = next((x for x in ins if x >= start), None)
+        if before and not obs[before[-1]]["inside"] and (first_in_w is None or first_in_w > start + timedelta(seconds=tol)):
+            ambiguous.append({"kind": "start", "s": ((first_in_w or wend) - obs[before[-1]]["t"]).total_seconds(),
+                              "last_out": obs[before[-1]]["t"].isoformat(), "last_out_id": gid(obs[before[-1]]["ping"])})
     if arrival == "FALSE" and len(after_arr) == 1:
         ambiguous.append({"kind": "single_false", "s": 0})
     if ambiguous:
@@ -709,7 +842,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
             if kind == "ambiguous":
                 kinds["ambiguous_gap_s"] = max(kinds["ambiguous_gap_s"], r["s_max"])
     edge_out = [k for k in used if not obs[k]["inside"]] if presence in ("CONSISTENT", "SPARSE") else []   # within the tolerance, not leaving
-    tr.finding("F-PRESENCE", presence, basis=ids_win, rule="CW-F04", params=["ARRIVAL_GEOFENCE_M", "PING_MAX_GAP_S", "LEFT_MIN_OUTSIDE_S", "SPEED_MAX_KMH", "TS_TOLERANCE_S"],
+    tr.finding("F-PRESENCE", presence, basis=ids_win, rule="CW-F04B", params=["ARRIVAL_GEOFENCE_M", "PING_MAX_GAP_S", "LEFT_MIN_OUTSIDE_S", "SPEED_MAX_KMH", "TS_TOLERANCE_S"],
                status="established" if presence != "UNKNOWN" else ("not_applicable" if wend <= start else "unknown"))
     longest_left = max([outside_in_wait(r) for r in left_runs], default=0)
     tr.presence_detail = {"pings": len(win), "usable_pings": len(used), "inside_pings": len(ins),
@@ -718,11 +851,33 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
                           "left_by_approach": bool(left_runs) and all(r.get("approach") for r in left_runs),
                           "no_return": any(not r.get("returned", True) for r in left_runs),
                           "edge_outside": len(edge_out), "edge_ids": [gid(obs[k]["ping"]) for k in edge_out],
-                          "outlier_kinds": kinds, "ambiguous": ambiguous}
+                          "outlier_kinds": kinds, "ambiguous": ambiguous,
+                          "after_window_outside_ids": [gid(obs[k]["ping"]) for k in range(len(obs)) if obs[k]["ping"] is not None
+                                                       and not obs[k]["inside"] and wend < obs[k]["t"] <= end]}
     if presence == "SPARSE":
         tr.flag("SPARSE_GPS")
-    tr.path("CW-F04")
-    tr.step(pb, 9, "CW-F04", f"{presence}: window {start.strftime('%H:%M:%S')} to {wend.strftime('%H:%M:%S')}, {len(win)} ping(s), max distance "
+    # CW-F04B F-GPS-LOGIC: FairRyde's logic, not the pings alone, makes the driver count as arrived and present (D29)
+    def can_change(k):      # a set-aside ping that could change the presence (in the window) or the arrival (CW-R06's moment range)
+        t_k = obs[k]["t"]
+        if start <= t_k <= wend:
+            return True
+        if t_arr is None:
+            return False
+        lo = t_arr if platform_check else t_arr - timedelta(seconds=maxgap)       # with the platform check only a contradiction matters
+        hi = t_arr + timedelta(seconds=tol)
+        if not lo <= t_k <= hi:
+            return False
+        return not any(lo <= obs[j]["t"] <= hi and obs[j]["t"] > t_k for j in kept)  # it would have been CW-R06's moment ping
+    aside_ids = [gid(obs[k]["ping"]) for k in sorted(aside) if obs[k]["ping"] is not None and can_change(k)]
+    logic_why = [w for w, hit in (("set_aside", aside_ids), ("not_counted", edge_out), ("later_confirmation", "ARRIVAL_UNCONFIRMED" in tr.flags),
+                                  ("sparse", presence == "SPARSE"), ("ambiguous", ambiguous)) if hit]
+    gps_logic = bool(logic_why)
+    tr.finding("F-GPS-LOGIC", gps_logic, basis=aside_ids + [gid(obs[k]["ping"]) for k in edge_out], rule="CW-F04B",
+               params=["ARRIVAL_GEOFENCE_M", "PING_MAX_GAP_S", "LEFT_MIN_OUTSIDE_S", "SPEED_MAX_KMH", "TS_TOLERANCE_S"],
+               status="established" if wend > start else "not_applicable")
+    tr.gps_logic_detail = {"why": logic_why, "set_aside_ids": aside_ids, "not_counted_ids": [gid(obs[k]["ping"]) for k in edge_out]}
+    tr.path("CW-F04", "CW-F04B")
+    tr.step(pb, 9, "CW-F04, CW-F04B", f"{presence}: window {start.strftime('%H:%M:%S')} to {wend.strftime('%H:%M:%S')}, {len(win)} ping(s), max distance "
             f"{max(dists) if dists else 0:.1f} m (area {gf} m)"
             + (((f"; outside for {longest_left:.0f} s of the wait" if longest_left else "; seen outside the area")
                 + (" (the driver was not yet seen inside the area)" if tr.presence_detail["left_by_approach"]
@@ -734,7 +889,8 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
             + ("; impossible speed (data error)" if err_runs else "")
             + ("; GPS cannot settle whether the driver left (" + ", ".join(sorted({a['kind'] for a in ambiguous})) + ")" if ambiguous else "")
             + ("; no inside ping and no confirmed arrival, so presence is not shown" if presence == "UNKNOWN" and win and wend > start else "")
-            + (f"; longest stretch without presence evidence {max(gaps):.0f} s (limit {maxgap} s)" if gaps else ""),
+            + (f"; longest stretch without presence evidence {max(gaps):.0f} s (limit {maxgap} s)" if gaps else "")
+            + (f"; F-GPS-LOGIC true: FairRyde's logic, not the pings alone, decides ({', '.join(logic_why)}; CW-F04B)" if gps_logic and wend > start else ""),
             ids_win, status="done" if win else "missing")
 
     # DQ-02 speed consistency inside the window (soft); hard errors were handled with the outliers above
@@ -877,8 +1033,18 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     # 13 GEN-R05 advocates: not simulated here
     tr.step(pb, 13, "GEN-R05", "advocate briefs are produced at run time by the Rider and Driver Advocates; not simulated in this offline check", [], status="missing")
 
+    if tr.findings.get("_discrimination"):       # CLS-01, CLS-02, SE-R01 (D40 (c)): the case file only, no proposed outcome
+        tr.outcome, tr.reasons = "ESCALATE_HUMAN", ["SE-R-HUMAN-DECIDES"]
+        tr.secondary_claims = [{"claim": "CANCELLATION_FEE", "amount_sgd": float(t.get("cancellation_fee") or 0), "proposed_outcome": None}]
+        tr.amount_at_stake = float(t.get("cancellation_fee") or 0)
+        tr.confidence = {"A": None, "M": None, "E": None, "R": None, "C": None, "assumed": [], "evidence_present": {}, "soft_flags": []}
+        tr.step(pb, 14, "CLS-01, CLS-02, SE-R01", "the complaint mentions discrimination: the whole case goes to a person; the findings above are "
+                "the case file, no outcome, amount or measure is proposed, and the contested fee is a secondary claim in the file", ["E-TKT-01"])
+        tr.path("CLS-01", "SE-R01")
+        return tr
+
     # 14 DT-CW-NOSHOW
-    env = {"arrival_valid": arrival, "presence": presence, "threshold_met": met, "rider_evidence": rider_ev}
+    env = {"arrival_valid": arrival, "presence": presence, "threshold_met": met, "rider_evidence": rider_ev, "gps_logic_decides": gps_logic}
     dt = kb.y["rules"]["decision_tables"]["DT-CW-NOSHOW"]
     hits = [r for r in dt["rows"] if all(env[k] in (v if isinstance(v, list) else [v]) for k, v in r["when"].items())]
     assert len(hits) == 1, f"decision table hit {len(hits)} rows for {env}"
@@ -903,7 +1069,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
         override = "; overridden by MAT-04 (out of window)"
         tr.notes.append(f"decision table row {row['row']} recorded for information only; MAT-04 decides")
     tr.step(pb, 14, "DT-CW-NOSHOW", f"row {row['row']} (credibility {row.get('credibility')}): {row['outcome']} ({row['reason']})" + override,
-            ["F-ARRIVAL-VALID", "F-PRESENCE", "F-WAIT-MARGIN", "F-RIDER-EVIDENCE"])
+            ["F-ARRIVAL-VALID", "F-PRESENCE", "F-GPS-LOGIC", "F-WAIT-MARGIN", "F-RIDER-EVIDENCE"])
 
     # 15 CW-R11 pin, CW-R04 contact, DQ-06 amount
     if mismatch:
@@ -1000,10 +1166,12 @@ def sensitivity(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
         pr = info.get("plausible_range")
         if info.get("credibility") not in ("C", "D") or not pr or info.get("flag_only"):
             continue
-        res, moved, weaker = {}, set(), False
+        res, moved, weaker, gl_ends = {}, set(), False, []
         for end_name, val in (("low", pr[0]), ("high", pr[1])):
             t2 = evaluate(kb, copy.deepcopy(case), profile, {**base.overrides, name: val})
             res[end_name] = (val, t2.outcome, t2.dt_row)
+            if t2.findings.get("F-GPS-LOGIC", {}).get("value"):
+                gl_ends.append(end_name)
             rw = (t2.outcome == base.outcome and not overridden(base) and not overridden(t2) and t2.dt_row != base.dt_row
                   and weak(t2.dt_row) and not weak(base.dt_row))
             weaker = weaker or rw
@@ -1017,7 +1185,8 @@ def sensitivity(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
             users = [rid for rid in users if rid in moved]
         rows.append({"param": name, "value": info["value"], "range": pr, "credibility": info["credibility"],
                      "low": f"{res['low'][0]} -> {res['low'][1]} ({res['low'][2]})", "high": f"{res['high'][0]} -> {res['high'][1]} ({res['high'][2]})",
-                     "outcome_changes": changed, "weaker_row": weaker and not changed, "decisive": changed or weaker, "rules_using": users})
+                     "outcome_changes": changed, "weaker_row": weaker and not changed, "decisive": changed or weaker, "rules_using": users,
+                     "gps_logic_at": gl_ends})
     return rows
 
 
@@ -1058,9 +1227,17 @@ def start_test(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
 def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
     tau = kb.pval("TAU", tr.profile, tr.overrides)
     limit = kb.pval("AUTO_LIMIT_SGD", tr.profile, tr.overrides)
-    if tr.reclassified_to:
-        return {"tier": f"n/a (reclassified to {tr.reclassified_to})", "decisive": [], "triggers": [], "gates": [], "runtime_only_gates": [],
-                "favoured_party": None, "tau": tau, "auto_limit": limit}
+    if tr.findings.get("_discrimination"):                              # CLS-01, SE-R01 (D40 (c)): no proposed outcome, a person decides
+        return {"tier": "HUMAN", "decisive": [], "gates": ["G4 safety content"], "runtime_only_gates": [], "favoured_party": None,
+                "triggers": ["the complaint mentions discrimination: the whole case goes to a person with the case file only (CLS-01, SE-R01)"],
+                "tau": tau, "auto_limit": limit}
+    if tr.reclassified_to or tr.outcome == "REQUEST_INFO":             # CLS-06: not ruled under this table
+        safety = ["G4 safety content"] if tr.findings.get("_safety") else []   # CLS-01: whatever else the ticket contains
+        if tr.reclassified_to:
+            return {"tier": "HUMAN" if safety else f"n/a (reclassified to {tr.reclassified_to})", "decisive": [], "triggers": [],
+                    "gates": safety, "runtime_only_gates": [], "favoured_party": None, "tau": tau, "auto_limit": limit}
+        return {"tier": "HUMAN", "decisive": [], "triggers": ["who canceled is not settled by the trip record, so no fee ruling is made until it is (CLS-06)"],
+                "gates": safety, "runtime_only_gates": [], "favoured_party": None, "tau": tau, "auto_limit": limit}
     decisive = []
     for r in reads:
         if r["changes"] and r["rule"] == "CW-F03B":
@@ -1096,6 +1273,13 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
     if tr.findings.get("F-CHARGE-AMOUNT", {}).get("value", {}).get("status") == "overcharged":
         triggers.append("overcharge (CHARGE_AMOUNT_MISMATCH)")
     upheld = tr.outcome == "UPHOLD" and tr.reasons and tr.reasons[0] == "CW-R-NOSHOW-VALID"
+    gl_now = tr.findings.get("F-GPS-LOGIC", {}).get("value")
+    gps_params = set(kb.rules.get("CW-F04B", {}).get("params") or [])
+    gl_param = [s["param"] for s in sens if s.get("gps_logic_at") and s["param"] in gps_params]
+    if upheld and (gl_now or gl_param):                                    # AUTH-02 trigger 12, decision D29
+        triggers.append("fee upheld on FairRyde's own GPS logic, not on the pings alone (CW-F04B, D29)" if gl_now else
+                        "fee upheld, and FairRyde's own GPS logic would decide it with " + ", ".join(gl_param)
+                        + " at an end of its plausible range (CW-F04B, D29)")
     if "BOUNDARY_MARGIN" in tr.flags and "MARGIN_WITHIN_SPREAD" in tr.flags:
         triggers.append(f"margin {tr.margin:+.0f} s within the boundary band, and the records disagree by up to {tr.spread_max:.0f} s")
     if upheld and tr.pin_mismatch and tr.rider_at_venue_claim:
@@ -1128,7 +1312,7 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
 
 def run(kb: KB, case: dict, profile: str | None = None) -> dict:
     base = evaluate(kb, copy.deepcopy(case), profile)
-    if base.reclassified_to:
+    if base.reclassified_to or base.outcome == "REQUEST_INFO" or base.findings.get("_discrimination"):
         return {"trace": base, "sensitivity": [], "readings": [], "tier": decide_tier(kb, base, [], []), "case": case}
     sens = sensitivity(kb, case, base.profile, base)
     reads = reading_test(kb, case, base.profile, base) + start_test(kb, case, base.profile, base)

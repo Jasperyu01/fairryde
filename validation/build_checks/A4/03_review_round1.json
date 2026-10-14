@@ -1,0 +1,926 @@
+[
+ {
+  "dimension": "fidelity",
+  "review": {
+   "dimension": "Fix fidelity and scope (A4: FX6, FX7, FX8, FX9), commit range f8a6abe..8beb6e8",
+   "checked_ok": [
+    "The working tree is clean. HEAD b36d911 only adds the round 1 brief and a log line on top of 8beb6e8. Running the build changed no tracked file.",
+    "Build (python3 kb/build_kb.py --no-xlsx): 'engine self-test: 114/114 variants pass'; 'ERP rules self-test: 42 ERP cases, the FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: all pass'; 'CW-F06 message readings: 565/565 pass'; 'GPS fuzz (seed 7): 150 random cases, 21 automatic, 0 crashes, 0 findings'; 'ERROR 0 | WARN 0 | INFO 3'.",
+    "Self-tests (python3 kb/tools/selftest.py): '114 / 114'; '565 / 565 message readings'; '42 ERP cases, FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: all pass'. V104, V105 and V106 give UPHOLD R8 HUMAN; V107 gives UPHOLD R8 APPROVE.",
+    "Engine rerun (validation/tools/rerun_engine.py /tmp/a4check1/rerun.json E01 E02 E03 E04 E11): 'OK E01 UPHOLD -> UPHOLD R8 APPROVE', 'OK E02 WAIVE_FEE -> WAIVE_FEE R1 APPROVE', 'OK E03 UPHOLD -> UPHOLD R8 APPROVE', 'OK E04 WAIVE_FEE -> WAIVE_FEE R6 AUTO', 'OK E11 TOLL_REFUND -> TOLL_REFUND None APPROVE', '5/5 outcomes match'. The result is identical to the builder's validation/build_checks/A4/01_engine_rerun.json, and tiers and triggers match A3's rerun, so there is no tier change on the regression cases.",
+    "Mutation check, each with one A4 file reverted to f8a6abe: old engine_toll.py makes T40 and T42 fail (TOLL_REFUND APPROVE instead of ESCALATE_HUMAN HUMAN); old engine_noshow.py makes V104, V105 and V106 fail (APPROVE, no G4); old rules.yaml gives 10 a4_check problems (CLS-01, CLS-02, CLS-03, CLS-06, FC-F02, FC-R03, FC-R05, FC-R08, FC-R12, EXP-03); old taxonomy.yaml gives 2 (SE-CONDUCT, the FX8 leaves); old ontology.yaml gives 1 (has_dropoff). V107 (a rudeness guard) and T41 (a regression of T09) pass on the old code too, which is expected for negative and regression tests.",
+    "In engine_noshow.py, A4 changed only SAFETY_WORDS, which is used only at PB-INTAKE step 2 (CLS-01). rider_contact_reading, before_arrival_reading and CONTEST_PHRASES are untouched, so the frozen area (D34) was not changed.",
+    "FX6 is done as the fix list asks. CLS-03 now reads 'unless CLS-01 applies or the claim is any SE type'. CLS-01 is a definition read for meaning (mode READ), with kidnapping or abduction, an unsafe drop-off and threats and intimidation among its examples. SE-CONDUCT is defined with assault, sexual harassment, threats, kidnapping and discrimination. CLS-02 making any SE claim primary is within scope (the C08 and C18 verdicts name that inconsistency).",
+    "FX7 is done as asked. has_dropoff is '1:N, ordered'. destination_edit_accepted is named as the destination-change event, and the notes for stop_added and destination_edit_requested are added. FC-F02 defines the recommended route through the final itinerary, piecewise around each accepted change. FC-R01, FC-R03, FC-R05, FC-R08 and FC-R12 refer to it, and FC-R00 and FC-R04 inherit it through FC-F02's DR. FC-F01 now counts an added stop as a destination edit, with a verified Ryde driver quote (RYDE-34883561600025).",
+    "FX8 is done at the rule level. FC-FAREMISMATCH and FC-DRIVERCHARGE are BACKLOG and listed in the scope.yaml backlog. FC-SURCHARGE and FC-PAYMENT point to FC-DRIVERCHARGE, and FC-DRIVERCHARGE excludes ERP keyed in by the driver (FC-TOLL), so E11 stays FC-TOLL. CLS-06 is cited by the DT-CW-NOSHOW precondition and by PB-CW-NOSHOW step 1.",
+    "FX9 is done. EXP-03 exempts numbers inside a verbatim quote. CW-F02B gains RYDE-20244064619161, verified, and its note names RYDE-33362932998937. CW-R08 defines an advance booking's assignment ETA as the scheduled time and labels this FairRyde's reading in the statement; this is consistent with E06 (a cancellation more than 15 min before the scheduled time is still free). O09 and O10 carry 'FairRyde design' sources. The other two FX9 items were already done before A4: EXP-01's FAIRRYDE note (A3) and FC-R01's ERP caveat ('a fixed fare does not include ERP', A2).",
+    "Nothing changed in meaning beyond the task. Of the rule cards outside the FX list, only CLS-02, FC-F01 and FC-R01 changed, all in scope. Credibility labels are unchanged where they should be (CLS-01 D, CLS-02 D, CLS-03 D, FC-F01 B, CW-F02B C), and the new CLS-06 is D.",
+    "CLS-01's 'any other crime' agrees with AUTH-03 ('possible criminal conduct ... decided by a human') and with scope.yaml never_decided_by_fairryde ('anything possibly criminal'). Making CLS-01 READ does not trigger decisive_definition: CLS-01 is not on a case's path, and an unclear text is sent to a person anyway.",
+    "In the toll engine, an FC-R07-only claim with an accepted destination edit and a route_review now escalates (HUMAN, with fc_r07_overstatement attached) instead of a refund at APPROVE. This matches FC-R12's new wording and the existing branch for missing recommended gantries, and it is defensible because ERP(final route) could be lower than ERP(original route).",
+    "Added lines contain no em or en dashes and no British spellings; 'cancelled' appears only inside event codes. New test data (V104 to V107, T40 to T42, the taxonomy example_phrases) contains no names, plates, phone numbers or account IDs, and the build's leak scan total is 0.",
+    "C02, how it would now be classified: the yelling 'crazy rude driver' is rudeness, so EX-FEEDBACK (CLS-01's rudeness line and SE-CONDUCT's exclusion). The S$4.30 fee is typed by CLS-06 from the trip record (CW-NOSHOW if the driver canceled with rider_no_show), else REQUEST_INFO. This is what FX6 and FX8 asked.",
+    "C04: the text only implies who canceled, so CLS-06 takes the canceling party from the trip record and gives REQUEST_INFO when the record is silent. That is FX8's 'if absent, ask' at the rule level; the reference engine differs (finding F1).",
+    "C05: driving off on seeing a wheelchair user is discrimination because of disability, so SE-CONDUCT, primary under CLS-02, tier HUMAN (AUTH-03), with CW-DRIVERNOSHOW secondary. This is FX6's 'discrimination' and is flagged for Jasper in D40(c).",
+    "C06: scolding and shouting plus a drive-off with no fee gives EX-FEEDBACK primary and CW-DRIVERNOSHOW secondary, and CLS-03 routes it to support. This is unchanged from round 1's PASS and in line with FX6's rudeness line.",
+    "C07: racist and religious hostility, 'threatened my safety', and 'paused and accelerated' when she asked to alight are all CLS-01 safety content (S0, a driver who will not stop when asked). SE-CONDUCT is primary; the commission demand is FC-DRIVERCHARGE secondary (BACKLOG); tier HUMAN. This is what FX6 and FX8 asked.",
+    "C08: a driver who stopped and asked her to get out mid-trip gives SE-TERMINATED. CLS-03 now keeps every SE type out of normal support and CLS-02 makes it primary, so tier HUMAN (CLS-01's unsafe drop-off and 'unclear counts as safety' also apply). The FX6 defect is fixed.",
+    "C11: a rider hitting and scratching the driver is violence reported by either party, so SE-CONDUCT, S0, tier HUMAN. SE-CONDUCT now names assault, as FX6 asked.",
+    "C15: the S$14.10 booking against S$21.10 on the driver's screen gives FC-FAREMISMATCH (BACKLOG, so GEN-R07, tier HUMAN), and the yelling is EX-FEEDBACK. One caveat: the driver's refusal to 'just drop them off' may now be read under CLS-01's 'will not let the passenger out' example (or 'unclear counts as safety') as an SE claim, which would then be primary. The routing is HUMAN either way, so this is outcome-neutral.",
+    "C16: a kidnapping accusation is named in CLS-01 and in SE-CONDUCT's definition, so SE-CONDUCT, S0, instead of the SE-OTHER catch-all; tier HUMAN. This is what FX6 asked.",
+    "C18: the trip was ended short of Bedok and the driver demanded S$30. SE-TERMINATED is primary (CLS-02, any SE type) and FC-DRIVERCHARGE secondary (BACKLOG); tier HUMAN. This is what FX8 asked.",
+    "C19: the made-up S$5 'VIP' charge is FC-DRIVERCHARGE (FC-SURCHARGE is now limited to fees Ryde lists), BACKLOG, so GEN-R07, tier HUMAN. Outcome-neutral, as FX8 expected."
+   ],
+   "findings": [
+    {
+     "id": "F1",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 412,
+     "claim": "The new CLS-06 is not implemented in the reference no-show engine. The engine's PB-CW-NOSHOW step 1 still cites CLS-02 and reclassifies to CW-OTHER when the canceling party is missing, or when the records disagree. CLS-06, and PB-CW-NOSHOW step 1 as A4 changed it, require REQUEST_INFO (GEN-R-NEED-INFO) in both cases. No self-test exercises CLS-06's outcome, and D40 does not record the gap.",
+     "evidence": "rules.yaml CLS-06: 'If these records disagree, or none says who canceled, the type cannot be set: ask for the trip record (outcome REQUEST_INFO, reason GEN-R-NEED-INFO)'. playbooks.yaml PB-CW-NOSHOW step 1 now has: 'rule: \"CLS-06, CW-R03\" ... if the record does not say who canceled, ask for it (REQUEST_INFO)'. engine_noshow.py, unchanged: 'tr.step(pb, 1, \"CLS-02, CW-R03\", ...)' and 'tr.reclassified_to = \"CW-RIDERCANCEL\" if t.get(\"cancellation_reason\") == \"rider_cancelled\" else \"CW-OTHER\"'. selftest a4_check only tests the card text: '\"REQUEST_INFO\" in t(\"CLS-06\")'. My run (/tmp/a4check1/scripts/cls06.py): 'missing reason -> ... tier: n/a (reclassified to CW-OTHER)' and 'reason no_show + system says rider canceled -> ... tier: n/a (reclassified to CW-OTHER)'; the trace shows \"{'playbook': 'PB-CW-NOSHOW', 'n': 1, 'rule': 'CLS-02, CW-R03', ...}\".",
+     "failure_scenario": "Take DISP-002 and remove trip_data.cancellation_reason, or add a system message 'Trip cancelled by rider.' while the reason stays rider_no_show. The KB (CLS-06) says REQUEST_INFO. The reference engine reclassifies to CW-OTHER instead, which under GEN-R07 is an escalation to a person. So the engine no longer verifies the playbook step it implements, for an in-scope type (CW-NOSHOW). The current regression cases (E01 to E04) all have a reason, so this is outcome-neutral there.",
+     "suggested_fix": "In engine_noshow.py step 1, cite CLS-06. When cancellation_reason is missing, or the reason, events and system message disagree, return REQUEST_INFO with GEN-R-NEED-INFO (tier per AUTH) instead of reclassifying. Add two variants (reason missing; reason contradicted by the system message) expecting REQUEST_INFO. Alternatively, record the gap in D40 if the engine is meant to stay as it is."
+    },
+    {
+     "id": "F2",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 191,
+     "claim": "The new FC-R12 branch (itinerary changed, final_itinerary not true) escalates even when no recommended-route comparison can change the result: RydeSEND (FC-R06 share 0) and claims with no ERP passed or paid. Such claims move from AUTO UPHOLD to ESCALATE_HUMAN, tier HUMAN. Before A4, the FC-R08 comparison ran only when actual > 0. The new branch sits ahead of that guard and is not gated on it, and no test covers these cases.",
+     "evidence": "engine_toll.py: 'if review is not None and changed and _flag(review.get(\"final_itinerary\"), False) is not True: reasons[:] = [\"FC-R-INSUFFICIENT-DATA\"] ... return finish(\"ESCALATE_HUMAN\")' is placed before 'if review.get(\"recommended_gantries\") is not None and actual > 0:'. FC-R08: 'FC-R06 first: nothing for RydeSEND, whose fare includes ERP'. My comparison (/tmp/a4check1/scripts/toll2.py) gives at f8a6abe '[old] RydeSEND detour + edit: UPHOLD 0.0 [FC-R-TOLL-VALID] AUTO' and at 8beb6e8 '[new] RydeSEND detour + edit: ESCALATE_HUMAN None [FC-R-INSUFFICIENT-DATA] HUMAN'; likewise '[old] no gantries passed, charged 0 + edit: UPHOLD 0.0 ... AUTO' against '[new] ... ESCALATE_HUMAN ... HUMAN'.",
+     "failure_scenario": "A RydeSEND ERP claim (in-scope FC-TOLL) with an accepted destination edit and a route_review was ruled automatically: the fare includes ERP, so nothing can be refunded whatever the route. It now goes to a person (tier HUMAN), and no comparison against the final itinerary could change it. The same happens to an ERP claim where no gantry was passed or nothing was charged. This is rare and in the conservative direction, but it is a tier change the FX7 fix does not need.",
+     "suggested_fix": "Apply the final-itinerary check only where the comparison can matter: move it inside the 'recommended_gantries is not None and actual > 0' block, or gate it on share > 0 and min(actual, charged) > 0. Add FC-R12's 'when the comparison could change the outcome' to the rule text or a note. Add T-cases for RydeSEND plus an edit, and for no gantries plus an edit, expecting the pre-A4 UPHOLD."
+    },
+    {
+     "id": "F3",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 20,
+     "claim": "V104 to V106 only pin the phrases the builder added to SAFETY_WORDS ('told me to get out', 'let me out' and 'kidnap', 'racist'), so they test the extended word list rather than reading for meaning. The stand-in misses paraphrases of CLS-01's own examples, and new words such as 'expressway', 'road shoulder', 'follow me' and 'let me go' give false hits on ordinary pick-up text. D40(a) discloses that the engine is still a word list, and the engine is a verification tool, so this is MINOR.",
+     "evidence": "SAFETY_WORDS adds \"let me out\", \"told me to get out\", \"kidnap\", \"racist\", \"expressway\", \"road shoulder\", \"follow me\", \"let me go\". The test texts: 'After that he stopped on the PIE and told me to get out of the car.', '... would not let me out, I felt kidnapped.', 'He made racist remarks about me.' My probe (/tmp/a4check1/scripts/words.py): 'miss [] He refused to stop the car when I asked him to.', 'miss [] He left me in the middle of nowhere in Lim Chu Kang at night.', 'miss [] He refused me because my friend is in a wheelchair.', 'miss [] He grabbed my arm.', 'miss [] He said he would find me and hurt me.' (11 of 11 paraphrases missed); 'HIT [expressway] I was waiting near the expressway exit at the taxi stand.', 'HIT [let me go] Please let me go without the fee, I was there.'",
+     "failure_scenario": "A no-show complaint whose description says 'He refused to stop the car when I asked him to' (CLS-01's 'will not stop when asked' example) gets no G4 in the reference engine and keeps an APPROVE or AUTO tier. A description naming an expressway exit as the pick-up gets G4 and HUMAN.",
+     "suggested_fix": "Keep the word list (D40(a)), but describe V104 to V106 as word-list tests. Add a few non-listed paraphrases to the round 2 taxonomy texts (FX6 'verify'), not to the engine. Consider dropping pure place words ('expressway', 'road shoulder') that hit pick-up descriptions."
+    },
+    {
+     "id": "F4",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 236,
+     "claim": "FC-F01 now makes a fare RECALCULATED after an added stop, and the new FC-R12 branch reads the app events destination_edit_accepted and stop_added. fc_r01's own FC-F01 test still reads only trip_data.destination_edit_accepted, so a trip whose only record of the change is a stop_added event is treated as FIXED and FC-R01 applies (no fare refund). Separately, an unparseable destination_edit_accepted counts as 'no change' and skips FC-R12, while T39 treats an unparseable is_carpool as unusable data (FC-R12).",
+     "evidence": "fc_r01: 'recalculated = _flag(trip.get(\"destination_edit_accepted\"), False) is True  # FC-F01: RECALCULATED'. run(): 'changed = _flag(trip.get(\"destination_edit_accepted\"), False) is True or any(a.get(\"event_type\") in (\"destination_edit_accepted\", \"stop_added\") ...)'. FC-F01: 'becoming RECALCULATED if a destination edit (a changed drop-off or an added drop-off stop) was accepted.' My run (/tmp/a4check1/scripts/toll.py): 'fc_r01 stop_added only: applies True' and 'unparseable edit flag TOLL_REFUND 4.0 ['FC-R-TOLL-FROM-DETOUR'] APPROVE'.",
+     "failure_scenario": "A route ticket where the record shows a stop_added app event but no trip-level flag, with the base fare equal to the quoted fare: the engine applies FC-R01 ('no fare refund') where FC-F01 says the fare is RECALCULATED and FC-R03 and FC-R05 should measure the detour. The toll part still escalates. This is edge-case data only.",
+     "suggested_fix": "Use one 'itinerary changed' predicate for both FC-F01 (fc_r01) and the FC-R12 branch. Treat an unparseable destination_edit_accepted as unusable data (FC-R12), as T39 does for is_carpool. Add a test for each."
+    },
+    {
+     "id": "F5",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1196,
+     "claim": "Wording left behind by the change. FC-R01's zh was not updated with the final-itinerary qualifier that its English gained. PB-ROUTE-SUPPORT step 1 still says 'Safety language'. The engine's intake step 3 cites the rule set without CLS-06, although PB-INTAKE step 3 now lists it.",
+     "evidence": "FC-R01 en: 'the recommended route (through the final itinerary, FC-F02) avoids'; the zh is unchanged: '只要实际路径经过了推荐路线避开的有效闸门'. playbooks.yaml:238: '{n: 1, do: CHECK, rule: CLS-01, note: \"Safety language overrides routing\"}'. engine_noshow.py:370: 'tr.step(\"PB-INTAKE\", 3, \"CLS-05, CLS-02, CLS-04\",' against the PB-INTAKE step 3 rule \"CLS-05, CLS-02, CLS-06, CLS-04\".",
+     "failure_scenario": "A reader of the Chinese card for FC-R01 compares gantries against the original recommended route. PB-ROUTE-SUPPORT reintroduces 'safety language' (the word-list framing FX6 removed). The engine trace and the playbook disagree on which rules step 3 applies.",
+     "suggested_fix": "Add '（按最终行程单，FC-F02）' to FC-R01's zh, and change PB-ROUTE-SUPPORT step 1's note to 'Safety content (CLS-01, read for meaning) or any SE type overrides routing'. Add CLS-06 to the engine's step 3 citation, or fix it together with F1."
+    },
+    {
+     "id": "F6",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 294,
+     "claim": "CLS-06 is incomplete and ambiguously worded. (1) It types only rider_no_show and rider_cancelled, while TX-CANCELREASON also has driver_cancelled_other, safety_termination, system_cancelled and other; when the record says the driver canceled for another reason and a fee was charged, CLS-06 neither types the claim nor asks. (2) It sends REQUEST_INFO, defined as asking the claimant, for Ryde's own trip record, which the claimant cannot supply, and reuses GEN-R-NEED-INFO, whose label is about an unidentified trip or charge. (3) 'decide no fee until it arrives' can be read as waiving the fee, while the zh says no ruling is made on the fee.",
+     "evidence": "CLS-06: 'the driver canceled with reason rider_no_show, CW-NOSHOW; the rider canceled, CW-RIDERCANCEL. If these records disagree, or none says who canceled, the type cannot be set: ask for the trip record (outcome REQUEST_INFO, reason GEN-R-NEED-INFO) and decide no fee until it arrives.' zh: '记录到之前不对收费作裁决'. taxonomy.yaml: '{code: REQUEST_INFO, label: Ask the claimant for missing information}', '{code: GEN-R-NEED-INFO, label: Trip or charge cannot be identified, outcome: REQUEST_INFO}', TX-CANCELREASON values 'driver_cancelled_other', 'system_cancelled'.",
+     "failure_scenario": "A rider is charged after the driver canceled with reason driver_cancelled_other: CLS-06 gives no type and no ask, and the applier falls back to guessing between CW-NOSHOW (CW-DRIVERNOSHOW's exclusion) and CW-OTHER. A record-silent C04-type case produces a request to the rider for a record only Ryde holds. An English reader may waive the fee pending the record.",
+     "suggested_fix": "Add the remaining branch (another canceling reason or a system cancellation with a fee charged: CW-OTHER, so GEN-R07), say that the record is requested from Ryde's systems (or name the internal request), and write 'make no ruling on the fee until it arrives'."
+    },
+    {
+     "id": "F7",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 192,
+     "claim": "Two CLS-01 elements have no quoted source and are not named in the FAIRRYDE note's list of additions: 'or any other crime' (Ryde's Code of Conduct item 6 'Do not commit crimes' exists in the corpus but is not cited) and 'religion' in the discrimination list (the cited Ryde text lists race, ethnicity, national origin and disability). 'Any other crime' also has no stated boundary with fraud and overcharging. Ryde calls overcharging 'Fraudulent Activity' that can lead to 'legal prosecution', and FC-DRIVERCHARGE's excludes implies that a made-up charge alone is not safety content.",
+     "evidence": "CLS-01: 'discrimination or abuse because of race, religion, nationality or disability; or any other crime.' The FAIRRYDE note: 'the examples Ryde's lists do not name (an unsafe drop-off, being stranded, a driver who will not stop)'. Quoted source: 'Comments on race, ethnicity, national origin, disability, etc'. Corpus 15395890865561: '6. Do not commit crimes.' Corpus 33362721809049: 'Overcharging riders or manipulating fares' ... 'legal prosecution'. FC-DRIVERCHARGE excludes: 'Threats used to obtain the payment are safety content (CLS-01, SE-CONDUCT).'",
+     "failure_scenario": "An applier reading CLS-01 for meaning, with 'unclear counts as safety', may treat an E11-type text that adds 'this is cheating' (an overstated ERP, in-scope FC-TOLL, tier APPROVE) or C19's made-up charge as an account of a crime. That creates a primary SE claim with tier HUMAN, and the KB gives no line against it. This is speculative: no current case text triggers it.",
+     "suggested_fix": "Cite Code of Conduct item 6 for 'any other crime' and add religion to the FAIRRYDE note (or cite 'Cancelling for any discriminatory or prejudiced reasons'). Add one sentence saying that an overcharge or a made-up charge alone is a fare claim with a fraud signal (FRD), not safety content, unless it comes with threats or other CLS-01 content."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "F1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Re-read engine_noshow.py at 8beb6e8 (identical to the working tree; HEAD b36d911 only adds the brief). Lines 409 to 415 are unchanged by A4: step 1 still cites 'CLS-02, CW-R03', and any case that is not a driver rider_no_show cancellation is reclassified to CW-RIDERCANCEL or CW-OTHER. Re-ran /tmp/a4check1/scripts/cls06.py on DISP-002. With cancellation_reason removed, and with the reason left as rider_no_show plus a system message 'Trip cancelled by rider.', the result is 'n/a (reclassified to CW-OTHER)' and the trace step is {'rule': 'CLS-02, CW-R03', 'result': 'not a driver no-show cancellation: reclassify'}. The new CLS-06 and the A4 PB-CW-NOSHOW step 1 ('if the record does not say who canceled, ask for it (REQUEST_INFO)') require REQUEST_INFO in both cases, as FX8 asks ('if absent, ask'). a4_check only greps the card for 'REQUEST_INFO', and D40 says nothing about the engine and CLS-06. The KB card is right, and both paths are non-automatic. So for the deliverable this is outcome-neutral in the current regression set (E01 to E04 all have a reason). But the reference engine now gives a different outcome than the playbook step it cites, for in-scope CW-NOSHOW, and no record discloses it. That fits MAJOR (wrong but outcome-neutral), not CRITICAL."
+    },
+    {
+     "id": "F2",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced with my own exports of f8a6abe and 8beb6e8 (/tmp/a4check1/sk/scripts/toll_f2.py). With an accepted edit and a route_review, these claims now go from UPHOLD 0.0 AUTO to ESCALATE_HUMAN, tier HUMAN: a RydeSEND detour, no gantries with nothing charged, one gantry identical to the recommended route, and a detour with nothing charged. A RydeSEND claim with an overstated ERP goes from TOLL_REFUND 6.5 APPROVE to ESCALATE_HUMAN with the FC-R07 amount attached. However, the FC-R12 card as A4 wrote it has no materiality condition: 'the itinerary changed ... and the recommended route on record does not follow the final itinerary ... make no adverse finding against either party and escalate'. The engine follows that text. The pre-existing FC-R12 branch just above it (route_review without recommended_gantries, unchanged since before A4) is also ungated: at f8a6abe it escalates a RydeSEND claim and a no-gantry claim to HUMAN in the same way (/tmp/a4check1/sk/scripts/toll_f2b.py). So A4 copied the established pattern, the move is only toward more human review, and it occurs only in a rare edge (route_review present, itinerary changed, share 0 or nothing passed or charged). Whether FC-R12 should apply only when the comparison could change the outcome is a design choice for the owner, not a fidelity error. If the owner wants the gate, it belongs on both FC-R12 branches."
+    },
+    {
+     "id": "F3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Diff check: V104 'told me to get out', V105 'let me out' and 'kidnap', and V106 'racist' each match a phrase A4 added to SAFETY_WORDS. So they test the extended list, not reading for meaning, although the selftest comment says 'safety content is read for meaning'. Re-ran /tmp/a4check1/scripts/words.py: all 11 paraphrases miss (including CLS-01's own examples, 'made me alight' and 'would not unlock the doors'), and 'expressway', 'let me go', 'road shoulder' and 'follow me' hit neutral pick-up text. An engine run on DISP-002 (/tmp/a4check1/sk/scripts/ns_f3.py): adding 'I was waiting near the expressway exit at the taxi stand.' gives tier HUMAN with G4. 'He refused to stop the car when I asked him to.' and 'He made me alight on the AYE.' stay APPROVE with no gate. The word list is disclosed as a stand-in (D40(a), CLS-01 credibility_note), the false hits are in the safe direction, and the product uses the LLM reading, so MINOR is right."
+    },
+    {
+     "id": "F4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "engine_toll.py fc_r01 still sets recalculated only from trip_data.destination_edit_accepted (unchanged since f8a6abe). A4's run() uses a broader 'changed' predicate that also counts the destination_edit_accepted and stop_added app events, and A4's FC-F01 now says an added drop-off stop makes the fare RECALCULATED. Re-ran /tmp/a4check1/scripts/toll.py. 'fc_r01 stop_added only: applies True' means FC-R01 'no fare refund' applies where FC-F01 says RECALCULATED. 'unparseable edit flag' gives TOLL_REFUND 4.0 APPROVE, because _flag('maybe', False) returns None, which counts as no change; T39 treats an unparseable is_carpool as FC-R12 instead. Impact is limited: fc_r01's scenario needs base fare equal to the quoted fare after a recalculation, the toll part still escalates, and unparseable flags are edge data. So MINOR."
+    },
+    {
+     "id": "F5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "All three parts read directly. (1) FC-R01: the English gained '(through the final itinerary, FC-F02)', and the zh line is unchanged in the diff ('只要实际路径经过了推荐路线避开的有效闸门'); FC-R08's zh got the qualifier and FC-R01's did not. (2) grep finds kb/playbooks.yaml:238 PB-ROUTE-SUPPORT step 1 note 'Safety language overrides routing', the only leftover of the word-list framing in the YAML. (3) engine_noshow.py:370 cites 'CLS-05, CLS-02, CLS-04', while A4's PB-INTAKE step 3 is 'CLS-05, CLS-02, CLS-06, CLS-04'. Wording and labeling only; no outcome effect."
+    },
+    {
+     "id": "F6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read rules.yaml CLS-06 and the taxonomy. (1) TX-CANCELREASON has driver_cancelled_other, safety_termination, system_cancelled and other. CLS-06 maps only rider_no_show and the rider canceling, and asks only when the records disagree or are silent. A driver_cancelled_other with a fee is neither typed nor asked about. The taxonomy's CW-OTHER catch-all ('fits the category but no type above') mitigates this. But CW-DRIVERNOSHOW's excludes ('classify by that fee: CW-RIDERCANCEL or CW-NOSHOW') and PB-CW-NOSHOW step 1 ('usually CW-RIDERCANCEL') pull the other way, so the gap is real. (2) taxonomy.yaml:599 REQUEST_INFO = 'Ask the claimant for missing information', and :652 GEN-R-NEED-INFO = 'Trip or charge cannot be identified'. CLS-06 uses both for Ryde's own trip record, a mismatch of label and target. (3) The English 'decide no fee until it arrives' can be read as waiving the fee; the zh '记录到之前不对收费作裁决' means make no ruling. These are missing detail and ambiguous wording, so MINOR."
+    },
+    {
+     "id": "F7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Corpus check (kb/sources/ryde_policy_corpus.json). Code of Conduct 15395890865561 item 6 'Do not commit crimes. You may be penalized ... theft, robbery, ... weapons, acts of vandalism' is in a document CLS-01 already cites, but is not quoted. Ryde's discrimination text names 'race, ethnicity, national origin, disability, etc' and 'Cancelling for any discriminatory or prejudiced reasons'. The latter covers religion and is cited in SE-CONDUCT's term_sources, but not among CLS-01's sources. CLS-01's FAIRRYDE note lists only an unsafe drop-off, being stranded and a driver who will not stop as additions. So 'religion' and 'any other crime' carry neither a cited quote nor an explicit FairRyde label. CLS-01 is already D, so the rating does not change. The fraud boundary point is real in the corpus (33362721809049 lists 'Fraudulent Activity: Drivers who overcharge riders' and mentions 'legal prosecution'), but no current case triggers it, so it is a speculative missing detail. Labeling and missing detail, so MINOR."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "grounding",
+  "review": {
+   "dimension": "Source grounding and credibility of every new or changed rule element (A4: f8a6abe..8beb6e8)",
+   "checked_ok": [
+    "CLS-01's Code of Conduct quotes are exact and say what they are used for. RYDE-15395890865561 (edited 2026-04-10, so A) item 5 lists 'Attempted or Actual Physical Assault', 'Verbal or Physical Sexual Harassment', 'Kidnapping', 'Threats and Intimidation' and 'Unwanted Sexual Advances' (the first source's note is accurate). Item 7 supports reckless or dangerous driving. Item 8 supports a weapon and a driver under the influence.",
+    "CLS-01's community-standards quote is exact: RYDE-33362721809049 (edited 2026-04-10), 'Adverse Ratings' row, 'Comments on race, ethnicity, national origin, disability, etc'. The note ('errant behavior that disables an account') matches the table heading 'Conditions, where driver accounts will be temporarily disabled'.",
+    "CLS-01 at D is correct: its weakest elements are FairRyde's. The FAIRRYDE note covers the unsafe drop-off, being stranded, a driver who will not stop, unclear text counting as S1, the line between rudeness and safety, and the S0 or S1 scale. Mode READ matches 'judged by meaning'.",
+    "CLS-03's FAIRRYDE note is present. Every SE leaf (SE-CONDUCT, -DRIVING, -MISMATCH, -ACCIDENT, -RECORDING, -TERMINATED, -OTHER) is TRIAGE_TO_HUMAN in taxonomy.yaml and scope.yaml, so 'every SE type is TRIAGE_TO_HUMAN' holds. CLS-02's new SE-primary element is covered by its existing credibility note ('the ordering ... is FairRyde's design (D)').",
+    "CLS-06's sources hold up. The ORG-DISP002 quote is in kb/sources/organizer/disp002.md (line 73), and the system message 'Trip cancelled by driver. Reason: rider_no_show.' is at line 170. The Ryde quote 'Rider cancels after 3 minutes of matching OR' is exact (RYDE-23534478435353, edited 2026-02-26, A), and the same article lists the driver's no-show cancellation as a separate ground. CLS-06 at D is correct, and its FAIRRYDE note is present.",
+    "FC-F01's new quote is exact (RYDE-34883561600025). Its note ('an added stop is the same request as a changed drop-off') matches the article's 'request to change the drop-off and/or add an additional drop-off stop'.",
+    "The ontology's destination-change notes are supported. RYDE-51399674412441, steps 6 to 10, and RYDE-34883561600025 say a rider can add or change a destination after the trip starts, and the change takes effect only if the driver accepts. The exceptions the sources state (multiple-stop bookings, RydePOOL, RydeTAXI; also RYDE-50798691815449's footnote) are recorded on destination_edit_requested.",
+    "The O09 and O10 FairRyde-design labels match the round 1 verdict evidence: no source defines evidence as a 1:1 wrapper, and the handbook has each advocate present its own case.",
+    "CW-F02B's new source checks out. The quote is exact and comes from the 'Advanced Trip' section of RYDE-20244064619161 (that section has 'at the pick-up point' with 'the'; the on-demand section does not). RYDE-33362932998937 has identical text. The dates 2024-04-23 and 2024-06-05 are correct, and so is the note that the pages count an advance trip's wait from 'I'm Here'. The rule stays C because it rests on Grab and Bolt.",
+    "SE-CONDUCT's new term sources are accurate: the Code of Conduct item 5 list (including Rape and Murder) and the community standards quotes 'Comments on race, ethnicity, national origin, disability, etc' and 'Cancelling for any discriminatory or prejudiced reasons'.",
+    "FC-FAREMISMATCH's term-source titles and quotes match the corpus: 30741244296217 'I was overcharged for ERP/toll' and 360004075214 'Why should I use RydeX?'. FC-DRIVERCHARGE's paraphrase of 33362721809049 ('Drivers who overcharge riders') is accurate.",
+    "EXP-03's quote exemption is FairRyde's, the rule is D, and the zh matches the English. FX9's other items (EXP-01 labels, FC-R01's toll caveat) were already done in A2 and A3.",
+    "The zh says the same as the English for CLS-03, CW-R08, FC-F01, FC-F02, FC-R03, FC-R05, FC-R08, FC-R12 and EXP-03.",
+    "The build (python3 kb/build_kb.py --no-xlsx --no-fuzz) ends 'ERROR 0 | WARN 0' and verifies every new quote. It ran on HEAD b36d911, which adds only the brief and a run_log line to 8beb6e8. git status was clean afterwards, so no tracked file changed.",
+    "A4 did not touch the frozen D34 area. Only SAFETY_WORDS changed, and it is used for CLS-01 at PB-INTAKE step 2, not in rider_contact_reading or before_arrival_reading.",
+    "The new test texts (V104 to V107, T40 to T42) and example phrases contain no names, plates, phone numbers or account IDs."
+   ],
+   "findings": [
+    {
+     "id": "SG-1",
+     "severity": "CRITICAL",
+     "file": "kb/rules.yaml",
+     "line": 952,
+     "claim": "CW-R08's new advance-booking ETA (always the scheduled time) goes beyond its source and ignores a case Ryde's own article states: an advance trip accepted late. For such a trip the driver is 'late' as soon as the driver is assigned, so CW-R08 waives the fee that CW-R02 (A) charges after the 3-minute grace.",
+     "evidence": "CW-R08 (A4): 'For an advance booking the assignment ETA is the scheduled time (FairRyde's reading: the driver is due at the pick-up then).' CW-R08's only outside source: 'Grab: a late driver (ETA + 3 min) forfeits the fee' (the ETA given at assignment). CW-R02 (credibility A): 'if the request was accepted after that cut-off, the rider has a 3-minute grace period', quoting RYDE-23534478435353 'If the advanced trip request is accepted only after 5:45 PM, riders will have a 3 minute grace period)'. CW-R07: '... is charged S$6.61, unless CW-R08 applies.' DRIVER_LATE_GRACE_S = 180 s.",
+     "failure_scenario": "Advance booking for 18:00 (CW-RIDERCANCEL, in scope). Accepted at 17:58 by a driver whose ETA at assignment is 18:10; the driver keeps driving toward the pick-up. The rider cancels at 18:05, after CW-R02's grace ended at 18:01. Under A4 the driver is later than 18:00 + 180 s, so CW-R-DRIVER-LATE gives WAIVE_FEE. Measured against the ETA given at assignment (CW-R08's own Grab basis, 18:10 + 3 min), the driver is not late, so the result is UPHOLD (CW-R-RIDERCANCEL-VALID). For a trip accepted after 18:00, every cancellation after the grace becomes waivable, so CW-R02's A-rated fee never applies. The rule's stated reason ('the driver is due at the pick-up then') is false for these trips.",
+     "suggested_fix": "Define the ETA as 'the later of the scheduled time and the ETA given when the driver was assigned', or keep the scheduled time and record that it overrides CW-R02's late-acceptance grace as a FairRyde choice for Jasper (D40). Code of Conduct item 4, 'accept bookings only when ... reasonably able to complete the trip', could be cited if he keeps it. Add a test for a late-accepted advance booking."
+    },
+    {
+     "id": "SG-2",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 964,
+     "claim": "CW-R08's labels were not updated for its new FairRyde element. The FAIRRYDE source note covers only the 'not moving' ground, and the credibility note (also open_items D39(e)) still says a local source for that ground would make the rule C again. That is no longer true, because the advance-booking ETA reading is also FairRyde's (D). The A3 census row still says the ETA is 'not defined'.",
+     "evidence": "rules.yaml line 959: note: \"The 'not moving toward the pick-up point' condition has no source in the knowledge base ...\". Line 964: 'A local source for that ground would make it C again.' validation/round2/census.csv: \"CW-R08,C,'Assignment ETA' for an advance booking,not defined,n/a,no,D,\"Wording gap (FX9), not changed in A3.\"\". The statement now carries '(FairRyde's reading: ...)'.",
+     "failure_scenario": "A reviewer who adds Grab's 'not moving' source would, following the credibility note, relabel CW-R08 as C. It would still rest on a FairRyde (D) reading of the advance-booking ETA. The label stays D today, so no outcome changes.",
+     "suggested_fix": "Extend the FAIRRYDE note to name the advance-booking ETA reading. Change the credibility note (and D39(e)) to say both grounds would need sources. Update census row 33 or note in D40 that it is superseded."
+    },
+    {
+     "id": "SG-3",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 211,
+     "claim": "Some CLS-01 examples are neither in the cited Ryde quotes nor in the FAIRRYDE note, which claims to list 'the examples Ryde's lists do not name'. These are: a rider under the influence, religion as a ground of discrimination, and an accident or an injury. Treating discrimination as safety content (Ryde treats it as a ratings matter) is also not named in the note.",
+     "evidence": "The cited Code of Conduct item 8 binds drivers only: 'Do not consume drugs or alcohol while you are on the Ryde platform.' Rider intoxication is named in RYDE-16925196526489 ('is intoxicated'), which CLS-01 does not cite. Community standards: 'Comments on race, ethnicity, national origin, disability, etc'. No Ryde page names religion, yet CLS-01 says 'race, religion, nationality or disability'. Accidents are in RYDE-900003838306, which CLS-01 does not cite. FAIRRYDE note: 'the examples Ryde's lists do not name (an unsafe drop-off, being stranded, a driver who will not stop)'. The discrimination row sits under 'Conditions, where driver accounts will be temporarily disabled' (Adverse Ratings).",
+     "failure_scenario": "A reader of the rule card would take 'rider under the influence' and 'religion' as Ryde-sourced (A) when they are FairRyde's extension. CLS-01 is D, and every match goes to a person, so no outcome changes.",
+     "suggested_fix": "Add rider intoxication (or cite RYDE-16925196526489), religion, and the classification of discrimination as safety content to the FAIRRYDE note. Optionally cite RYDE-900003838306 for accidents."
+    },
+    {
+     "id": "SG-4",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1060,
+     "claim": "FC-F01's credibility note still says 'The destination-edit part is A'. Its newly added 'added drop-off stop' element rests only on a driver article that is older than 12 months and conflicts with a newer rider page on rollout status, so that part is B. The A-level rider article that supports added stops is cited in the ontology but not on FC-F01.",
+     "evidence": "RYDE-34883561600025 was edited 2025-09-18, more than 12 months before 2026-10-05, so it is B under credibility_scale. It says '*This feature is currently in a pilot phase and is not yet a full-scale release.', while RYDE-50798691815449 (2025-10-09) says 'the full rollout of a new feature ... Effective 17 Oct 2025'. RYDE-51399674412441 (2025-10-10): '6. The rider can add another destination ...', '7. New destination and fare confirmation will be displayed.', '9. If the driver accepts, the trip details are updated'. That article is cited only in ontology.yaml line 385.",
+     "failure_scenario": "The rule card says the RECALCULATED pricing mode for an added stop is A when its only cited support is B. FC-F01 stays B overall, so no outcome changes.",
+     "suggested_fix": "Cite RYDE-51399674412441 (steps 6, 7 and 9) on FC-F01, or say in the credibility note that the added-stop part is B. Update census row 37."
+    },
+    {
+     "id": "SG-5",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1196,
+     "claim": "FC-R01's English now says the recommended route runs through the final itinerary, but its zh was not updated. This is the only changed English statement whose zh lags.",
+     "evidence": "EN: 'Whenever the actual path passed active gantries that the recommended route (through the final itinerary, FC-F02) avoids'. ZH: '只要实际路径经过了推荐路线避开的有效闸门' (no 按最终行程单 / FC-F02).",
+     "failure_scenario": "A zh reader of FC-R01 would compare the gantries with the original booked route. After an accepted destination change, the ERP for the new leg would then be sent to FC-TOLL as detour ERP.",
+     "suggested_fix": "ZH: '只要实际路径经过了推荐路线（按最终行程单，FC-F02）避开的有效闸门'."
+    },
+    {
+     "id": "SG-6",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 200,
+     "claim": "In the changed CLS-01 and CLS-02 statements the zh shifts the meaning in a few places. CLS-01: 'under the influence of drink or drugs' becomes any drinking (饮酒), and 'an accident' becomes only a traffic accident (交通事故). CLS-02's rewritten zh still omits 'otherwise the first stated issue' and 'Other claims are secondary'.",
+     "evidence": "CLS-01 EN: 'a driver or rider under the influence of drink or drugs' vs ZH '司机或乘客饮酒或吸毒'. EN 'an accident or an injury' vs ZH '交通事故或受伤'. CLS-02 EN: '... otherwise the primary claim is the one contesting the largest charge; otherwise the first stated issue. Other claims are secondary.' The ZH has no counterpart for the last two clauses.",
+     "failure_scenario": "Under the zh, a rider who had one drink with no sign of impairment counts as safety content; under the English that holds only if the rider was under the influence. Under the zh, a non-traffic accident (a door closed on a hand) counts only through '受伤' (injury). For CLS-02, a zh reader has no tie-break when no charge is contested.",
+     "suggested_fix": "CLS-01 zh: '司机或乘客酒后或吸毒后（受酒精或毒品影响）', '事故或受伤'. CLS-02 zh: add '否则以最先提出的问题为主项；其余为次项'."
+    },
+    {
+     "id": "SG-7",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 294,
+     "claim": "CLS-06 has three problems. Its last clause is ambiguous, and the zh resolves it differently from a natural English reading. Its outcome and reason codes do not describe what it does. It has no branch for the other cancellation reasons the vocabulary lists.",
+     "evidence": "EN: 'ask for the trip record (outcome REQUEST_INFO, reason GEN-R-NEED-INFO) and decide no fee until it arrives.' ZH: '记录到之前不对收费作裁决' (make no ruling on the charge). taxonomy: 'REQUEST_INFO, label: Ask the claimant for missing information'; 'GEN-R-NEED-INFO, label: Trip or charge cannot be identified'. TX-CANCELREASON also has driver_cancelled_other, safety_termination and system_cancelled. CLS-06 covers only rider_no_show (driver) and a rider cancellation.",
+     "failure_scenario": "'Decide no fee' can be read as 'decide that no fee is due', which is a waiver, while the zh says no ruling. The outcome asks the claimant for a record that the platform holds. A fee charged after driver_cancelled_other says who canceled, yet fits neither branch nor 'none says who canceled'.",
+     "suggested_fix": "EN: 'and make no decision on the fee until it arrives'. Say the trip record is requested from the platform, or add a reason code for 'canceling party unknown'. Add a branch for other driver or system cancellations (for example CW-OTHER, escalated by GEN-R07)."
+    },
+    {
+     "id": "SG-8",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1084,
+     "claim": "The final-itinerary design has no label of its own. FC-F02's only source note still describes the sparse-ping method, and FC-F02 does not cite the Ryde text the design rests on. The engine's final_itinerary and trip_data.destination_edit_accepted fields appear only in engine_toll.py's docstring, and the ontology's recommended_route note contradicts the design.",
+     "evidence": "FC-F02 sources: '{type: FAIRRYDE, ..., note: \"Method from research note 08 (sparse-ping simulation).\"}'. The Ryde basis 'your route will be updated to the new destination' is cited only on FC-F01. engine_toll.py docstring: 'route_review.final_itinerary (true when that route follows the final itinerary, FC-F02), trip_data.destination_edit_accepted'. ontology.yaml line 110: '{name: recommended_route, ..., note: \"Precomputed at booking for demo reliability.\"}'. There is no ontology attribute for either flag.",
+     "failure_scenario": "A data provider following the ontology precomputes the recommended route at booking. Every trip with an accepted change then fails the final-itinerary test and escalates under FC-R12 (the safe direction). Nothing in the KB says a FairRyde flag decides this. D40 records the engine behavior, but the rule card and the ontology do not.",
+     "suggested_fix": "Add a FAIRRYDE note to FC-F02 naming the piecewise final itinerary as FairRyde's design, and cite RYDE-50798691815449 for the route update. Add route_review.final_itinerary (and the destination-edit flag) to the ontology as FairRyde data fields with data_gap: true. Reword recommended_route's note: precomputed for the final itinerary, or recomputed at each accepted change."
+    },
+    {
+     "id": "SG-9",
+     "severity": "MINOR",
+     "file": "kb/ontology.yaml",
+     "line": 425,
+     "claim": "stop_added's 'changes' field still says the route and fare change at the rider's event. That contradicts its new A4 note and Ryde's article, which say nothing changes until the driver accepts. The engine counts stop_added as an itinerary change even when the request was rejected.",
+     "evidence": "stop_added row: 'actor: RIDER, ..., changes: \"SM-TRIP: route updated (fare recalculated)\", ..., note: \"A drop-off stop added during the trip takes effect when the driver accepts it ...\"'. RYDE-51399674412441: '10. If the driver rejects, the previous trip details remain.' engine_toll.py: any(a.get(\"event_type\") in (\"destination_edit_accepted\", \"stop_added\") ...).",
+     "failure_scenario": "A rider adds a stop and the driver rejects it. The log has stop_added and no destination_edit_accepted, yet the trip is treated as having a changed itinerary and goes to FC-R12 escalation instead of a ruling. That is the safe direction, so only the tier changes, and only for this narrow log pattern.",
+     "suggested_fix": "Set stop_added's changes to 'none until accepted (destination_edit_accepted)', as for destination_edit_requested. Have the engine count stop_added only when it is followed by an acceptance, or record the conservative choice in D40."
+    },
+    {
+     "id": "SG-10",
+     "severity": "MINOR",
+     "file": "kb/taxonomy.yaml",
+     "line": 299,
+     "claim": "SE-CONDUCT's new definition is anchored on 'behavior ... that Ryde's Code of Conduct prohibits', but the Code also prohibits non-safety conduct. The discrimination items come from the community standards, not the Code. One of the leaf's term sources ('Report a safety issue') is a seat-belt article that does not support the definition.",
+     "evidence": "Definition: 'behavior by the other party toward a person that Ryde's Code of Conduct prohibits or that threatens their safety: ... and discrimination ...'. Code of Conduct items 2, 3, 7 and 9 prohibit smoking in the vehicle, improper attire, phone use while driving and poor hygiene. RYDE-51354502165913 'Report a safety issue': 'Seat belts are a mandatory requirement. ... How to report a seat belt issue'.",
+     "failure_scenario": "'The driver was smoking in the car' is behavior toward the passenger that the Code prohibits, so read literally it is SE-CONDUCT and goes to human triage instead of EX-FEEDBACK (support). Both are routing types, and no adjudicated outcome changes.",
+     "suggested_fix": "Anchor the definition on the listed behaviors: 'behavior toward a person that threatens their safety or dignity, as in Code of Conduct item 5 and the community standards: ...'. Replace the seat-belt term source, or note that it belongs to SE-DRIVING or SE-OTHER."
+    },
+    {
+     "id": "SG-11",
+     "severity": "MINOR",
+     "file": "kb/taxonomy.yaml",
+     "line": 370,
+     "claim": "EX-FEEDBACK's new definition moves danger out of feedback, but the leaf's own Ryde term sources file 'made me feel unsafe' and 'drove dangerously' under feedback. The departure is labeled only in CLS-01's FAIRRYDE note, not at the leaf.",
+     "evidence": "RYDE-18230876398105 (an EX-FEEDBACK term source) has the headings 'The driver was rude and/or made me feel unsafe.' and 'The driver drove dangerously.'. RYDE-20690825386521: 'The rider was rude and/or made me feel unsafe.' New definition: '... with no threat, danger or discrimination (those are safety content, CLS-01).'",
+     "failure_scenario": "A reviewer checking the leaf against its term sources finds Ryde putting unsafe-feeling complaints in the channel the definition excludes, and nothing at the leaf says this is FairRyde's stricter line. That line is the safe direction, so no outcome changes.",
+     "suggested_fix": "Add a term_note to EX-FEEDBACK: Ryde's feedback articles also cover feeling unsafe and dangerous driving, and FairRyde routes those to SE (CLS-01, FairRyde's line, D)."
+    },
+    {
+     "id": "SG-12",
+     "severity": "MINOR",
+     "file": "kb/taxonomy.yaml",
+     "line": 249,
+     "claim": "Two problems with FC-DRIVERCHARGE. Its term source says 'No rider article names the complaint', but a rider article already in the KB addresses paying the driver cash off the app. The definition's 'a transfer outside the app' example also lacks the cash-payment exception that article states.",
+     "evidence": "RYDE-115000777574 (a term source of FC-PAYMENT): '*Note: Please be reminded not to pay cash to the driver if you have chosen RydePay as your payment method.' and 'the payment method accepted for RydeTAXI is only via cash.' FC-DRIVERCHARGE: '... cash on top of the fare, ... or a transfer outside the app.'",
+     "failure_scenario": "A RydeTAXI or cash-payment rider who complains that the driver collected the fare in cash fits the example 'a transfer outside the app', although cash is a valid payment method. The leaf is BACKLOG, so a person decides anyway.",
+     "suggested_fix": "Cite RYDE-115000777574's note as the rider-side source. Add to excludes: 'the fare paid in cash when cash was the booked payment method (RydeTAXI is cash only)'."
+    },
+    {
+     "id": "SG-13",
+     "severity": "MINOR",
+     "file": "kb/taxonomy.yaml",
+     "line": 233,
+     "claim": "FC-FAREMISMATCH's definition leaves out the RydeTAXI exception that its own term source states.",
+     "evidence": "Term source: 'Fares quoted for our services are generally fixed, except for RydeTAXI.' Definition: 'The rider says the fare charged ... differs from the fare quoted at booking, and no accepted destination change, ERP, listed surcharge or tip explains the difference.' Its excludes do not mention metered fares (FC-F01: RydeTAXI is METERED).",
+     "failure_scenario": "'My RydeTAXI fare was higher than the estimate' would be classified as a mismatch with a fixed quote, although a metered fare is expected to differ. The leaf is BACKLOG and FC-R00 also escalates metered fares, so the routing is the same.",
+     "suggested_fix": "Add to the definition or excludes: 'a METERED fare (RydeTAXI, FC-F01) differing from an estimate'."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "SG-1",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "I read CW-R08 (rules.yaml 944-967), CW-R02 (800-814), CW-R07 (930-942), RYDE-23534478435353's full text and research note 02. The arithmetic holds: for an 18:00 booking accepted at 17:58 with a driver still on the way at 18:05, the A4 reading (ETA = 18:00, late after 18:03) gives CW-R-DRIVER-LATE, while 'the ETA given at assignment' would give UPHOLD. The CRITICAL framing does not hold up, though. (1) Before A4 the term was undefined (census row 33: 'not defined'), and FX9 asked for a definition, so any definition decides this edge. (2) The reading is not unsourced. It is labeled 'FairRyde's reading' in a rule already rated D, and research note 02 supports lateness measured against the scheduled time: line 109, 'Lyft scheduled (more than 5 minutes late)', and line 296, 'driver lateness against ETA or scheduled time'. CW-F02B's industry wait anchor, max(arrival, scheduled time), also treats the driver as due at the scheduled time. (3) Nothing in Ryde's text is overridden. CW-R02 sets no fee: it only grants the free window and the 3-minute grace, and the grace still applies. The fee is CW-R07's, which explicitly yields to CW-R08 ('unless CW-R08 applies'). Ryde's article says nothing about driver lateness. So 'CW-R02's A-rated fee never applies' is wrong. (4) Whether a driver who accepts an 18:00 booking at 17:58 is 'late' at 18:05 is a judgment. From the rider's booked time he is late. What remains, and can be shown, is that the late-acceptance edge is neither discussed nor labeled as a choice (the stated rationale fits only trips accepted in time), and the supporting industry source is not cited. Whether to switch to 'the later of the scheduled time and the assignment ETA' is Jasper's call. If he rejects the scheduled-time anchor for late-accepted trips, the outcome effect would be CRITICAL."
+    },
+    {
+     "id": "SG-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read at 8beb6e8. The statement now carries '(FairRyde's reading: the driver is due at the pick-up then)' for the advance-booking ETA. The FAIRRYDE source note (rules.yaml 959) still covers only the 'not moving toward the pick-up point' condition. The credibility_note (964) still says 'A local source for that ground would make it C again', which is no longer true, because a second FairRyde element now exists. open_items D39(e) says the same. validation/round2/census.csv row 33 still reads \"'Assignment ETA' for an advance booking,not defined,...,Wording gap (FX9), not changed in A3\", and A4 did not touch the census. The label stays D, so no outcome changes."
+    },
+    {
+     "id": "SG-3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I checked the corpus. Code of Conduct item 8 binds drivers only ('Do not consume drugs or alcohol while you are on the Ryde platform'). Rider intoxication appears in RYDE-16925196526489 ('is intoxicated'), which is cited on another rule (rules.yaml ~1591) but not on CLS-01. No Ryde page names religion as a discrimination ground: the only hits are guide-dog 'religious ... concerns' and review moderation of 'religious views'. Community standards list 'race, ethnicity, national origin, disability, etc' under Adverse Ratings, a ratings and account-disable matter, not safety. Accidents are in RYDE-900003838306, which is not cited on CLS-01. The FAIRRYDE note lists only 'an unsafe drop-off, being stranded, a driver who will not stop' as examples Ryde does not name. Discrimination counted as safety is recorded in D40(c) but not on the rule card. CLS-01 is D and every match goes to a person, so this is labeling only."
+    },
+    {
+     "id": "SG-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "RYDE-34883561600025 (driver article) was edited 2025-09-18, more than 12 months before the 2026-10-05 reference date in credibility_scale, so it is B. It also says '*This feature is currently in a pilot phase and is not yet a full-scale release', against RYDE-50798691815449's 'full rollout ... Effective 17 Oct 2025'. FC-F01's cited A sources speak of an 'edit destination request' and a recalculation on a changed destination. The census itself notes 'the cited fee article does not say the fare is recalculated'. The A article that explicitly covers an added destination and its new fare, RYDE-51399674412441 (steps 6, 7 and 9, edited 2025-10-10), is cited only at ontology.yaml 385. The credibility_note still says 'The destination-edit part is A' while the new added-stop wording rests explicitly only on the B quote. FC-F01 stays B overall, so no outcome changes."
+    },
+    {
+     "id": "SG-5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "In git diff f8a6abe 8beb6e8, FC-R01's English sentence gains '(through the final itinerary, FC-F02)'. The zh line ('只要实际路径经过了推荐路线避开的有效闸门...') is unchanged context in the diff and has no 按最终行程单 or FC-F02. This is a translation lag only; the English and the engine (T40 to T42) carry the logic."
+    },
+    {
+     "id": "SG-6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "In the A4 diff, CLS-01's English says 'a driver or rider under the influence of drink or drugs' and 'an accident or an injury'; the zh says '司机或乘客饮酒或吸毒' (drinking, not impairment) and '交通事故或受伤' (traffic accident). CLS-02's zh was rewritten in A4 but still has no counterpart for 'otherwise the first stated issue. Other claims are secondary.' This gap predates A4, but A4 touched the line. The meaning shifts only in zh, and the effect leans toward safety or is a missing tie-break, so this is wording."
+    },
+    {
+     "id": "SG-7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "CLS-06 (rules.yaml 285-304) has two branches: rider_no_show by the driver gives CW-NOSHOW; a rider cancellation gives CW-RIDERCANCEL. It also says 'disagree, or none says who canceled'. TX-CANCELREASON (taxonomy 543-552) also lists driver_cancelled_other, safety_termination, system_cancelled and other. A record of driver_cancelled_other names the party but fits no branch. REQUEST_INFO's label is 'Ask the claimant for missing information' and GEN-R-NEED-INFO's is 'Trip or charge cannot be identified', yet CLS-06 asks for a platform-held trip record. The English 'decide no fee until it arrives' is ambiguous, while the zh says '不对收费作裁决'. All of this is wording and coverage, with no in-scope outcome shown to change."
+    },
+    {
+     "id": "SG-8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "FC-F02's only source (rules.yaml 1084) is FAIRRYDE with the note 'Method from research note 08 (sparse-ping simulation).' Nothing labels the new piecewise final-itinerary design, and the rule does not cite Ryde's 'your route will be updated to the new destination'. ontology.yaml line 110 still says recommended_route is 'Precomputed at booking for demo reliability.' That conflicts with the new design and with playbooks.yaml 132 ('precomputed recommended route through the final itinerary'). route_review.final_itinerary and trip_data.destination_edit_accepted appear only in engine_toll.py's docstring. route_review.* is absent from the ontology even before A4, so that part follows existing practice. FC-F02 is D overall, and a stale precomputation only escalates (FC-R12), so this is a labeling problem."
+    },
+    {
+     "id": "SG-9",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "ontology.yaml 425: stop_added keeps changes 'SM-TRIP: route updated (fare recalculated)' while its new note says the stop 'takes effect when the driver accepts it, as a destination edit (destination_edit_accepted)'. Lines 94 and 385 instead treat stop_added itself as the change. The ontology contradicts itself. I reproduced the engine effect with a scratch script (/tmp/a4check1/sk_grounding/t42rej.py). T42 with its event text changed to 'driver rejected' gives ESCALATE_HUMAN, FC-R-INSUFFICIENT-DATA, HUMAN; the same case without the stop_added event gives TOLL_REFUND S$4.00, APPROVE. The engine counts stop_added regardless of acceptance. The tier changes only for a hypothetical log pattern whose meaning the ontology leaves undefined. FC-R12's text ('an accepted destination change or added stop') and T42's own event text ('driver accepted') treat stop_added as an effective change, and escalation makes no adverse finding. The root defect is the contradictory event definition, so MINOR is right. (Note: importing selftest may have written the gitignored bytecode cache kb/tools/__pycache__/selftest.cpython-313.pyc; no tracked file was changed.)"
+    },
+    {
+     "id": "SG-10",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "SE-CONDUCT's new definition reads 'behavior by the other party toward a person that Ryde's Code of Conduct prohibits or that threatens their safety: ...'. The Code (RYDE-15395890865561) also prohibits smoking (item 2), improper attire (3), phone use while driving (7) and poor hygiene (9). The discrimination items come from community standards (RYDE-33362721809049), not the Code. The term source RYDE-51354502165913 'Report a safety issue' is entirely about seat belts. That source predates A4, but the definition added in A4 does not match it. The smoking scenario is weak, since 'toward a person' and the colon list narrow the definition, but the anchoring is imprecise. Both possible routes (SE triage and support) go to non-adjudicated handling."
+    },
+    {
+     "id": "SG-11",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "EX-FEEDBACK's term source RYDE-18230876398105 has the headings 'The driver was rude and/or made me feel unsafe.' and 'The driver drove dangerously.'. RYDE-20690825386521 has 'The rider was rude and/or made me feel unsafe.'. The A4 definition excludes 'threat, danger or discrimination (those are safety content, CLS-01)', and the leaf has no term_note recording this as FairRyde's stricter line. CLS-01's FAIRRYDE note covers 'the line between rudeness and safety' only at the rule. The departure leans toward safety, so this is labeling."
+    },
+    {
+     "id": "SG-12",
+     "verdict": "REFUTED",
+     "severity_after_check": "NONE",
+     "reason": "RYDE-115000777574's note ('Please be reminded not to pay cash to the driver if you have chosen RydePay as your payment method') is a rider instruction. It does not name a complaint about a driver-imposed charge, so the term source 'No rider article names the complaint' is not false; citing the article would only be a nice-to-have. The failure scenario misreads the definition. FC-DRIVERCHARGE covers 'a payment the app's fare does not include', and 'a transfer outside the app' is given as an example of such a payment. A RydeTAXI or cash-booked fare paid in cash is the app's fare, paid by the booked method, not a payment the fare excludes. It is also not a 'transfer', and it fits FC-PAYMENT's existing 'cash collection issues'. The leaf is BACKLOG, so a person decides anyway."
+    },
+    {
+     "id": "SG-13",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "FC-FAREMISMATCH's own term source quotes 'Fares quoted for our services are generally fixed, except for RydeTAXI.' The definition ('differs from the fare quoted at booking, and no accepted destination change, ERP, listed surcharge or tip explains the difference') and its excludes do not mention metering, so a RydeTAXI fare above its estimate fits literally. The leaf is BACKLOG (GEN-R07 escalates) and FC-R00 also escalates metered fares. Routing is unchanged, so this is a missing detail."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "adversarial",
+  "review": {
+   "dimension": "ADVERSARIAL TEST OF THE CHANGED LOGIC (engine_noshow.py SAFETY_WORDS, engine_toll.py FC-R12 itinerary check, CLS-01/02/03/06, SE leaves, FC-F02/FC-R03/FC-R05/FC-R08/FC-R12 as an LLM would apply them). Scratch scripts: /tmp/a4check1/common.py, cls06.py, safety_engine.py, ns_more.py, reclass_safety.py, corpus_fp.py, toll.py, toll2.py, toll_safety.py. About 86 no-show E.run cases, about 40 T.run ERP cases, 30 complaint texts classified by hand under the new rule text.",
+   "checked_ok": [
+    "The repo is at b36d911, which is 8beb6e8 plus only the brief and a run_log line. selftest.py passes (114/114 variants, 565/565 message readings, 42 ERP cases plus the A2, A3 and A4 card checks). git status was clean before and after; nothing under /home/user/fairryde was written.",
+    "In engine_noshow.py, A4 changed only SAFETY_WORDS. The frozen reading (rider_contact_reading, before_arrival_reading, D34) was not touched.",
+    "G4 fires and the tier is HUMAN whenever a listed word is in the description or in a rider or driver chat row of type 'message'. That holds under the organizer and Ryde profiles, for an advance booking, a waiver outcome (R6), an out-of-window filing, RydeTAXI, text that also carries an injection, and upper case (K1, K5, K10 to K16, K19).",
+    "Rudeness alone stays outside safety in the engine: 'rude and impatient on the phone', 'scolded me for being late' and 'sighed loudly and was unfriendly' give no G4, the same as V107.",
+    "The toll engine's FC-R12 itinerary check escalates (ESCALATE_HUMAN, HUMAN) for a trip flag true, 'yes', 'Y', 1, 'TRUE' or 'true ', and for the app events destination_edit_accepted or stop_added even when the flag says 'false' (E12). A final_itinerary of 'partially' or 'unknown' also escalates, and final_itinerary true gives T09's S$4.00 detour refund at APPROVE.",
+    "The toll engine leaves correct cases alone. With no route_review (an overstatement-only claim, E13 and E13b), a changed itinerary does not matter. RydeTAXI plus a change escalates. destination_edit_requested alone is not treated as a change, which matches the ontology ('none until accepted').",
+    "In the toll engine, every detour refund carries the FC-F03 decisive item, so a detour refund is never AUTO, even when the baseline is wrong (E1 to E8 are APPROVE). The tier AUTO problems found are UPHOLDs on a stale route; see the findings.",
+    "CLS-01, CLS-02, CLS-03 and the SE leaves send these texts to SE and a person, correctly: (T1) 'stopped on the AYE shoulder and told me to walk the rest'; (T2) 'kept the child lock on and drove past my stop twice'; (T3) 'said people like me should go back to my country'; (T4) 'saw my guide dog, drove off and marked me no-show, charged S$5' (SE-CONDUCT primary, the fee secondary and typed by CLS-06); (T5) 'kept asking if I had a boyfriend, stared in the mirror'; (T6) 'messaged me after the trip asking to meet'; (T7) 'on his phone the whole ride, nearly hit a cyclist' (SE-DRIVING S0); (T8) 'smelled of beer' (unclear, so S1); (T9) 'small bump with a taxi, want the fare back' (SE-ACCIDENT primary); (T10) 'ended the ride halfway in a jam and charged full fare' (SE-TERMINATED primary via CLS-02 and CLS-03); (T12) 'drove through a dark industrial estate and I was scared' (unclear, so S1); (T15) 'said he knows my block and will wait for me' (S0); (T16) 'took my bag and drove off' (crime or unclear, so SE-OTHER).",
+    "Mixed and non-safety texts are handled correctly: (T17) 'rude and impatient on the phone', (T18) 'complained about traffic the whole ride' and (T19) 'scolded me for being two minutes late' are EX-FEEDBACK. (T22) 'rude, and charged a no-show fee though I was at the lobby' is CW-NOSHOW primary with EX-FEEDBACK secondary. (T23) 'added S$5 VIP, got angry, said he'd remember my address' is SE-CONDUCT primary with FC-DRIVERCHARGE secondary. (T24) 'asked for S$30 cash instead of the app fare' is FC-DRIVERCHARGE, BACKLOG, so GEN-R07 escalates it. (T25) 'booked at S$14, charged S$21' is FC-FAREMISMATCH. (T28) 'threatened to give me one star', (T29) 'refused me because I'm gay' (the definition says the list is not closed and unclear text counts as safety) and (T30) 'longer route and speeding' (SE-DRIVING primary) all err only toward a person.",
+    "CLS-03's exception now covers any SE type, so the C08 pattern (a mid-trip ejection with no listed word) no longer reaches normal support. CLS-02 makes any SE claim primary.",
+    "FC-F02, FC-R03, FC-R05, FC-R08, FC-R12 and FC-F01 all point to the final itinerary consistently. The new FC-R12 condition matches what engine_toll does when the change is recorded in the expected fields.",
+    "CLS-06 works when the records agree: a description that says 'I cancelled' does not override reason rider_no_show (C9, UPHOLD), as CLS-06 requires (records, not text).",
+    "The SAFETY_WORDS false-positive rate on the repo's own 428-message rider corpus (cw_f06_reading_corpus.json) is 0. Neither the old nor the new words occur there."
+   ],
+   "findings": [
+    {
+     "id": "ADV-1",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 410,
+     "claim": "CLS-06 (new) says the canceling party comes from the cancellation_reason, the driver_cancelled or rider_cancelled event and the system message, and that records which disagree give REQUEST_INFO with no fee decision. Neither the DT-CW-NOSHOW precondition nor the engine reads the events, and the engine's system-message test is one regex. So when the records disagree, the fee is upheld automatically. When the record is silent, the case is reclassified instead of giving REQUEST_INFO.",
+     "evidence": "rules.yaml CLS-06: 'classified by who canceled according to the trip record (trip_data.cancellation_reason, the driver_cancelled or rider_cancelled event, the system message) ... If these records disagree, or none says who canceled, the type cannot be set: ask for the trip record (outcome REQUEST_INFO, reason GEN-R-NEED-INFO) and decide no fee until it arrives.' DT-CW-NOSHOW precondition: 'The trip record shows a cancellation with reason rider_no_show, and no system message says the rider canceled.' engine_noshow.py:410-411: 'by_rider = any(re.search(r\"cancel+ed by (the )?rider\", c[\"content\"], re.I) for c in chat if c[\"type\"] == \"system\")' and 'drv_cancel = t.get(\"cancellation_reason\") == \"rider_no_show\" and not by_rider'. /tmp/a4check1/cls06.py output: 'C2 reason rider_no_show + app event rider_cancelled -> outcome UPHOLD, row R8, tier AUTO'; 'C3 ... system \"Rider cancelled the trip. ...\" -> UPHOLD R8 AUTO'; 'C3c system \"Booking canceled by the passenger\" -> UPHOLD R8 AUTO'; 'C6 reason rider_no_show + driver_cancelled and rider_cancelled events -> UPHOLD R8 AUTO'; 'C1 reason None, neutral system msg -> reclass CW-OTHER'; 'C4 reason rider_cancelled + system \"cancelled by driver. Reason: rider_no_show\" -> reclass CW-RIDERCANCEL'; 'C8 reason None, ... app event driver_cancelled reason rider_no_show -> reclass CW-OTHER'.",
+     "failure_scenario": "Start from clean DISP-002 (selftest.clean). Append the app event {event_type: 'rider_cancelled', details: 'Rider cancelled the trip in the app.'} at 08:51:58. CLS-06 says the records disagree, so the outcome should be REQUEST_INFO with no fee decision. The engine returns UPHOLD R8 at tier AUTO. The same happens when the system message reads 'Rider cancelled the trip.' or 'Booking canceled by the passenger' (the regex needs 'cancel(l)ed by (the) rider'). In the safe direction, a missing reason (C1), records that disagree the other way (C4) and a driver_cancelled event without the reason field (C8) give a CW-OTHER or CW-RIDERCANCEL reclassification, never REQUEST_INFO, and C8 should be CW-NOSHOW under CLS-06. Records that disagree are rare, so this is MAJOR.",
+     "suggested_fix": "Align the DT-CW-NOSHOW precondition with CLS-06. In the engine's PB-CW-NOSHOW step 1, read the driver_cancelled and rider_cancelled app events alongside the reason and the system message. On any disagreement, or when no record names the canceling party, return REQUEST_INFO (GEN-R-NEED-INFO, tier HUMAN) instead of running the table or reclassifying. Widen the system-message test to the rider-canceled phrasings ('rider cancelled', 'canceled by the passenger'). Cite CLS-06 in the step label. Add selftest variants for C2, C3 and C1."
+    },
+    {
+     "id": "ADV-2",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 189,
+     "claim": "The new FC-R12 itinerary check treats the itinerary as changed only when trip_data.destination_edit_accepted parses as a boolean true, or an app event is named exactly destination_edit_accepted or stop_added. An unparseable flag (for example the acceptance timestamp) counts as 'not changed', although the same engine sends an unparseable is_carpool to FC-R12 (T39). The S$3 add/edit destination fee line that Ryde puts on the receipt, a system chat message and other event spellings are all ignored. The rider's ERP claim is then rejected automatically against a stale recommended route.",
+     "evidence": "engine_toll.py:189-190: 'changed = _flag(trip.get(\"destination_edit_accepted\"), False) is True or any(a.get(\"event_type\") in (\"destination_edit_accepted\", \"stop_added\") for a in case.get(\"app_events\") or [])'. The _flag docstring: 'anything else is unparseable and gives None (insufficient data)'. /tmp/a4check1/toll2.py: 'U1 stale route = actual, destination_edit_accepted=\\'2026-09-13T08:20:00+08:00\\' -> UPHOLD amount=0.0 tier=AUTO reasons=[FC-R-TOLL-VALID]' (also for 'accepted' and 'edited'); 'U2 compare: is_carpool unparseable (T39 convention) -> ESCALATE_HUMAN ... HUMAN'; 'U3 stale route, event in other case -> UPHOLD ... AUTO'. toll.py: 'E9b destination change recorded as \\'destination_changed\\', stale route = actual -> UPHOLD amount=0.0 tier=AUTO'; 'E5 fare_breakdown.destination_edit_fee 3.00, no event -> TOLL_REFUND amount=4.0 tier=APPROVE'; 'E6 system chat \\'Rider added a stop. Driver accepted.\\' -> TOLL_REFUND 4.0 APPROVE'. Ryde article 51399674412441: 'If the driver accepts, the trip details are updated, and the add/edit destination fee is reflected on the rider receipt.'",
+     "failure_scenario": "_erp_case(gantries=(CTE, PIE), charged=6.50, recommended=[CTE, PIE]) with trip_data.destination_edit_accepted = '2026-09-13T08:20:00+08:00'. Read the story this way: the rider changed to a nearer destination that only needs CTE, and the driver still went via PIE. The recommended route on record is the stale one to the old destination. FC-R12 requires escalation. The engine returns UPHOLD S$0.00 at tier AUTO, so the rider pays the S$4.00 PIE charge of a detour with no person involved. In the other direction, with the stale route [CTE], the same change recorded only as a receipt fee line, a system message or a 'destination_changed' event gives TOLL_REFUND S$4.00 at APPROVE, charging the driver for the rider's own change. The data shape is uncommon, so this is MAJOR.",
+     "suggested_fix": "Treat an unparseable destination_edit_accepted as insufficient data (FC-R12), as for is_carpool. Count as a change any of these: the trip flag, the two events matched without regard to case, and a nonzero add/edit destination fee line in fare_breakdown. Add T-cases for the timestamp flag and the fee line in the UPHOLD direction (stale route equal to the actual gantries)."
+    },
+    {
+     "id": "ADV-3",
+     "severity": "MAJOR",
+     "file": "kb/rules.yaml",
+     "line": 1456,
+     "claim": "A multiple-stop booking (drop-offs set at booking, which Ryde offers and FX7 names) is covered by neither the new FC-R12 condition nor the engine. FC-R12 escalates only when 'the itinerary changed'. engine_toll never reads trip_data.stops or any drop-off list. A recommended route on record that ignores the booked stop is therefore trusted.",
+     "evidence": "FC-R12: 'or the itinerary changed (an accepted destination change or added stop) and the recommended route on record does not follow the final itinerary (FC-F02)'. ontology ENT-TRIP dropoffs: 'trip_data.stops for a multiple-stop booking (data gap)'. FX7 problem: 'Ryde supports multi-stop bookings and mid-trip destination edits'; verify: 'a multi-stop route case in the next held-out set'. /tmp/a4check1/toll.py: 'E8 multiple-stop booking (trip_data.stops), no final_itinerary -> TOLL_REFUND amount=4.0 tier=APPROVE reasons=[FC-R-TOLL-FROM-DETOUR]'; 'E8b trip_data.dropoffs list of 2 -> TOLL_REFUND 4.0 APPROVE'; 'E9 multi-stop booking, stale route [CTE, PIE] = actual ... -> UPHOLD amount=0.0 tier=AUTO'.",
+     "failure_scenario": "Case 1: _erp_case(gantries=(CTE, PIE), charged=6.50, recommended=[CTE]) with trip_data.stops=[A, B], where the route on record was computed to B without stop A and PIE lies on the way to A. The result is TOLL_REFUND S$4.00 at APPROVE, charging the driver for the rider's booked stop. Case 2: recommended=[CTE, PIE] computed to B without A, while the route through A needs only CTE and the driver detoured via PIE after A. The result is UPHOLD S$0.00 at AUTO. Under FC-F02 ('through every drop-off in order') neither baseline is the recommended route. Case 2 is the rider-adverse automatic error. It needs a multiple-stop booking with an ERP detour dispute, which is rare, so this is MAJOR.",
+     "suggested_fix": "Widen FC-R12's new condition from 'the itinerary changed' to 'the trip has more than one drop-off or the itinerary changed' when the recommended route on record is not shown to follow the final itinerary. In engine_toll, treat a trip_data.stops (or dropoffs) list longer than one like a change: escalate unless route_review.final_itinerary is true. Add a T-case for each direction."
+    },
+    {
+     "id": "ADV-4",
+     "severity": "MAJOR",
+     "file": "kb/rules.yaml",
+     "line": 1064,
+     "claim": "FC-F02's piecewise measurement does not say what the first piece's recommended route ends at. It also restarts the second piece 'from where the car was'. A detour driven before the accepted change, with the car still off route at that moment, is therefore absorbed into the baseline. Separately, the sentence 'Distance driven to a stop the rider added ... is therefore not a detour' read literally excuses a detour on the leg to the added stop. FC-R03 applies only to RECALCULATED fares, and those always involve an accepted change, so every FC-R03 case goes through this text.",
+     "evidence": "FC-F02: 'Up to the moment the driver accepted a changed drop-off or an added stop (destination_edit_accepted), it runs toward the drop-offs then in force; from that moment, from where the car was through the new drop-offs. Distance driven to a stop the rider added, or toward the original destination before a change, is therefore not a detour.' FC-F01: 'every other service is FIXED_AT_BOOKING, becoming RECALCULATED if a destination edit (a changed drop-off or an added drop-off stop) was accepted.' FC-R03: 'For RECALCULATED fares: DR at least DETOUR_RATIO_MIN ...'",
+     "failure_scenario": "A RydeX trip from pick-up P to D1, recommended 10 km. The driver turns the wrong way and drives 6 km to a point X that is 6 km from P by the shortest road. The rider notices and changes the destination to D2, which the driver accepts. X to D2 is 8 km; from where the car should have been, D2 is about 5 km. Actual distance is 14 km against a fair baseline of about 8 km (DR 1.75). An LLM applier following FC-F02 has no endpoint for piece 1 other than X, so it takes P to X as 6 km (DR 1.0) and X to D2 as 8 km (DR 1.0). It finds no detour and pays no FC-R05 refund. The same absorption applies to ERP: a gantry passed on the wrong-way leg lies on the path P to X to D2. The rider loses the refund, and the pattern (a detour, then a change) is plausible but not common, so this is MAJOR.",
+     "suggested_fix": "Define piece 1 as the recommended route from the pick-up toward the drop-offs then in force, measured up to the point on that route nearest the car at the change, or from the pick-up to where the car would have been. Measure the deviation already driven (actual minus that baseline) as part of the detour. Rephrase the stop sentence to 'the extra distance that an added stop or a changed destination itself requires is not a detour; a longer road to that stop still is'."
+    },
+    {
+     "id": "ADV-5",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 20,
+     "claim": "The reference engine's safety stand-in (SAFETY_WORDS) still decides realistic safety cases automatically. It misses 22 of 22 safety texts that do not use a listed word. It also ignores chat rows whose type is not exactly 'message', the 'added evidence' that CLS-01 names, app event details and non-English text. The step's tests V104 to V106, described as 'safety content without v0.1's words', each use a word added to the list in the same step, so they test the list, not reading for meaning. engine_toll has no stand-in at all. validation/tools/rerun_engine.py scores round cases on both engines.",
+     "evidence": "selftest V104 to V106 texts: 'told me to get out of the car', 'would not let me out, I felt kidnapped', 'made racist remarks'. A4 added 'told me to get out', 'let me out', 'kidnap' and 'racist' to SAFETY_WORDS. engine_noshow.py:356-358 builds free_text only from the description and chat rows with c[\"type\"] == \"message\". /tmp/a4check1/safety_engine.py: 'missed 22 of 22', for example 'MISS UPHOLD AUTO | He drove off when he saw my wheelchair.', 'MISS UPHOLD AUTO | He refused me because of my guide dog.', 'MISS UPHOLD AUTO | He said he knows where I live and will come for me.', 'MISS UPHOLD AUTO | He pulled over on the CTE and made me walk.' ns_more.py: 'K2 threat in rider chat type \\'text\\' -> UPHOLD R8 AUTO', 'K9 ticket field \\'additional_evidence\\' with assault -> UPHOLD R8 AUTO', 'K8 safety in app event details -> UPHOLD R8 AUTO', 'K20 \\'harrased\\' misspelt -> APPROVE, safety False'. toll_safety.py: 'ERP valid + threat/locked doors in description -> UPHOLD 0.0 AUTO []'.",
+     "failure_scenario": "Clean DISP-002 with ' He drove off when he saw my wheelchair.' appended to the description. This is the C05 discriminatory refusal, which D40(c) now calls SE-CONDUCT. The engine gives UPHOLD R8 at tier AUTO, but CLS-01 requires a person. The same happens with ' He said he knows where I live and will come for me.' (a threat) and with a threat sent in a chat row of type 'text'. An ERP case whose description says 'the driver threatened to hit me and locked the doors' gives UPHOLD at AUTO in engine_toll. D40(a) acknowledges the word list, and safety content inside no-show or ERP fee disputes is uncommon, so this is MAJOR. It matters for round 2 because rerun_engine.py uses these engines.",
+     "suggested_fix": "Keep the word list but rewrite V104 to V106 with safety texts that use none of the list's words (expected HUMAN), so the gap stays visible as a known failing or an xfail. Alternatively, mark in D40 and in rerun_engine.py output that the offline tier is not valid for any case with free text, and send every case with nonempty free text that the stand-in cannot clear to approval. Scan every chat row type and every free-text ticket field, and add the same CLS-01 stand-in to engine_toll."
+    },
+    {
+     "id": "ADV-6",
+     "severity": "MAJOR",
+     "file": "kb/rules.yaml",
+     "line": 179,
+     "claim": "CLS-01's line between rudeness and safety is narrower than the Ryde source it cites. Ryde's Code of Conduct item 5 is 'Assault, harassment, or abuse of any kind', with a zero-tolerance list that also bans overly personal questions, comments on appearance and contacting passengers after a trip. CLS-01 counts abuse only 'because of race, religion, nationality or disability' and names scolding and a raised voice as feedback. An LLM applier will therefore route verbal abuse that is not on those grounds (swearing, insults, a gender-based slur) to EX-FEEDBACK and normal support. In a no-show dispute it would leave the fee eligible for an automatic ruling.",
+     "evidence": "CLS-01: 'discrimination or abuse because of race, religion, nationality or disability; or any other crime ... Rudeness alone (a raised voice, scolding, an unfriendly manner) with no threat, danger or discrimination is not safety content; it is feedback (EX-FEEDBACK).' Ryde Code of Conduct (RYDE-15395890865561), cited by CLS-01: '5. Assault, harassment, or abuse of any kind will not be tolerated. We have a zero-tolerance approach to any form of misconduct or inappropriate behavior ... Additionally, drivers must not ask overly personal questions, comment on anyone's appearance, or contact passengers after a trip for personal reasons.' The CLS-01 FAIRRYDE note labels 'the line between rudeness and safety' as FairRyde's design.",
+     "failure_scenario": "Text T20: 'When I called, the driver swore at me and called me a stupid woman, then canceled and I was charged the no-show fee.' Gender is not a listed ground, and swearing reads close to 'scolding', so the applier sees no SE claim. The claim becomes CW-NOSHOW with EX-FEEDBACK secondary, and the fee can be upheld at AUTO. Under the cited Code it is 'abuse of any kind', a zero-tolerance breach that can end the account, and AUTH-03 puts account sanctions with a person. Text T21, 'he commented on my looks and asked where I live', is named in Code item 5 but not in CLS-01. The 'unclear counts as safety' clause probably catches it, but the explicit carve-out pulls the other way. Verbal-abuse complaints are common, but the line is a labeled design choice and an applier may still lean to safety, so this is MAJOR.",
+     "suggested_fix": "Add verbal abuse, insults or slurs of any kind (with gender, age and sexual orientation named among the grounds, matching the source's 'etc'), overly personal questions, comments on appearance and personal contact after the trip to CLS-01's examples and to SE-CONDUCT. Narrow the rudeness carve-out to 'manner without insults, slurs, threats or intimidation'."
+    },
+    {
+     "id": "ADV-7",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 20,
+     "claim": "Some of the new SAFETY_WORDS are short substrings or common phrases that fire on ordinary no-show text and send a routine fee case to HUMAN (the safe direction). This is frequent enough to note for 'let me go' (the usual 'let me go down' from a rider, or 'let me go round' from a driver) and 'stranded' (a common complaint idiom about a cancellation). Less often 'rape' matches inside grape, scrape, drape, skyscraper and therapeutic, and 'speeding', 'expressway', 'follow me' and 'dangerous' match ordinary descriptions.",
+     "evidence": "/tmp/a4check1/safety_engine.py: 'FP HUMAN [let me go] | rider ok let me go down now'; 'FP HUMAN [stranded] | desc The driver canceled and left me stranded at the mall.'; 'FP HUMAN [rape] | desc I waited near the skyscraper entrance.'; 'FP HUMAN [rape] | desc I was at the therapeutic massage shop at the lobby.'; 'FP HUMAN [speeding] | desc I saw the car speeding past the lobby without stopping.'; 'FP HUMAN [expressway] | desc The driver was stuck on the expressway and arrived late.' corpus_fp.py: the repo's 428-message corpus has no hits; it has no 'let me' message at all.",
+     "failure_scenario": "Clean DISP-002 with the rider chat message 'ok let me go down now' at 08:50:50 gives tier HUMAN with gate G4 instead of AUTO. The same happens with the description 'I waited near the skyscraper entrance.'",
+     "suggested_fix": "Match whole words or phrases: 'let me go' only when followed by a non-movement word or with a refusal ('would not let me go'); '\\\\brape\\\\b'; 'speeding' only near 'driver' or 'he'. Add these routine phrases as negative variants next to V107."
+    },
+    {
+     "id": "ADV-8",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 179,
+     "claim": "Two of CLS-01's new examples move common in-scope fee patterns to a person (the safe direction). 'Being left stranded at an isolated place or at night' is not tied to a drop-off, so a night-time no-show or rider-cancel dispute saying the rider was 'stranded' becomes SE primary at HUMAN. 'A driver or rider under the influence of drink' turns the typical drunk-rider vomit cleaning claim into SE primary, ahead of DM-CLEANING.",
+     "evidence": "CLS-01: 'being put in danger (... a driver or rider under the influence of drink or drugs, an unsafe drop-off such as being made to leave the car on an expressway or road shoulder, or being left stranded at an isolated place or at night)'. Round 1 complaint C20 is a vomit cleaning-fee claim (DM-CLEANING). The engine also has 'stranded' and 'drunk' in SAFETY_WORDS.",
+     "failure_scenario": "T26: 'The driver canceled at 11:30pm and left me stranded at the bus stop; I was charged S$5' is read as SE S1 primary, so the case is HUMAN instead of the CW-NOSHOW table's AUTO or APPROVE. T27, a driver writing 'the rider was drunk and vomited; I claim S$120 cleaning', is read as SE primary, so a person decides instead of approving the DM-CLEANING ruling.",
+     "suggested_fix": "Tie 'stranded' to being made to leave the vehicle, or to being left after boarding. Limit the intoxication example to an impaired driver, or to a rider whose state endangered someone, and say that a mess caused by a drunk rider is DM-CLEANING unless there was danger."
+    },
+    {
+     "id": "ADV-9",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 1100,
+     "claim": "When a case is reclassified (CLS-06's path), decide_tier returns early with no gates. Safety content found at intake (_safety true) then leaves no G4 and no HUMAN tier, against CLS-01's 'whatever else the ticket contains'. This predates A4, but A4 made CLS-06 the reclassification rule.",
+     "evidence": "engine_noshow.py:1100-1102: 'if tr.reclassified_to: return {\"tier\": f\"n/a (reclassified to {tr.reclassified_to})\", ... \"gates\": [] ...'. /tmp/a4check1/reclass_safety.py: 'rider_cancelled -> outcome None, reclass CW-RIDERCANCEL, tier n/a (reclassified to CW-RIDERCANCEL), gates [], safety True'. engine_gates.py: 'a tier the engine did not set (for example a reclassified case) counts as the lowest'.",
+     "failure_scenario": "Clean DISP-002 with cancellation_reason 'rider_cancelled' and ' the driver threatened to hit me and said he knows where I live' appended to the description. The intake step records safety words ['hit me', 'threat'], but the result has no G4 gate and the tier is 'n/a'.",
+     "suggested_fix": "In decide_tier, keep G4 and return tier HUMAN for a reclassified trace when tr.findings['_safety'] is true."
+    },
+    {
+     "id": "ADV-10",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 236,
+     "claim": "fc_r01 (FC-F01's pricing mode in the engine) still reads only the trip flag. A trip whose accepted change is recorded as an app event (destination_edit_accepted or stop_added), which run() now treats as a change, therefore counts as FIXED_AT_BOOKING. FC-R01's 'no fare refund' (FC-R-FIXED-FARE) is applied to a fare that FC-F01, as changed in A4, calls RECALCULATED (FC-R03's domain).",
+     "evidence": "engine_toll.py:236: 'recalculated = _flag(trip.get(\"destination_edit_accepted\"), False) is True                       # FC-F01: RECALCULATED'. FC-F01: 'becoming RECALCULATED if a destination edit (a changed drop-off or an added drop-off stop) was accepted.' /tmp/a4check1/toll2.py: 'F1 fc_r01, app event destination_edit_accepted only, base==quoted -> applies True, fare_refund 0.0, reason FC-R-FIXED-FARE'; 'F3 fc_r01 stop_added, no extra gantry -> applies True, fare_refund 0.0, reason FC-R-FIXED-FARE, toll_claim None'.",
+     "failure_scenario": "A RydeX route ticket with app_events=[stop_added] and quoted_fare equal to base_fare (the re-quoted fare). fc_r01 closes the fare part with FC-R-FIXED-FARE and a refund of 0. Under FC-F01 the fare is RECALCULATED, so FC-R03 (the detour measurement) should decide it.",
+     "suggested_fix": "Compute the change once (the same test as run()'s 'changed') and use it in fc_r01 for RECALCULATED. Add a selftest case with a stop_added event."
+    },
+    {
+     "id": "ADV-11",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 285,
+     "claim": "CLS-06 has three gaps. (a) 'decide no fee until it arrives' can be read as 'decide that no fee is due' (a waiver); the zh says make no ruling on the fee. (b) REQUEST_INFO is labeled 'Ask the claimant for missing information', but the trip record is held by the platform, not the claimant. (c) A driver cancellation with a reason other than rider_no_show, with the fee charged, fits neither branch, because the records agree and say who canceled.",
+     "evidence": "CLS-06: 'the driver canceled with reason rider_no_show, CW-NOSHOW; the rider canceled, CW-RIDERCANCEL. If these records disagree, or none says who canceled, ... ask for the trip record (outcome REQUEST_INFO, reason GEN-R-NEED-INFO) and decide no fee until it arrives.' zh: '记录到之前不对收费作裁决'. taxonomy: '{code: REQUEST_INFO, label: Ask the claimant for missing information}'; '{code: GEN-R-NEED-INFO, label: Trip or charge cannot be identified, outcome: REQUEST_INFO}'. cls06.py: 'C7 reason driver_cancelled (no reason) + fee -> reclass CW-OTHER'.",
+     "failure_scenario": "An LLM applier given a silent record may output WAIVE_FEE ('no fee'), or may ask the rider for a record the rider cannot have. For a record of 'driver canceled, reason vehicle_issue, S$5 charged', CLS-06 sets no type and asks for nothing.",
+     "suggested_fix": "Write 'make no ruling on the fee until the record arrives'. Say who is asked (the platform's trip record, and the claimant only for their own evidence). Add a branch: driver canceled with another reason and a fee charged gives CW-OTHER, escalated under GEN-R07."
+    },
+    {
+     "id": "ADV-12",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 223,
+     "claim": "Two smaller gaps in the classification rules. CLS-01's SE-type mapping and its safety examples leave out two TRIAGE_TO_HUMAN leaves (SE-MISMATCH, a driver or car that does not match the app, and SE-RECORDING). An applier that tests CLS-01 first may not create an SE claim for 'the car and driver did not match the app' when the ticket is about a fee. CLS-02 still says the organizer code stays primary when the text contradicts it, next to 'a safety claim ... is always the primary claim', without saying which wins.",
+     "evidence": "CLS-01: 'The SE type follows the taxonomy definitions (SE-CONDUCT for behavior toward a person, SE-DRIVING, SE-ACCIDENT, SE-TERMINATED for a ride ended midway, SE-OTHER otherwise).' CLS-02: 'A safety claim (any SE type ...) is always the primary claim; ... If the free text contradicts the organizer's dispute code, the code stays primary, the text's issue becomes a secondary claim'.",
+     "failure_scenario": "T13: 'I canceled because the car that came was a different model from the app and the driver looked different, and I was charged S$6.61.' This is not in CLS-01's list, so the applier may type it only as CW-RIDERCANCEL, eligible for an automatic ruling, instead of SE-MISMATCH primary at HUMAN. In a safety ticket filed under no_show_charge, the two CLS-02 sentences conflict about which claim is primary. That is outcome-neutral, because CLS-01 still routes the ticket to a person.",
+     "suggested_fix": "Add 'a driver or vehicle that does not match the app' and 'a recording device in the car' to CLS-01's examples and its SE-type list. In CLS-02, write 'except that a safety claim is always primary'."
+    },
+    {
+     "id": "ADV-13",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 944,
+     "claim": "CW-R08's new definition of the advance-booking ETA (the scheduled time) leaves two waiver triggers for advance bookings that fire in the rider's favor. The 'not moving toward the pick-up point' ground is not qualified for an early driver who is parked and waiting. For an advance booking accepted after the cutoff, using the scheduled time instead of the app's assignment ETA makes a driver who is on time by the app 'late'.",
+     "evidence": "CW-R08: 'If, when the rider canceled, the driver was already later than the assignment ETA plus DRIVER_LATE_GRACE_S, or was not moving toward the pick-up point, the rider's cancellation fee is eligible for a waiver. ... For an advance booking the assignment ETA is the scheduled time (FairRyde's reading: the driver is due at the pick-up then).' CW-R02: 'if the request was accepted after that cut-off, the rider has a 3-minute grace period.'",
+     "failure_scenario": "An advance booking for 18:00, with the driver parked 300 m away at 17:50 waiting. The rider cancels at 17:50, which is chargeable under CW-R02. The driver is literally 'not moving toward the pick-up point', so the fee is waived. Or the booking is accepted at 17:55 with an app ETA of 10 minutes, the rider cancels at 18:04, and the driver is 'late' against the scheduled time, so the fee is waived. Both errors favor the rider, and CW-R08 is D, so the waiver needs approval.",
+     "suggested_fix": "For advance bookings, apply the 'not moving' ground only after the time the driver must leave to arrive by the scheduled time. Use the later of the scheduled time and the app's assignment ETA when the booking was accepted after the cutoff."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "ADV-1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Read rules.yaml CLS-06 (lines 285-297: canceling party from cancellation_reason, the driver_cancelled or rider_cancelled event and the system message; records that disagree or say nothing give REQUEST_INFO) and the DT-CW-NOSHOW precondition (only 'reason rider_no_show, and no system message says the rider canceled'; A4 only added the CLS-06 citation). engine_noshow.py:410-416 is unchanged by A4 (step label still 'CLS-02, CW-R03') and reads only the reason and one regex. Reran /tmp/a4check1/cls06.py: C2 (reason rider_no_show plus a rider_cancelled app event) and C6 give UPHOLD R8 at AUTO, where CLS-06 requires REQUEST_INFO. C3 ('Rider cancelled the trip.') and C3c also give UPHOLD AUTO. C1 (silent record) and C8 give a CW-OTHER reclassification, not REQUEST_INFO. rider_cancelled events do occur in round 1 data (E05, E06), so the shape is realistic, though records that contradict each other are rare. The KB now holds two conflicting texts, and the reference engine follows the narrower one. The regex gap for C3 predates A4, so MAJOR rather than CRITICAL."
+    },
+    {
+     "id": "ADV-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "engine_toll.py:189-190 (new in A4) counts a change only when _flag(destination_edit_accepted) is exactly True, or when an event is named exactly destination_edit_accepted or stop_added. _flag returns None for unparseable text, and None is treated as 'not changed'. The same engine treats an unparseable is_carpool as FC-R12 (T39), and _active treats unparseable as the safe direction. Reran /tmp/a4check1/toll2.py: U1 with a timestamp, 'accepted' or 'edited' in the flag and a stale route equal to the actual gantries gives UPHOLD 0.00 AUTO; U2 (is_carpool 'maybe') gives HUMAN. toll.py E5 (destination_edit_fee line only), E6 (system chat only) and E9b ('destination_changed') also miss the change. A2 check round 2 rated the same class of finding (A2R2-03, literal booleans) MAJOR. Uncommon data shape in an in-scope type, so MAJOR is consistent."
+    },
+    {
+     "id": "ADV-3",
+     "verdict": "REFUTED",
+     "severity_after_check": "NONE",
+     "reason": "Reran toll.py E8, E8b and E9. The outputs are exactly what the engine gives for a single-drop-off trip with the same route_review. The failure needs a recommended route on record that skips a booked stop, which is a wrong record; the engine trusts the route on record in every case, and A4 did not create that exposure. The KB text covers the case: FC-F02 defines the recommended route as 'from the pick-up through every drop-off in order', FC-R12 escalates when the recommended route is missing, and PB-FC-ROUTE's required evidence is 'precomputed recommended route through the final itinerary'. Asking for the final_itinerary marker only when the itinerary changed is principled, because only then is the route computed at booking known to be stale. At most, FC-R12 could name 'a booked stop the route on record skips' explicitly (a wording point)."
+    },
+    {
+     "id": "ADV-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Read FC-F02 (rules.yaml 1064-1080). Piece 1 'runs toward the drop-offs then in force' up to a moment in time, and piece 2 starts 'from where the car was'. When the car is off the recommended route at the change, the text does not say where piece 1's baseline ends or how its distance is measured. An applier can take the shortest path from P to X (6 km, so DR 1.0) and absorb a detour driven before the change. FC-F01 makes a fare RECALCULATED only after an accepted edit, and FC-R03 applies only to RECALCULATED fares, so every FC-R03 fare-refund case goes through this text, and a detour followed by a change is a plausible pattern in an in-scope type. The second point, that the stop sentence read literally excuses a detour on the leg to an added stop, is weak: the sentence follows by 'therefore' from measuring against the route through the stop. MAJOR rests on the undefined piece-1 baseline."
+    },
+    {
+     "id": "ADV-5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reran /tmp/a4check1/safety_engine.py: 22 of 22 safety texts that use no listed word give UPHOLD AUTO, and V104 to V106 each hit a word A4 added ('told me to get out', 'let me out' and 'kidnap', 'racist'). The facts hold, but this is a documented limitation of a verification tool, not a KB error. CLS-01 is mode READ and its credibility note says SAFETY_WORDS is only an offline stand-in. The engine_noshow.py comment says the same, and D40(a) records it for Jasper (round 2's taxonomy texts test the definition). V104 to V106 are labeled accurately as 'without v0.1's words'. engine_toll's docstring limits it to the listed ERP rules (no CLS). rerun_engine.py's docstring calls itself 'a regression check, never a validation score', so the round 2 impact is overstated. The useful residue is a test-design point (add xfail meaning-only texts): MINOR."
+    },
+    {
+     "id": "ADV-6",
+     "verdict": "UNCERTAIN",
+     "severity_after_check": "MINOR",
+     "reason": "Read the Code of Conduct in kb/sources/ryde_policy_corpus.json. Item 5's heading is 'Assault, harassment, or abuse of any kind will not be tolerated', and it adds 'drivers must not ask overly personal questions, comment on anyone's appearance, or contact passengers after a trip for personal reasons'. CLS-01 limits abuse to 'race, religion, nationality or disability', drops the community standards' 'etc', and leaves out the item 5 behaviors. That narrowing is real. But the line between rudeness and safety is explicitly labeled FairRyde design in CLS-01's FAIRRYDE note, so where to draw it is Jasper's call. Practical risk is limited for three reasons. SE-CONDUCT's new definition begins 'behavior ... that Ryde's Code of Conduct prohibits', which covers abuse of any kind by reference. CLS-01's examples are 'not a closed list', and unclear text counts as safety (S1). The rudeness carve-out names only 'a raised voice, scolding, an unfriendly manner', not insults or slurs. A text like T20 would most likely be read as S1."
+    },
+    {
+     "id": "ADV-7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reran /tmp/a4check1/safety_engine.py. Routine texts give tier HUMAN through words A4 added: 'ok let me go down now' ('let me go'), 'left me stranded at the mall' ('stranded'), 'skyscraper' and 'therapeutic' ('rape' as a substring), 'stuck on the expressway' and 'speeding past the lobby'. This is the matching at engine_noshow.py:366 ('w in x.lower()'). These errors are in the safe direction (more HUMAN) and the corpus has no hits, so MINOR is right."
+    },
+    {
+     "id": "ADV-8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "CLS-01 (rules.yaml 182-198) lists 'being left stranded at an isolated place or at night' and 'a driver or rider under the influence of drink or drugs' under 'being put in danger', and ties neither to a drop-off or to actual danger. A night-time cancellation-fee complaint or a drunk-rider vomit claim (the C20 pattern) can then be read as an SE claim. The direction is safe (HUMAN instead of AUTO or APPROVE; DM-CLEANING already needs approval). The intoxication trigger predates A4: v0.1's list had 'intoxication' and the engine had 'drunk'. Only 'stranded' is new. MINOR."
+    },
+    {
+     "id": "ADV-9",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "engine_noshow.py:1100-1102 returns tier 'n/a (reclassified ...)' with gates [] before the G4 check at 1155. Reran /tmp/a4check1/reclass_safety.py: rider_cancelled plus threat text gives safety True, no G4 and tier n/a. A4 did not change this code (the engine's diff touches only SAFETY_WORDS), and the reclassified result has no outcome, so no automatic ruling is made. engine_gates treats 'n/a' as the lowest tier only when G3 fires. Pre-existing and cosmetic for the engine: MINOR."
+    },
+    {
+     "id": "ADV-10",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "engine_toll.py:236 (fc_r01) still sets recalculated only from the trip flag, while A4's run() (189-190) also counts the destination_edit_accepted and stop_added events, and A4's FC-F01 says an accepted edit or added stop makes the fare RECALCULATED. Reran toll2.py: F1 (event only, base equal to quoted) and F3 (stop_added) give applies True and FC-R-FIXED-FARE. The trigger needs the record's quoted fare to equal the recalculated base fare (otherwise R3's path already stops FC-R01), and the engine does not implement FC-R03, so MINOR."
+    },
+    {
+     "id": "ADV-11",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "CLS-06's English 'decide no fee until it arrives' can be read as a waiver, while the zh says no ruling on the fee until the record arrives. Taxonomy line 599 labels REQUEST_INFO 'Ask the claimant for missing information', and line 652 labels GEN-R-NEED-INFO 'Trip or charge cannot be identified', but under CLS-06 the platform holds the record and the trip is identified. Both are wording mismatches. Point (c) is weak: a driver cancellation for another reason falls to CW-OTHER by its taxonomy definition ('Fits the category but no type above', BACKLOG, then GEN-R07), and the engine reclassifies it there (C7). MINOR overall."
+    },
+    {
+     "id": "ADV-12",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "CLS-01's SE-type parenthetical names SE-CONDUCT, SE-DRIVING, SE-ACCIDENT and SE-TERMINATED, then 'SE-OTHER otherwise', omitting the TRIAGE_TO_HUMAN leaves SE-MISMATCH and SE-RECORDING (taxonomy.yaml 315, 329). The examples do not mention a driver or vehicle that does not match the app. CLS-02 still has both 'A safety claim (any SE type) is always the primary claim' and 'If the free text contradicts the organizer's dispute code, the code stays primary'; the second sentence predates A4. Both lead to a person either way, so MINOR."
+    },
+    {
+     "id": "ADV-13",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read CW-R08 (rules.yaml 944-966) and CW-R02 (800-814). With A4's sentence (advance-booking ETA is the scheduled time) and DRIVER_LATE_GRACE_S of 180 s, a booking accepted at 17:55 for 18:00 (app ETA 10 min) makes the driver 'late' at 18:04 although the app's ETA has not passed. CW-R02 gives such late-accepted bookings only a 3-minute grace, so the fee would otherwise be chargeable. The 'not moving toward the pick-up point' ground for a parked, early driver predates A4, but A4 left it unqualified while defining CW-R08 for advance bookings. CW-R08 is D and the waiver needs approval: MINOR."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "consistency",
+  "review": {
+   "dimension": "Consistency across files and party-facing text (A4, round 1)",
+   "checked_ok": [
+    "Build of an exported copy of 8beb6e8 (git archive into /tmp/a4check1/full): ERROR 0 | WARN 0 with --no-xlsx --no-fuzz and with workbooks; the committed kb/out/check_report.md and kb/out/disp002_trace.md match a fresh build (only the workbook status line differs).",
+    "Engine outputs on all 15 V4 cases (E01 to E15) are identical before (f8a6abe) and after (8beb6e8) A4, including the rider and driver explanations; E01 and E03 explanations were read sentence by sentence against the case files (arrival 07:48:20 / 19:02:10, waits 420 s / 195 s, 1 call and 3 or 1 driver messages, rider's E-CHT-03 'still getting ready' read as late): nothing false.",
+    "V104, V105, V106: tier HUMAN, gate G4; rider and driver texts ('Your report includes a safety concern...', 'The rider's report includes...') are true here because the safety text is in the rider's own description; no numbers, EXP-03 clean.",
+    "V107: UPHOLD R8 APPROVE, no G4; every sentence of both explanations matches DISP-002 facts (08:43:00 to 08:51:00, 480 s, 10 s spread, timer 08:43:10, pin 1,259 m from the venue).",
+    "No em dashes or en dashes in any added line of the diff; no British spellings in added text (the only hit, 'Cancelling', is inside a verbatim Ryde quote).",
+    "New test data (V104 to V107 texts, T40 to T42 cases and the stop_added event text) contain no names, plates, phone numbers or account IDs.",
+    "kb/tools/make_xlsx.py renders the new leaves' definition and excludes, the ENT-TRIP dropoffs attribute and note, the has_dropoff relation note, the new event notes, the O09/O10 relation sources and D40; the annotation workbook's lists include FC-FAREMISMATCH, FC-DRIVERCHARGE and CLS-06.",
+    "kb/scope.yaml backlog lists FC-FAREMISMATCH and FC-DRIVERCHARGE, matching their taxonomy scope BACKLOG; taxonomy scope_playbooks sends BACKLOG to PB-TRIAGE-HUMAN, as D40(b) says.",
+    "Taxonomy: TX-CASE assigned_when now says safety content judged by meaning; FC-SURCHARGE and FC-PAYMENT point to FC-DRIVERCHARGE; FC-ROUTE excludes a rider's stop or destination change; SE-CONDUCT and EX-FEEDBACK draw the same rudeness line as CLS-01; cited article titles (30741244296217, 360004075214, 33362721809049, 15395890865561) match the corpus.",
+    "Ontology: has_dropoff 1:N ordered, the dropoffs attribute and the destination_edit_requested/accepted notes agree with FC-F02 and with Ryde articles 51399674412441 (steps 6 to 9) and 34883561600025 (multiple-stop, RydePOOL and RydeTAXI exclusions).",
+    "PB-INTAKE steps 2 to 4, PB-CW-NOSHOW step 1, PB-FC-ROUTE (required evidence, step 3) and PB-FC-TOLL (required evidence) agree with the new CLS-01, CLS-02, CLS-03, CLS-06 and FC-F02 texts.",
+    "FC-F02, FC-R03, FC-R05, FC-R08, FC-R12, FC-F01, CW-R08, EXP-03, CLS-01, CLS-02, CLS-03 and CLS-06 have matching English and Chinese texts; engine_toll.run() implements FC-R12's new itinerary condition (T40 to T42 pass, and an app-event destination_edit_accepted also escalates).",
+    "Grep of kb/ (excluding kb/sources) finds no text describing the drop-off as 1:1 and no rule text describing CLS-01 as a word list, apart from historical records (D39) and the SAFETY_WORDS comment; the old CLS-03 exception wording survives only in PB-ROUTE-SUPPORT (finding below).",
+    "Frozen area D34 untouched: SAFETY_WORDS is used only at PB-INTAKE step 2 (engine_noshow.py line 366), not by rider_contact_reading or before_arrival_reading."
+   ],
+   "findings": [
+    {
+     "id": "CONS-1",
+     "severity": "CRITICAL",
+     "file": "kb/rules.yaml",
+     "line": 1988,
+     "claim": "The new CLS-06 and the DT-CW-NOSHOW precondition (which A4 rewrote to cite CLS-06) give different outcomes when the cancellation records disagree or are silent, and the reference engine follows neither consistently: conflicting records yield an UPHOLD where CLS-06 requires REQUEST_INFO.",
+     "evidence": "CLS-06 (rules.yaml 291-295): 'classified by who canceled according to the trip record (trip_data.cancellation_reason, the driver_cancelled or rider_cancelled event, the system message) ... If these records disagree, or none says who canceled, the type cannot be set: ask for the trip record (outcome REQUEST_INFO, reason GEN-R-NEED-INFO)'. DT-CW-NOSHOW precondition (1988-1990): 'The trip record shows a cancellation with reason rider_no_show, and no system message says the rider canceled. Otherwise the claim is reclassified by who canceled (CLS-06: usually CW-RIDERCANCEL)'. engine_noshow.py 410-415: by_rider looks only at system chat; 'drv_cancel = t.get(\"cancellation_reason\") == \"rider_no_show\" and not by_rider'; step labeled 'CLS-02, CW-R03'. Scratch run (/tmp/a4check1/cls06.py) on DISP-002: + app event rider_cancelled -> 'UPHOLD R8 [CW-R-NOSHOW-VALID, ...] tier APPROVE', rider told 'Outcome: the S$5.00 cancellation fee stands.'; system message changed to 'Trip cancelled by rider' (reason still rider_no_show) -> reclassified CW-OTHER; cancellation_reason removed -> reclassified CW-OTHER (not REQUEST_INFO).",
+     "failure_scenario": "A CW-NOSHOW ticket whose trip_data says rider_no_show while the app events record rider_cancelled: CLS-06 says the records disagree, so REQUEST_INFO and no fee decision; the DT precondition is met literally, so the table rules (R8 UPHOLD); the engine upholds the fee at APPROVE and tells the rider the fee stands. A ticket with no cancellation_reason: CLS-06 says REQUEST_INFO; the DT says reclassify (usually CW-RIDERCANCEL); the engine says CW-OTHER (backlog, GEN-R07 escalation).",
+     "suggested_fix": "Rewrite the DT-CW-NOSHOW precondition as 'CLS-06 types the claim CW-NOSHOW (driver canceled with reason rider_no_show and no record says otherwise); if the records disagree or none says who canceled, REQUEST_INFO and the table is not used'. Implement the same in engine_noshow.py step 1 (reason, cancelled_by, driver_cancelled/rider_cancelled events, system message), relabel the step 'CLS-06, CW-R03', and add self-tests for an event that disagrees, a system message that disagrees and a missing reason."
+    },
+    {
+     "id": "CONS-2",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 415,
+     "claim": "The engine and the explanation tell both parties that a recorded rider cancellation is 'handled under CW-OTHER' (a backlog type escalated by GEN-R07), while CLS-06 types it CW-RIDERCANCEL (an adjudicated type); round 1 cases E05 and E06 show it.",
+     "evidence": "engine_noshow.py 415: 'tr.reclassified_to = \"CW-RIDERCANCEL\" if t.get(\"cancellation_reason\") == \"rider_cancelled\" else \"CW-OTHER\"'. E05 trip_data: cancelled_by 'rider', cancellation_reason 'rider_cancelled_eta_too_long', app event rider_cancelled, system message 'Trip cancelled by rider. Cancellation fee of $6.61 applied.' (E06 the same with 'rider_cancelled_change_of_plans'). explain.noshow output for E05 and E06, rider and driver: 'This claim is not a driver no-show cancellation, so it is handled under CW-OTHER.' validation/V4_e2e/43_kb_applier.jsonl decided both as kb_type CW-RIDERCANCEL, tier AUTO. scope.yaml: adjudicate includes CW-RIDERCANCEL; backlog includes CW-OTHER.",
+     "failure_scenario": "E05 (rider canceled 3 min 20 s after match, every record says so): CLS-06 makes it CW-RIDERCANCEL, which the KB appliers decided automatically (UPHOLD); the engine and both party texts say CW-OTHER, a type that goes to a person under GEN-R07. The party-facing sentence is false under the new rule. Outcome-neutral in the noshow engine itself (no ruling for reclassified cases).",
+     "suggested_fix": "Take the canceling party per CLS-06 (cancelled_by, rider_cancelled/driver_cancelled event, system message, or a reason starting with rider_cancelled) and reclassify to CW-RIDERCANCEL; reserve CW-OTHER for a driver cancellation with another reason. Add a self-test with a 'rider_cancelled_<detail>' reason."
+    },
+    {
+     "id": "CONS-3",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 21,
+     "claim": "Several substrings A4 added to SAFETY_WORDS fire on ordinary no-show chat that CLS-01 does not count as safety content, so the reference engine moves routine CW-NOSHOW cases to tier HUMAN (one from AUTO) and tells both parties a safety concern was reported.",
+     "evidence": "New entries (engine_noshow.py 22-24) include \"let me go\", \"follow me\", \"rape\", \"dangerous\", \"expressway\"; matching is a plain substring test over the description and every chat message of both parties: 'safety_hits = sorted({w for w in SAFETY_WORDS for x in free_text if w in x.lower()})' (line 366). Scratch runs (/tmp/a4check1/fp.py, who.py): E04 (WAIVE_FEE AUTO) + rider message 'ok let me go down now' -> WAIVE_FEE HUMAN, \"safety words: ['let me go']\"; E04 + driver 'I'm waiting at the side, the grape stall' -> HUMAN, \"['rape']\"; E01 and E03 (UPHOLD APPROVE) + driver 'Stuck on the expressway, 2 min.', 'Cannot stop at the main road, dangerous. I wait at the porch.' or 'Please follow messages, I'm at the porch' -> HUMAN, gate G4. Each time the rider is told 'Your report includes a safety concern...' and the driver 'The rider's report includes a safety concern...'. In validation data 'follow me' already matches 'follow mechanically' (build_checks/A2/05_applier_round2.jsonl).",
+     "failure_scenario": "A routine no-show case where the rider writes 'ok let me go down now' (common in such chats) goes from AUTO to HUMAN, and both parties receive a false safety notice. The CLS-01 rule card is right (it reads for meaning); the engine stand-in is wrong in the safe direction, and D40(a) does not record these substring false positives. A validation round 2 regression with such chat would show a tier mismatch.",
+     "suggested_fix": "Match whole words or phrases with word boundaries and drop or narrow the ambiguous entries ('rape' as a word only; 'follow me' as a phrase not followed by letters; 'let me go' only in a refusal such as 'would not let me go'; 'expressway' and 'dangerous' only together with a drop-off or driving context). Add negative variants (E01 and E04 with these ordinary messages keep their tier) and note the residual false-positive risk in D40(a)."
+    },
+    {
+     "id": "CONS-4",
+     "severity": "MAJOR",
+     "file": "kb/tools/explain.py",
+     "line": 81,
+     "claim": "The safety explanation always attributes the safety content to the rider's report, although CLS-01 (A4) covers 'any account, by either party' and the engine scans the driver's chat too, so the texts are false when the driver raised it.",
+     "evidence": "explain.py 81-84: rider text 'Your report includes a safety concern, so a Ryde staff member will review the whole case and decide it.'; driver text 'The rider's report includes a safety concern...'. engine_noshow.py 355-357 builds free_text from the description and every chat message with its author. CLS-01: 'Safety content is any account, by either party, of: ...'. Scratch run: E04 + driver message 'Rider shouted and threatened me when I called.' -> HUMAN; rider told 'Your report includes a safety concern', driver told 'The rider's report includes a safety concern'.",
+     "failure_scenario": "A driver writes in the chat that the rider threatened him: the rider is told that their own report raised a safety concern, and the driver is told the rider reported one. Both sentences are false and misleading; tier and outcome are unaffected (HUMAN). The text is older than A4, but A4's explicit 'either party' and its broader word list make the case more frequent.",
+     "suggested_fix": "Record which author's text triggered CLS-01 (the engine already knows the author per text) and word the notice neutrally, for example 'This case includes a safety concern raised in the ticket or the chat', or by author ('The driver's messages include...')."
+    },
+    {
+     "id": "CONS-5",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_toll.py",
+     "line": 236,
+     "claim": "fc_r01 decides FC-F01's pricing mode from trip_data.destination_edit_accepted only, while FC-F01 (as A4 changed it) and run() in the same file also count an accepted edit or added stop recorded as an app event, so FC-R01's no-refund finding is applied to a trip whose fare FC-F01 calls RECALCULATED.",
+     "evidence": "engine_toll.py 236: 'recalculated = _flag(trip.get(\"destination_edit_accepted\"), False) is True  # FC-F01: RECALCULATED'. run() 189-190: 'changed = ... trip.get(\"destination_edit_accepted\") ... or any(a.get(\"event_type\") in (\"destination_edit_accepted\", \"stop_added\") for a in case.get(\"app_events\") or [])'. FC-F01: 'becoming RECALCULATED if a destination edit (a changed drop-off or an added drop-off stop) was accepted'. Ryde article 51399674412441 step 7: 'New destination and fare confirmation will be displayed' (the quote shown can be the new fare). Scratch run (/tmp/a4check1/fcr01.py): _erp_case(gantries CTE+PIE, recommended [CTE]) + app event stop_added -> fc_r01 {'applies': True, 'fare_refund': 0.0, 'reason': 'FC-R-FIXED-FARE'} while its toll claim escalates for the changed itinerary; same with only an app event destination_edit_accepted.",
+     "failure_scenario": "An FC-ROUTE ticket where the rider added a stop (recorded as an app event, trip flag absent) and the charged fare equals the confirmed quote: the engine closes the fare part with FC-R-FIXED-FARE (no refund) instead of the RECALCULATED path (FC-F02 measured through the final itinerary, FC-R03, FC-R05). The same function treats the itinerary as changed for ERP and unchanged for the fare.",
+     "suggested_fix": "Compute the itinerary change once (trip flag or destination_edit_accepted/stop_added event) and use it both for FC-F01's RECALCULATED test in fc_r01 and for FC-R12 in run(); add an R9 check to the FC-R01 split tests."
+    },
+    {
+     "id": "CONS-6",
+     "severity": "MINOR",
+     "file": "kb/playbooks.yaml",
+     "line": 238,
+     "claim": "Two playbooks still cite CLS-01 as a CHECK with the old wording, while CLS-01 is now mode READ and PB-INTAKE step 2 was changed to READ.",
+     "evidence": "PB-ROUTE-SUPPORT step 1: '{n: 1, do: CHECK, rule: CLS-01, note: \"Safety language overrides routing\"}'; PB-TRIAGE-HUMAN step 1 (line 221): '{n: 1, do: CHECK, rule: CLS-01, note: \"Severity S0 or S1 for safety claims\"}'. rules.yaml CLS-01 'mode: READ'; PB-INTAKE step 2 'do: READ, rule: CLS-01, note: \"Safety content anywhere, judged by meaning ...\"'.",
+     "failure_scenario": "A reader of PB-ROUTE-SUPPORT sees 'safety language' and a mechanical CHECK, the v0.1 word-list behavior, and no mention that any SE type also overrides routing (CLS-03's new exception). Outcome-neutral because PB-INTAKE runs first.",
+     "suggested_fix": "PB-ROUTE-SUPPORT step 1: do READ, note 'Safety content (CLS-01, judged by meaning) or any SE type overrides routing (CLS-03)'. PB-TRIAGE-HUMAN step 1: do READ (severity is judged by meaning)."
+    },
+    {
+     "id": "CONS-7",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 370,
+     "claim": "Engine trace labels and engine docstrings still describe the pre-A4 rules: the intake and precondition steps omit CLS-06, step 2 speaks of safety words, and engine_toll's docstring says it applies no FC-R12 beyond missing gantry data.",
+     "evidence": "engine_noshow.py 368: 'safety words: {safety_hits}' / 'no safety language'; 370: step 'CLS-05, CLS-02, CLS-04' (playbook step 3 now 'CLS-05, CLS-02, CLS-06, CLS-04'); 412: step 'CLS-02, CW-R03' (playbook step 1 now 'CLS-06, CW-R03'). These labels appear in kb/out/disp002_trace.md lines 10-11 and the workbook's DISP-002 sheet. engine_toll.py docstring line 9: 'only the rules named above are applied (no MAT, DQ, META-02 date check or FC-R12 beyond missing gantry data)', while run() now escalates under FC-R12 for a changed itinerary.",
+     "failure_scenario": "The DISP-002 trace shown to judges cites rules that no longer match the playbook steps; a reader of engine_toll.py is told the itinerary check does not exist. Outcome-neutral.",
+     "suggested_fix": "Relabel the two steps to the playbook's rule lists, word step 2 as 'safety content (offline word-list stand-in for CLS-01)', and update the engine_toll docstring to name the FC-R12 checks it does apply."
+    },
+    {
+     "id": "CONS-8",
+     "severity": "MINOR",
+     "file": "kb/scope.yaml",
+     "line": 110,
+     "claim": "The runtime mapping for intake still lists 'CLS-01 to CLS-05', omitting the new CLS-06.",
+     "evidence": "scope.yaml 110: 'reads: \"TX-CASE, TX-ROLE, TX-SEVERITY; CLS-01 to CLS-05; GEN-R04\"'; rules.yaml 285: '- id: CLS-06'.",
+     "failure_scenario": "The intake node's documented reads miss the rule that types a cancellation-fee claim. Outcome-neutral.",
+     "suggested_fix": "Change to 'CLS-01 to CLS-06'."
+    },
+    {
+     "id": "CONS-9",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1196,
+     "claim": "FC-R01's English statement now says the recommended route runs through the final itinerary, but its Chinese text (shown in the workbook's 09_Rules sheet) was not updated.",
+     "evidence": "English (1193): 'Whenever the actual path passed active gantries that the recommended route (through the final itinerary, FC-F02) avoids'. Chinese (1196): '只要实际路径经过了推荐路线避开的有效闸门' with no 最终行程单. Every other route rule changed in A4 (FC-F02, FC-R03, FC-R05, FC-R08, FC-R12) has the phrase in both languages.",
+     "failure_scenario": "A Chinese reader of the workbook sees FC-R01 measured against the booked route. Outcome-neutral.",
+     "suggested_fix": "Add '（按最终行程单，FC-F02）' after 推荐路线 in FC-R01's zh."
+    },
+    {
+     "id": "CONS-10",
+     "severity": "MINOR",
+     "file": "kb/ontology.yaml",
+     "line": 110,
+     "claim": "Ontology rows around the drop-off change still describe the old model: the recommended route is 'precomputed at booking', the DISP-002 mapping targets '(dropoff)' though the attribute is now 'dropoffs', stop_added's state change contradicts its own note, and the engine's new input route_review.final_itinerary is not in the ontology or the inventory of data gaps.",
+     "evidence": "ontology.yaml 110: 'recommended_route ... note: \"Precomputed at booking for demo reliability.\"' vs FC-F02 'The recommended route runs through the trip's final itinerary'. 500-502: 'maps_to: Place.name (dropoff)' vs attribute 94 'name: dropoffs'. 425: stop_added 'changes: \"SM-TRIP: route updated (fare recalculated)\"' with note 'takes effect when the driver accepts it, as a destination edit (destination_edit_accepted)'. engine_toll.py 191 reads 'review.get(\"final_itinerary\")'; no ontology or inventory row names route_review or trip_data.stops (inventory.yaml line 22 lists the missing trip fields without them).",
+     "failure_scenario": "A data provider following the ontology supplies a route precomputed at booking; every changed-itinerary route claim then escalates under FC-R12 without anyone having asked for the final-itinerary route. Outcome-neutral (escalation is the safe default).",
+     "suggested_fix": "Note on recommended_route: 'computed through the final itinerary (FC-F02); a route precomputed at booking is usable only if the itinerary did not change'; map DISP-002's dropoff_location to 'Place (dropoffs[1], the only and final drop-off)'; make stop_added's change 'none until accepted'; add route_review (recommended gantries, final_itinerary flag) and trip_data.stops to ENT-TRIP as data gaps and to the inventory's missing-fields row."
+    },
+    {
+     "id": "CONS-11",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 294,
+     "claim": "CLS-06's REQUEST_INFO branch does not fit the vocabularies it uses, and its English is ambiguous: REQUEST_INFO asks the claimant, the reason label speaks of an unidentifiable trip or charge, and 'decide no fee' can be read as 'no fee is due'.",
+     "evidence": "CLS-06: 'ask for the trip record (outcome REQUEST_INFO, reason GEN-R-NEED-INFO) and decide no fee until it arrives'; zh: '记录到之前不对收费作裁决' (no ruling on the fee). taxonomy.yaml 599: 'REQUEST_INFO, label: Ask the claimant for missing information'; 652: 'GEN-R-NEED-INFO, label: Trip or charge cannot be identified'.",
+     "failure_scenario": "The rider is asked for a trip record only Ryde holds, under a reason saying the trip or charge cannot be identified; an applier reading the English may waive the fee ('decide no fee') instead of deferring the decision.",
+     "suggested_fix": "English: 'and make no decision on the fee until it arrives'. Either widen GEN-R-NEED-INFO's label (for example 'Trip, charge or canceling party cannot be identified') and say the request goes to Ryde's trip records, not the claimant, or add a reason code for it."
+    },
+    {
+     "id": "CONS-12",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 51,
+     "claim": "The decision records disagree: D39 (f) still lists the CW-F02B note and the CW-R08 advance-booking ETA as FX9 leftovers 'not done', while D40 records both as done in A4; D40 also omits FC-R01 from the route rules that follow FC-F02.",
+     "evidence": "D39: '(f) FX9 leftovers seen in the census and not done: CW-F02B's note could add the 2024 driver pages RYDE-20244064619161 and RYDE-33362932998937, and CW-R08 does not define the assignment ETA of an advance booking.' D40: 'FX9: ... CW-F02B's note adds the 2024 driver pages; CW-R08 defines the assignment ETA of an advance booking' and 'FC-R03, FC-R05, FC-R08, FC-R12 and FC-F01 follow' (no FC-R01, though rules.yaml 1193 changed FC-R01 and the brief lists it).",
+     "failure_scenario": "Jasper reading D39 sees open FX9 items that are closed; the A5 changelog built from D40 misses FC-R01. Outcome-neutral.",
+     "suggested_fix": "Append '(done in A4, D40)' to D39 (f) and add FC-R01 to D40's list."
+    },
+    {
+     "id": "CONS-13",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 246,
+     "claim": "CLS-03's new exception is about SE claims, but the rule still applies_to [EX, OT-OTHER], so on its own declared scope the SE exception can never apply.",
+     "evidence": "CLS-03 'applies_to: [EX, OT-OTHER]'; statement: 'unless CLS-01 applies or the claim is any SE type: every SE type is TRIAGE_TO_HUMAN ... (a ride ended midway, SE-TERMINATED, goes to a person even when nothing was charged)'. PB-INTAKE step 4 runs CLS-03 on every ticket.",
+     "failure_scenario": "A reader or a tool that filters rules by applies_to never shows CLS-03's SE exception for an SE-TERMINATED claim, the C08 case FX6 was about. Outcome-neutral because SE leaves are TRIAGE_TO_HUMAN anyway.",
+     "suggested_fix": "Set applies_to to [ALL] (it runs at intake on every claim) or add SE."
+    },
+    {
+     "id": "CONS-14",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 199,
+     "claim": "CLS-01's SE-type mapping says it follows the taxonomy but leaves out SE-MISMATCH and SE-RECORDING ('SE-OTHER otherwise'), and EX-LOCATION (a drop-off location issue routed to support) has no pointer that an unsafe drop-off is safety content, unlike EX-FEEDBACK.",
+     "evidence": "CLS-01: 'The SE type follows the taxonomy definitions (SE-CONDUCT for behavior toward a person, SE-DRIVING, SE-ACCIDENT, SE-TERMINATED for a ride ended midway, SE-OTHER otherwise).' taxonomy.yaml has SE-MISMATCH and SE-RECORDING leaves. EX-LOCATION (373-376): 'Pick-up or drop-off location issue (no charge contested)' with no exclusion; EX-FEEDBACK now says '(those are safety content, CLS-01)'.",
+     "failure_scenario": "A driver or vehicle mismatch with safety content is typed SE-OTHER instead of SE-MISMATCH; a text about being dropped on a road shoulder may first be typed EX-LOCATION. Both still reach a person, so outcome-neutral.",
+     "suggested_fix": "Name all seven SE leaves in CLS-01's parenthesis (or say 'per the SE leaf definitions'), and add to EX-LOCATION: 'An unsafe drop-off (being made to leave the car on an expressway or road shoulder, or left stranded) is safety content (CLS-01).'"
+    },
+    {
+     "id": "CONS-15",
+     "severity": "MINOR",
+     "file": "kb/tools/explain.py",
+     "line": 374,
+     "claim": "In V107 the rider's rudeness complaint, which CLS-01 now sends to feedback (EX-FEEDBACK) as its own issue, is neither recorded as a claim by the engine nor acknowledged in the rider's explanation.",
+     "evidence": "V107 description adds 'The driver was rude and shouted at me on the phone.'; engine step 3: \"one claim contesting CANCELLATION_FEE S$5.00\"; the rider explanation has no sentence about it. CLS-02: 'One claim per contested charge or issue'; CLS-01: 'Rudeness alone ... is feedback (EX-FEEDBACK)'; ontology new_vs_update: 'a fee plus a rude-driver complaint ... separate claims'.",
+     "failure_scenario": "The rider who complained about rudeness gets a full fee explanation that silently drops the complaint, with no word that it went to support. Outcome-neutral for the fee.",
+     "suggested_fix": "When the engine sees feedback content, add a secondary EX-FEEDBACK claim routed to support (CLS-03) and one sentence in the rider's text ('Your comment about the driver's manner has been passed to Ryde support'); or record the gap as a known limitation of the stand-in."
+    },
+    {
+     "id": "CONS-16",
+     "severity": "MINOR",
+     "file": "kb/tools/explain.py",
+     "line": 70,
+     "claim": "The EXP-03 verifier in explain.py does not implement the quote exemption A4 added to EXP-03.",
+     "evidence": "EXP-03 (A4): 'Numbers inside a verbatim quote of a clause (EXP-02) are exempt'. explain.py 70-72: 'return [n for n in NUM_RE.findall(ID_RE.sub(\" \", text)) if n not in allowed]' with no handling of quoted spans.",
+     "failure_scenario": "Dormant today (explain.noshow quotes no clauses), but the first explanation that quotes a READ clause as EXP-02 requires (for example '... within 3 minutes of matching') would be rejected by the verifier, contrary to EXP-03.",
+     "suggested_fix": "Strip spans in quotation marks that match a cited rule's source quote before the number check, and add a unit test."
+    },
+    {
+     "id": "CONS-17",
+     "severity": "MINOR",
+     "file": "docs/NEXT_STEPS.md",
+     "line": 66,
+     "claim": "NEXT_STEPS's 'For people' list carries A3's open judgments (D39) but none of A4's (D40 (a) to (d)).",
+     "evidence": "NEXT_STEPS: '- To decide (A3, open items D39 (a) to (l) and D35 item 8): ...'; no entry for D40, whose decide field lists four judgments 'For Jasper' (word-list stand-in, backlog leaves and a possible fraud signal, discrimination as SE-CONDUCT, the trip_data.stops data gap).",
+     "failure_scenario": "Jasper's checklist for people omits A4's open judgments. Outcome-neutral; may be planned for the step's close.",
+     "suggested_fix": "Add 'To decide (A4, open item D40 (a) to (d)): ...' when the step closes."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "CONS-1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Reproduced in /tmp/a4check1/sk_cons/cls06_sk.py. On cleaned DISP-002 with an app event rider_cancelled added (reason still rider_no_show, no system message about the rider), the engine returns UPHOLD R8 at tier AUTO. With the system message changed to 'Trip cancelled by rider' it reclassifies to CW-OTHER, and with cancellation_reason removed it also reclassifies to CW-OTHER. CLS-06 (rules.yaml 285-302) asks for REQUEST_INFO when the records disagree. engine_noshow.py 410-415 (step 1, labeled 'CLS-02, CW-R03') looks only at the system chat and the reason field, and A4 did not touch it: the only engine_noshow.py hunk in the diff is SAFETY_WORDS. So the reference engine does not implement CLS-06. I lowered the severity from CRITICAL for two reasons. (1) The KB itself is reconcilable. PB-INTAKE step 3 now runs CLS-06 before PB-CW-NOSHOW, so an applier following the playbooks reaches REQUEST_INFO at intake. The DT precondition and PB-CW-NOSHOW step 1 are narrower: they do not mention records that disagree. But both defer to CLS-06, so they do not contradict it. (2) The outcome-changing divergence needs trip records that contradict each other. That is a rare data-error pattern: no DISP-002 variant, E case or self-test has it, and the workflow's own rubric rates a rare unsafe error MAJOR. One correction to the finding: when only the reason is removed, DISP-002's system message still says 'cancelled by driver. Reason: rider_no_show', so CLS-06 would type the claim CW-NOSHOW, not REQUEST_INFO. The engine's CW-OTHER is wrong either way."
+    },
+    {
+     "id": "CONS-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Ran /tmp/a4check1/sk_cons/e05.py on validation/V4_e2e/cases/E05.json and E06.json. Both have cancelled_by 'rider', reason 'rider_cancelled_eta_too_long' or 'rider_cancelled_change_of_plans', an app event rider_cancelled and the system message 'Trip cancelled by rider'. The engine sets reclassified_to CW-OTHER with tier 'n/a (reclassified to CW-OTHER)'. explain.noshow tells both parties: 'This claim is not a driver no-show cancellation, so it is handled under CW-OTHER.' The cause is engine_noshow.py 415, which checks for the exact string 'rider_cancelled'. CLS-06 types these claims CW-RIDERCANCEL, an adjudicated type in scope.yaml line 68, while CW-OTHER is BACKLOG. Outcome-neutral in the repo: the only consumers of reclassified_to are the n/a tier, the explanation and the selftest/build bookkeeping, and the noshow engine makes no ruling for reclassified cases. So it is wrong but outcome-neutral, which is MAJOR. The logic is older than A4, but it now contradicts the new CLS-06."
+    },
+    {
+     "id": "CONS-3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Reproduced in /tmp/a4check1/sk_cons/fp_sk.py with the real E01, E03 and E04 cases. E04 (WAIVE_FEE AUTO) plus the rider message 'ok let me go down now' gives WAIVE_FEE HUMAN with gate G4. The driver messages \"I'm waiting at the side, the grape stall\" ('rape'), 'Stuck on the expressway, 2 min.', 'Please follow messages...' ('follow me' matches inside 'follow messages') and 'Cannot stop at the main road, dangerous...' all move E01 and E03 from APPROVE to HUMAN and E04 from AUTO to HUMAN. In every run both parties get the safety notice. The cause is the plain substring match at engine_noshow.py 366 over A4's new entries. I kept MAJOR rather than CRITICAL. The direction is safe, and CLS-01 itself sends unclear text to a person. The authoritative rule is the READ definition, and D40 (a) records the stand-in as erring toward safety. None of the 1,337 existing corpus and E-case texts (cw_f06_reading_corpus.json plus V4 cases) triggers any new word (corpus_sk.py), so these are not frequent in current data. D40 (a) does not record substring false positives such as 'grape' or 'follow messages', so the defect stands."
+    },
+    {
+     "id": "CONS-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "explain.py 81-84 is as quoted. With E04 plus the driver message 'Rider shouted and threatened me when I called.', the rider is told 'Your report includes a safety concern' and the driver 'The rider's report includes a safety concern' (fp_sk.py). The same happens for every driver-side trigger above. The text is wrong about who raised the concern. But explain.py is not in the A4 diff, and pre-A4 CLS-01 already scanned all free text including chat, so this is older than A4. The tier and outcome are unaffected, and the fix is a neutral rewording. That makes it a wording defect (MINOR), not MAJOR."
+    },
+    {
+     "id": "CONS-5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "Reproduced in /tmp/a4check1/sk_cons/fcr01_sk.py. _erp_case(CTE+PIE, recommended [CTE]) with only an app event destination_edit_accepted, or only stop_added, gives fc_r01 applies True, fare_refund 0.0, FC-R-FIXED-FARE. Its toll_claim from run() escalates under FC-R12 (FC-R-INSUFFICIENT-DATA) because the itinerary changed. With the trip flag instead, applies is False. So engine_toll.py 236 (fc_r01, not changed in A4) and the new lines 189-190 in run() disagree about whether the itinerary changed. The ontology models destination_edit_accepted as an event (ontology.yaml 424), not a trip field, so data that follows the ontology would carry it as an app event. FC-F01 makes that fare RECALCULATED, and FC-R01 then does not apply. The case also needs charged equal to quoted after a recalculation. It is a rare pattern in a reference helper that only the self-test uses, and the toll part still escalates. So MAJOR, not CRITICAL."
+    },
+    {
+     "id": "CONS-6",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "playbooks.yaml line 221 (PB-TRIAGE-HUMAN: 'do: CHECK, rule: CLS-01, Severity S0 or S1') and line 238 (PB-ROUTE-SUPPORT: 'do: CHECK, rule: CLS-01, Safety language overrides routing') are unchanged. CLS-01 is now mode READ, and PB-INTAKE step 2 was changed to READ. The build does not check that READ rules are referenced with do: READ. Outcome-neutral because PB-INTAKE runs first."
+    },
+    {
+     "id": "CONS-7",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read engine_noshow.py 368, 370 and 412. Step 2 still says 'safety words' and 'no safety language'. Step 3 is labeled 'CLS-05, CLS-02, CLS-04', against the playbook's 'CLS-05, CLS-02, CLS-06, CLS-04'. PB-CW-NOSHOW step 1 is labeled 'CLS-02, CW-R03', against the playbook's 'CLS-06, CW-R03'. kb/out/disp002_trace.md lines 10-11 show these labels. engine_toll.py docstring line 9 still says 'no ... FC-R12 beyond missing gantry data', while the A4 hunk at 189-196 applies FC-R12 to a changed itinerary. A4 edited the lines right after line 9 but left it. Labels only, outcome-neutral."
+    },
+    {
+     "id": "CONS-8",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "scope.yaml line 110 still reads 'CLS-01 to CLS-05' in the intake node's reads, while CLS-06 exists (rules.yaml 285) and PB-INTAKE step 3 cites it. A4 edited scope.yaml (the backlog line 84) but not this row. Documentation only."
+    },
+    {
+     "id": "CONS-9",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "FC-R01's English (rules.yaml ~1193) now says 'the recommended route (through the final itinerary, FC-F02)'. Its zh still reads '只要实际路径经过了推荐路线避开的有效闸门' with no 最终行程单. FC-R03, FC-R05, FC-R08 and FC-R12 have the phrase in zh. a4_check checks only FC-F02, FC-R03, FC-R05, FC-R08 and FC-R12, so nothing catches this. Translation gap, outcome-neutral."
+    },
+    {
+     "id": "CONS-10",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "ontology.yaml line 110 still says recommended_route is 'Precomputed at booking for demo reliability.', which is at odds with FC-F02's route through the final itinerary. Line 500 maps dropoff_location.name to 'Place.name (dropoff)' although the attribute is now 'dropoffs'. stop_added (425) lists 'changes: SM-TRIP: route updated (fare recalculated)' while its new note says it takes effect only when accepted. route_review (recommended_gantries, final_itinerary) is read by engine_toll but appears in neither the ontology nor inventory.yaml. The inventory's missing-trip-fields row (line 22) lists 'recommended route' but not trip_data.stops. All documentation, and an unmarked route escalates (the safe default)."
+    },
+    {
+     "id": "CONS-11",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "CLS-06 says 'ask for the trip record (outcome REQUEST_INFO, reason GEN-R-NEED-INFO) and decide no fee until it arrives'. taxonomy.yaml 599 defines REQUEST_INFO as 'Ask the claimant for missing information', but the trip record is Ryde's own. GEN-R-NEED-INFO (652) is labeled 'Trip or charge cannot be identified', not 'canceling party unknown'. The English 'decide no fee' can be read as 'no fee is due', while the zh clearly means no ruling yet ('不对收费作裁决'). Wording and vocabulary fit only."
+    },
+    {
+     "id": "CONS-12",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read the D39 and D40 entries in kb/open_items.yaml. D39 (f) still lists the CW-F02B note and the CW-R08 advance-booking ETA as FX9 leftovers 'not done'. That was accurate when A3 wrote it, but it now has no '(done in A4)' pointer. D40's changed text says 'FC-R03, FC-R05, FC-R08, FC-R12 and FC-F01 follow' and omits FC-R01, which A4 changed (rules.yaml ~1193) and the brief lists. Record-keeping only."
+    },
+    {
+     "id": "CONS-13",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "CLS-03 still has 'applies_to: [EX, OT-OTHER]', yet its new exception is about a claim of 'any SE type'. On its declared scope that condition can never hold, so the exception only makes sense if the rule runs on every claim, which PB-INTAKE step 4 does. Outcome-neutral, because SE leaves are TRIAGE_TO_HUMAN anyway. It is a scope label inconsistency."
+    },
+    {
+     "id": "CONS-14",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "CLS-01 says 'The SE type follows the taxonomy definitions' but its parenthesis lists only SE-CONDUCT, SE-DRIVING, SE-ACCIDENT and SE-TERMINATED, then 'SE-OTHER otherwise'. The taxonomy also has SE-MISMATCH (315) and SE-RECORDING (329), so the parenthesis can be read as sending those to SE-OTHER. EX-LOCATION (373-377) has no pointer to CLS-01 for an unsafe drop-off, while EX-FEEDBACK now has one. CLS-01 runs first at intake and names the unsafe drop-off itself, and any SE leaf reaches a person, so this is a wording gap only."
+    },
+    {
+     "id": "CONS-15",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Self-test V107 (selftest.py diff) appends 'The driver was rude and shouted at me on the phone.' and passes with UPHOLD R8 APPROVE. Engine step 3 (engine_noshow.py 370-372) always records 'one claim contesting CANCELLATION_FEE'. Under CLS-01 and CLS-02 the rudeness should be a secondary EX-FEEDBACK claim, and the rider explanation does not mention it. This is a limitation of the stand-in engine, which has never modeled secondary non-safety claims. The fee is unaffected."
+    },
+    {
+     "id": "CONS-16",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "EXP-03 now exempts numbers inside a verbatim clause quote. explain.py 70-72 (exp03_check) strips only identifiers before matching numbers and has no handling for quoted spans, and explain.py is not in the A4 diff. The defect is dormant because explain.noshow quotes no clause, but the verifier no longer implements the rule as written."
+    },
+    {
+     "id": "CONS-17",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "docs/NEXT_STEPS.md line 44, in the 'For people, not sessions' list, has the A3 entry ('To decide (A3, open items D39 (a) to (l) ...)') but nothing for D40 (a) to (d). NEXT_STEPS.md is not in the A4 diff. The brief defers the status line to the step close, and A3 updated NEXT_STEPS in its closing commit, so this is probably planned for the close. As of 8beb6e8 the checklist omits A4's open judgments."
+    }
+   ]
+  }
+ }
+]

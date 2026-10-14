@@ -1,7 +1,7 @@
 """Generate the two workbooks from the YAML knowledge base (the YAML files stay the single source of truth).
 
-FairRyde_KB_v0.1.xlsx          the knowledge base, regenerated on every build; it holds no labels.
-FairRyde_Annotation_v0.1.xlsx  the annotation workbook (ONT.5). Created once; the build refuses to overwrite it when any
+FairRyde_KB_v<x.y>.xlsx          the knowledge base, regenerated on every build; it holds no labels (x.y from the KB version).
+FairRyde_Annotation_v<x.y>.xlsx  the annotation workbook (ONT.5). Created once; the build refuses to overwrite it when any
                                HUMAN cell is filled or when it is open in Excel (ONT.11.3: never overwrite human edits),
                                and backs it up before replacing an untouched copy.
 
@@ -200,14 +200,14 @@ def _finalize(wb, skip_autofit=()):
 def s_readme(wb, kb, st, runs, rep, tests, ann_status, dt_enum, out_scan=None):
     ws = wb.active
     ws.title = "00_说明"
-    r = title(ws, "FairRyde 知识库 v0.1（Taxonomy · Ontology · Rules）",
+    r = title(ws, f"FairRyde 知识库 {kb.vtag}（Taxonomy · Ontology · Rules）",
               f"按 ChordX 知识库协议 ONT.1 到 ONT.11 编写；生成日期 {kb.y['rules']['meta']['updated']}；状态 draft，待曹老师审核")
     org = runs["organizer_case"]
     t, tier = org["trace"], org["tier"]
     n_ok = sum(x["ok"] for x in tests)
     lines = [
         ("这是什么", "Ryde 赛道 FairRyde 的知识库：三层（Taxonomy 是哪一类；Ontology 有哪些实体、角色、关系和事件；Rules 什么条件下得出什么结论），加上协议要求的数据清单、操作指引、参考数据表、标注方案和验证方案。"),
-        ("两个文件", "FairRyde_KB_v0.1.xlsx（本文件）：知识库，每次运行 build_kb.py 重新生成，不放任何标注。FairRyde_Annotation_v0.1.xlsx：标注工作簿，脚本只建一次；只要有人填过人工列，或文件正在 Excel 或 LibreOffice 里打开，脚本就不会覆盖它（ONT.11.3）。"
+        ("两个文件", f"FairRyde_KB_{kb.vtag}.xlsx（本文件）：知识库，每次运行 build_kb.py 重新生成，不放任何标注。FairRyde_Annotation_{kb.vtag}.xlsx：标注工作簿，脚本只建一次；只要有人填过人工列，或文件正在 Excel 或 LibreOffice 里打开，脚本就不会覆盖它（ONT.11.3）。"
                      f"本次运行：{ann_status['message']}"),
         ("唯一真源", "kb/ 目录下的 YAML 文件。本工作簿由 build_kb.py 从 YAML 生成，改内容请改 YAML 再重新生成，不要直接改这里。"),
         ("校验结果", f"规则 {st['n_rules']} 条；逐字引文 {st['n_quotes_verified']} 条与原文一致，不符 {st['n_quotes_bad']} 条；"
@@ -241,7 +241,7 @@ def s_readme(wb, kb, st, runs, rep, tests, ann_status, dt_enum, out_scan=None):
         ("14_来源登记", "所有被引用的文件，Ryde 文章带编辑日期"),
         ("15_DISP-002三层视图", "同一份单据在三层里的样子（ONT.2），推演过程、敏感性测试、读法测试、给双方的解释"),
         ("16_引擎自测", f"{len(tests)} 个单因素变体，检验规则卡与参考引擎一致（不是标准答案）"),
-        ("17_标注方案", "标注表的列设计、验证方案、实体覆盖（标注本身在 FairRyde_Annotation_v0.1.xlsx）"),
+        ("17_标注方案", f"标注表的列设计、验证方案、实体覆盖（标注本身在 FairRyde_Annotation_{kb.vtag}.xlsx）"),
         ("18_待决问题", f"待决定事项 D1 到 D{len(kb.y['open_items']['decisions'])}、给曹老师和组织方的问题"),
     ]
     table(ws, r, ["页", "内容"], pages, widths=[22, 120])
@@ -250,7 +250,7 @@ def s_readme(wb, kb, st, runs, rep, tests, ann_status, dt_enum, out_scan=None):
 
 def s_gap(wb, kb, st):
     ws = wb.create_sheet("01_协议对照")
-    r = title(ws, "对照 ChordX 知识库协议：做了什么、还缺什么", "之前 = 10 月 4 日初步研究；现在 = 知识库 v0.1（经独立审查后修正）")
+    r = title(ws, "对照 ChordX 知识库协议：做了什么、还缺什么", f"之前 = 10 月 4 日初步研究；现在 = 知识库 {kb.vtag}（v0.1 经独立审查后修正；v0.2 按第 1 轮验证的修正清单 FX1 到 FX9 修改，见 kb/CHANGELOG.md）")
     rows = [(x["clause"], x["requirement"], x["before"], statsmod.fill(x["now"], st), x["where"], x["status"], x["remaining"])
             for x in kb.y["protocol_gap"]["rows"]]
     table(ws, r, ["条款", "协议要求", "之前", "现在", "位置", "状态", "还缺"], rows, widths=[11, 30, 42, 60, 30, 9, 26])
@@ -288,13 +288,13 @@ def s_scope(wb, kb, runs):
     r = table(ws, r, ["问题", "由谁回答", "DISP-002 的答案"],
               [(q["q"], q["answered_by"], answers.get(i, "")) for i, q in enumerate(sc["competency_questions"])], widths=[50, 50, 50])
     s = sc["scope_v0_1"]
-    r = heading(ws, r, "v0.1 范围（最小够用）")
+    r = heading(ws, r, f"{kb.vtag} 范围（最小够用）")
     r = table(ws, r, ["范围", "类型"], [
         ("自动裁决 ADJUDICATE", s["adjudicate"]), ("需人工批准 ADJUDICATE_WITH_APPROVAL", s["adjudicate_with_approval"]),
         ("只分流 TRIAGE_TO_HUMAN", s["triage_to_human"]), ("非争议转客服 ROUTE_TO_SUPPORT", s["route_to_support"]),
         ("手册四类对应", s["handbook_mapping"]), ("为什么选这些", s["why_these"]), ("停止条件", s["stop_rule"]),
     ], widths=[34, 110])
-    r = heading(ws, r, "待办（刻意不放进 v0.1）")
+    r = heading(ws, r, f"待办（刻意不放进 {kb.vtag}）")
     r = table(ws, r, ["#", "内容"], [(i + 1, x) for i, x in enumerate(sc["backlog"])])
     r = heading(ws, r, "起点路线与离线 / 运行分开（ONT.10.1、ONT.10.4）")
     r = table(ws, r, ["项目", "内容"], [("条件", sc["start_route"]["condition"]), ("路线", sc["start_route"]["route"]),
@@ -460,7 +460,7 @@ def s_dt(wb, kb, rep):
                        summ["hits_per_row"][row["row"]], row.get("plain", "")])
     r0 = r
     r = table(ws, r, ["行"] + names + ["结果", "理由", "标记", "依赖的规则", "同时触发", "可信度", "命中组合数", "解释用语（plain）"], rows,
-              widths=[6, 14, 14, 12, 14, 16, 26, 18, 30, 26, 8, 10, 60])
+              widths=[6] + [14] * len(names) + [16, 26, 18, 30, 26, 8, 10, 60])
     for i, row in enumerate(dt["rows"], 1):
         c = ws.cell(row=r0 + i, column=len(names) + 7)
         c.fill, c.alignment = CRED_FILLS[row["credibility"]], CENTER
@@ -676,7 +676,7 @@ def s_selftest(wb, kb, results):
 def s_annotation_design(wb, kb, rep):
     ws = wb.create_sheet("17_标注方案")
     ann = kb.y["annotation_schema"]
-    r = title(ws, "标注方案（ONT.5）与验证方案（ONT.6）", "标注本身在 FairRyde_Annotation_v0.1.xlsx；这一页只是设计说明，由脚本从 annotation_schema.yaml 生成")
+    r = title(ws, "标注方案（ONT.5）与验证方案（ONT.6）", f"标注本身在 FairRyde_Annotation_{kb.vtag}.xlsx；这一页只是设计说明，由脚本从 annotation_schema.yaml 生成")
     for col, w in zip("ABCDEFGH", (18, 28, 10, 30, 6, 8, 50, 40)):
         ws.column_dimensions[col].width = w
     for k, v in (("原则", ann["meta"]["principle"]), ("文件规则", ann["meta"]["file_policy"]), ("示例行", ann["meta"]["example_note"]),
@@ -810,7 +810,7 @@ def _auto_inputs(kb, case):
                                                      or any(c["sender"] == "rider" and from_assignment(c["timestamp"]) for c in case["chat_logs"])
                                                      or any(re.search(r"fail|not delivered|undelivered", a["details"], re.I) for a in case["app_events"] if a["event_type"] == "rider_notified"))
                                 else ("statement_only" if tk.get("description") else "none")),
-        "seed_case_id": tk["dispute_id"], "varied_factor": "none (seed)", "guideline_version": "G-0.1", "rulebook_version": "KB-0.1.0",
+        "seed_case_id": tk["dispute_id"], "varied_factor": "none (seed)", "guideline_version": "G-0.1", "rulebook_version": f"KB-{kb.version}",
         "labeling_mode": "STANDARD",      # organizer cases are public to the team, so they cannot be labeled blind
     }
 
@@ -821,7 +821,7 @@ def a_instructions(wb, kb):
     ann = kb.y["annotation_schema"]
     cols = _ann_columns(kb)
     blind = [c["name"] for _, _, c in cols if c.get("hide_in_blind")]
-    r = title(ws, "FairRyde 标注工作簿 v0.1（给标注人看，ONT.5：说明写进表里）", ann["meta"]["principle"])
+    r = title(ws, f"FairRyde 标注工作簿 {kb.vtag}（给标注人看，ONT.5：说明写进表里）", ann["meta"]["principle"])
     rules_ = [
         ("铁律 1", "标准答案（ANSWER、BASIS 两组列）只能由人填写，不能抄 FairRyde 或任何模型的输出。"),
         ("铁律 2", f"INDEPENDENT_BLIND 模式下先折叠（隐藏）INPUT 组最后 {len(blind)} 列：{', '.join(blind)}。它们是 AI 草稿或提前算好的决策表输入，会锚定判断。点表头上方的减号即可折叠。"),
@@ -1051,7 +1051,7 @@ def a_coverage(wb, kb, L):
         ws.cell(row=row, column=2, value=f)
         ws.cell(row=row, column=3, value=f'=IF(B{row}=0,"好","需修正")')
     r = r + len(checks_) + 2
-    para(ws, r, "每个实体类型至少出现一次（ONT.6）由脚本在案件文件上检查，结果见 FairRyde_KB_v0.1.xlsx 的 17_标注方案。", 6, 30, F_NOTE)
+    para(ws, r, f"每个实体类型至少出现一次（ONT.6）由脚本在案件文件上检查，结果见 FairRyde_KB_{kb.vtag}.xlsx 的 17_标注方案。", 6, 30, F_NOTE)
     for col, w in zip("ABCDEF", (34, 26, 16, 16, 22, 12)):
         ws.column_dimensions[col].width = w
     finish(ws, freeze=None)

@@ -61,10 +61,10 @@ def main(argv):
     for x in reading_bad:
         rep.add("ERROR", "reading-selftest", x["text"][:40], f"CW-F06 message reading expected {x['expected']}, got {x['got']}"
                 + (" (unsafe: a placing or contesting message read as no counter-evidence)" if x["unsafe"] else ""))
-    a2_bad = selftest.erp_check(kb) + selftest.erp_code_check(kb) + selftest.g3_check(kb) + selftest.rule_card_check(kb)
+    a2_bad = selftest.erp_check(kb) + selftest.erp_code_check(kb) + selftest.g3_check(kb) + selftest.rule_card_check(kb) + selftest.a3_check(kb) + selftest.a4_check(kb)
     for x in a2_bad:
         rep.add("ERROR", "erp-g3-selftest", x["id"], f"{x['variant']}: " + "; ".join(x["problems"]))
-    erp_line = (f"ERP rules self-test: {len(selftest.erp_cases())} ERP cases, the FC-R01 split, gate G3 and the A2 rule-card checks: "
+    erp_line = (f"ERP rules self-test: {len(selftest.erp_cases())} ERP cases, the FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: "
                 + ("all pass" if not a2_bad else f"{len(a2_bad)} problem(s)"))
     decided = {t["got"]["row"] for t in tests if t["got"]["row"] and t["got"]["reasons"]
                and t["got"]["reasons"][0] not in ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP")}
@@ -123,14 +123,14 @@ def main(argv):
     files = []
     if "--no-xlsx" not in argv:
         import make_xlsx
-        ann_path = out / "FairRyde_Annotation_v0.1.xlsx"
+        ann_path = out / f"FairRyde_Annotation_{kb.vtag}.xlsx"
         ann_status = make_xlsx.build_annotation(kb, ann_path, [privacy_scan.pseudonymize(kb.disp002, terms)])
         if ann_status.get("written"):
             rc = recalc(ann_path)
             ann_status["recalc"] = rc
             if rc.get("status") == "errors_found" or rc.get("error"):
                 rep.add("ERROR", "xlsx-formulas", ann_path.name, f"recalculation: {rc}")
-        kb_path = out / "FairRyde_KB_v0.1.xlsx"
+        kb_path = out / f"FairRyde_KB_{kb.vtag}.xlsx"
         kb_status = make_xlsx.build_kb_workbook(kb, rep, runs, dt_enum, priv, tests, kb_path, ann_status)
         files = [kb_path, ann_path]
 

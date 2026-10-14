@@ -5,9 +5,9 @@
 meta:
   kb: FairRyde Knowledge Base
   layer: Taxonomy
-  version: 0.1.0
+  version: 0.2.0
   status: draft            # draft -> approved after review by the team lead and, where possible, the organizer / Ryde
-  updated: 2026-10-05
+  updated: 2026-10-14
   owner: Jasper
   reviewers: [Cao]
   authority: >-
@@ -46,7 +46,7 @@ vocabularies:
     name: Dispute category and type
     zh: 争议类别与类型
     used_by: [Claim.taxonomy_code, DisputeTicket.dispute_type]
-    assigned_when: At intake (may be corrected later). Safety language anywhere overrides to SE (rule CLS-01).
+    assigned_when: At intake (may be corrected later). Safety content anywhere, judged by meaning, overrides to SE (rule CLS-01).
     levels: [category, type]
     values:
 
@@ -102,7 +102,7 @@ vocabularies:
             label: Driver did not arrive or was uncontactable
             zh: 司机未到或联系不上（乘客未被收费）
             definition: The rider reports that the driver did not come, was uncontactable or canceled, and no fee was charged to the rider; the rider seeks redress or reports the driver.
-            excludes: "Any case where the rider was charged a fee (classify by that fee: CW-RIDERCANCEL or CW-NOSHOW)."
+            excludes: "Any case where the rider was charged a fee (classify by that fee and by who canceled, CLS-06: CW-RIDERCANCEL, CW-NOSHOW, or CW-OTHER for a fee after a driver cancellation for another reason or a system cancellation)."
             term_sources:
               - "Ryde rider article 115000772593 'My Ryde driver is uncontactable. What should I do?'"
             organizer_code: null
@@ -122,7 +122,7 @@ vocabularies:
           - code: CW-OTHER
             label: Other cancellation or waiting issue
             zh: 其他取消或等候问题
-            definition: Fits the category but no type above; record free text.
+            definition: Fits the category but no type above; record free text. This includes a cancellation fee charged after the driver canceled for a reason other than rider_no_show, or after the system canceled (CLS-06).
             scope: BACKLOG
 
       - code: FC
@@ -137,7 +137,7 @@ vocabularies:
             zh: 绕路或路线更长
             definition: The claimant says the driver's route, unexpected stops or a longer trip duration made the trip longer and/or raised the fare.
             term_note: "The handbook lists 'Route deviation analysis', 'unexpected stops' and 'trip duration vs. estimated time' as GPS evidence for this type."
-            excludes: "Disputes about the ERP/toll amount itself (FC-TOLL), even if caused by the route; destination-edit fees (FC-DEST)."
+            excludes: "Disputes about the ERP/toll amount itself (FC-TOLL), even if caused by the route; destination-edit fees (FC-DEST). A longer trip because of a stop or a destination change the rider made is not a detour: the route is measured against the final itinerary (FC-F02)."
             term_sources:
               - "Handbook category 1 'Route Deviation': 'Driver took a longer route and I was overcharged.'"
               - "Ryde rider article 4412121982745 'Can I suggest my preferred route to the driver?'"
@@ -186,7 +186,7 @@ vocabularies:
           - code: FC-SURCHARGE
             label: Surcharge or entry fee
             zh: 附加费或入场费
-            definition: The claimant contests a surcharge or entry fee (Sentosa entrance, Jurong Island pass, bulky item or wheelchair fee, child seat).
+            definition: The claimant contests a surcharge or entry fee that Ryde lists (Sentosa entrance, Jurong Island pass, bulky item or wheelchair fee, child seat). A charge the driver made up or asked for outside the app is FC-DRIVERCHARGE.
             term_sources:
               - "Ryde rider articles 17735760737817 'Sentosa Entrance Fee', 48945760704537 'Jurong Island Entry Pass', 4408072421785 'Are surcharges included in the base fee?', 4408080441497 'Do I need to pay an extra fee for my bulky items or wheelchair?', 37057430899225 'Baby and Child seat'"
             organizer_code: null
@@ -195,7 +195,7 @@ vocabularies:
           - code: FC-PAYMENT
             label: Payment or transaction fee issue
             zh: 支付或交易费问题
-            definition: Platform fee, transaction fee, duplicate charge, unpaid fare or cash collection issues.
+            definition: Platform fee, transaction fee, duplicate charge, unpaid fare or cash collection issues. A payment the driver asked for on top of the fare is FC-DRIVERCHARGE.
             term_sources:
               - "Ryde rider articles 22836370596377 'Platform Fee', 52594357168281 'Transaction Fee', 18230595517465 'I forgot to pay for my trip.', 115000777574 'How can I pay my Ryde driver?'"
               - "Ryde driver articles 4842763548825 'Fare Evasion', 115001439613 'How do I collect payment from my pickups?'"
@@ -225,6 +225,31 @@ vocabularies:
             definition: The rider says a promo code, voucher or discount was not applied to a trip fare.
             term_sources:
               - "Handbook MVP evidence: 'Payment & Fare Data' includes 'promo code usage'"
+            scope: BACKLOG
+            rule_family: FC
+          - code: FC-FAREMISMATCH
+            label: Fare charged differs from the booked fare
+            zh: 实收车费与下单报价不符
+            definition: The rider says the fare charged, or the fare shown on the driver's screen, differs from the fare quoted at booking, and no accepted destination change, ERP, waiting time fee, listed surcharge or tip explains the difference. A RydeTAXI fare is metered, not fixed, so a metered fare above its estimate is not this type (FC-R00).
+            excludes: "A longer route (FC-ROUTE); ERP (FC-TOLL); a waiting time fee (CW-WAITING); a destination-edit fee or a fare recalculated after an accepted edit (FC-DEST); a charge the driver made up (FC-DRIVERCHARGE)."
+            term_sources:
+              - "Ryde rider article 30741244296217 'I was overcharged for ERP/toll' ('Fares quoted for our services are generally fixed, except for RydeTAXI.')"
+              - "Ryde rider article 360004075214 'Why should I use RydeX?' ('All fares are fixed at the time of booking')"
+            organizer_code: null
+            example_phrases: ["the app said S$14 but I was charged S$21", "the fare on the driver's screen was higher than my booking"]
+            scope: BACKLOG
+            rule_family: FC
+          - code: FC-DRIVERCHARGE
+            label: Charge imposed by the driver or asked for off the app
+            zh: 司机自行加收或要求在 app 外付款
+            definition: The rider says the driver asked for or added a payment the app's fare does not include, such as cash on top of the fare, a 'commission', a 'VIP' or other charge the driver made up, or a transfer outside the app.
+            excludes: "A surcharge or entry fee that Ryde lists (FC-SURCHARGE); ERP the driver keyed in (FC-TOLL). Threats used to obtain the payment are safety content (CLS-01, SE-CONDUCT)."
+            term_note: "A charge the driver made up raises a fraud signal against the driver (FRD-01), shown to the reviewer only; it never changes the outcome (GEN-R03). Jasper, 2026-10-14, open item D40 (b)."
+            term_sources:
+              - "Ryde driver article 33362721809049 'Driver Performance and Community Standards' (fraudulent activity: drivers who overcharge riders)"
+              - "No rider article names the complaint; validation round 1 complaints C07, C18 and C19 (round 1 finding FX8)"
+            organizer_code: null
+            example_phrases: ["the driver asked me for his commission", "he added S$5 for VIP treatment", "the driver wanted S$30 in cash"]
             scope: BACKLOG
             rule_family: FC
           - code: FC-OTHER
@@ -272,9 +297,13 @@ vocabularies:
           - code: SE-CONDUCT
             label: Inappropriate behavior or harassment
             zh: 不当行为或骚扰
+            definition: "A rider or driver reports behavior by the other party toward a person that threatens their safety or that Ryde lists as misconduct between drivers and passengers (Code of Conduct item 5, community standards): physical assault or an attempt, verbal or physical sexual harassment, unwanted sexual advances, threats and intimidation, kidnapping or being held against one's will, abuse or harassment of any kind (insults, slurs, overly personal questions, comments on appearance, personal contact after the trip), and discrimination because of race, ethnicity, religion, nationality, disability or a similar ground (including a refusal or a canceled trip for that reason). Rudeness alone (an unfriendly or impatient manner, a raised voice, a curt reply) with no abuse, threat or discrimination is feedback (EX-FEEDBACK). A complaint that mentions discrimination sends the whole case to a person with the case file only, no recommendation (CLS-01, SE-R01)."
+            excludes: "Unsafe driving (SE-DRIVING); a ride ended midway (SE-TERMINATED); a fee contested because of the behavior keeps its own claim as a secondary claim (CLS-02)."
             term_sources:
               - "Handbook: 'Driver behaved inappropriately during the trip.'"
-              - "Ryde rider article 51354502165913 'Report a safety issue'"
+              - "Ryde rider article 51354502165913 'Report a safety issue' (the reporting channel only; its text is about seat belts)"
+              - "Ryde driver article 15395890865561 'Ryde Code Of Conduct' (item 5: Attempted or Actual Physical Assault, Verbal or Physical Sexual Harassment, Rape, Murder, Kidnapping, Threats and Intimidation, Unwanted Sexual Advances)"
+              - "Ryde driver article 33362721809049 'Driver Performance and Community Standards' ('Comments on race, ethnicity, national origin, disability, etc'; 'Cancelling for any discriminatory or prejudiced reasons')"
             organizer_code: safety_incident          # assumed
             scope: TRIAGE_TO_HUMAN
             rule_family: SE
@@ -339,12 +368,14 @@ vocabularies:
           - code: EX-FEEDBACK
             label: Feedback about the driver or rider
             zh: 对司机或乘客的一般反馈
+            definition: Feedback about service or manners (an unfriendly or impatient manner, a raised voice, a curt reply) with no contested charge, and with no abuse, threat, danger or discrimination (those are safety content, CLS-01).
             term_sources: ["Ryde rider article 18230876398105", "Ryde driver article 20690825386521"]
+            term_note: "Ryde's feedback pages also file 'rude and/or made me feel unsafe' and 'drove dangerously' here. FairRyde's line is stricter: anything beyond rudeness is safety content and goes to a person (CLS-01, FairRyde design, A4)."
             scope: ROUTE_TO_SUPPORT
           - code: EX-LOCATION
             label: Pick-up or drop-off location issue (no charge contested)
             zh: 上下车点问题（无争议款项）
-            definition: Location problem reported without contesting any charge. If a fee is contested because of a location problem, classify by the fee (for example CW-NOSHOW) and record the reason code CW-R-PIN-AMBIGUOUS.
+            definition: Location problem reported without contesting any charge. If a fee is contested because of a location problem, classify by the fee (for example CW-NOSHOW) and record the reason code CW-R-PIN-AMBIGUOUS. An unsafe drop-off (made to leave the car on an expressway or road shoulder, or at an isolated place or at night) is safety content (CLS-01), not a location issue.
             term_sources: ["Ryde articles 18230398581913 / 20691147765401 'Report issue with pick-up & drop-off location'"]
             scope: ROUTE_TO_SUPPORT
           - code: EX-APP
@@ -567,7 +598,7 @@ vocabularies:
       - {code: COMPENSATE_DRIVER, label: Compensate the driver, zh: 补偿司机, handbook: compensation}
       - {code: GOODWILL_CREDIT, label: Goodwill credit without fault finding, zh: 善意补偿（不认定过错）, handbook: compensation}
       - {code: ESCALATE_HUMAN, label: Escalate to a human, zh: 转人工}
-      - {code: REQUEST_INFO, label: Ask the claimant for missing information, zh: 要求补充信息}
+      - {code: REQUEST_INFO, label: "Ask for missing information: from the claimant, or the trip record from the platform", zh: 要求补充信息（向申诉人，或向平台调取行程记录）}
       - {code: ROUTE_TO_SUPPORT, label: Not a dispute; route to support, zh: 非争议，转普通客服}
       - {code: MERGE_DUPLICATE, label: Merge into an existing ticket, zh: 合并重复工单}
 
@@ -620,7 +651,7 @@ vocabularies:
       - {code: SE-R-HUMAN-DECIDES, label: Safety matter decided by a human, outcome: ESCALATE_HUMAN}
       - {code: GEN-R-NOT-A-DISPUTE, label: No contested charge or remedy, outcome: ROUTE_TO_SUPPORT}
       - {code: GEN-R-DUPLICATE, label: Duplicate of an open ticket, outcome: MERGE_DUPLICATE}
-      - {code: GEN-R-NEED-INFO, label: Trip or charge cannot be identified, outcome: REQUEST_INFO}
+      - {code: GEN-R-NEED-INFO, label: "Trip, charge or canceling party cannot be identified from the records", outcome: REQUEST_INFO}
       - {code: GEN-R-POLICY-GAP, label: No written rule covers the case, outcome: ESCALATE_HUMAN}
       - {code: GEN-R-SOURCE-CONFLICT, label: Policy sources conflict and the outcome depends on it, outcome: ESCALATE_HUMAN}
       - {code: GEN-R-DATA-INCONSISTENT, label: Authoritative records contradict each other beyond tolerance, outcome: ESCALATE_HUMAN}
@@ -709,8 +740,8 @@ vocabularies:
       - {code: CHARGE_AMOUNT_MISMATCH, label: Amount charged differs from the policy amount of the profile}
       - {code: MARGIN_WITHIN_SPREAD, label: The decisive margin is not larger than the disagreement between sources about the same moment}
       - {code: RECORDS_MISSING, label: A decisive finding is UNKNOWN because records are missing}
-      - {code: GPS_OUTLIER, label: "An outside stretch shorter than LEFT_MIN_OUTSIDE_S followed by a return inside, or reached at an impossible speed, after the driver was seen inside the pick-up area; set aside (CW-F04)"}
-      - {code: GPS_AMBIGUOUS, label: "The driver's GPS cannot settle whether the driver left during the wait (a stretch set aside between inside pings far apart, a departure around the window end, or a single ping); human approval (CW-F04, AUTH-02)"}
+      - {code: GPS_OUTLIER, label: "An outside stretch shorter than LEFT_MIN_OUTSIDE_S followed by a return inside, or reached at an impossible speed, after the driver was seen inside the pick-up area; set aside (CW-F04B)"}
+      - {code: GPS_AMBIGUOUS, label: "The driver's GPS cannot settle whether the driver left during the wait (a stretch set aside between inside pings far apart, a departure around the window end, a wait that starts while the driver was last seen away, or a single ping); human approval (CW-F04B, AUTH-02)"}
       - {code: GPS_DATA_ERROR, label: Driver GPS implies a speed above SPEED_MAX_KMH; the jump is set aside and gate G1 fires (DQ-02)}
       - {code: ARRIVAL_UNCONFIRMED, label: "GPS did not confirm the driver at the pick-up point when arrival was indicated; the wait counts from the first confirming ping (CW-R06, CW-F03B)"}
       - {code: OTHER, label: Other}

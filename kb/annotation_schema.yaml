@@ -1,8 +1,8 @@
 # FairRyde Knowledge Base - ANNOTATION SHEET DESIGN (ChordX ONT.5) and VALIDATION PLAN (ONT.6)
 
 meta:
-  version: 0.1.0
-  updated: 2026-10-05
+  version: 0.2.0
+  updated: 2026-10-14
   owner: Jasper
   principle: >-
     The standard answer is never pre-filled by the system under test or by any model. Input columns are mechanical copies of
@@ -17,7 +17,7 @@ meta:
   protocol_hard_cases: "ONT.6 names four hard-case types: key information missing (MISSING_INFO), negative samples that need no action (NEGATIVE), vague wording (VAGUE), and state updates (STATE_UPDATE)."
   blind_mode: "In INDEPENDENT_BLIND mode, columns marked hide_in_blind are hidden: they are AI drafts or pre-computed inputs of the decision table that could anchor the annotator."
   file_policy: >-
-    Labels live in their own workbook (FairRyde_Annotation_v0.1.xlsx). The build script creates it once and refuses to
+    Labels live in their own workbook (FairRyde_Annotation_v0.2.xlsx in KB v0.2; the name follows the KB version). The build script creates it once and refuses to
     overwrite it when any HUMAN cell is filled or the file is open (Excel or LibreOffice lock file), backing up an untouched
     copy before replacing it (ONT.11.3: never overwrite human edits). The knowledge-base workbook is regenerated freely and
     holds no labels.
@@ -83,7 +83,7 @@ groups:
       - {name: reason_code_primary, fill: HUMAN, vocab: TX-REASON, example: CW-R-FREE-WINDOW}
       - {name: reason_codes_secondary, fill: HUMAN, vocab: TX-REASON, multi: true, example: ""}
       - {name: escalate, fill: HUMAN, values: [Y, N], note: "Y when a person must approve or decide (autonomy_tier APPROVE or HUMAN); N for AUTO. The coverage sheet counts rows where the two disagree.", example: N}
-      - {name: autonomy_tier, fill: HUMAN, vocab: TX-TIER-AUTONOMY, note: "AUTO, APPROVE (FairRyde has a ruling a person confirms or changes) or HUMAN (safety, or outcome ESCALATE_HUMAN: there is no ruling to approve, AUTH-06). An ESCALATE_HUMAN outcome is always HUMAN.", example: AUTO}
+      - {name: autonomy_tier, fill: HUMAN, vocab: TX-TIER-AUTONOMY, note: "AUTO, APPROVE (FairRyde has a ruling a person confirms or changes) or HUMAN (safety, or outcome ESCALATE_HUMAN: there is no ruling to approve, AUTH-06). An ESCALATE_HUMAN outcome is always HUMAN, and so is a REQUEST_INFO under CLS-06 (no ruling until the trip record arrives).", example: AUTO}
       - {name: required_flags, fill: HUMAN, vocab: TX-FLAG, multi: true, example: ""}
       - {name: difficulty, fill: HUMAN, values: [CLEAR, BOUNDARY, CONFLICT, MISSING_INFO, NEGATIVE, VAGUE, STATE_UPDATE, BAD_FAITH, ADVERSARIAL], example: CLEAR}
 
@@ -91,7 +91,7 @@ groups:
     zh: 依据列（用了哪个文件、哪条规则）
     columns:
       - {name: decisive_rule_primary, fill: HUMAN, vocab: rule ids, example: CW-R01}
-      - {name: decision_table_row, fill: HUMAN, values: [R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, n/a], note: "Row of DT-CW-NOSHOW that applies (n/a for other types)", example: n/a}
+      - {name: decision_table_row, fill: HUMAN, values: [R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, n/a], note: "Row of DT-CW-NOSHOW that applies (n/a for other types)", example: n/a}
       - {name: supporting_rules, fill: HUMAN, vocab: rule ids, multi: true, example: "CW-F01; CW-R10; MAT-04"}
       - {name: basis_other_text, fill: HUMAN, note: "Basis not covered by a rule ID (for example a Ryde article missing from the KB); free text", example: ""}
       - {name: source_docs, fill: HUMAN, vocab: source ids, multi: true, example: "RYDE-23534478435353; RYDE-18229758389017"}
@@ -139,7 +139,7 @@ validation_plan:
     ADVERSARIAL: ">= 4 (instruction injected in description, in chat, fake JSON, other language)"
   coverage_checks:
     - Every rule is cited by at least one case (decisive or supporting), and each outcome rule is decisive in at least one case.
-    - Every decision-table row (DT-CW-NOSHOW R1 to R10) is hit by at least one case.
+    - Every decision-table row (DT-CW-NOSHOW R1 to R11) is hit by at least one case.
     - Every TX-CASE leaf with scope ADJUDICATE or ADJUDICATE_WITH_APPROVAL has at least two cases; every other leaf at least one.
     - Every ontology entity type appears in at least one case file; every TX-FLAG value is required by at least one case.
     - Consistency of each labeled row (counted on the coverage sheet, target 0) - an ESCALATE_HUMAN outcome with a tier other than HUMAN; escalate Y with tier AUTO, or N with tier APPROVE or HUMAN.

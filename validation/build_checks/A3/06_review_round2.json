@@ -1,0 +1,502 @@
+[
+ {
+  "dimension": "fidelity",
+  "review": {
+   "dimension": "FIX FIDELITY AND SCOPE",
+   "checked_ok": [
+    "Build: python3 kb/build_kb.py --no-xlsx ends 'ERROR 0 | WARN 0 | INFO 3'; it reports 'engine self-test: 105/105 variants pass; rows decided by self-tests: R1 to R11' and 'DT-CW-NOSHOW enumeration: 192 combinations, 192 unique, gaps 0, overlaps 0'. The working tree stays clean after the build, so kb/out matches the sources.",
+    "Self-tests: python3 kb/tools/selftest.py prints '105 / 105', '565 / 565 message readings', and '39 ERP cases, FC-R01 split, gate G3, the A2 and A3 rule-card checks and the census: all pass'.",
+    "Engine rerun: rerun_engine.py prints 'OK E01 UPHOLD R8 APPROVE', 'OK E02 WAIVE_FEE R1 APPROVE', 'OK E03 UPHOLD R8 APPROVE', 'OK E04 WAIVE_FEE R6 AUTO', 'OK E11 TOLL_REFUND None APPROVE', '5/5 outcomes match'. The output is field-for-field identical to the committed validation/build_checks/A3/01_engine_rerun.json.",
+    "The CW-F04B statement (English and zh) matches de53c7c's CW-F04 logic sentence by sentence. The only changes are the new framing sentence, 'F-PRESENCE over CW-F04's window', the F-GPS-LOGIC and D29 parts, and the zh '半径' spelled as ARRIVAL_GEOFENCE_M. The presence logic's meaning is unchanged.",
+    "Rule-card diffs against de53c7c stay within A3's scope: CLS-01, CW-R08, FC-F03, FC-R02, FC-R03, EXP-01 and FC-R07 go to D; CW-F04 is split and CW-F04B added; the CW-R06 params are narrowed; DQ-02 and the AUTH-02 trigger 11 reference now point to CW-F04B; AUTH-02 trigger 12 is added; CW-R03 gains the F-GPS-LOGIC input; CW-R11 lists R11; R5, R9 and R10 list CW-F04B; R8 needs gps_logic_decides false and R11 is added. SE-R02 and SE-R04 statements were changed only to match the quotes the census added. FC-R01 changed only in its notes.",
+    "F-GPS-LOGIC in CW-F04B matches engine_noshow.py. Window pings count inclusive of [start, wend]. CW-R06's moment range is [indication - PING_MAX_GAP_S, indication + TS_TOLERANCE_S], or from the indication when the platform check is present. 'Not counted' means edge_out, which is set only when presence is CONSISTENT or SPARSE. ARRIVAL_UNCONFIRMED counts whether or not the start moved. SPARSE counts, and GPS_AMBIGUOUS is the engine's ambiguous list, the only place that flag is set.",
+    "The ADV-4 narrowing is sound. Every set-aside ping is an outside ping (runs hold only outside pings, and the impossible-jump case adds the outside ping before first_in). Restoring a ping outside the window and outside the moment range cannot change the arrival or the presence.",
+    "Mutations caught by the tests: window-only can_change fails V96. Counting every set-aside ping fails V97. Dropping later_confirmation fails V94. Dropping sparse fails V08. Dropping ambiguous fails V54. Dropping not_counted fails V95. Dropping set_aside fails V25, V32, V33, V96 and V99. Dropping gl_param fails V99 (trigger text only, since clause 2 already gives APPROVE). Text sort fails V98. Removing trigger 12 fails 8 variants. Removing 'plausible range' from CW-F04B or AUTH-02 fails a3_check, and so does rating R11 B.",
+    "Tier report rerun, cases: DISP-002 is R8 APPROVE in both profiles. The organizer margin is 0 s with BOUNDARY_MARGIN and MARGIN_WITHIN_SPREAD; the Ryde margin is +300 s. Both profiles have the fraud, pin and PING_MAX_GAP_S decisive triggers. E01 to E04 rows and tiers are the same at 3426070 and HEAD. E11 is TOLL_REFUND S$6.00 APPROVE.",
+    "Tier report rerun, variants: running the current variants on the 3426070 engine changes exactly 15 rows or tiers: V04F, V25, V32, V33, V35, V48, V50 to V52, V54, V94 to V96, V98 (UPHOLD R8 to WAIVE_FEE R4) and V99 (R8 AUTO to R8 APPROVE). AUTO R8 upholds are now 20, the 19 listed plus V97.",
+    "Tier report rerun, fuzz (3,000 cases, seed 11): 959 upheld at both ends. AUTO upholds go from 118 to 59, R11 upholds are 510 (517 at 17fc16c), all AUTO rulings go from 388 to 329, waivers stay at 1,736, and there are 0 invariant findings. E07's free-wait pings are 90 s apart (10:14:30, 10:16:00, end 10:17:30), as stated.",
+    "Independent jitter simulation (400 clean upholds, parked 0 to 25 m from the pin, sigma 2 to 8 m, 70% with the platform check): AUTO goes from 149 to 24, and all 22 cases with every ping within 10 m stay AUTO. This corroborates the report's 39% to 5%.",
+    "Round 1 dispositions marked fixed are present and correct in the files: A3-FID-03, 04, 07, 08, 09 and 10; SG-1 (= ADV-1), SG-2, SG-5, SG-7, SG-8, SG-9 and SG-10; ADV-3 and ADV-5; CONS-1, 2, 3, 4, 5, 6, 8, 9, 10 and 11. The gaps are listed in the findings: FID-01 unpinned, SG-6 card, ADV-4 stale text and partial pinning, SG-2 stale D39 (a).",
+    "After A3, 10 rules are rated B or C (AUTH-03, CW-F02B C, CW-F04, CW-R00, CW-R06, FC-F01, FC-R01, GEN-R06, SE-R02, SE-R04), as NEXT_STEPS and D39 say. The census has 78 rows for 18 rules; a3_check verifies coverage and the weakest counted element.",
+    "Style and privacy: no em or en dashes in added lines; 'licence' is gone from the KB and the census (it remains only in quotes inside the round 1 review log). No names, plates, phone numbers or account IDs in V94 to V99 or the new outputs.",
+    "No mutation was left in the repo: git status is clean and HEAD is 049901a. All mutation and simulation work ran on copies under /tmp/a3check2."
+   ],
+   "findings": [
+    {
+     "id": "FID2-01",
+     "severity": "MINOR",
+     "file": "kb/tools/selftest.py",
+     "line": 684,
+     "claim": "Two parts of ADV-4's narrowed set-aside range are not pinned by any self-test, although the disposition says 'V97 pins it'. The first is the platform-check part: with the platform's arrival check, only pings at or after the indication count. The second is the part of CW-R06's moment range after the indication (up to TS_TOLERANCE_S). V97's outlier sits 135 s after the mark, outside both parts. Each mutation flips the tier of a no-show uphold and still passes the whole suite.",
+     "evidence": "Engine line 733: 'lo = t_arr if platform_check else t_arr - timedelta(seconds=maxgap)'. Mutation M2 (lo = t_arr - maxgap always) gives '== M2_platform_ignored: 0 failing line(s)'. Mutation M12 (return lo <= t_k < t_arr) gives '== M12_moment_hi_excl: 0 failing line(s)'. Concrete cases: 'V96 with platform check -> UPHOLD R8 AUTO F-GPS-LOGIC False' on HEAD becomes 'UPHOLD R11 APPROVE' under M2. 'advance, outlier 10 s after the mark -> UPHOLD R11 APPROVE' on HEAD becomes 'UPHOLD R8 AUTO F-GPS-LOGIC False' under M12.",
+     "failure_scenario": "Someone later edits can_change, for example dropping the platform_check branch or the '+ tol' bound. 105/105 still passes, and either clean upholds silently move from AUTO to APPROVE, or an uphold whose arrival could be contradicted by a set-aside ping silently becomes AUTO, against D29.",
+     "suggested_fix": "Add two variants: V96 with the platform check kept (expect R8 AUTO, F-GPS-LOGIC false), and a Ryde advance booking with the platform check and a 150 m outlier within TS_TOLERANCE_S after the mark (expect R11 APPROVE, trigger D29)."
+    },
+    {
+     "id": "FID2-02",
+     "severity": "MINOR",
+     "file": "kb/tools/selftest.py",
+     "line": 149,
+     "claim": "A3-FID-01's fix is observable but not pinned. The fix attributes F-PRESENCE to CW-F04B so that decisive lists stop naming CW-R06 or CW-F06. Reverting it passes every test, and the disposition's evidence 'V04F and V48 now report CW-F04B, not CW-R06' is not asserted: neither variant has a 'decisive' expectation, and the decisive check is containment, so an extra CW-R06 would not fail.",
+     "evidence": "Mutation M13 (rule=\"CW-F04\" on F-PRESENCE) gives '== M13_presence_attr_cwf04: 0 failing line(s)'. Under M13: 'V04F ... decisive: [('CW-R06', 'outcome changes when PING_MAX_GAP_S moves within [60, 420]'), ('CW-F04B', ...)]'. A 20 m jitter case gets '[('CW-R06', ...ARRIVAL_GEOFENCE_M...), ('CW-F04B', ...), ('CW-F06', ...)]'. On HEAD the same cases give only CW-F04B, plus DT-CW-NOSHOW R11 where R11 fires.",
+     "failure_scenario": "A later edit restores the old attribution. Explanations and traces again name CW-R06 (B) and the frozen CW-F06 as decisive for the approval step, and no test fails. Tier is unaffected.",
+     "suggested_fix": "Add a 'not_decisive' (or exact-list) expectation to V04F and V48, for example not_decisive: ['CW-R06', 'CW-F06']."
+    },
+    {
+     "id": "FID2-03",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 41,
+     "claim": "ADV-4's narrowed definition was not carried everywhere. D29's own implementation note still opens with the pre-ADV-4 range, which contradicts its later sentence and CW-F04B. The CW-R06 census row note has the same stale range. Both contradict the engine and V97.",
+     "evidence": "D29 decide: 'F-GPS-LOGIC, true when ... (a ping set aside from PING_MAX_GAP_S before the arrival indication to the window end, ...)'. Later in the same entry: 'The set-aside pings that count are those that could change the presence (in the window) or the arrival (CW-R06's moment range; with the platform check, only those at or after the indication).' census.csv line 27 (CW-R06, 'GPS outliers are set aside before the check'): 'Delegated to CW-F04B: when a ping from PING_MAX_GAP_S before the arrival to the window end is set aside, F-GPS-LOGIC is true and an upheld fee falls in row R11 (D).'",
+     "failure_scenario": "V97 (advance booking, platform check at 08:38, outlier at 08:40:15, wait from 08:45). The ping lies between the indication and the window end, so a reader of D29's first sentence or the census note rates F-GPS-LOGIC true and sends the uphold to R11 APPROVE. The engine and CW-F04B give R8 AUTO.",
+     "suggested_fix": "Replace the parenthetical in D29 and the CW-R06 census note with CW-F04B's wording: in the window, or in CW-R06's moment range; with the platform check, only at or after the indication."
+    },
+    {
+     "id": "FID2-04",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 51,
+     "claim": "SG-2's correction was applied to CW-R06 and its census row but not to D39 (a). D39 (a) still records Jasper's judgment on the false premise that every row resting on CW-R06's FairRyde parts is D.",
+     "evidence": "D39 decide (a): 'CW-R06 stays B: its FairRyde parts (the outlier step, the later confirmation, CONTESTED, UNKNOWN) are rated D in the rules they belong to (CW-F04B, CW-F03B, GEN-R02, GEN-R01) and every row that rests on them is D'. CW-R06 statement since round 1: 'A waiver for a short wait (R6, A) can rest on the later confirmation, because it moves the wait start; CW-F03B's start test then makes CW-F03B decisive'.",
+     "failure_scenario": "Jasper decides D39 (a) from the open-items text and does not see that R6 (A) can rest on CW-F03B's moved start. The tier is still right through CW-F03B's start test.",
+     "suggested_fix": "In D39 (a), say that upheld fees and escalations rest on D rows (R2, R3, R9, R11), and that a short-wait waiver (R6) on the moved start is caught by CW-F03B's start test."
+    },
+    {
+     "id": "FID2-05",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1053,
+     "claim": "SG-6 split FC-F03's rider-agreement element in the census: agreement before the trip is B, a request during the trip is FAIRRYDE (D). The FC-F03 rule card was not updated. Its credibility_note still counts three FairRyde elements and calls rider agreement Ryde text, and no FAIRRYDE source note labels the mid-trip request. CLAUDE.md requires every rule element to have a source or an open FairRyde label.",
+     "evidence": "FC-F03 statement: 'a route requested or agreed by the rider before the deviation (read the chat); avoiding ERP at the rider's request'. credibility_note: 'Rider agreement and the GPS most-efficient route are Ryde text ... so B ... Three elements are FairRyde's (D): using the GPS permission ...; the navigation-record requirement; and applying the PDVL duty to every driver'. The only FAIRRYDE source note covers the navigation record. census.csv: 'FC-F03 ... or requested or agreed during the trip before the deviation, including avoiding ERP at the rider's request, FAIRRYDE (Ryde's text covers agreement 'before you go'), D'.",
+     "failure_scenario": "A reader of the card, which an LLM applier sees and the census it does not, takes a mid-trip rider request as Ryde-sourced (B). The card and the census disagree on FC-F03's elements. The label is unaffected, since FC-F03 is D anyway.",
+     "suggested_fix": "Add the mid-trip request extension to FC-F03's FAIRRYDE source note and credibility_note ('four elements'), with the zh text if needed."
+    },
+    {
+     "id": "FID2-06",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 1123,
+     "claim": "The engine's D29 parameter trigger is broader than the rule text. CW-F04B and AUTH-02 trigger 12 limit it to CW-F04B's five parameters, but the engine fires it for any C or D parameter whose end makes F-GPS-LOGIC true, and labels it '(CW-F04B, D29)'. The tier is unchanged for no-show fees, because clause 2 already makes the moving parameter decisive.",
+     "evidence": "Engine: 'gl_param = [s[\"param\"] for s in sens if s.get(\"gps_logic_at\")]'. gps_logic_at is recorded for every C or D parameter in sensitivity(). Rule text: 'with one of this rule's parameters (ARRIVAL_GEOFENCE_M, PING_MAX_GAP_S, LEFT_MIN_OUTSIDE_S, SPEED_MAX_KMH, TS_TOLERANCE_S)'. Constructed case (Ryde profile, booking type inferred ON_DEMAND, 150 m outlier at 08:47:50, cancel 08:49): 'BOOKING_INFER_ETA_S 60 -> UPHOLD (R11)' gives trigger \"fee upheld, and FairRyde's own GPS logic would decide it with BOOKING_INFER_ETA_S at an end of its plausible range (CW-F04B, D29)\". In the fuzz run, all 334 such triggers named CW-F04B parameters only.",
+     "failure_scenario": "A reviewer reads a D29 trigger naming a CW-F01 booking-inference parameter that CW-F04B and AUTH-02 do not cover. Engine and rule text disagree on what D29's parameter part is. No tier changes.",
+     "suggested_fix": "Either restrict gl_param to CW-F04B's params (kb.rules['CW-F04B']['params']), or say in CW-F04B and AUTH-02 that any C or D parameter on the path counts."
+    },
+    {
+     "id": "FID2-07",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 598,
+     "claim": "CW-F04B's F-GPS-LOGIC text names the set-aside kind by flag ('was set aside (GPS_OUTLIER or GPS_DATA_ERROR)'). But when the set-aside ping lies in CW-R06's moment range outside the window, the engine makes F-GPS-LOGIC true and raises no GPS_OUTLIER flag, because the flag is raised only for outlier runs that touch the window.",
+     "evidence": "Engine line 657: 'out_runs = [r for r in runs if r[\"outlier\"] and touch(r)]' (touch = a ping in [start, wend]). V96 on HEAD: 'UPHOLD R11 APPROVE flags ['BOOKING_TYPE_INFERRED', 'NO_RIDER_EVIDENCE', 'GENERIC_ASSUMPTION_USED']' with 'gps_logic_detail {'why': ['set_aside'], 'set_aside_ids': ['E-GPS-06']}'. No GPS_OUTLIER.",
+     "failure_scenario": "An LLM applier following CW-F04B flags GPS_OUTLIER on V96-like cases while the reference engine does not. Flag-level disagreement in the round 2 coverage counts. Outcome and tier are unaffected.",
+     "suggested_fix": "Either flag GPS_OUTLIER for set-aside pings that F-GPS-LOGIC counts (in the moment range), or drop the flag names from CW-F04B's parenthetical ('set aside as an outlier or a data error')."
+    },
+    {
+     "id": "FID2-08",
+     "severity": "MINOR",
+     "file": "validation/build_checks/A3/01b_tier_report.md",
+     "line": 60,
+     "claim": "The radius-cost table (600 clean upholds, AUTO 235 to 29) comes from a script in the builder's scratch that is not in the repo, so that part of the tier report cannot be rerun from its inputs. Every other number in the report reproduces. An independent simulation corroborates the magnitude.",
+     "evidence": "'A simulation of 600 clean upholds shows its size (`jitter_sim.py` in the builder's scratch, seed 5)'. My own 400-case simulation with the stated settings gave {'upheld': 400, 'auto': 149, ...} on 3426070 and {'upheld': 400, 'auto': 24, 'within10': 22, 'within10_auto': 22} on HEAD.",
+     "failure_scenario": "Jasper's D39 (g) decision rests on numbers that validation round 2 or a later reviewer cannot regenerate exactly (CLAUDE.md DEP: explicit input and output files).",
+     "suggested_fix": "Commit the simulation script (for example under validation/build_checks/A3/), or mark the table as illustrative and cite the reviewer's independent replication."
+    },
+    {
+     "id": "FID2-09",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 816,
+     "claim": "Frozen area (D34): the defect that ADV-3 fixed for GPS pings (ordering by timestamp text instead of by instant) remains in the rider-message reading. answers_question sorts the driver's messages by their timestamp string. A3 did not change this code; it is the same class of pre-existing defect.",
+     "evidence": "Lines 815-816: 'prev = sorted((x for x in chat if x[\"sender\"] == \"driver\" and x[\"type\"] == \"message\" and T(x[\"timestamp\"]) <= T(c[\"timestamp\"])), key=lambda x: x[\"timestamp\"])'. Compare line 325 after the fix: 'gps = sorted(gps_raw, key=lambda g: T(g[\"timestamp\"]))'.",
+     "failure_scenario": "Chat timestamps written with mixed UTC offsets make prev[-1] a message that is not the driver's latest. A rider's 'ok' may then be read against the wrong driver question.",
+     "suggested_fix": "Record it in kb/open_items.yaml under D34 or D39 (i) for Jasper; do not fix it without his decision (frozen area)."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "FID2-01",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I reproduced it on a scratch copy (/tmp/a3check2). In engine_noshow.py can_change (lines 726-733), M2 makes lo = t_arr - maxgap always, and M12 changes the return to lo <= t_k < t_arr. Under each mutant, selftest.py still gives 105/105, 565/565 and the A3 checks all pass. The full build_kb.py --no-xlsx, fuzz seed 7 included, still gives ERROR 0 | WARN 0. Concrete flips, HEAD versus mutant: (1) V96 with the platform check kept is R8 AUTO with F-GPS-LOGIC false on HEAD, which matches CW-F04B's text ('only those at or after the indication'), and R11 APPROVE under M2. (2) A Ryde advance booking with the platform check at 08:38 and a 150 m outlier at 08:38:10, :15 or :30 (within TS_TOLERANCE_S=30 after the mark) is R11 APPROVE on HEAD and R8 AUTO under M12. That is the unsafe direction. V97's outlier at 08:40:15 is outside both bounds under every variant, and V96 has no platform check with its outlier before the mark, so neither variant tells the mutants apart. The ADV-4 disposition's 'V97 pins it' therefore overstates the coverage. The current engine is correct, so this is a missing test, MINOR."
+    },
+    {
+     "id": "FID2-02",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I applied M13 (rule=\"CW-F04\" on the F-PRESENCE finding, engine line ~712). The self-test passes 105/105 and the full build passes. Under M13, V04F's and V48's decisive lists become [CW-R06, CW-F04B, DT-CW-NOSHOW R11]. On HEAD they are [CW-F04B, DT-CW-NOSHOW R11], so CW-R06 returns as decisive. selftest.run (lines 1115-1118) only checks that each expected entry is present, and no 'not_decisive' key exists anywhere in kb/tools. Neither V04F nor V48 has a 'decisive' expectation. So the A3-FID-01 fix ('V04F and V48 now report CW-F04B, not CW-R06') is not asserted. My own case with a single 20 m ping did not reproduce the CW-F06 part (it gave only CW-F04B under M13), but the V04F and V48 evidence is enough. Tier is unchanged, so this is MINOR."
+    },
+    {
+     "id": "FID2-03",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I read kb/open_items.yaml line 41 (D29, decide). It first says F-GPS-LOGIC is true for 'a ping set aside from PING_MAX_GAP_S before the arrival indication to the window end'. Later in the same entry it gives the narrowed ADV-4 range: in the window, or CW-R06's moment range, and with the platform check only at or after the indication. Census row 27 (CW-R06, outliers) has the same stale range as a sufficient condition: 'when a ping from PING_MAX_GAP_S before the arrival to the window end is set aside, F-GPS-LOGIC is true'. Both contradict CW-F04B (rules.yaml lines 597-601) and the engine. In V97, run on HEAD, the indication is at 08:38, the window starts at 08:45 and the outlier is at 08:40:15, inside the stale range. The engine gives F-GPS-LOGIC false, R8 AUTO. The rule card and engine agree with each other, so this is a stale record, MINOR."
+    },
+    {
+     "id": "FID2-04",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I parsed D39 in open_items.yaml. Its decide (a) still reads 'CW-R06 stays B: its FairRyde parts (the outlier step, the later confirmation, CONTESTED, UNKNOWN) are rated D in the rules they belong to ... and every row that rests on them is D'. CW-R06's statement and credibility_note were corrected in round 1 (SG-2) to say that a short-wait waiver (R6, A) can rest on the later confirmation and is caught by CW-F03B's start test, and census row 28 says the same. D39 (a) was not updated, so the record Jasper will decide from carries a premise the rule card now contradicts. Tier is unaffected (CW-F03B's start test), so MINOR."
+    },
+    {
+     "id": "FID2-05",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I read rules.yaml lines 1026-1056. FC-F03's statement covers 'a route requested or agreed by the rider before the deviation' and 'avoiding ERP at the rider's request'. Its credibility_note says 'Rider agreement ... are Ryde text' and 'Three elements are FairRyde's (D)', listing the GPS permission extension, the navigation record and the PDVL duty. The only FAIRRYDE source note covers the navigation record (D36). Census rows 39, 41, 43 and 44 give four FAIRRYDE D elements, row 41 being the mid-trip request added by SG-6. git diff 453b511 829d717 shows the round 1 fix touched only the census, not the card. The card therefore has no open FairRyde label for the mid-trip request, against CLAUDE.md, and disagrees with the census. The label is unaffected (FC-F03 is D either way), so MINOR."
+    },
+    {
+     "id": "FID2-06",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Engine line 1123: gl_param = [s['param'] for s in sens if s.get('gps_logic_at')]. sensitivity() (lines 1016-1044) records gps_logic_at for every C or D parameter on the path. CW-F04B and AUTH-02 (12) limit the parameter part to CW-F04B's parameters. I rebuilt the reviewer's case: the clean V06 baseline under ryde_2026 with an inferred ON_DEMAND booking, a 150 m ping at 08:47:50 and cancellation at 08:49. It gives the trigger \"fee upheld, and FairRyde's own GPS logic would decide it with BOOKING_INFER_ETA_S at an end of its plausible range (CW-F04B, D29)\", from sensitivity 'BOOKING_INFER_ETA_S 60 -> UPHOLD (R11)'. The tier is already APPROVE because CW-F01 is decisive through clause 2's row move. So the engine is broader than the text and mislabels the trigger, with no tier change. MINOR."
+    },
+    {
+     "id": "FID2-07",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Engine line 657: out_runs = [r for r in runs if r['outlier'] and touch(r)], where touch means a ping of the stretch is in [start, wend]. On HEAD, V96 has F-GPS-LOGIC true with gps_logic_detail why=['set_aside'], set_aside_ids=['E-GPS-06'], and flags ['BOOKING_TYPE_INFERRED','NO_RIDER_EVIDENCE','GENERIC_ASSUMPTION_USED'], with no GPS_OUTLIER. CW-F04B line 598 says 'was set aside (GPS_OUTLIER or GPS_DATA_ERROR)', and line 577 says any outlier stretch is 'set aside and flagged GPS_OUTLIER'. The divergence between the flag text and touch() predates A3: de53c7c has the same touch() and the same 'flagged GPS_OUTLIER' sentence. A3's F-GPS-LOGIC parenthetical, combined with ADV-4's counting of moment-range pings outside the window, now produces F-GPS-LOGIC true with no matching flag. GPS_OUTLIER is a soft flag (SOFT_FLAGS, -0.025 on C), so an applier and the engine can disagree on flags and confidence. In V96-like upholds the tier is already APPROVE through R11. MINOR."
+    },
+    {
+     "id": "FID2-08",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "01b_tier_report.md lines 58-66 cite `jitter_sim.py` 'in the builder's scratch, seed 5'. git ls-files has no such script, and validation/build_checks/A3/ has none either. A copy exists only in this session's scratchpad (/tmp/claude-0/.../scratchpad/jitter_sim.py), outside the repo. I ran that copy with 600 cases, seed 5: HEAD gives auto 29 with all_in_10m 26/26, and de53c7c (git archive) gives auto 235, so the table's numbers are exact. They cannot be regenerated from the repo once the session scratch is gone, which falls short of the DEP rule on explicit input files. The report already cites the reviewer's independent replication (38% to 5%), so only reproducibility is affected. MINOR."
+    },
+    {
+     "id": "FID2-09",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Frozen area (D34). Engine lines 814-817: answers_question filters with T() but sorts by key=lambda x: x['timestamp'] (text), while GPS pings are now sorted by instant (line 325, ADV-3). git diff de53c7c 829d717 does not touch this code. I reproduced the effect: the clean V06 baseline, driver question 'Hi, are you coming down?' at 08:49:30 and rider 'ok' at 08:50. With the question written as +08:00, the 'ok' reads UNCLEAR, CW-F06 is decisive, tier APPROVE. With the same instant written as 2026-09-13T00:49:30+00:00, text sorting puts the earlier non-question last, so the 'ok' reads NEUTRAL, nothing is decisive, tier AUTO. That is an unsafe tier flip. Per the task rules, a gap in the frozen reading is reported only as MINOR with the D34 note, so MINOR stands. It should be recorded for Jasper (D34 or D39 (i)), not fixed in A3."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "grounding",
+  "review": {
+   "dimension": "SOURCE GROUNDING AND CREDIBILITY of every new or changed rule element (A3, de53c7c..829d717, round 2)",
+   "checked_ok": [
+    "Build on a scratch copy (git archive 829d717 to /tmp/a3check2/repo): python3 kb/build_kb.py --no-xlsx ends 'ERROR 0 | WARN 0 | INFO 3'; 131 quotes verified; 105/105 variants; DT enumeration 192/192 unique. The repo was not touched. HEAD is 049901a, which only adds round2_brief.md and a run_log line.",
+    "Census coverage (script): the 10 rules rated B or C after A3 (CW-F02B C; CW-F04, CW-R00, CW-R06, FC-F01, FC-R01, SE-R02, SE-R04, GEN-R06, AUTH-03 B) all have census rows. For all 18 census rules, the weakest element counted 'yes' equals the card label (CLS-01 D, CW-F04B D, CW-R08 D, FC-F03 D, FC-R02 D, FC-R03 D, EXP-01 D, FC-R07 D, the rest as listed).",
+    "Census quotes (script /tmp/a3check2/quotes.py): all 40 quoted strings in the census source column are exact substrings of the Ryde corpus, research notes or organizer files. The CW-R08 benchmark line is abridged with ellipses from research note 02 line 109. The cited edit dates and audiences match the corpus (for example 15395890865561 Driver 2026-04-10, 4407761313305 Rider 2024-03-18, 4412121982745 Rider 2024-10-01, 4412122016153 Driver 2023-06-16).",
+    "SE-R02 (round 1 SG-5): the statement and zh now carry the article's condition ('breaks down or malfunctions, and they are unable to safely continue the ride'). All three quotes are verbatim from 16925196526489 (edited 2023-04-26), so B is right. The census rows match.",
+    "SE-R04: the statement and zh match the article's 'traffic accident report within 24 hours' and its conditions (injury, death, pedestrian, cyclist, government or foreign vehicles, government property). The 1-hour RydeHelp quote is verbatim; the article was edited 2023-09-19, so B.",
+    "FC-F01: the recalculation quote is verbatim from 50798691815449 (edited 2025-10-09, within 12 months of 2026-10-05, not a META-04 side), so that element is A. The card stays B through its META-04 fare-basis elements.",
+    "FC-R07 (SG-10): the key-in quote is now on the card and verbatim. The FAIRRYDE note names the refund remedy and the carpool O15 assumption. D matches Jasper's 14 Oct decision as recorded in D35 item (5); the census's weakest element is D.",
+    "FC-R02, FC-R03, CW-R08, CLS-01 and EXP-01 each carry a FAIRRYDE source for the element that makes them D. Both route articles do say 'The trip fare is fixed based on pick-up and drop-off points', which FC-R02 and FC-F03 rely on.",
+    "CW-F04B has a FAIRRYDE source (D18, D24, D26, D29). All five of its parameters are FAIRRYDE D in reference_data.yaml with plausible ranges. Its zh says the same as the English, including the round 1 additions: the narrowed set-aside range, 'whether or not the wait start moved', and the parameter part of D29.",
+    "AUTH-02 trigger 12: the English and zh agree. AUTH-02 is D, and its note says the trigger list is FairRyde's design. Applying the parameter part to all five CW-F04B parameters stays within D29's own list (outliers, window edges, ping-gap and radius).",
+    "CW-F04: the statement after round 1 (no parameters, points to CW-F04B and F-GPS-LOGIC, D29 sentence) has matching zh. Its RYDE-4407754403353 quote is verbatim, and the B rating follows FX4's own definition of the Ryde core ('driver at the pick-up per GPS while waiting, B').",
+    "CW-R06: the round 1 sentences say the same in English and zh. The rules it names for its FairRyde parts are all rated D: CW-F04B, CW-F03B, GEN-R02, DQ-01 and GEN-R01.",
+    "DQ-02: the English and zh both point to CW-F04B.",
+    "DT-CW-NOSHOW: each row's credibility is the weakest of its listed rules: R1 B, R2 D, R3 D, R4 B, R5 D, R6 A, R7 D, R8 B, R9 D, R10 D, R11 D.",
+    "The engine's F-GPS-LOGIC (can_change in engine_noshow.py) matches CW-F04B's narrowed range. Rerun: V96 R11 APPROVE; V97 R8 AUTO with F-GPS-LOGIC false.",
+    "No stale credibility labels remain for the relabeled rules in playbooks, scope, taxonomy or ontology (PB-CW-RIDERCANCEL step 5 says D for CW-R08).",
+    "No en or em dashes in any added line. The only British spelling is 'Organisations' inside the verbatim IMDA quote.",
+    "D39 (a) to (i) judgments were not reopened. The frozen D34 reading was not reviewed."
+   ],
+   "findings": [
+    {
+     "id": "A3R2-GRD-01",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 559,
+     "claim": "CW-F04's credibility_note and the census row for its window element justify B by quoting the main policy page as \"waits ... at the pick-up point\". In the source, 'at the pick-up point' belongs to 'for the rider to arrive', so the clause does not say where the driver waits. The window end ('leaving after the threshold does not count') is recorded in open item D26 as a team decision, and the census does not cite D26. The B label can still stand on RYDE-4407754403353 and FX4's own core ('driver at the pick-up per GPS while waiting, B'), but the stated basis is a misreading. The element is the one on which an automatic uphold like V34 rests.",
+     "evidence": "rules.yaml:559: 'reading \"waits ... at the pick-up point\" as presence until the threshold interprets Ryde text, so the norm is B'. census.csv:10 note: 'Reading 'waits ... at the pick-up point' as presence until the threshold is an interpretation of Ryde text (B).' Source RYDE-23534478435353: 'The driver presses \"I'm Here\", waits for > 3 minutes for the rider to arrive at the pick-up point and cancels the trip'. RYDE-4407754403353: 'Drivers are only allowed to indicate arrival and impose the Waiting Time Fee only if he/she: 1. Is at the pick-up location according to GPS data AND 2. Has waited for more than 3 mins'. open_items.yaml:37 D26: 'Presence is checked only until the threshold is reached: leaving after that does not void the fee', decide: 'Team; organizer (question O12)' (O12 asks only about the start). Engine rerun: 'V34 UPHOLD R8 AUTO GPS-LOGIC False' (the driver drives off at 08:51:15, after the threshold, and cancels at 08:52, 400 m away).",
+     "failure_scenario": "A reviewer who checks the B label against the quote finds the stated basis does not hold. The choice that a departure between the threshold and the cancellation does not count is the only thing keeping V34 an automatic uphold. It is recorded in D26 as FairRyde's, and D39 does not list it for Jasper. If he reads it as FairRyde's (D), uphold rows like V34's would need approval. As written, outcome and tier are unchanged.",
+     "suggested_fix": "Rewrite the note and census row 10. Ground presence while waiting on RYDE-4407754403353 ('Is at the pick-up location according to GPS data AND Has waited for more than 3 mins') as FX4's B core. Ground the window end on 'waits for > 3 minutes ... and cancels', the elision the statement already uses faithfully. Cite D26 for the choice that leaving after the threshold does not count, and add to D39 the question of whether that end is Ryde's (B) or FairRyde's (D)."
+    },
+    {
+     "id": "A3R2-GRD-02",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 1053,
+     "claim": "Round 1's SG-6 fix split the FC-F03 census row: a route agreed before the trip is B, and a request or agreement during the trip (including avoiding ERP at the rider's request) is FAIRRYDE, D. The FC-F03 card was not updated. Its FAIRRYDE source covers only the navigation-record rule. Its credibility_note calls rider agreement 'Ryde text ... so B' and lists only three D elements, so the during-trip element has no FairRyde label on the card.",
+     "evidence": "census.csv FC-F03 row: '... or requested or agreed during the trip before the deviation, including avoiding ERP at the rider's request,FAIRRYDE (Ryde's text covers agreement 'before you go'),D,yes,D,Check round 1 (SG-6)'. Card statement: 'a route requested or agreed by the rider before the deviation (read the chat); avoiding ERP at the rider's request'. Card note: 'Rider agreement and the GPS most-efficient route are Ryde text ... so B' and 'Three elements are FairRyde's (D): using the GPS permission ...; the navigation-record requirement; and applying the PDVL duty to every driver'. FAIRRYDE source (line 1045): 'Requiring the trip's navigation record for the GPS justification ... is FairRyde's evidence rule'. zh: '乘客事先要求或同意的路线'. Source 4412121982745: 'reach a mutual agreement before you go.'",
+     "failure_scenario": "A KB applier or reviewer reading only the card takes a rider's mid-trip request, or a request to avoid ERP, as a Ryde-sourced (B) justification for a detour. The census says it is FairRyde's extension. The card's label is already D, so this does not change an outcome, but it breaks the rule that every element has a source or a FairRyde label.",
+     "suggested_fix": "Name the during-trip request or agreement and the ERP-avoidance request in FC-F03's FAIRRYDE source note and credibility_note (four D elements). Make the zh distinguish before the trip (行程开始前) from during the trip."
+    },
+    {
+     "id": "A3R2-GRD-03",
+     "severity": "MINOR",
+     "file": "validation/round2/census.csv",
+     "line": 27,
+     "claim": "After the ADV-4 fix, CW-F04B and the engine count a set-aside ping only if it could change the presence (in the window) or the arrival (CW-R06's moment range; with the platform check, only at or after the indication). Two texts still state the old range, from PING_MAX_GAP_S before the arrival to the window end: census row 27, which justifies CW-R06's 'delegated' outlier element, and the first parenthetical of D29's decide note. The DT-CW-NOSHOW note and the ontology label still summarize the finding as 'a ping set aside' without the qualifier. ADV-4's disposition says the census agrees with the engine, but this row was not updated.",
+     "evidence": "census.csv:27: 'Delegated to CW-F04B: when a ping from PING_MAX_GAP_S before the arrival to the window end is set aside, F-GPS-LOGIC is true and an upheld fee falls in row R11 (D).' open_items.yaml:41 D29: '(a ping set aside from PING_MAX_GAP_S before the arrival indication to the window end, ...)'. CW-F04B: 'a ping inside the window, or one CW-R06 reads for the arrival (from PING_MAX_GAP_S before the indication to TS_TOLERANCE_S after it; when the platform's own arrival check confirms the arrival, only those at or after the indication ...)'. rules.yaml:1934 and ontology.yaml:335: '(a ping set aside, an outside ping not counted as leaving, ...)'. Engine rerun: 'V97 UPHOLD R8 AUTO GPS-LOGIC False'. V97 has a 150 m outlier at 08:40:15, set aside between the indication (08:38) and the window start (08:45).",
+     "failure_scenario": "Take V97. Under the census note and D29's parenthetical, F-GPS-LOGIC is true and the uphold is R11 APPROVE. Under CW-F04B and the engine, it is R8 AUTO. An applier following the census, the DT note or the ontology label would send such advance-booking cases to approval while the engine decides them automatically, and the census justification for keeping CW-R06 at B misstates the rule it delegates to. The engine and the rule text agree, so the KB's own outcome is unchanged.",
+     "suggested_fix": "Rewrite census row 27's note and D29's first parenthetical to CW-F04B's range. Add 'that could change the arrival or the presence' to the DT-CW-NOSHOW note and to the ontology label of F-GPS-LOGIC."
+    },
+    {
+     "id": "A3R2-GRD-04",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 609,
+     "claim": "CW-F04B's English and zh say no waiver rests on its logic. Yet F-GPS-LOGIC includes the later confirmation (ARRIVAL_UNCONFIRMED), and a short-wait waiver (R6) can rest on the wait start it moves. CW-R06 and the DT-CW-NOSHOW note say exactly this since round 1's SG-2 fix. SG-2 corrected the same overstatement in CW-R06 but not in CW-F04B.",
+     "evidence": "CW-F04B: 'A waiver does not rest on the logic in this way: setting a ping aside or not counting it only removes evidence that the driver was away, so a LEFT or a FALSE arrival found with the logic also holds on the pings alone'. zh: '免除收费不以这种方式依赖这套逻辑'. CW-R06: 'A waiver for a short wait (R6, A) can rest on the later confirmation, because it moves the wait start'. DT note: 'A short-wait waiver (R6) can rest on a later GPS confirmation that moved the wait start; CW-F03B's start test covers it.' Engine rerun: 'V37 WAIVE_FEE R6 APPROVE GPS-LOGIC True {'why': ['later_confirmation']}' (decisive: CW-F03B).",
+     "failure_scenario": "V37 is a waiver that rests on CW-F04B's later-confirmation part with F-GPS-LOGIC true, which contradicts CW-F04B's own sentence. The tier is still right because CW-F03B's start test makes the case decisive. A reader of CW-F04B alone would conclude that no waiver needs that check.",
+     "suggested_fix": "Narrow the sentence in both languages: a LEFT or FALSE waiver does not rest on the logic in this way. Add that a short-wait waiver (R6) can rest on the later confirmation's moved start, and that CW-F03B's start test covers it (as in CW-R06 and the DT note)."
+    },
+    {
+     "id": "A3R2-GRD-05",
+     "severity": "MINOR",
+     "file": "kb/rules.yaml",
+     "line": 847,
+     "claim": "CW-R06's round 1 sentence (English and zh) and its credibility_note list R3 among the rows on which 'an upheld fee or an escalation' rests. R3 is a waiver (WAIVE_FEE), not an upheld fee or an escalation.",
+     "evidence": "rules.yaml:847: 'An upheld fee or an escalation that rests on one of them is on a row rated D: R2 (CONTESTED), R3 (UNKNOWN), and R9 or R11'. zh: '维持收费或转人工依赖其中任何一项时，所在决策表行可信度为 D：R2（CONTESTED）、R3（UNKNOWN）'. rules.yaml:868: 'Every row on which an upheld fee or an escalation rests on them is rated D (R2, R3, R9, R11)'. DT row: '{row: R3, when: {arrival_valid: UNKNOWN}, outcome: WAIVE_FEE, ... credibility: D}'.",
+     "failure_scenario": "A reader takes R3 (UNKNOWN arrival) for an uphold or an escalation, when the table waives the fee. R3 is D either way, so no label or tier changes.",
+     "suggested_fix": "Reword in the statement, the zh and the note, for example: 'A ruling that rests on one of them is on a row rated D: R2 (CONTESTED, escalation), R3 (UNKNOWN, waiver), and R9 or R11 (fee upheld while F-GPS-LOGIC is true).'"
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "A3R2-GRD-01",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I read kb/rules.yaml:559 (CW-F04 credibility_note) and census.csv line 10. Both justify B with the elided phrase 'waits ... at the pick-up point'. The source in kb/sources/ryde_policy_corpus.json:18 says 'waits for > 3 minutes for the rider to arrive at the pick-up point and cancels the trip'. 'At the pick-up point' goes with 'arrive', so the elision makes Ryde appear to say where the driver waits. A3 added this wording: it is not in de53c7c's CW-F04. D26 (open_items.yaml:37) records 'Presence is checked only until the threshold is reached: leaving after that does not void the fee' as a v0.1 default with decide 'Team; organizer (question O12)'. O12 (line 73) asks only about the start. The census row does not cite D26, and D39 (a) to (i) do not raise the window end. I reran V34 in scratch: UPHOLD R8 AUTO, F-GPS-LOGIC False, no triggers. That AUTO depends on the window ending at the threshold. The B label still stands on RYDE-4407754403353, as census row 9 shows, so labels, outcomes and tiers are unchanged. The misquote is a wording and grounding defect (MINOR). Whether the window end is Ryde's (B) or FairRyde's (D) is Jasper's call, which the suggested fix rightly routes to D39."
+    },
+    {
+     "id": "A3R2-GRD-02",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Census rows 40 and 41 split the FC-F03 element after SG-6. Agreement before the trip is B (RYDE-4412121982745, 'before you go'). A request or agreement during the trip, ERP avoidance included, is FAIRRYDE, D. The FC-F03 card (rules.yaml:1026 onward) was not changed in the round 1 fixes: git diff 453b511 829d717 shows no FC-F03 change. Its statement still says 'a route requested or agreed by the rider before the deviation' and 'avoiding ERP at the rider's request'. Its only FAIRRYDE source covers the navigation-record rule. Its credibility_note says 'Rider agreement ... are Ryde text ... so B' and names three D elements without the during-trip request. No open item labels that element: grep for 'during the trip' and 'mid-trip' in open_items.yaml and rules.yaml finds nothing. The card is D anyway, so nothing changes in outcome or tier, but the element lacks the source or FairRyde label that CLAUDE.md requires. The zh '事先' leaves 'before the trip or before the deviation' ambiguous. MINOR."
+    },
+    {
+     "id": "A3R2-GRD-03",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Census line 27 (CW-R06 outlier element, 'delegated') still reads 'when a ping from PING_MAX_GAP_S before the arrival to the window end is set aside, F-GPS-LOGIC is true'. D29's decide note (open_items.yaml:41) opens with the same old range. The same note later states the new range, so D29 contradicts itself. The engine's can_change (engine_noshow.py:727-735) counts a set-aside ping only if it falls in the window or in [t_arr, or t_arr - maxgap without the platform check, t_arr + tol]. CW-F04B's text matches the engine. I reran V97 in scratch: UPHOLD R8 AUTO, F-GPS-LOGIC False, no triggers. Its 08:40:15 ping is a single 150 m stretch followed by an inside ping, so it is an outlier set aside. It lies between 08:33 and the window end, so the census and D29 range would make F-GPS-LOGIC true (R11, APPROVE). The DT-CW-NOSHOW note (rules.yaml:1934) and the ontology label (ontology.yaml:335) say only 'a ping set aside', without the qualifier. The engine and the rule text agree, so the KB's outcome is unchanged; the defect is stale supporting text. ADV-4's disposition says the census agrees, but this row was missed. MINOR."
+    },
+    {
+     "id": "A3R2-GRD-04",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "CW-F04B (rules.yaml:609 and the zh '免除收费不以这种方式依赖这套逻辑') says unconditionally that a waiver does not rest on the logic. Its justification covers only set-aside or uncounted pings (LEFT or FALSE). The same rule lists the later confirmation (ARRIVAL_UNCONFIRMED) as a part of F-GPS-LOGIC. CW-R06's statement and the DT note (rules.yaml:1941) both say a short-wait waiver (R6) can rest on the later confirmation's moved start. The sentence is unchanged from 17fc16c (line 601), so SG-2's fix did not reach it. I reran V37 in scratch: WAIVE_FEE R6 APPROVE, F-GPS-LOGIC True (why: later_confirmation), decisive CW-F03B. The tier is right through CW-F03B's start test, so this is an overstatement in the rule text only. MINOR."
+    },
+    {
+     "id": "A3R2-GRD-05",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "CW-R06's statement says 'An upheld fee or an escalation that rests on one of them is on a row rated D: R2 (CONTESTED), R3 (UNKNOWN), and R9 or R11'. The zh says the same ('维持收费或转人工依赖其中任何一项时 ... R3（UNKNOWN）'), and the credibility_note says 'Every row on which an upheld fee or an escalation rests on them is rated D (R2, R3, R9, R11)'. DT-CW-NOSHOW row R3 (rules.yaml:1958) is outcome WAIVE_FEE, credibility D. So R3 is neither an upheld fee nor an escalation. R3 is D either way, so no label, outcome or tier changes. The defect is wording only: MINOR."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "adversarial",
+  "review": {
+   "dimension": "ADVERSARIAL TEST OF THE CHANGED LOGIC (engine_noshow.py F-GPS-LOGIC, D29 trigger, counting range, ping sort; waiting-fee rule text as an LLM applies it)",
+   "checked_ok": [
+    "D29, base part: about 25 targeted full-engine cases with F-GPS-LOGIC true. They cover window-edge pings (C01 to C03), outliers (C17a/b, C25, C28, C34, C35, C52), a data error (C05), GPS_AMBIGUOUS (C22, C45a, C47b, C49b), a later confirmation (C48) and SPARSE (C18, C36). None upholds at AUTO: each lands on R11 or R9 with the D29 trigger, or on an R10 or R2 escalation. Scripts are in /tmp/a3check2/battery*.py.",
+    "D29, parameter part: the engine's sensitivity reads F-GPS-LOGIC at both ends of all five CW-F04B parameters. It caught C19 (Ryde, two pings 210 s apart), C20 (moment ping 270 s before the indication, next ping 40 s after it), C24 (outlier 40 s after the arrival, counted at TS_TOLERANCE_S 60), DISP-002, E01, E03 and the E07 waiting-fee proxy. I found no AUTO uphold where one parameter at one end makes F-GPS-LOGIC true.",
+    "ADV-4 narrowing, differential test: a patched copy of the engine (/tmp/a3check2/mod/engine_mod.py) treats one uncounted set-aside stretch at a time as real. Over 3,000 random cases (fuzz_presence.make, organizer late wait start, Ryde advance bookings with glitches) there were 303 upholds with F-GPS-LOGIC false and 74 uncounted stretches. None changed the arrival or presence value. One moved R8 to R11 through GPS_AMBIGUOUS (a data-error ping 25 s after the window end). That case is APPROVE anyway, through the PING_MAX_GAP_S and SPEED_MAX_KMH ends. The targeted cases C04, C07, C08, C53 and V97-like are AUTO only where the pinged stretch can change neither arrival nor presence.",
+    "ADV-3 sort fix: pings written in Z, +00:00, +09:00 or +0800, with milliseconds or a space separator, or in reversed file order, and a trip record in UTC, all give V06's decision. Departures written in another offset (C16a to C16c) are R4 WAIVE_FEE. An outlier written in +09:00 (C35) is R11 APPROVE.",
+    "Waiting-fee text applied to E07 and E08 patterns (hand application, cross-checked with an engine proxy at boarding with the 180 s threshold):\n- E07 as given: approval through the PING_MAX_GAP_S end (90 s gaps).\n- E07 with 30 s pings at the pin: AUTO, correctly.\n- E07 with an outlier in the free wait: F-GPS-LOGIC true, approval.\n- E08: ARRIVAL_UNCONFIRMED moves the start to 20:37:20, so the fee fails (90 s) and CW-F03B is decisive.\nThe only AUTO uphold resting on the logic is the edge-gap pattern in finding ADV2-1.",
+    "The named cases match 01b_tier_report.md: E01 R8 APPROVE, E02 R1 APPROVE, E03 R8 APPROVE, E04 R6 AUTO, and DISP-002 R8 APPROVE in both profiles.",
+    "Window semantics agree with CW-F04:\n- leaving after the threshold (C21) is AUTO;\n- an outside ping 1 s after the window end with a return and the last inside ping 30 s earlier (C04) cannot be LEFT and is AUTO;\n- real departures of 90 s (C50) or at about 110 km/h (C51) are R4 at APPROVE, with LEFT_MIN_OUTSIDE_S or SPEED_MAX_KMH decisive.",
+    "Self-test 105/105 and 565/565 readings pass. The build on a scratch copy (git archive HEAD to /tmp/a3check2/headcopy, --no-xlsx) ends ERROR 0 | WARN 0 | INFO 3. The repo itself was not touched; HEAD 049901a differs from 829d717 only in the round 2 brief and the run log.",
+    "The frozen reading area (D34): this step does not change it, and no case here depended on it."
+   ],
+   "findings": [
+    {
+     "id": "ADV2-1",
+     "severity": "MAJOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 736,
+     "claim": "F-GPS-LOGIC (CW-F04B) misses the window-edge logic D29 names ('window edges'). The rules treat the driver as present across an unobserved change of position at a window edge. One case: the last ping at the pin is more than TS_TOLERANCE_S before the window end and the next ping is outside, more than TS_TOLERANCE_S after the window end. The other: a real departure before the window start, with the driver first seen back more than TS_TOLERANCE_S into the window. In both, F-GPS-LOGIC is false at the base values and at every parameter end, so the fee is upheld at AUTO. A shorter or earlier-detected version of the same pattern goes to approval through GPS_AMBIGUOUS. The presence logic predates A3 (the de53c7c engine gives the same AUTO), but A3's F-GPS-LOGIC was meant to cover it. The same hole reaches waiting fees through the rule text.",
+     "evidence": "Engine line 691: `elif not r[\"outlier\"] and r not in left_runs and start <= t_first <= wend + timedelta(seconds=tol) and t_prev < wend - timedelta(seconds=tol)`. The CW-F04B text matches it: 'first seen outside between the window start and TS_TOLERANCE_S after the window end' and 'Only pings inside the window decide the value; pings outside it only show where a stretch begins and whether the driver came back.' D29: 'whenever upholding a fee depends on FairRyde's own GPS logic (outliers, window edges, ...)'.\n\nRuns (full E.run):\n- C49: UPHOLD, R8, AUTO, GL=False, no sensitivity GL.\n- C49b, the same with the away ping at 08:46:25: R11, APPROVE, GPS_AMBIGUOUS.\n- C45b: R8, AUTO.\n- C45a, the same 60 s dropout after a 15 s outlier stretch: R11, APPROVE, GPS_AMBIGUOUS.\n- C45c: R8, AUTO.\n- WF-4 (E07 proxy): R8, AUTO.\n- WF-4b: R11, APPROVE.\n- The de53c7c engine also gives AUTO for C45b, C45c and C46.\n\nThe explanation sent for C49 says: 'This decision was made automatically ... Every driver GPS point from 08:43:00 to 08:46:00 is at the pick-up pin, and the longest stretch without a point at the pin is 60 seconds ... After the counted wait ended at 08:46:00, the driver's GPS was away from the pick-up pin (E-GPS-12); the fee pays for the wait up to that point, so this is not counted as leaving.'\n\nThe project's own fuzz generator produces this shape: in /tmp/a3check2/oracle_fuzz.py (1,500 cases, seed 21), 8 of the 37 AUTO upholds have it. fuzz_presence.check only inspects outside pings up to `wend + timedelta(seconds=TOL)` and never generates advance bookings.",
+     "failure_scenario": "C49 (no-show): V06 baseline changed to the Ryde profile:\n- cancellation_policy removed, booking_type ON_DEMAND, NON_CONTESTING description;\n- cancellation moved to 08:47:00; platform check at 08:43:00 kept;\n- driver pings at the pin every 20 s from 08:43:00 to 08:45:00, then one ping 400 m north at 08:46:40.\nThe window is 08:43:00 to 08:46:00. The engine upholds at R8, tier AUTO, although the pings cannot show more than 120 s of waiting at the pick-up. Moving the away ping earlier, to 08:46:25, gives approval.\n\nC45c (no-show): Ryde advance booking for 08:45, arrival 08:38 with the platform check, cancellation 08:48:10. Pings every 10 s at the pin until 08:40:00, 400 m north from 08:40:20 to 08:44:50, back at the pin from 08:45:50. The engine counts the window from 08:45:00 as presence and upholds at R8, AUTO. At urban speeds the driver cannot have waited 180 s at the pick-up.\n\nWF-4 (waiting fee, from E07): free wait 10:14:30 to 10:17:30. Pings at the pin every 20 s until 10:16:50, one ping 400 m away at 10:18:10, at the pin from 10:19:00 until boarding at 10:21:10. CW-F04B as written gives CONSISTENT. The away ping is set aside but not counted, and GPS_AMBIGUOUS needs it by 10:18:00. So F-GPS-LOGIC is false at every parameter end, AUTH-02 trigger 12 does not fire, and an LLM applier upholds at AUTO.\n\nThe pattern is rare: it needs a dropout of 60 to 90 s straddling the threshold, or an advance-booking driver who leaves and returns 30 to 60 s after the scheduled time.",
+     "suggested_fix": "In CW-F04B's F-GPS-LOGIC (or in GPS_AMBIGUOUS), and in the engine, add two conditions:\n(a) the last inside ping in the window is more than TS_TOLERANCE_S before the window end and the next ping is outside, whenever it comes before the cancellation or boarding. That is, drop the 'TS_TOLERANCE_S after the window end' cap on the first outside ping.\n(b) the window starts after the confirmed arrival, the last ping before the window start is outside and not set aside, and the first inside ping comes more than TS_TOLERANCE_S after the window start.\nAdd self-test variants for C49 and C45b. Extend fuzz_presence to advance bookings and to outside pings after wend + TS_TOLERANCE_S. In explain.py, the after-window sentence should not imply the driver left after the counted wait when the last inside ping is more than TS_TOLERANCE_S before its end."
+    },
+    {
+     "id": "ADV2-2",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 516,
+     "claim": "After the sort-by-instant fix (ADV-3), pings written in another UTC offset are decided correctly. Their times are still displayed in the ping's own offset, so the trace and the explanation mix clock times. The wait start taken from a ping (CW-F03B) is printed in UTC next to local times.",
+     "evidence": "C48 is V94 (no platform check, GPS confirms the driver at 08:43:40) with the pings written in Z. Step 8 reads: 'wait counted from 00:43:40 (GPS confirmation after the anchor); elapsed 500 s'. The rider explanation reads: 'arrival was marked at 08:43:00; the first confirmation is at 00:43:40, so the wait counts from then ... Every driver GPS point from 00:43:40 to 00:51:40 ... The wait lasted 500 seconds, from 00:43:40 to 08:52:00'. Line 516: `obs = [{\"t\": T(g[\"timestamp\"]), ...` keeps each ping's own tzinfo.",
+     "failure_scenario": "Any case whose GPS feed is in UTC while the trip record is in +08:00 gets an explanation, sent to both parties, saying the wait ran 'from 00:43:40 to 08:52:00'. The outcome and tier are correct.",
+     "suggested_fix": "Convert ping instants to the trip record's offset when building obs, e.g. `T(g[\"timestamp\"]).astimezone(end.tzinfo)` at line 516 (and wherever t_confirm is taken from a ping). Add a self-test assertion on the step 8 text for V98 or C48."
+    },
+    {
+     "id": "ADV2-3",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 325,
+     "claim": "A GPS timestamp with no UTC offset makes E.run raise TypeError, so the case gets no ruling and no tier, instead of a flag such as RECORDS_MISSING with approval. With some pings naive, the new sort itself fails. With all of them naive, the comparison with the arrival fails. This is not an unsafe AUTO, and the crash predates A3 in effect.",
+     "evidence": "C13 (pings from 08:46 written without an offset): line 325, `gps = sorted(gps_raw, key=lambda g: T(g[\"timestamp\"]))`, raises 'TypeError: can't compare offset-naive and offset-aware datetimes'. C13b (all pings naive): line 518, `k = next((i for i, o in enumerate(obs) if o[\"t\"] >= t_arr), len(obs))`, raises the same TypeError.",
+     "failure_scenario": "A real feed that drops the offset on some pings (e.g. '2026-09-13T08:47:00') makes the whole run fail, so the dispute is neither decided nor routed by the engine.",
+     "suggested_fix": "Normalize timestamps on intake. Either assume the trip record's offset and flag it (DQ-03 style, RECORDS_MISSING, approval) or reject the case to a person with a stated reason. Add a variant with a naive ping."
+    },
+    {
+     "id": "ADV2-4",
+     "severity": "MINOR",
+     "file": "kb/tools/engine_noshow.py",
+     "line": 1123,
+     "claim": "The D29 parameter trigger fires on any C or D parameter at whose plausible-range end F-GPS-LOGIC becomes true, not only on CW-F04B's five parameters. It then tells the reviewer that 'FairRyde's own GPS logic' would decide with a non-GPS parameter. AUTH-02 trigger 12 limits the trigger to CW-F04B's parameters. The tier is unaffected because clause 2 already makes the row move decisive.",
+     "evidence": "`gl_param = [s[\"param\"] for s in sens if s.get(\"gps_logic_at\")]`. C54 (Ryde profile, booking_type not recorded and inferred ON_DEMAND, a 150 m outlier at 08:47:00, cancellation 08:48:30) produces the trigger 'fee upheld, and FairRyde's own GPS logic would decide it with BOOKING_INFER_ETA_S at an end of its plausible range (CW-F04B, D29)'. BOOKING_INFER_ETA_S is CW-F01's parameter. AUTH-02 (12) says 'with one of CW-F04B's parameters at either end of its plausible range'.",
+     "failure_scenario": "A Ryde case with an inferred booking type: at BOOKING_INFER_ETA_S 60 the trip becomes ADVANCE, the window moves, and an outlier falls inside it. The reviewer sees a D29 trigger attributed to CW-F04B for a booking-type parameter. The outcome and tier are unchanged.",
+     "suggested_fix": "Filter on CW-F04B's parameters: `gl_param = [s[\"param\"] for s in sens if s.get(\"gps_logic_at\") and s[\"param\"] in kb.rules[\"CW-F04B\"][\"params\"]]`. A window that moves through another parameter stays decisive under clause 2."
+    },
+    {
+     "id": "ADV2-5",
+     "severity": "MINOR",
+     "file": "kb/playbooks.yaml",
+     "line": 117,
+     "claim": "PB-CW-WAITING step 5 says 'Presence and F-GPS-LOGIC as for a no-show fee, over the free wait'. An LLM applier can read 'over the free wait' as the scope of F-GPS-LOGIC. CW-F04B's F-GPS-LOGIC also counts set-aside pings in CW-R06's arrival range before the window, and a later confirmation. Read that way, a waiting fee whose arrival rests on a set-aside ping before the free wait comes out AUTO.",
+     "evidence": "playbooks.yaml step 5 note: 'Presence and F-GPS-LOGIC as for a no-show fee, over the free wait; if the fee stands while F-GPS-LOGIC is true ...'. CW-F04B: 'a ping inside the window, or one CW-R06 reads for the arrival (from PING_MAX_GAP_S before the indication to TS_TOLERANCE_S after it ...)'. V96, the no-show twin, is R11 APPROVE.",
+     "failure_scenario": "Waiting fee built from E07 with the platform confirmation removed ('Driver tapped I'm Here.' only). There is a 150 m one-ping outlier 15 s before the indication, between inside pings, and every free-wait ping is at the pin. CW-F04B gives F-GPS-LOGIC true (approval). A literal reading of step 5 checks only the free wait, finds nothing set aside, and the waiting fee is upheld at AUTO.",
+     "suggested_fix": "Reword step 5, e.g.: 'Presence over the free wait, and F-GPS-LOGIC exactly as CW-F04B defines it (including set-aside pings CW-R06 reads for the arrival and a later confirmation)'."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "ADV2-1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "CRITICAL",
+     "reason": "Reproduced with full E.run on HEAD (code is identical to 829d717). Scripts are in /tmp/a3check2/skeptic_adv/. (1) C49 (Ryde on-demand, window 08:43:00 to 08:46:00, inside pings until 08:45:00, one ping 400 m away at 08:46:40, cancellation 08:47:00): UPHOLD, R8, AUTO, F-GPS-LOGIC false. No parameter end gives F-GPS-LOGIC true. With the away ping at 08:46:25 or 08:46:30 the result is R11, APPROVE, GPS_AMBIGUOUS 'end'; at 08:46:31 it is AUTO again. That is the wend + TS_TOLERANCE_S cap at engine line 691. explain.py's text for C49 says 'This decision was made automatically ... After the counted wait ended at 08:46:00, the driver's GPS was away ... (E-GPS-12)', exactly as quoted. (2) C45c (Ryde advance booking for 08:45, platform check at 08:38, 400 m north from 08:40:20 to 08:44:50, back at the pin from 08:45:50, cancellation 08:48:10): UPHOLD, R8, AUTO, F-GPS-LOGIC false, no trigger. Step 9 counts the window start as presence ('longest stretch without presence evidence 50 s'). On the pings alone the driver was 400 m away 10 s before the start. Being back by 08:45:00 would take 144 km/h, and at 50 km/h the earliest return is about 08:45:19. That leaves at most about 170 s of waiting against a 180 s threshold, so the outcome itself rests on the logic. A 60-second ping cadence with no dropout at all (out at 08:44:50, in at 08:45:50) also gives R8 AUTO. (3) WF-4, via a no-show-engine proxy on E07: R8 AUTO; WF-4b (away ping at 10:17:55): R11 APPROVE. (4) The de53c7c engine (git archive into scratch) also gives AUTO for C45c and C49, so the presence logic predates A3. But D29 had no implementation before A3, and A3 is the step that had to deliver it. The rule text matches the engine, so an LLM applier gets the same AUTO. CW-F04B's 'Only pings inside the window decide the value' and 'the window start is a point at the pick-up' when the arrival is TRUE are FairRyde's logic (D). CW-F04B defines F-GPS-LOGIC as 'true when this logic, and not the pings alone, makes the driver count as arrived and present', but its enumerated conditions miss this case. D29 names window edges and LEFT explicitly. fuzz_presence only generates ON_DEMAND (line 42) and only checks outside pings up to wend + TOL (line 109), so nothing tests this. Severity: an AUTO uphold where D29 requires APPROVE, in an in-scope type (CW-NOSHOW, and CW-WAITING through the same text), changes the tier. That is CRITICAL under the given definitions, the same class as round 1's CRITICAL SG-1/ADV-1. The start-edge case (C45c) is the clearest. The end-edge case (C49) partly rests on D24's design cap and is closer to a judgment, but it also contradicts F-GPS-LOGIC's own definition sentence."
+    },
+    {
+     "id": "ADV2-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced C48: V94 (no platform check, pings every 20 s from 08:43:40) with the pings rewritten in Z. The result is UPHOLD, R11, APPROVE, elapsed 500 s, which is correct. Step 7 reads 'first confirmed by the ping at 00:43:40'. Step 8 reads 'wait counted from 00:43:40'. Step 9 reads 'window 00:43:40 to 00:51:40'. The explanation sent to both parties says 'The wait lasted 500 seconds, from 00:43:40 to 08:52:00' and 'arrival was marked at 08:43:00; the first confirmation is at 00:43:40'. Line 516 keeps each ping's own tzinfo. Outcome and tier are right; the issue is display and labeling only, so MINOR."
+    },
+    {
+     "id": "ADV2-3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced. C13 (pings from 08:46 without an offset) raises TypeError at line 325, the new sort by instant. C13b (all pings naive) raises TypeError at line 518. The de53c7c engine also crashes on both, at lines 554 and 518, so the defect predates A3 and A3 only moved where it fails. The run aborts with no ruling and no AUTO, so no unsafe tier results. MINOR is right."
+    },
+    {
+     "id": "ADV2-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Reproduced C54: Ryde profile, booking type not recorded and inferred ON_DEMAND, 30 s pings, a 150 m ping at 08:47:00, cancellation 08:48:30. The base is R8 with F-GPS-LOGIC false. Sensitivity has BOOKING_INFER_ETA_S 60 -> R11 with gps_logic_at ['low']. decide_tier lists the trigger 'fee upheld, and FairRyde's own GPS logic would decide it with BOOKING_INFER_ETA_S at an end of its plausible range (CW-F04B, D29)'. gl_param at line 1123 does not filter on CW-F04B's params. AUTH-02 (12) (rules.yaml lines 1772-1776) says 'one of CW-F04B's parameters'. The tier is unchanged: the same row move is already decisive under clause 2 (decisive: CW-F01), and any such move to R9 or R11 always is. So this is a labeling mismatch between engine and rule text, MINOR."
+    },
+    {
+     "id": "ADV2-5",
+     "verdict": "REFUTED",
+     "severity_after_check": "NONE",
+     "reason": "I read playbooks.yaml line 117. The note says 'Presence and F-GPS-LOGIC as for a no-show fee, over the free wait', and the step's rule column is 'CW-F04, CW-F04B'. 'As for a no-show fee' brings in CW-F04B's definition. That definition places the arrival-range pings relative to the arrival indication ('one CW-R06 reads for the arrival (from PING_MAX_GAP_S before the indication ...)'), not relative to the window. So substituting the free wait for the window leaves them in, and the natural reading is the correct one. The claimed AUTO depends on a reader ignoring the rule the step names. It was not observed: the round 1 KB applier on the waiting-fee case E07 (validation/build_checks/A3/02_applier.jsonl) checked set-aside pings at the CW-R06 step and applied CW-F04B's F-GPS-LOGIC and its parameter part correctly at step 5. Clarifying the wording would do no harm, but no real defect is shown."
+    }
+   ]
+  }
+ },
+ {
+  "dimension": "consistency",
+  "review": {
+   "dimension": "Consistency across files and party-facing text (A3, check round 2)",
+   "checked_ok": [
+    "Build of an untouched copy of HEAD (git archive to /tmp/a3check2/cur): python3 kb/build_kb.py --no-xlsx ends ERROR 0 | WARN 0 | INFO 3, with 105/105 variants, 192/192 unique DT combinations and rows R1 to R11 all hit. A full build including the xlsx also passes. The committed kb/out/check_report.md and kb/out/disp002_trace.md are byte-identical to the fresh build.",
+    "make_xlsx.py: in the regenerated workbook the 10_决策表 sheet shows 5 input columns, including gps_logic_decides and R11. The width fix puts the credibility fill on column 12, the 可信度 column. make_xlsx uses explain.noshow and report_md.py hard-codes no row ranges.",
+    "explain.noshow on all 105 variants plus E01 to E04 and DISP-002 (both profiles): exp03_unmatched is empty everywhere, so every number in the new sentences ('After the counted wait ended at {wend}', 'the counted wait ({start} to {wend})') is registered (EXP-03).",
+    "V25, V94, V95, V98, V99, DISP-002, E01 and E03 explanations were read sentence by sentence against the pings and events (listed with distances by /tmp/a3check2/gps_ids.py). The counted window, the set-aside and not-counted IDs (V25 E-GPS-13, V95 E-GPS-21), the after-window IDs (V95 E-GPS-22, E-GPS-23), V94's 08:43:00 mark and 08:43:40 confirmation, V98's 120 s and 150 m departure, V99's radius attribution and the S$ amounts all match the facts. V96 is the exception (see the MAJOR finding).",
+    "Rule labels in the explanations follow the relabels: CW-F04 is 'Ryde policy; credibility B' and CW-F04B is 'FairRyde assumption; credibility D'. R11 lists CW-F04B among the rules that decided the outcome; R8 and R4 list it under 'Also used'. The parameter is attributed to CW-F04B (E01, E03, DISP-002: 'used by CW-F04B'), and CW-F06 no longer appears as decisive.",
+    "Row and tier changes, old engine (de53c7c) against the new one, over all 105 variants: exactly V04F, V25, V32, V33, V35, V48, V50, V51, V52, V54, V94, V95, V96, V98 and V99 change, as 01b_tier_report.md lists. 20 automatic R8 upholds remain (19 plus V97), as the report says. Fuzz 3000/11 gives 388 then 329 AUTO, matching the report.",
+    "Labels: rules.yaml has 9 B and 1 C rule (the 10 NEXT_STEPS names). The census before-labels match de53c7c for all 16 old B and C rules plus FC-R07. The relabels listed in D39 match rules.yaml, and so does D36 ('the A3 census rates it D').",
+    "Consumers updated consistently: PB-CW-NOSHOW step 9 (R11, or R9 when SPARSE, plus the parameter part), PB-CW-WAITING step 5 (all five parameters, AUTH-02 trigger 12), PB-CW-RIDERCANCEL step 5 (CW-R08 D), the scope.yaml competency question, the taxonomy flags GPS_OUTLIER and GPS_AMBIGUOUS (now CW-F04B), ontology F-PRESENCE and F-GPS-LOGIC, the reference_data LEFT_MIN_OUTSIDE_S note, annotation_schema R11 (values and coverage), and DQ-02 (English and zh). AUTH-02 (12), CW-F04, CW-F04B and CW-R06 say the same in English and zh.",
+    "Grep of kb/ (excluding kb/sources and kb/out) for stale wording finds no remaining 'R1 to R10', no outlier step set aside by CW-F04, and no old C or A labels on CLS-01, CW-R08, FC-F03, FC-R02, FC-R03, EXP-01 or FC-R07. The remaining 'CW-F04' references mean Ryde's condition or the window, which is correct.",
+    "No em or en dashes in any line A3 added (checked by code point). British spellings appear only in verbatim quotes: IMDA's 'Organisations', and 'cancelled' in quoted case data. 'licence' is gone from rules.yaml and the census.",
+    "New test data V94 to V99 adds no names, plates, phone numbers or account IDs; the variants reuse DISP-002's existing records. Observation outside the test data: validation/build_checks/A3/02_applier.jsonl quotes E09's synthetic account IDs ('same rider R-2290 and driver D-4408') from the case file.",
+    "Reviewed only for context (frozen, D34): the rider-message reading. A3 did not change it, and I report nothing there."
+   ],
+   "findings": [
+    {
+     "id": "CONS2-1",
+     "severity": "MAJOR",
+     "file": "kb/rules.yaml",
+     "line": 597,
+     "claim": "The round 1 fix (ADV-4) means to count a set-aside ping only if it 'could change' the arrival. The text, and the engine with it, instead counts every set-aside ping anywhere in CW-R06's moment range. But CW-R06 reads only the last remaining ping in that range, so an outlier earlier than a remaining ping in the range cannot change the arrival. V96, the variant added to pin this rule, is such a case. Its R11 explanation tells both parties something false: that the arrival and stay rest on FairRyde's reading of a point that could not have changed anything.",
+     "evidence": "CW-F04B: 'a ping that could change the arrival or the presence was set aside (GPS_OUTLIER or GPS_DATA_ERROR), that is, a ping inside the window, or one CW-R06 reads for the arrival (from PING_MAX_GAP_S before the indication to TS_TOLERANCE_S after it; ...)'. CW-R06 (line 836): 'The moment ping is the last remaining ping from PING_MAX_GAP_S before the arrival event to TS_TOLERANCE_S after it.' engine_noshow.py 733-734: 'lo = t_arr if platform_check else t_arr - timedelta(seconds=maxgap) ... return lo <= t_k <= t_arr + timedelta(seconds=tol)'. Runs (/tmp/a3check2/v96cf2.py): V96 as built gives 'UPHOLD R11 TRUE E-GPS-09 CONSISTENT ... set_aside_ids: [E-GPS-06]'. With E-GPS-06 not set aside (LEFT_MIN_OUTSIDE_S=0) it gives 'UPHOLD R8 TRUE E-GPS-09 CONSISTENT ... why: []': the same moment ping and the same presence. TS_TOLERANCE_S 5 and PING_MAX_GAP_S 60 give the same. With E-GPS-06 moved to the pin: 'UPHOLD R8 AUTO'. V96 explanation (rider and driver): 'So whether the driver arrived and stayed at the pick-up point rests on how FairRyde reads the GPS points, not on the points alone: a point away from the pin was set aside as an outlier or a data error (E-GPS-06).' The selftest and tier report describe V96 as 'a 150 m outlier at 08:42:45 among the pings CW-R06 reads for the arrival'.",
+     "failure_scenario": "No platform arrival check (the GPS that settles the arrival is the driver's own). The driver is seen at the pin, has one GPS glitch within PING_MAX_GAP_S (5 min) before marking arrival, and then pings cleanly at the pin. The uphold goes to R11 and APPROVE instead of R8 and AUTO (safe direction). Both parties are told the arrival and stay rest on FairRyde's reading of E-GPS-06, which was taken before the arrival mark, is not dated in the text, and could not have changed the moment ping (E-GPS-09 at 08:43:30, at the pin). A literal LLM applier reading 'one CW-R06 reads for the arrival' as the moment ping would rule R8 AUTO, so it disagrees with the engine on the tier.",
+     "suggested_fix": "Count a set-aside ping in the moment range only when no remaining ping in that range is later than it, so that it would otherwise be CW-R06's moment ping (or recompute CW-R06 with the ping restored). Reword CW-F04B (English and zh), D29 and the census accordingly. Rebuild V96 so the outlier is the last ping in the range: pings at the pin until 08:42:30, the outlier at 08:42:45, the next ping at 08:43:40; there the arrival does change. In explain.py, give the time of a set-aside point outside the counted wait (for example 'before the arrival mark') and say which kind it is: the trace already knows outlier or data error."
+    },
+    {
+     "id": "CONS2-2",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 41,
+     "claim": "The round 1 fix narrowed which set-aside pings count (ADV-4), but the old range still stands in D29's first definition and in the census row for CW-R06's outlier element, and they contradict CW-F04B. The ontology label for F-GPS-LOGIC and the DT-CW-NOSHOW credibility note still say just 'a ping set aside', with no range.",
+     "evidence": "D29 decide: 'true when the logic and not the pings alone makes the driver count as arrived and present (a ping set aside from PING_MAX_GAP_S before the arrival indication to the window end, ...)'. The same entry later says: 'The set-aside pings that count are those that could change the presence (in the window) or the arrival (CW-R06's moment range; with the platform check, only those at or after the indication).' validation/round2/census.csv line 27: 'Delegated to CW-F04B: when a ping from PING_MAX_GAP_S before the arrival to the window end is set aside, F-GPS-LOGIC is true and an upheld fee falls in row R11 (D).' ontology.yaml line 335: '(a ping set aside, an outside ping not counted as leaving, ...)'. rules.yaml line 1933-1935 (DT note): '(a ping set aside, an outside ping not counted as leaving, a later GPS confirmation, SPARSE or GPS_AMBIGUOUS)'.",
+     "failure_scenario": "V97 is a Ryde advance booking for 08:45 with the platform check at 08:38 and an outlier at 08:40:15. Under D29's first sentence and census row 27 the outlier counts, giving R11 and APPROVE. The engine and CW-F04B give F-GPS-LOGIC false, R8 and AUTO (as the selftest expects). A reviewer or applier who uses the open item, the census or the ontology as the definition reaches a different tier (safe direction).",
+     "suggested_fix": "In D29's first parenthetical and census row 27, replace 'from PING_MAX_GAP_S before the arrival indication to the window end' with CW-F04B's range (in the window, or in CW-R06's moment range; with the platform check, only at or after the indication). In the ontology label and the DT note, write 'a set-aside ping that could change the arrival or the presence'."
+    },
+    {
+     "id": "CONS2-3",
+     "severity": "MINOR",
+     "file": "kb/tools/explain.py",
+     "line": 205,
+     "claim": "A3 added an after-window sentence that tells the parties the point after the counted wait 'is not counted as leaving'. In V54 that point is exactly what makes the departure unsettled (GPS_AMBIGUOUS, the reason the case needs approval). The explanation never says why it is unsettled, and the new sentence reads as if the driver was certainly present for the whole counted wait. The missing reason is older than A3: line 192 skips the 'gap' kind as 'already stated', but the set-aside sentence covers only outliers inside the window.",
+     "evidence": "V54 rider and driver text: 'Every driver GPS point from 08:43:00 to 08:51:00 is at the pick-up pin, and the longest stretch without a point at the pin is 40 seconds (E-GPS-05 to E-GPS-27). The GPS points therefore cannot settle whether the driver left the pick-up point during the wait. After the counted wait ended at 08:51:00, the driver's GPS was away from the pick-up pin (E-GPS-28); the fee pays for the wait up to that point, so this is not counted as leaving. So whether the driver arrived and stayed ... rests on how FairRyde reads the GPS points, not on the points alone: the GPS points cannot settle whether the driver left.' Trace: ambiguous [{'kind': 'gap', 's': 70.0}]. The last point at the pin is E-GPS-27 at 08:50:20, 40 s before the window end; the next is E-GPS-28 at 08:51:10, 100 m away. explain.py line 192: 'if a[\"kind\"] == \"gap\": # already stated in the sentence about the points set aside'.",
+     "failure_scenario": "In V54 the driver may have left as early as 08:50:21, 39 s before the counted wait ended. The rider is told only that the away point after 08:51:00 'is not counted as leaving'. The explanation does not say the last point at the pin was 40 s before the counted wait ended, so the rider cannot see why a person reviews the fee or what to contest.",
+     "suggested_fix": "When an ambiguity of kind 'gap' or 'end' involves an after-window point, add its reason, for example: 'the last point at the pin was at 08:50:20, 40 seconds before the counted wait ended, and the next point (E-GPS-28) is away from the pin'. Also say in the after-window sentence that this point is why a person checks the decision, or leave that point out of the sentence."
+    },
+    {
+     "id": "CONS2-4",
+     "severity": "MINOR",
+     "file": "kb/open_items.yaml",
+     "line": 51,
+     "claim": "Several A3 open-item records misstate the rules or the review evidence: D39 (g) and (a), D39's list of added sources, and D31.",
+     "evidence": "D39 (g): 'a reviewer's simulation of 600 clean upholds ... found automatic upholds falling from 38% to 5%, all of the moved cases through ARRIVAL_GEOFENCE_M's 10 m low end'. The reviewer's evidence (03_review_round1.json, ADV-2) says: 'Of the 201, 198 come from ARRIVAL_GEOFENCE_M and 3 from TS_TOLERANCE_S.' D39 (a): 'reading Ryde's GPS condition at the moment of the arrival through the last ping before it'. CW-R06 instead takes the last remaining ping up to TS_TOLERANCE_S after the arrival; in V25 the moment ping is E-GPS-06 at 08:43:30, after the 08:43:00 mark. D39 changed: 'Sources added: FC-F01 ..., SE-R02 ..., SE-R04 ...' omits FC-R07's new RYDE-115001438614 key-in quote (round 1 SG-10). D31 still lists PB-CW-WAITING as '(... CW-F03B, CW-F04, CW-R05 ...)' without CW-F04B, and still says A3 'must state it in the rule text'.",
+     "failure_scenario": "Jasper decides D39 (g) on the belief that the radius alone causes the cost. The reviewer's run also moved 3 cases through TS_TOLERANCE_S, which neither listed option (exempt the radius, raise its low end) would restore. A reader of D39 (a) believes the moment ping is never after the arrival mark.",
+     "suggested_fix": "D39 (g): give the reviewer's split (198 through the radius, 3 through TS_TOLERANCE_S, on the round 1 draft) separately from the builder's post-fix run. D39 (a): write 'through the last remaining ping from PING_MAX_GAP_S before to TS_TOLERANCE_S after it'. Add FC-R07's key-in quote to 'Sources added'. In D31, add CW-F04B to the PB-CW-WAITING list and mark the rule-text part done (pointing to D29)."
+    },
+    {
+     "id": "CONS2-5",
+     "severity": "MINOR",
+     "file": "docs/NEXT_STEPS.md",
+     "line": 43,
+     "claim": "A3 reopened a point Jasper had decided (CONS-7, carpool flag), but NEXT_STEPS still reports it as decided, and D35's own list of open items omits it. The 'For people, not sessions' section, which A2 used for points awaiting Jasper, also lists none of D39's judgments for him. This is not the status line.",
+     "evidence": "D35: '... for the other services it reads as not carpool (A3 check round 1, CONS-7: to confirm with Jasper whether he meant RydeFLASH only, as implemented, or every service). Items (1), (3), (6) and (9) stay open.' NEXT_STEPS line 43: 'Decided by Jasper (14 Oct, on the points A2 left open): ... an unrecorded is_carpool stays as implemented (RydeFLASH: approval)'. D39 decide: 'Judgments for Jasper, not changed: (a) ... (i)'. grep for D39 in docs/NEXT_STEPS.md finds nothing.",
+     "failure_scenario": "Jasper works from NEXT_STEPS' list for people. He sees the is_carpool point as settled, misses the CONS-7 question, and never sees the D39 (a) to (i) judgments, including (g), which sets the automatic-uphold rate. D35's closing list also suggests (8) needs no further action.",
+     "suggested_fix": "Add (8) (CONS-7 scope question) to D35's closing list of open items. In NEXT_STEPS 'For people, not sessions', add one line: 'To decide (A3, D39 (a) to (i) and D35 (8)): ...', and qualify 'stays as implemented' with the pending scope question."
+    }
+   ]
+  },
+  "verify": {
+   "verdicts": [
+    {
+     "id": "CONS2-1",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MAJOR",
+     "reason": "I reproduced this on HEAD 049901a, which is 829d717 plus the round 2 brief. In V96 the arrival mark is 08:43:00 and there is no platform check. The pings are 08:42:30 at the pin, 08:42:45 at 150 m (E-GPS-06, set aside), 08:42:55 at the pin, 08:43:00 at the pin and 08:43:30 at the pin. CW-R06 (rules.yaml 836) and the engine (engine_noshow.py 552-555, cand[-1]) take the last remaining ping in [t_arr-PING_MAX_GAP_S, t_arr+TS_TOLERANCE_S]. That ping is E-GPS-09 at 08:43:30, at the pin. E-GPS-06 is earlier than three kept in-range pings, and 08:42:55 and 08:43:00 stay in range at any tolerance. It is also before t_arr, so it is outside after_arr and later_in. It therefore cannot change the arrival at any parameter value. can_change (733-735) still counts it because it tests only the range.\n\nRuns:\n- /tmp/a3check2/v96cf.py: as built, UPHOLD R11 APPROVE with F-GPS-LOGIC true. With the outlier moved to the pin, UPHOLD R8 AUTO with the same moment ping. With the outlier removed, R8 AUTO.\n- v96cf2.py reproduces the reviewer's lines. One correction: at TS_TOLERANCE_S 5 the moment ping becomes E-GPS-08, not E-GPS-09, but the result is still R8 and TRUE.\n- I built a mutant engine (/tmp/a3check2/sk/mut) that counts an in-range set-aside ping only when no kept ping in the range is later. Of 105 variants only V96 changes (R11 APPROVE to R8 AUTO), so no parameter end flips it back. On 3,000 fuzz cases (seed 11), 4 change F-GPS-LOGIC or row, and none changes tier.\n\nCW-F04B's text says 'a ping that could change the arrival ... that is, ... one CW-R06 reads for the arrival (range)' (English and zh). That equivalence is false. The V96 explanation tells both parties that arrival and stay 'rest on' E-GPS-06, which is factually wrong; I confirmed the text in the explain output.\n\nSeverity: not CRITICAL. The tier effect is only toward approval, D29 is a floor, and the reach is rare (0 tier changes in 3,000 fuzz cases). The defect is real logic (not wording), and the case gets a false party-facing statement, so MAJOR stands. Note that round 1 rated the same class of over-inclusion (ADV-4) MINOR, so the owner may calibrate it down.",
+     "failure_scenario": ""
+    },
+    {
+     "id": "CONS2-2",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "Read directly. D29's decide in kb/open_items.yaml line 41 says '(a ping set aside from PING_MAX_GAP_S before the arrival indication to the window end, ...)'. The same entry later says 'The set-aside pings that count are those that could change the presence (in the window) or the arrival (CW-R06's moment range; with the platform check, only those at or after the indication)', so the entry contradicts itself. census.csv row 27 (CW-R06 outlier element) also uses the old range: 'when a ping from PING_MAX_GAP_S before the arrival to the window end is set aside, F-GPS-LOGIC is true'. ontology.yaml line 335 and the DT-CW-NOSHOW note (rules.yaml 1933-1935) say only 'a ping set aside'.\n\nI ran V97 (Ryde advance booking, platform check at 08:38, window 08:45 to 08:48, outlier at 08:40:15). The engine gives R8 AUTO with F-GPS-LOGIC false. Under D29's first parenthetical and census row 27 that outlier would count. The tier is unaffected in the engine, and the stale text is in records and labels, so MINOR is right.",
+     "failure_scenario": ""
+    },
+    {
+     "id": "CONS2-3",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "I ran V54 through explain.py. The rider and driver text match the quote: 'The GPS points therefore cannot settle whether the driver left ...' followed by A3's new 'After the counted wait ended at 08:51:00, the driver's GPS was away from the pick-up pin (E-GPS-28); ... not counted as leaving.' The trace has ambiguous [{'kind':'gap','s':70.0}] and outlier_kinds all zero. explain.py line 192 skips 'gap' as 'already stated in the sentence about the points set aside'. That sentence is built from presence_detail outlier_kinds, which the engine (engine_noshow.py 703-709) counts only for pings in the window. E-GPS-28 (08:51:10) is after the window, so no reason is ever given.\n\nRunning the de53c7c engine and explain (git archive copy) shows the same reasonless 'therefore' sentence, so the gap predates A3. A3's new sentence is literally accurate but adds no reason. The 'reads as certainly present' part is a reading judgment. What is confirmed is a missing detail in party text, so MINOR.",
+     "failure_scenario": ""
+    },
+    {
+     "id": "CONS2-4",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "All four sub-points check out.\n\n(g): D39 (open_items.yaml line 51) says the reviewer's simulation (38% to 5%) moved 'all of the moved cases through ARRIVAL_GEOFENCE_M's 10 m low end'. 03_review_round1.json ADV-2 evidence says 'Of the 201, 198 come from ARRIVAL_GEOFENCE_M and 3 from TS_TOLERANCE_S', so the record misattributes. The 'all through the radius' result is the builder's own run (disposition and tier report: 235 to 29).\n\n(a): D39 says 'through the last ping before it'. CW-R06 and the census row take the last remaining ping up to TS_TOLERANCE_S after the arrival. Running V25 gives moment ping E-GPS-06 at 08:43:30, after the 08:43:00 mark.\n\nSources added: the A3 diff adds 'Please key in ERP based on the ERP gantry you passed during the journey.' to FC-R07 (rules.yaml 1292), but D39's 'Sources added' lists only FC-F01, SE-R02 and SE-R04.\n\nD31: unchanged by A3 (it is only context in the diff). It still lists PB-CW-WAITING's rules without CW-F04B, although playbook step 5 is 'CW-F04, CW-F04B', and it still says A3 'must state it in the rule text', which AUTH-02 trigger 12 and CW-F04B now do.\n\nThese are record inaccuracies with no tier effect, so MINOR.",
+     "failure_scenario": ""
+    },
+    {
+     "id": "CONS2-5",
+     "verdict": "CONFIRMED",
+     "severity_after_check": "MINOR",
+     "reason": "D35 item (8) in open_items.yaml now says '(A3 check round 1, CONS-7: to confirm with Jasper whether he meant RydeFLASH only, as implemented, or every service)'. Its closing sentence still reads 'Items (1), (3), (6) and (9) stay open', which omits (8). NEXT_STEPS.md line 43 still reports 'an unrecorded is_carpool stays as implemented (RydeFLASH: approval)' as decided, with no pending question. grep finds no D39 in NEXT_STEPS.\n\nAt A2's close (commit 3426070), the 'For people, not sessions' section did list the points awaiting Jasper ('To confirm with Jasper (D35): ...'), so the convention exists and A3 has not followed it. One mitigating point: A3 is still marked draft and its status line is not yet updated either, so the D39 line may be meant for the close. The D35 (8) inconsistency is real now. It is documentation only, so MINOR.",
+     "failure_scenario": ""
+    }
+   ]
+  }
+ }
+]
