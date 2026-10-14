@@ -3,7 +3,7 @@
 # Counts marked {n_...} are filled in by build_kb.py from the YAML files.
 
 meta:
-  version: 0.1.0
+  version: 0.2.0
   updated: 2026-10-05
   owner: Jasper
   method: "Each 'before' statement was checked against the text of the 4 Oct report; an independent reviewer then checked both columns against the files."
@@ -109,7 +109,7 @@ rows:
     requirement: 标注表（输入、标准答案、依据、关联四组列；下拉加自填；主次其他；哪些自动、哪些 AI、哪些必须人工；说明写进表里）
     before: 有盲标流程、"LLM 不得生成 gold 标签"的要求和 12 个标签字段（ruling、remedy、decisive_rules、key_evidence、required_flags 等），但没有按四组列设计，没有主次其他结构，也没有标明哪些列自动、AI、人工。
     now: 五组列（多一个过程列）；下拉允许自填；分号分隔多值；答案、依据、证据各有主项、次项、其他；每列标 AUTO、FORMULA、HUMAN、AI_OK，会锚定标注人的列在盲标时隐藏；示例行用虚构案件；标注放在单独的工作簿里，脚本不会覆盖已填的标注。
-    where: annotation_schema.yaml；FairRyde_Annotation_v0.1.xlsx
+    where: annotation_schema.yaml；FairRyde_Annotation_v0.2.xlsx
     status: 已做
     remaining: 开始造案例和标注
 

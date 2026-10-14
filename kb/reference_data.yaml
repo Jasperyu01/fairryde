@@ -6,9 +6,9 @@
 meta:
   kb: FairRyde Knowledge Base
   layer: Rules / reference data
-  version: 0.1.0
+  version: 0.2.0
   status: draft
-  updated: 2026-10-05
+  updated: 2026-10-14
   owner: Jasper
   how_profiles_work: >-
     A case is evaluated under exactly one profile (rule META-01). Profile parameters override shared parameters.

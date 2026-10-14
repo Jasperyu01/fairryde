@@ -6,9 +6,9 @@
 meta:
   kb: FairRyde Knowledge Base
   layer: Rules
-  version: 0.1.0
+  version: 0.2.0
   status: draft
-  updated: 2026-10-05
+  updated: 2026-10-14
   owner: Jasper
   reviewers: [Cao]
   authority: >-

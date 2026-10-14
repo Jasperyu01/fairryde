@@ -1,8 +1,8 @@
 # FairRyde Knowledge Base - ANNOTATION SHEET DESIGN (ChordX ONT.5) and VALIDATION PLAN (ONT.6)
 
 meta:
-  version: 0.1.0
-  updated: 2026-10-05
+  version: 0.2.0
+  updated: 2026-10-14
   owner: Jasper
   principle: >-
     The standard answer is never pre-filled by the system under test or by any model. Input columns are mechanical copies of
@@ -17,7 +17,7 @@ meta:
   protocol_hard_cases: "ONT.6 names four hard-case types: key information missing (MISSING_INFO), negative samples that need no action (NEGATIVE), vague wording (VAGUE), and state updates (STATE_UPDATE)."
   blind_mode: "In INDEPENDENT_BLIND mode, columns marked hide_in_blind are hidden: they are AI drafts or pre-computed inputs of the decision table that could anchor the annotator."
   file_policy: >-
-    Labels live in their own workbook (FairRyde_Annotation_v0.1.xlsx). The build script creates it once and refuses to
+    Labels live in their own workbook (FairRyde_Annotation_v0.2.xlsx in KB v0.2; the name follows the KB version). The build script creates it once and refuses to
     overwrite it when any HUMAN cell is filled or the file is open (Excel or LibreOffice lock file), backing up an untouched
     copy before replacing it (ONT.11.3: never overwrite human edits). The knowledge-base workbook is regenerated freely and
     holds no labels.

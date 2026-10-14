@@ -1,6 +1,6 @@
-# FairRyde knowledge base v0.1: check report
+# FairRyde knowledge base v0.2: check report
 
-Generated from the YAML source files (knowledge base dated 2026-10-05).
+Generated from the YAML source files (knowledge base dated 2026-10-14).
 
 * Rules: 90; vocabularies: 22; TX-CASE leaves: 35; entities: 20; events: 35; playbooks: 11
 * Rule sources: 190; VERIFIED 148, NO_QUOTE (design assumption) 35, PARAPHRASE 7
@@ -12,7 +12,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-05).
 * ERP rules self-test: 53 ERP cases, the FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: all pass
 * Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
-* Annotation workbook: workbooks skipped (--no-xlsx)
+* Annotation workbook: FairRyde_Annotation_v0.2.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.2.20261014T115338.xlsx
 * Issues: ERROR 0, WARN 0, INFO 3
 
 * DISP-002 under organizer_case: **UPHOLD** (row R8), reasons CW-R-NOSHOW-VALID, CW-R-PIN-AMBIGUOUS, flags BOOKING_TYPE_INFERRED, BOUNDARY_MARGIN, MARGIN_WITHIN_SPREAD, NO_RIDER_EVIDENCE, PIN_VENUE_MISMATCH, FRAUD_SIGNAL, GENERIC_ASSUMPTION_USED, confidence 0.689, tier **APPROVE**

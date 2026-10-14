@@ -7,9 +7,9 @@
 meta:
   kb: FairRyde Knowledge Base
   layer: Rules / playbooks
-  version: 0.1.0
+  version: 0.2.0
   status: draft     # each playbook moves draft -> approved only after review by the business owner
-  updated: 2026-10-05
+  updated: 2026-10-14
   owner: Jasper
   step_primitives:
     GET: Load evidence items by ID from the evidence store.
