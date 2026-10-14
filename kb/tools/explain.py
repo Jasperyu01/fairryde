@@ -157,9 +157,10 @@ def noshow(kb, run: dict) -> dict:
     edge = ""
     if n_edge:
         e, tl = N("edge_outside", n_edge), N("tol_s", int(P["TS_TOLERANCE_S"]["value"]))
-        edge = (f"{e} point away from the pin within {tl} seconds of the start or end of the wait was not counted as leaving, because records of the "
+        span = f"the counted wait ({start} to {wend})" if wend else "the counted wait"
+        edge = (f"{e} point away from the pin within {tl} seconds of the start or end of {span} was not counted as leaving, because records of the "
                 f"same moment can differ by that much" if n_edge == 1 else
-                f"{e} points away from the pin within {tl} seconds of the start or end of the wait were not counted as leaving, because records of "
+                f"{e} points away from the pin within {tl} seconds of the start or end of {span} were not counted as leaving, because records of "
                 f"the same moment can differ by that much") + paren(pd.get("edge_ids") or [])
     at_pin_ids = [i for i in gps_ids if i not in (pd.get("edge_ids") or [])]
     tail = "".join(f"; {x}" for x in (set_aside, edge) if x) + "."
@@ -187,17 +188,53 @@ def noshow(kb, run: dict) -> dict:
     amb = pd.get("ambiguous") or []
     if amb and not no_wait and reason != "GEN-R-POLICY-GAP":
         why = []
-        for a in amb:
-            if a["kind"] == "gap":                # already stated in the sentence about the points set aside
+        w0, w1 = [(datetime.fromisoformat(x) if x else None) for x in (pd.get("window") or [None, None])]
+        for i_a, a in enumerate(amb):
+            in_window = bool(a.get("first_out_t") and w0 and w1 and w0 <= datetime.fromisoformat(a["first_out_t"]) <= w1)
+            if a["kind"] == "gap" and in_window:  # set aside inside the counted wait: already stated in the sentence about the points set aside
                 continue
-            elif a["kind"] == "end":
-                why.append(f"the car was first seen away from the pin around the end of the wait, {N('amb_end_s', int(a['s']))} seconds after the last point at the pin")
+            if a["kind"] == "gap":
+                why.append(f"a point away from the pin{', ' + a['first_out_id'] + ',' if a.get('first_out_id') else ''} lies between points at the pin "
+                           f"{N(f'amb_gap_s_{i_a}', int(a['s']))} seconds apart, so the car may have been away longer than that point shows")
+            elif a["kind"] == "end" and a.get("last_in") and w1 and wend:
+                before_s = int((w1 - datetime.fromisoformat(a["last_in"])).total_seconds())
+                why.append(f"the last point at the pin was at {N(f'amb_last_in_{i_a}', _hms(a['last_in']))}, {N(f'amb_before_end_{i_a}', before_s)} seconds "
+                           f"before the counted wait ended at {wend}, and the next point{', ' + a['first_out_id'] + ',' if a.get('first_out_id') else ''} "
+                           f"is away from the pin")
+            elif a["kind"] == "start":
+                why.append(f"the counted wait starts at {start}, but the last point before it, {a['last_out_id']} at "
+                           f"{N(f'amb_last_out_{i_a}', _hms(a['last_out']))}, is away from the pin, and no point shows the car back at the pin until "
+                           f"more than {N('tol_s', int(P['TS_TOLERANCE_S']['value']))} seconds into the counted wait")
             elif a["kind"] == "single":
                 why.append("the departure rests on a single point")
             elif a["kind"] == "single_false":
                 why.append("only one GPS point follows the arrival mark")
         facts.append("The GPS points therefore cannot settle whether the driver left the pick-up point during the wait." if not why else
                      "The GPS points cannot settle whether the driver left the pick-up point during the wait (" + "; ".join(dict.fromkeys(why)) + ").")
+    merits = t.outcome == "UPHOLD" and reason == "CW-R-NOSHOW-VALID"
+    after_out = pd.get("after_window_outside_ids") or []
+    unsettled = {a.get("first_out_id") for a in amb if a["kind"] in ("gap", "end")}
+    if merits and after_out and wend and not (unsettled & set(after_out)):
+        facts.append(f"After the counted wait ended at {wend}, the driver's GPS was away from the pick-up pin{paren(after_out)}; "
+                     f"the fee pays for the wait up to that point, so this is not counted as leaving.")
+    gl = getattr(t, "gps_logic_detail", None) or {}
+    if merits and f.get("F-GPS-LOGIC", {}).get("value"):           # CW-F04B, decision D29: say what the points alone do not show
+        why = []
+        if gl.get("set_aside_ids"):
+            one = len(gl["set_aside_ids"]) == 1
+            why.append(f"{'a point' if one else 'points'} away from the pin {'was' if one else 'were'} set aside as "
+                       f"{'an outlier or a data error' if one else 'outliers or data errors'}{paren(gl['set_aside_ids'])}")
+        if gl.get("not_counted_ids"):
+            one = len(gl["not_counted_ids"]) == 1
+            why.append(f"{'a point' if one else 'points'} away from the pin near the start or end of the counted wait "
+                       f"{'was' if one else 'were'} not counted as leaving{paren(gl['not_counted_ids'])}")
+        if "later_confirmation" in (gl.get("why") or []):
+            why.append("GPS confirmed the driver at the pick-up pin only after the arrival mark")
+        if "sparse" in (gl.get("why") or []):
+            why.append("the GPS points leave part of the wait without a point at the pin")
+        if why:                                 # GPS_AMBIGUOUS alone is already explained in the sentence above
+            facts.append("So whether the driver arrived and stayed at the pick-up point rests on how FairRyde reads the GPS points, not on the "
+                         "points alone: " + "; ".join(why) + ".")
     if no_wait:
         pass
     elif reason == "GEN-R-POLICY-GAP":          # no written policy applies, so no limit is quoted

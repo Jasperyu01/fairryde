@@ -113,7 +113,8 @@ def variants(base: dict):
       {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "reasons": ["CW-R-NOSHOW-VALID", "CW-R-PIN-AMBIGUOUS"],
        "flags": ["BOOKING_TYPE_INFERRED", "BOUNDARY_MARGIN", "MARGIN_WITHIN_SPREAD", "NO_RIDER_EVIDENCE", "PIN_VENUE_MISMATCH",
                  "FRAUD_SIGNAL", "GENERIC_ASSUMPTION_USED"],
-       "fraud": ["RIDER"], "decisive": ["CW-F04"], "triggers": ["fraud signal on RIDER", "within the boundary band", "says they were there"]})
+       "fraud": ["RIDER"], "decisive": ["CW-F04B"], "triggers": ["fraud signal on RIDER", "within the boundary band", "says they were there"],
+       "findings": {"F-GPS-LOGIC": False}})
     v("V02", "driver cancels 1 s before the 8-minute threshold", lambda c: _shift_end(c, "08:50:59"),
       {"outcome": "WAIVE_FEE", "row": "R6", "reasons": ["CW-R-WAIT-SHORT"], "flags": ["BOUNDARY_MARGIN", "MARGIN_WITHIN_SPREAD"]})
     v("V03", "driver pings 400 m away during the wait",
@@ -148,7 +149,8 @@ def variants(base: dict):
     v("V04F", "platform GPS check says arrived; a single ping at that second is 300 m away, then the driver is at the pin",
       lambda c: _set_wait_pings(c, [("08:43:00", 1.2874, 103.8382, "arrived"), ("08:45:00", *PIN, "waiting"),
                                     ("08:48:00", *PIN, "waiting"), ("08:51:00", *PIN, "cancelled")]),
-      {"outcome": "UPHOLD", "row": "R8", "flags": ["GPS_OUTLIER"], "fraud": ["RIDER"]})
+      {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "flags": ["GPS_OUTLIER"], "fraud": ["RIDER"], "triggers": ["D29"],
+       "decisive": ["CW-F04B"], "not_decisive": ["CW-R06", "CW-F06"]})
 
     def v04c(c):
         no_platform_check(c)
@@ -169,7 +171,7 @@ def variants(base: dict):
     # ---------------------------------------------------------------- clean baseline and one-factor changes from it
     v("V06", "clean baseline: pin at the venue, pings every 30 s, cancel at 08:52, rider without history", clean,
       {"outcome": "UPHOLD", "row": "R8", "tier": "AUTO", "reasons": ["CW-R-NOSHOW-VALID"], "fraud": [],
-       "not_flags": ["GENERIC_ASSUMPTION_USED", "PIN_VENUE_MISMATCH", "FRAUD_SIGNAL", "BOUNDARY_MARGIN"]})
+       "not_flags": ["GENERIC_ASSUMPTION_USED", "PIN_VENUE_MISMATCH", "FRAUD_SIGNAL", "BOUNDARY_MARGIN"], "findings": {"F-GPS-LOGIC": False}})
     v("V07", "only two driver pings, 8 minutes apart (rider contests)",
       lambda c: _set_wait_pings(c, [("08:43:00", *PIN, "arrived"), ("08:51:00", *PIN, "cancelled")]),
       {"outcome": "ESCALATE_HUMAN", "row": "R10", "flags": ["SPARSE_GPS"], "tier": "HUMAN"})
@@ -178,7 +180,8 @@ def variants(base: dict):
         _set_wait_pings(c, [("08:43:00", *PIN, "arrived"), ("08:51:00", *PIN, "cancelled")])
         c["dispute_ticket"]["description"] = NON_CONTESTING
     v("V08", "as V07, and the rider's statement does not contest presence, timing or place", v08,
-      {"outcome": "UPHOLD", "row": "R9", "tier": "APPROVE", "flags": ["SPARSE_GPS", "GENERIC_ASSUMPTION_USED"], "decisive": ["DT-CW-NOSHOW R9"]})
+      {"outcome": "UPHOLD", "row": "R9", "tier": "APPROVE", "flags": ["SPARSE_GPS", "GENERIC_ASSUMPTION_USED"], "decisive": ["DT-CW-NOSHOW R9"],
+       "findings": {"F-GPS-LOGIC": True}, "triggers": ["D29"]})
     v("V10", "trip canceled for another reason (rider_cancelled)",
       lambda c: c["trip_data"].update(cancellation_reason="rider_cancelled"),
       {"reclassified": "CW-RIDERCANCEL"})
@@ -209,7 +212,7 @@ def variants(base: dict):
         clean(c)
         _set_wait_pings(c, [("08:43:00", *VENUE, "arrived"), ("08:47:50", *VENUE, "waiting"), ("08:52:00", *VENUE, "cancelled")])
     v("V16", "V06 with driver pings 290 s apart: inside the 300 s limit but outside the plausible range low end", v16,
-      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["GENERIC_ASSUMPTION_USED"], "decisive": ["CW-F04"]})
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["GENERIC_ASSUMPTION_USED"], "decisive": ["CW-F04B"]})
     v("V17", "the case's own policy object sets the no-show threshold to 10 minutes",
       lambda c: c["cancellation_policy"].update(no_show_threshold_min=10),
       {"outcome": "WAIVE_FEE", "row": "R6", "params": {"NO_SHOW_THRESHOLD_S": 600}})
@@ -262,8 +265,9 @@ def variants(base: dict):
         for g in c["gps_telemetry"]:
             if g["timestamp"] == _ts("08:47:00"):
                 g["lat"] = VENUE[0] + 0.00135
-    v("V25", "V06 with one driver ping 150 m away in the middle of the wait (a GPS outlier)", v25,
-      {"outcome": "UPHOLD", "row": "R8", "tier": "AUTO", "flags": ["GPS_OUTLIER"], "not_flags": ["GENERIC_ASSUMPTION_USED"]})
+    v("V25", "V06 with one driver ping 150 m away in the middle of the wait (a GPS outlier): FairRyde's logic sets it aside, so approval (D29)", v25,
+      {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "flags": ["GPS_OUTLIER", "GENERIC_ASSUMPTION_USED"], "decisive": ["DT-CW-NOSHOW R11"],
+       "triggers": ["D29"], "findings": {"F-GPS-LOGIC": True}})
 
     def v26(c):
         clean(c)
@@ -308,10 +312,10 @@ def variants(base: dict):
             pings = [(h, *(jump_to if "08:47:00" <= h <= "08:47:10" else VENUE), st) for h, _, _, st in pings]
             _set_wait_pings(c, pings)
         return m
-    v("V32", "V06 with pings every 5 s and a 10-second jump to 150 m (three pings): a GPS outlier, not a departure", dense(NORTH_150),
-      {"outcome": "UPHOLD", "row": "R8", "tier": "AUTO", "flags": ["GPS_OUTLIER"], "not_flags": ["GPS_DATA_ERROR"]})
+    v("V32", "V06 with pings every 5 s and a 10-second jump to 150 m (three pings): a GPS outlier, not a departure; approval (D29)", dense(NORTH_150),
+      {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "flags": ["GPS_OUTLIER"], "not_flags": ["GPS_DATA_ERROR"], "triggers": ["D29"]})
     v("V33", "as V32 but the jump is 400 m (implied 288 km/h): a data error, set aside, gate G1", dense(NORTH_400),
-      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["GPS_DATA_ERROR", "GPS_OUTLIER"], "gates": ["G1"]})
+      {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "flags": ["GPS_DATA_ERROR", "GPS_OUTLIER"], "gates": ["G1"]})
 
     def v34(c):
         clean(c)
@@ -328,7 +332,7 @@ def variants(base: dict):
             + [p for p in _every("08:46:00", "08:49:15", VENUE, 15)]
         c["gps_telemetry"] = early + [{"timestamp": _ts(h), "lat": la, "lng": lo, "speed_kmh": 0, "status": st} for h, la, lo, st in pings]
     v("V35", "Ryde advance booking for 08:45: driver at the pin from 08:38, 150 m away for 45 s at 08:45, then waiting 4 min 15 s", v35,
-      {"outcome": "UPHOLD", "row": "R8", "profile": "ryde_2026", "flags": ["GPS_OUTLIER"], "tier": "APPROVE", "decisive": ["CW-F04"]})
+      {"outcome": "UPHOLD", "row": "R11", "profile": "ryde_2026", "flags": ["GPS_OUTLIER"], "tier": "APPROVE", "decisive": ["CW-F04B", "DT-CW-NOSHOW R11"]})
 
     def v36(c):
         clean(c)
@@ -423,7 +427,7 @@ def variants(base: dict):
             if g["timestamp"] == _ts("08:51:00"):
                 g["lat"] = PIN[0] + 0.00054               # the last ping, at the cancellation, is 60 m out as the driver pulls away
     v("V48", "DISP-002 with the last ping (08:51:00, at the cancellation) 60 m from the pin and no ping after it: not a departure", v48,
-      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "not_flags": ["GPS_OUTLIER"], "findings": {"F-PRESENCE": "CONSISTENT"}})
+      {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "not_flags": ["GPS_OUTLIER"], "findings": {"F-PRESENCE": "CONSISTENT", "F-GPS-LOGIC": True}})
 
     def v49(c):
         clean(c)
@@ -443,7 +447,7 @@ def variants(base: dict):
         _set_wait_pings(c, [("08:43:00", *VENUE, "arrived"), ("08:44:00", *VENUE, "waiting"), ("08:45:00", *VENUE, "waiting"),
                             ("08:46:00", *NORTH_400, "waiting"), ("08:47:00", *north_800, "waiting")])
     v("V50", "Ryde on-demand trip (more than 180 s): at the pin until 08:45, 400 m away at 08:46:00 (the threshold moment) and never back", v50,
-      {"outcome": "UPHOLD", "row": "R8", "profile": "ryde_2026", "tier": "APPROVE", "flags": ["GPS_AMBIGUOUS"], "triggers": ["GPS cannot settle"]})
+      {"outcome": "UPHOLD", "row": "R11", "profile": "ryde_2026", "tier": "APPROVE", "flags": ["GPS_AMBIGUOUS"], "triggers": ["GPS cannot settle"]})
 
     def v51(c):
         clean(c)
@@ -451,7 +455,7 @@ def variants(base: dict):
         _set_wait_pings(c, [("08:43:00", *VENUE, "arrived"), ("08:45:00", *VENUE, "waiting"), ("08:47:00", *NORTH_400, "waiting"),
                             ("08:49:00", *VENUE, "waiting"), ("08:51:00", *VENUE, "waiting")])
     v("V51", "V06 with pings every 120 s and one 400 m away at 08:47: set aside as an outlier, but the driver may have been away 240 s", v51,
-      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["GPS_OUTLIER", "GPS_AMBIGUOUS"], "triggers": ["GPS cannot settle"]})
+      {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "flags": ["GPS_OUTLIER", "GPS_AMBIGUOUS"], "triggers": ["GPS cannot settle"]})
 
     def v52(c):
         clean(c)
@@ -459,7 +463,7 @@ def variants(base: dict):
         _set_wait_pings(c, [(h, *VENUE, "arrived" if h == "08:43:00" else "waiting") for h in ("08:43:00", "08:45:00", "08:47:00", "08:49:00")]
                         + [("08:50:45", *NORTH_400, "waiting"), ("08:52:00", *NORTH_400, "waiting"), ("08:53:00", *VENUE, "waiting")])
     v("V52", "V06 with pings every 120 s: away from 08:50:45 (within 30 s of the threshold) until after the cancellation, then back", v52,
-      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["GPS_AMBIGUOUS"], "findings": {"F-PRESENCE": "CONSISTENT"}})
+      {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "flags": ["GPS_AMBIGUOUS"], "findings": {"F-PRESENCE": "CONSISTENT"}})
 
     def v53(c):
         clean(c, end="08:49:15")
@@ -479,14 +483,14 @@ def variants(base: dict):
         _set_wait_pings(c, [(h, *VENUE, "waiting") for h in steady] + [("08:51:10", VENUE[0] + 0.0009, VENUE[1], "waiting")]
                         + [(h, *VENUE, "waiting") for h in ("08:51:30", "08:51:50")])
     v("V54", "V06 at the pin every 20 s until 08:50:20, one ping 100 m out at 08:51:10 (just after the threshold), back at 08:51:30", v54,
-      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["GPS_AMBIGUOUS"], "triggers": ["GPS cannot settle"]})
+      {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "flags": ["GPS_AMBIGUOUS"], "triggers": ["GPS cannot settle"]})
 
     def v55(c):
         clean(c)
         c["dispute_ticket"]["description"] = NON_CONTESTING
         _set_wait_pings(c, [p for p in _every_30s() if p[0] <= "08:46:00"])
     v("V55", "V06 with pings every 30 s until 08:46 and none after (300 s of silence before the threshold, rider not contesting)", v55,
-      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["GENERIC_ASSUMPTION_USED"], "decisive": ["CW-F04"]})
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "flags": ["GENERIC_ASSUMPTION_USED"], "decisive": ["CW-F04B"]})
 
     # ---------------------------------------------------------------- CW-F06: what the rider's calls and messages say (FX1)
     def rider_says(*items):
@@ -640,6 +644,117 @@ def variants(base: dict):
       {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "decisive": ["CW-F06"], "flags": ["GENERIC_ASSUMPTION_USED"]})
     v("V93", "V06, and the rider messages \"I'm at the mall already\" at 08:41, before the arrival (D30): counted, so approval",
       rider_says(("08:41:00", "message", "I'm at the mall already")), before)
+
+    # A3, D29 (Jasper 2026-10-11): an upheld fee that rests on FairRyde's own GPS logic (CW-F04B) needs approval, never AUTO
+    def v94(c):
+        clean(c)
+        _no_platform_check(c)
+        _set_wait_pings(c, [(h, la, lo, "waiting") for h, la, lo, _ in _every("08:43:40", "08:52:00", VENUE, 20)])
+    v("V94", "V06 without the platform check; GPS first confirms the driver 40 s after the arrival mark, and the wait from then meets the threshold",
+      v94, {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "flags": ["ARRIVAL_UNCONFIRMED"], "decisive": ["CW-F03B", "DT-CW-NOSHOW R11"],
+            "triggers": ["D29"], "findings": {"F-GPS-LOGIC": True, "F-PRESENCE": "CONSISTENT"}})
+
+    def v95(c):
+        clean(c)
+        out60 = (VENUE[0] + 0.00054, VENUE[1])           # about 60 m north of the venue, just outside the 50 m area
+        _set_wait_pings(c, [p for p in _every_30s() if p[0] <= "08:50:30"] + [(h, *out60, "waiting") for h in ("08:50:58", "08:51:30", "08:52:00")])
+    v("V95", "V06, but the driver pulls away 2 s before the threshold (60 m out, within the tolerance of the window end, so not counted): "
+      "automatic before A3, approval now (D29)",
+      v95, {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "not_flags": ["GPS_OUTLIER", "GPS_AMBIGUOUS"], "triggers": ["D29"],
+            "findings": {"F-GPS-LOGIC": True, "F-PRESENCE": "CONSISTENT"}})
+
+    # A3 check round 1: the range of F-GPS-LOGIC (ADV-4, A3-FID-02), time order (ADV-3), the radius part of D29 (ADV-2)
+    def pre_arrival(c, pings, after="08:43:40"):
+        """Replace the driver pings from 08:42:00: (time, where) before the arrival, then at the pin every 30 s from `after`."""
+        c["gps_telemetry"] = [g for g in c["gps_telemetry"] if g["timestamp"] < _ts("08:42:00")] + [
+            {"timestamp": _ts(h), "lat": w[0], "lng": w[1], "speed_kmh": 0, "status": "waiting"} for h, w in pings] + [
+            {"timestamp": _ts(h), "lat": la, "lng": lo, "speed_kmh": 0, "status": "waiting"} for h, la, lo, _ in _every(after, "08:52:00", VENUE, 30)]
+
+    def v96(c):
+        clean(c)
+        _no_platform_check(c)
+        pre_arrival(c, [("08:42:00", VENUE), ("08:42:30", VENUE), ("08:42:45", NORTH_150)])
+    v("V96", "V06 without the platform check; a 150 m outlier at 08:42:45 is the last ping before the arrival mark, so without the logic it "
+      "would be CW-R06's moment ping: R11 (D29)", v96,
+      {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "findings": {"F-GPS-LOGIC": True}, "triggers": ["D29"]})
+
+    def v96b(c):
+        clean(c)
+        _no_platform_check(c)
+        pre_arrival(c, [("08:42:30", VENUE), ("08:42:45", NORTH_150), ("08:42:55", VENUE)], after="08:43:00")
+    v("V96B", "as V96, but pings at the pin follow the outlier before the arrival mark: it could not change the arrival, so automatic", v96b,
+      {"outcome": "UPHOLD", "row": "R8", "tier": "AUTO", "findings": {"F-GPS-LOGIC": False}})
+
+    def v100(c):
+        clean(c)
+        pre_arrival(c, [("08:42:00", VENUE), ("08:42:30", VENUE), ("08:42:45", NORTH_150)])
+    v("V100", "V96 with the platform's arrival check: an outlier before the indication cannot contradict the check, so automatic", v100,
+      {"outcome": "UPHOLD", "row": "R8", "tier": "AUTO", "findings": {"F-GPS-LOGIC": False}})
+
+    def v97(c):
+        clean(c, end="08:49:15")
+        _ryde_advance(c)
+        early = [g for g in c["gps_telemetry"] if g["timestamp"] < _ts("08:38:00")]
+        pings = [p for p in _every("08:38:00", "08:49:15", VENUE, 15)]
+        pings = [(h, *(NORTH_150 if h == "08:40:15" else VENUE), st) for h, _, _, st in pings]
+        c["gps_telemetry"] = early + [{"timestamp": _ts(h), "lat": la, "lng": lo, "speed_kmh": 0, "status": st} for h, la, lo, st in pings]
+    v("V97", "Ryde advance booking for 08:45, platform check at 08:38, one 150 m outlier at 08:40:15: it can change neither the arrival nor the "
+      "wait, so the uphold stays automatic", v97,
+      {"outcome": "UPHOLD", "row": "R8", "tier": "AUTO", "profile": "ryde_2026", "findings": {"F-GPS-LOGIC": False}})
+
+    def v98(c):
+        clean(c)
+        c["dispute_ticket"]["description"] = NON_CONTESTING
+        for g in c["gps_telemetry"]:
+            if _ts("08:46:00") <= g["timestamp"] <= _ts("08:48:00"):
+                g["lat"] = NORTH_150[0]
+                g["timestamp"] = g["timestamp"].replace("2026-09-13T08:", "2026-09-13T00:").replace("+08:00", "+00:00")
+    v("V98", "V06 with the driver 150 m away from 08:46 to 08:48, those pings written in UTC: sorted by instant, a departure (R4)", v98,
+      {"outcome": "WAIVE_FEE", "row": "R4", "findings": {"F-PRESENCE": "LEFT"}})
+
+    def v99(c):
+        clean(c)
+        jit = (VENUE[0] + 0.000027, VENUE[1])            # about 3 m from the pin
+        _set_wait_pings(c, [(h, *((VENUE[0] + 0.000135, VENUE[1]) if h == "08:47:00" else jit), st) for h, _, _, st in _every_30s()])
+    v("V99", "V06 with pings 3 m from the pin and one 15 m away: inside the 50 m area, but at the radius's 10 m low end it is an outlier, "
+      "so the uphold would rest on FairRyde's logic (D29, radius part): approval", v99,
+      {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "findings": {"F-GPS-LOGIC": False}, "decisive": ["CW-F04B"],
+       "triggers": ["would decide it with ARRIVAL_GEOFENCE_M"]})
+
+    def v101(c):
+        clean(c, end="08:49:15")
+        _ryde_advance(c)
+        early = [g for g in c["gps_telemetry"] if g["timestamp"] < _ts("08:37:00")]
+        pings = [("08:37:00", *VENUE, "en_route"), ("08:37:30", *VENUE, "en_route"), ("08:38:00", *VENUE, "arrived"), ("08:38:10", *NORTH_150, "waiting")]
+        pings += [(h, *VENUE, "waiting") for h, _, _, _ in _every("08:38:40", "08:49:15", VENUE, 15)]
+        c["gps_telemetry"] = early + [{"timestamp": _ts(h), "lat": la, "lng": lo, "speed_kmh": 0, "status": st} for h, la, lo, st in pings]
+    v("V101", "Ryde advance booking for 08:45 with the platform check at 08:38; an outlier 10 s after the indication is the last ping before "
+      "08:38:30, so without the logic it would contradict the check: R11 (D29)", v101,
+      {"outcome": "UPHOLD", "row": "R11", "tier": "APPROVE", "profile": "ryde_2026", "findings": {"F-GPS-LOGIC": True}})
+
+    # A3 check round 2 (ADV2-1): window edges the pings cannot settle
+    def v102(c):
+        clean(c, end="08:47:00")
+        c.pop("cancellation_policy")
+        c["trip_data"]["booking_type"] = "ON_DEMAND"
+        c["dispute_ticket"]["description"] = NON_CONTESTING
+        _set_wait_pings(c, [(h, *VENUE, "waiting") for h, _, _, _ in _every("08:43:00", "08:45:00", VENUE, 20)] + [("08:46:40", *NORTH_400, "waiting")])
+    v("V102", "Ryde on-demand trip: at the pin until 08:45:00, then the next ping (08:46:40, 400 m) comes 40 s after the 3-minute wait ended: "
+      "the driver may have left before it ended, so approval", v102,
+      {"outcome": "UPHOLD", "row": "R11", "profile": "ryde_2026", "tier": "APPROVE", "flags": ["GPS_AMBIGUOUS"], "triggers": ["D29"]})
+
+    def v103(c):
+        clean(c, end="08:48:10")
+        _ryde_advance(c)
+        c["dispute_ticket"]["description"] = NON_CONTESTING
+        early = [g for g in c["gps_telemetry"] if g["timestamp"] < _ts("08:38:00")]
+        pings = [(h, *VENUE, st) for h, _, _, st in _every("08:38:00", "08:40:00", VENUE, 10)]
+        pings += [(h, *NORTH_400, "waiting") for h, _, _, _ in _every("08:40:20", "08:44:50", VENUE, 10)]
+        pings += [(h, *VENUE, "waiting") for h, _, _, _ in _every("08:45:50", "08:48:10", VENUE, 10)]
+        c["gps_telemetry"] = early + [{"timestamp": _ts(h), "lat": la, "lng": lo, "speed_kmh": 0, "status": st} for h, la, lo, st in pings]
+    v("V103", "Ryde advance booking for 08:45: 400 m away from 08:40:20 to 08:44:50 and first back at the pin at 08:45:50: the pings cannot "
+      "show the driver at the pick-up when the counted wait started, so approval", v103,
+      {"outcome": "UPHOLD", "row": "R11", "profile": "ryde_2026", "tier": "APPROVE", "flags": ["GPS_AMBIGUOUS"], "triggers": ["D29"]})
     return out
 
 
@@ -981,6 +1096,55 @@ def rule_card_check(kb) -> list:
     return bad
 
 
+CENSUS = Path(__file__).resolve().parents[2] / "validation" / "round2" / "census.csv"
+
+
+def a3_check(kb) -> list:
+    """A3 (FX4, D29): the census covers every rule rated B or C and agrees with every label it proposes; CW-F04 holds Ryde's
+    condition (B) and CW-F04B FairRyde's GPS logic (D); the decision table rates an uphold D whenever that logic decides; the
+    rule text carries D29 for waiting fees; and no self-test variant upholds a fee automatically on FairRyde's GPS logic."""
+    import csv
+    bad, R = [], kb.rules
+
+    def need(rid, ok, msg):
+        if not ok:
+            bad.append({"id": rid, "variant": "A3", "problems": [msg]})
+    rows = list(csv.DictReader(open(CENSUS, encoding="utf-8")))
+    after = {}
+    for x in rows:
+        after.setdefault(x["rule"], set()).add(x["label_after"])
+    for rid, labels in after.items():
+        need(rid, len(labels) == 1, f"census gives several labels {sorted(labels)}")
+        need(rid, rid in R and R[rid]["credibility"] in labels, f"census proposes {sorted(labels)}, rules.yaml says {R.get(rid, {}).get('credibility')}")
+    for rid, r in R.items():
+        need(rid, r["credibility"] not in ("B", "C") or rid in after, f"rated {r['credibility']} but not in the census")
+    order = {"A": 0, "B": 1, "C": 2, "D": 3}
+    for rid in after:
+        counted = [x["element_label"] for x in rows if x["rule"] == rid and x["counts_toward_label"] == "yes"]
+        need(rid, counted and max(counted, key=order.get) == next(iter(after[rid])),
+             f"label {next(iter(after[rid]))} is not the weakest counted element {sorted(set(counted))}")
+    need("CW-F04", R["CW-F04"]["credibility"] == "B" and not R["CW-F04"].get("params"), "CW-F04 must be Ryde's condition only (B, no FairRyde parameters)")
+    need("CW-F04B", R["CW-F04B"]["credibility"] == "D" and set(R["CW-F04B"].get("params", [])) >= {"ARRIVAL_GEOFENCE_M", "PING_MAX_GAP_S", "LEFT_MIN_OUTSIDE_S", "SPEED_MAX_KMH", "TS_TOLERANCE_S"},
+         "CW-F04B must be D and carry the GPS parameters")
+    need("CW-F04B", "AUTH-02 trigger 12" in " ".join(R["CW-F04B"]["statement"].split()) and "waiting fee" in R["CW-F04B"]["statement"], "D29 for waiting fees is not in the rule text")
+    need("AUTH-02", "(12)" in R["AUTH-02"]["statement"] and "CW-F04B" in R["AUTH-02"]["statement"] and "D29" in R["AUTH-02"]["statement"], "AUTH-02 has no D29 trigger")
+    for rid in ("AUTH-02", "CW-F04B"):         # check round 1 (SG-1, ADV-1): the ping-gap and radius part of D29 reaches waiting fees
+        need(rid, "plausible range" in " ".join(R[rid]["statement"].split()), "D29's parameter part (a CW-F04B parameter at an end of its plausible range) is not stated")
+    need("FC-R07", R["FC-R07"]["credibility"] == "D", "FC-R07 must be D (Jasper, 2026-10-14)")
+    dt = {x["row"]: x for x in kb.y["rules"]["decision_tables"]["DT-CW-NOSHOW"]["rows"]}
+    need("DT-R8", dt["R8"]["when"].get("gps_logic_decides") is False and dt["R8"]["credibility"] == "B", "R8 must be B and need gps_logic_decides false")
+    need("DT-R11", dt["R11"]["when"].get("gps_logic_decides") is True and dt["R11"]["credibility"] == "D" and "CW-F04B" in dt["R11"]["rules"]
+         and dt["R11"]["outcome"] == "UPHOLD", "R11 must be the D twin of R8 for gps_logic_decides true")
+    for row in dt.values():
+        need(f"DT-{row['row']}", "CW-F04B" not in row["rules"] or row["credibility"] == "D", "a row resting on CW-F04B must be D")
+    for vid, desc, case, exp, prof in variants(kb.disp002):
+        r = E.run(kb, case, prof)
+        t = r["trace"]
+        if t.outcome == "UPHOLD" and t.reasons and t.reasons[0] == "CW-R-NOSHOW-VALID" and t.findings.get("F-GPS-LOGIC", {}).get("value"):
+            need(vid, r["tier"]["tier"] != "AUTO", "fee upheld automatically on FairRyde's own GPS logic (D29)")
+    return bad
+
+
 def run(kb) -> list[dict]:
     results = []
     for vid, desc, case, exp, profile in variants(kb.disp002):
@@ -1004,6 +1168,9 @@ def run(kb) -> list[dict]:
         for d in exp.get("decisive", []):
             if d not in dec:
                 problems.append(f"{d} not decisive (decisive: {dec})")
+        for d in exp.get("not_decisive", []):
+            if d in dec:
+                problems.append(f"{d} decisive, expected not (decisive: {dec})")
         for key, src in (("triggers", tier["triggers"]), ("gates", tier["gates"])):
             for s in exp.get(key, []):
                 if not any(s in x for x in src):
@@ -1039,7 +1206,7 @@ if __name__ == "__main__":
         print("FAIL reading", ("UNSAFE " if b["unsafe"] else "") + repr(b["text"]), "expected", b["expected"], "got", b["got"])
     n = len(READING_CASES) + len(BEFORE_ARRIVAL_CASES) + len(reading_corpus())
     print(n - len(bad), "/", n, "message readings")
-    a2 = erp_check(KB()) + erp_code_check(KB()) + g3_check(KB()) + rule_card_check(KB())
+    a2 = erp_check(KB()) + erp_code_check(KB()) + g3_check(KB()) + rule_card_check(KB()) + a3_check(KB())
     for b in a2:
         print("FAIL", b["id"], b["variant"], b["problems"])
-    print(len(erp_cases()), "ERP cases, FC-R01 split, gate G3 and rule-card checks:", "all pass" if not a2 else f"{len(a2)} problem(s)")
+    print(len(erp_cases()), "ERP cases, FC-R01 split, gate G3, the A2 and A3 rule-card checks and the census:", "all pass" if not a2 else f"{len(a2)} problem(s)")

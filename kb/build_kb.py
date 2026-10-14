@@ -61,10 +61,10 @@ def main(argv):
     for x in reading_bad:
         rep.add("ERROR", "reading-selftest", x["text"][:40], f"CW-F06 message reading expected {x['expected']}, got {x['got']}"
                 + (" (unsafe: a placing or contesting message read as no counter-evidence)" if x["unsafe"] else ""))
-    a2_bad = selftest.erp_check(kb) + selftest.erp_code_check(kb) + selftest.g3_check(kb) + selftest.rule_card_check(kb)
+    a2_bad = selftest.erp_check(kb) + selftest.erp_code_check(kb) + selftest.g3_check(kb) + selftest.rule_card_check(kb) + selftest.a3_check(kb)
     for x in a2_bad:
         rep.add("ERROR", "erp-g3-selftest", x["id"], f"{x['variant']}: " + "; ".join(x["problems"]))
-    erp_line = (f"ERP rules self-test: {len(selftest.erp_cases())} ERP cases, the FC-R01 split, gate G3 and the A2 rule-card checks: "
+    erp_line = (f"ERP rules self-test: {len(selftest.erp_cases())} ERP cases, the FC-R01 split, gate G3, the A2 and A3 rule-card checks and the census: "
                 + ("all pass" if not a2_bad else f"{len(a2_bad)} problem(s)"))
     decided = {t["got"]["row"] for t in tests if t["got"]["row"] and t["got"]["reasons"]
                and t["got"]["reasons"][0] not in ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP")}

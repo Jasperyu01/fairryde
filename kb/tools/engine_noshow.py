@@ -322,7 +322,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     ev, chat = case.get("app_events", []), case.get("chat_logs", [])
     gps_raw = case.get("gps_telemetry", []) or []
     gps_no = {id(g): i + 1 for i, g in enumerate(gps_raw)}          # E-GPS-nn follows the case file's order
-    gps = sorted(gps_raw, key=lambda g: g["timestamp"])               # the rules read pings in time order
+    gps = sorted(gps_raw, key=lambda g: T(g["timestamp"]))            # the rules read pings in time order (by instant, not by text)
     gid = lambda g: f"E-GPS-{gps_no[id(g)]:02d}"
     forced = profile is not None
     if profile is None:
@@ -506,14 +506,14 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
         tr.flag("TIMER_ANCHOR_MISMATCH")
         tr.use("DQ-01")
 
-    # 7 CW-R06 arrival: outliers first (same rule as CW-F04), then the moment ping
+    # 7 CW-R06 arrival: outliers first (FairRyde's logic, CW-F04B, shared with CW-F04), then the moment ping
     pin = (t["pickup_location"]["lat"], t["pickup_location"]["lng"])
     gf, maxgap, lmin, vmax = P("ARRIVAL_GEOFENCE_M"), P("PING_MAX_GAP_S"), P("LEFT_MIN_OUTSIDE_S"), P("SPEED_MAX_KMH")
     smax_ratio = P("SPEED_RATIO_SOFT")
     dist = lambda g: hav(g["lat"], g["lng"], *pin)
     platform_check = bool(arrived_ev and re.search(r"GPS within (\d+) ?m of pickup", arrived_ev["details"]))
     # observations: pings, plus the platform's arrival check as an inside observation at the arrival
-    obs = [{"t": T(g["timestamp"]), "lat": g["lat"], "lng": g["lng"], "inside": dist(g) <= gf, "ping": g} for g in gps]
+    obs = [{"t": T(g["timestamp"]).astimezone(end.tzinfo), "lat": g["lat"], "lng": g["lng"], "inside": dist(g) <= gf, "ping": g} for g in gps]
     if platform_check and t_arr is not None:
         k = next((i for i, o in enumerate(obs) if o["t"] >= t_arr), len(obs))
         obs.insert(k, {"t": t_arr, "lat": pin[0], "lng": pin[1], "inside": True, "ping": None})
@@ -594,7 +594,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     else:
         arr_basis = i_arr
     tr.finding("F-ARRIVAL-VALID", arrival, status={"TRUE": "established", "FALSE": "established", "CONTESTED": "contested", "UNKNOWN": "unknown"}[arrival],
-               basis=arr_basis, rule="CW-R06", params=["ARRIVAL_GEOFENCE_M", "TS_TOLERANCE_S", "PING_MAX_GAP_S", "LEFT_MIN_OUTSIDE_S", "SPEED_MAX_KMH"])
+               basis=arr_basis, rule="CW-R06", params=["ARRIVAL_GEOFENCE_M", "TS_TOLERANCE_S", "PING_MAX_GAP_S"])
     tr.arrival_detail = {"t_arr": t_arr.isoformat() if t_arr else None, "t_confirm": t_confirm.isoformat() if t_confirm else None,
                          "platform_check": platform_check, "moment_ping": i_parr[0] if i_parr else None, "brief_inside": brief_in,
                          "confirm_ping": gid(obs[later_in[0]]["ping"]) if "ARRIVAL_UNCONFIRMED" in tr.flags else None,
@@ -633,7 +633,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
             + (f"; the records of the start or end differ by up to {spread_max:.0f} s, more than the margin" if "MARGIN_WITHIN_SPREAD" in tr.flags else ""),
             basis_start + ["E-TRP-01.cancellation_time"])
 
-    # 9 CW-F04 presence over the waiting the fee pays for
+    # 9 CW-F04 presence over the waiting the fee pays for (Ryde's condition), read from the pings by FairRyde's logic (CW-F04B)
     wend = min(end, start + timedelta(seconds=thr)) if met else end
     in_w = lambda k: start <= obs[k]["t"] <= wend
 
@@ -683,14 +683,23 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
             continue
         t_prev, t_first = obs[r["i0"] - 1]["t"], obs[r["i0"]]["t"]
         n_pings = sum(1 for k in range(r["i0"], r["i1"] + 1) if obs[k]["ping"] is not None)
-        if r["outlier"] and r["s_max"] > lmin and t_first <= wend + timedelta(seconds=tol) \
+        edge = {"last_in": t_prev.isoformat(), "first_out_t": t_first.isoformat(),
+                "first_out_id": gid(obs[r["i0"]]["ping"]) if obs[r["i0"]]["ping"] is not None else None}
+        last_seen = max(end, wend + timedelta(seconds=tol))   # first seen away before the cancellation, or within the tolerance of the window end
+        if r["outlier"] and r["s_max"] > lmin and t_first <= last_seen \
                 and t_prev < wend - timedelta(seconds=tol) and obs[r["i1"] + 1]["t"] > start:
-            ambiguous.append({"kind": "gap", "s": r["s_max"]})          # set aside, but the driver may have been away longer
+            ambiguous.append({"kind": "gap", "s": r["s_max"], **edge})  # set aside, but the driver may have been away longer
         elif not r["returned"] and r in left_runs and n_pings == 1:
             ambiguous.append({"kind": "single", "s": 0})
-        elif not r["outlier"] and r not in left_runs and start <= t_first <= wend + timedelta(seconds=tol) \
-                and t_prev < wend - timedelta(seconds=tol):
-            ambiguous.append({"kind": "end", "s": (t_first - t_prev).total_seconds()})
+        elif not r["outlier"] and r not in left_runs and start <= t_first <= last_seen \
+                and t_prev < wend - timedelta(seconds=tol):            # first seen away at any time before the cancellation or boarding
+            ambiguous.append({"kind": "end", "s": (t_first - t_prev).total_seconds(), **edge})
+    if arrival == "TRUE" and t_arr is not None and start > t_arr and presence in ("CONSISTENT", "SPARSE"):
+        before = [k for k in range(len(obs)) if k not in aside and obs[k]["t"] < start]     # the counted wait starts after the arrival
+        first_in_w = next((x for x in ins if x >= start), None)
+        if before and not obs[before[-1]]["inside"] and (first_in_w is None or first_in_w > start + timedelta(seconds=tol)):
+            ambiguous.append({"kind": "start", "s": ((first_in_w or wend) - obs[before[-1]]["t"]).total_seconds(),
+                              "last_out": obs[before[-1]]["t"].isoformat(), "last_out_id": gid(obs[before[-1]]["ping"])})
     if arrival == "FALSE" and len(after_arr) == 1:
         ambiguous.append({"kind": "single_false", "s": 0})
     if ambiguous:
@@ -709,7 +718,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
             if kind == "ambiguous":
                 kinds["ambiguous_gap_s"] = max(kinds["ambiguous_gap_s"], r["s_max"])
     edge_out = [k for k in used if not obs[k]["inside"]] if presence in ("CONSISTENT", "SPARSE") else []   # within the tolerance, not leaving
-    tr.finding("F-PRESENCE", presence, basis=ids_win, rule="CW-F04", params=["ARRIVAL_GEOFENCE_M", "PING_MAX_GAP_S", "LEFT_MIN_OUTSIDE_S", "SPEED_MAX_KMH", "TS_TOLERANCE_S"],
+    tr.finding("F-PRESENCE", presence, basis=ids_win, rule="CW-F04B", params=["ARRIVAL_GEOFENCE_M", "PING_MAX_GAP_S", "LEFT_MIN_OUTSIDE_S", "SPEED_MAX_KMH", "TS_TOLERANCE_S"],
                status="established" if presence != "UNKNOWN" else ("not_applicable" if wend <= start else "unknown"))
     longest_left = max([outside_in_wait(r) for r in left_runs], default=0)
     tr.presence_detail = {"pings": len(win), "usable_pings": len(used), "inside_pings": len(ins),
@@ -718,11 +727,33 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
                           "left_by_approach": bool(left_runs) and all(r.get("approach") for r in left_runs),
                           "no_return": any(not r.get("returned", True) for r in left_runs),
                           "edge_outside": len(edge_out), "edge_ids": [gid(obs[k]["ping"]) for k in edge_out],
-                          "outlier_kinds": kinds, "ambiguous": ambiguous}
+                          "outlier_kinds": kinds, "ambiguous": ambiguous,
+                          "after_window_outside_ids": [gid(obs[k]["ping"]) for k in range(len(obs)) if obs[k]["ping"] is not None
+                                                       and not obs[k]["inside"] and wend < obs[k]["t"] <= end]}
     if presence == "SPARSE":
         tr.flag("SPARSE_GPS")
-    tr.path("CW-F04")
-    tr.step(pb, 9, "CW-F04", f"{presence}: window {start.strftime('%H:%M:%S')} to {wend.strftime('%H:%M:%S')}, {len(win)} ping(s), max distance "
+    # CW-F04B F-GPS-LOGIC: FairRyde's logic, not the pings alone, makes the driver count as arrived and present (D29)
+    def can_change(k):      # a set-aside ping that could change the presence (in the window) or the arrival (CW-R06's moment range)
+        t_k = obs[k]["t"]
+        if start <= t_k <= wend:
+            return True
+        if t_arr is None:
+            return False
+        lo = t_arr if platform_check else t_arr - timedelta(seconds=maxgap)       # with the platform check only a contradiction matters
+        hi = t_arr + timedelta(seconds=tol)
+        if not lo <= t_k <= hi:
+            return False
+        return not any(lo <= obs[j]["t"] <= hi and obs[j]["t"] > t_k for j in kept)  # it would have been CW-R06's moment ping
+    aside_ids = [gid(obs[k]["ping"]) for k in sorted(aside) if obs[k]["ping"] is not None and can_change(k)]
+    logic_why = [w for w, hit in (("set_aside", aside_ids), ("not_counted", edge_out), ("later_confirmation", "ARRIVAL_UNCONFIRMED" in tr.flags),
+                                  ("sparse", presence == "SPARSE"), ("ambiguous", ambiguous)) if hit]
+    gps_logic = bool(logic_why)
+    tr.finding("F-GPS-LOGIC", gps_logic, basis=aside_ids + [gid(obs[k]["ping"]) for k in edge_out], rule="CW-F04B",
+               params=["ARRIVAL_GEOFENCE_M", "PING_MAX_GAP_S", "LEFT_MIN_OUTSIDE_S", "SPEED_MAX_KMH", "TS_TOLERANCE_S"],
+               status="established" if wend > start else "not_applicable")
+    tr.gps_logic_detail = {"why": logic_why, "set_aside_ids": aside_ids, "not_counted_ids": [gid(obs[k]["ping"]) for k in edge_out]}
+    tr.path("CW-F04", "CW-F04B")
+    tr.step(pb, 9, "CW-F04, CW-F04B", f"{presence}: window {start.strftime('%H:%M:%S')} to {wend.strftime('%H:%M:%S')}, {len(win)} ping(s), max distance "
             f"{max(dists) if dists else 0:.1f} m (area {gf} m)"
             + (((f"; outside for {longest_left:.0f} s of the wait" if longest_left else "; seen outside the area")
                 + (" (the driver was not yet seen inside the area)" if tr.presence_detail["left_by_approach"]
@@ -734,7 +765,8 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
             + ("; impossible speed (data error)" if err_runs else "")
             + ("; GPS cannot settle whether the driver left (" + ", ".join(sorted({a['kind'] for a in ambiguous})) + ")" if ambiguous else "")
             + ("; no inside ping and no confirmed arrival, so presence is not shown" if presence == "UNKNOWN" and win and wend > start else "")
-            + (f"; longest stretch without presence evidence {max(gaps):.0f} s (limit {maxgap} s)" if gaps else ""),
+            + (f"; longest stretch without presence evidence {max(gaps):.0f} s (limit {maxgap} s)" if gaps else "")
+            + (f"; F-GPS-LOGIC true: FairRyde's logic, not the pings alone, decides ({', '.join(logic_why)}; CW-F04B)" if gps_logic and wend > start else ""),
             ids_win, status="done" if win else "missing")
 
     # DQ-02 speed consistency inside the window (soft); hard errors were handled with the outliers above
@@ -878,7 +910,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     tr.step(pb, 13, "GEN-R05", "advocate briefs are produced at run time by the Rider and Driver Advocates; not simulated in this offline check", [], status="missing")
 
     # 14 DT-CW-NOSHOW
-    env = {"arrival_valid": arrival, "presence": presence, "threshold_met": met, "rider_evidence": rider_ev}
+    env = {"arrival_valid": arrival, "presence": presence, "threshold_met": met, "rider_evidence": rider_ev, "gps_logic_decides": gps_logic}
     dt = kb.y["rules"]["decision_tables"]["DT-CW-NOSHOW"]
     hits = [r for r in dt["rows"] if all(env[k] in (v if isinstance(v, list) else [v]) for k, v in r["when"].items())]
     assert len(hits) == 1, f"decision table hit {len(hits)} rows for {env}"
@@ -903,7 +935,7 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
         override = "; overridden by MAT-04 (out of window)"
         tr.notes.append(f"decision table row {row['row']} recorded for information only; MAT-04 decides")
     tr.step(pb, 14, "DT-CW-NOSHOW", f"row {row['row']} (credibility {row.get('credibility')}): {row['outcome']} ({row['reason']})" + override,
-            ["F-ARRIVAL-VALID", "F-PRESENCE", "F-WAIT-MARGIN", "F-RIDER-EVIDENCE"])
+            ["F-ARRIVAL-VALID", "F-PRESENCE", "F-GPS-LOGIC", "F-WAIT-MARGIN", "F-RIDER-EVIDENCE"])
 
     # 15 CW-R11 pin, CW-R04 contact, DQ-06 amount
     if mismatch:
@@ -1000,10 +1032,12 @@ def sensitivity(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
         pr = info.get("plausible_range")
         if info.get("credibility") not in ("C", "D") or not pr or info.get("flag_only"):
             continue
-        res, moved, weaker = {}, set(), False
+        res, moved, weaker, gl_ends = {}, set(), False, []
         for end_name, val in (("low", pr[0]), ("high", pr[1])):
             t2 = evaluate(kb, copy.deepcopy(case), profile, {**base.overrides, name: val})
             res[end_name] = (val, t2.outcome, t2.dt_row)
+            if t2.findings.get("F-GPS-LOGIC", {}).get("value"):
+                gl_ends.append(end_name)
             rw = (t2.outcome == base.outcome and not overridden(base) and not overridden(t2) and t2.dt_row != base.dt_row
                   and weak(t2.dt_row) and not weak(base.dt_row))
             weaker = weaker or rw
@@ -1017,7 +1051,8 @@ def sensitivity(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
             users = [rid for rid in users if rid in moved]
         rows.append({"param": name, "value": info["value"], "range": pr, "credibility": info["credibility"],
                      "low": f"{res['low'][0]} -> {res['low'][1]} ({res['low'][2]})", "high": f"{res['high'][0]} -> {res['high'][1]} ({res['high'][2]})",
-                     "outcome_changes": changed, "weaker_row": weaker and not changed, "decisive": changed or weaker, "rules_using": users})
+                     "outcome_changes": changed, "weaker_row": weaker and not changed, "decisive": changed or weaker, "rules_using": users,
+                     "gps_logic_at": gl_ends})
     return rows
 
 
@@ -1096,6 +1131,13 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
     if tr.findings.get("F-CHARGE-AMOUNT", {}).get("value", {}).get("status") == "overcharged":
         triggers.append("overcharge (CHARGE_AMOUNT_MISMATCH)")
     upheld = tr.outcome == "UPHOLD" and tr.reasons and tr.reasons[0] == "CW-R-NOSHOW-VALID"
+    gl_now = tr.findings.get("F-GPS-LOGIC", {}).get("value")
+    gps_params = set(kb.rules.get("CW-F04B", {}).get("params") or [])
+    gl_param = [s["param"] for s in sens if s.get("gps_logic_at") and s["param"] in gps_params]
+    if upheld and (gl_now or gl_param):                                    # AUTH-02 trigger 12, decision D29
+        triggers.append("fee upheld on FairRyde's own GPS logic, not on the pings alone (CW-F04B, D29)" if gl_now else
+                        "fee upheld, and FairRyde's own GPS logic would decide it with " + ", ".join(gl_param)
+                        + " at an end of its plausible range (CW-F04B, D29)")
     if "BOUNDARY_MARGIN" in tr.flags and "MARGIN_WITHIN_SPREAD" in tr.flags:
         triggers.append(f"margin {tr.margin:+.0f} s within the boundary band, and the records disagree by up to {tr.spread_max:.0f} s")
     if upheld and tr.pin_mismatch and tr.rider_at_venue_claim:

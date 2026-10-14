@@ -1,10 +1,12 @@
-"""Randomized check of the GPS presence logic (CW-R06, CW-F04): an automatic ruling must never rest on GPS that leaves the
+"""Randomized check of the GPS presence logic (CW-R06, CW-F04, CW-F04B): an automatic ruling must never rest on GPS that leaves the
 question open. Random variants of the clean baseline V06: both profiles, with and without the platform arrival check,
 approach pings before the arrival, random gaps (5 to 180 s), positions inside or 60, 150 or 400 m out, data that stops early.
 
     python3 tools/fuzz_presence.py 2000 11      # cases, seed
 
 Invariant for AUTO rulings (independent of the engine's run logic; uses only the engine's wait start and window):
+  UPHOLD (D29, step A3): no ping outside the area in [start, wend], the engine's F-GPS-LOGIC is false, and the first ping
+          away after the window end does not follow a last inside ping more than tol before the window end.
   UPHOLD: every outside ping in [start, wend + tol] that is not a data error is certainly brief (inside observations
           around it within LEFT_MIN_OUTSIDE_S), or a departure at or after the threshold within tolerance, or an approach
           ping within tolerance of the start.
@@ -99,6 +101,18 @@ def check(c, platform, r):
         dt = (b[0] - a[0]).total_seconds()
         return E.hav(a[2], a[3], b[2], b[3]) / dt * 3.6 if dt > 0 else 0
     if tr.outcome == "UPHOLD":
+        if tr.findings.get("F-GPS-LOGIC", {}).get("value"):
+            return "AUTO UPHOLD while F-GPS-LOGIC is true (D29: FairRyde's own GPS logic decides, so approval)"
+        out_in_window = [o for o in obs if not o[1] and start <= o[0] <= wend]
+        if out_in_window:                                 # D29: on the pings alone, every ping in the window is inside the area
+            return f"AUTO UPHOLD with an outside ping in the window at {hms(out_in_window[0][0])} (start {hms(start)}, wend {hms(wend)}; D29)"
+        end_t = datetime.fromisoformat(c["trip_data"]["cancellation_time"])
+        for i, o in enumerate(obs):                       # window end (A3 check round 2): first seen away after the window end, last seen at the pin too early
+            if not o[1] and wend < o[0] <= end_t:
+                prev_in = [x[0] for x in obs[:i] if x[1]]
+                if prev_in and prev_in[-1] < wend - timedelta(seconds=TOL):
+                    return f"AUTO UPHOLD: last inside {hms(prev_in[-1])}, more than {TOL} s before wend {hms(wend)}, then outside at {hms(o[0])}"
+                break
         for i, o in enumerate(obs):
             if o[1] or not (start <= o[0] <= wend + timedelta(seconds=TOL)):
                 continue

@@ -67,7 +67,7 @@ playbooks:
       - {n: 6, do: COMPUTE, rule: "DQ-01, DQ-02", note: "Cross-source timestamps (spread of the anchor and end times); speed consistency in the wait window"}
       - {n: 7, do: CHECK, rule: CW-R06, note: "Arrival: TRUE, FALSE, CONTESTED or UNKNOWN (platform check and the moment ping; outliers set aside first)"}
       - {n: 8, do: COMPUTE, rule: "CW-F03, CW-F03B", note: "Elapsed wait and margin, counted from the confirmed wait start (CW-F03B moves the start to the GPS confirmation)"}
-      - {n: 9, do: COMPUTE, rule: CW-F04, note: "Driver presence over the waiting the fee pays for: CONSISTENT, SPARSE, LEFT or UNKNOWN"}
+      - {n: 9, do: COMPUTE, rule: "CW-F04, CW-F04B", note: "Driver presence over the waiting the fee pays for: CONSISTENT, SPARSE, LEFT or UNKNOWN (CW-F04 is Ryde's condition, CW-F04B FairRyde's logic for the pings), and F-GPS-LOGIC: whether that logic, not the pings alone, makes the driver count as arrived and present (D29: an upheld fee then needs approval, row R11, or R9 when presence is SPARSE; so does one where a CW-F04B parameter at an end of its plausible range would make it true)"}
       - {n: 10, do: COMPUTE, rule: CW-F05, note: "Contact attempts"}
       - {n: 11, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the cancellation, to see whether they place the rider at the pick-up or contest presence, timing or place; the wait starts TS_TOLERANCE_S before the arrival indication; before it, from the driver's assignment, the rider's messages count unless they are only questions about the driver, contests, pick-up instructions, admissions or acknowledgments, and calls do not count; rider phone GPS at the pick-up before the wait counts (D30, D33)"}
       - {n: 12, do: COMPUTE, rule: CW-F07, note: "Pin versus venue"}
@@ -93,7 +93,7 @@ playbooks:
       - {n: 2, do: CHECK, rule: CW-R00}
       - {n: 3, do: COMPUTE, rule: CW-F01}
       - {n: 4, do: CHECK, rule: "CW-R01 or CW-R02", note: "Free window by booking type"}
-      - {n: 5, do: CHECK, rule: CW-R08, note: "Driver lateness (generic assumption, credibility C)"}
+      - {n: 5, do: CHECK, rule: CW-R08, note: "Driver lateness (generic assumption: other platforms' practice, and a FairRyde condition for a driver not moving toward the pick-up; credibility D)"}
       - {n: 6, do: CHECK, rule: CW-R07}
       - {n: 7, do: CHECK, rule: "DQ-06, CW-R10", note: "Charged amount; voucher amount if waived"}
       - {n: 8, do: GET, rule: GEN-R05, note: "Both advocates' briefs"}
@@ -114,7 +114,7 @@ playbooks:
       - {n: 2, do: COMPUTE, rule: "CW-F02 or CW-F02B"}
       - {n: 3, do: CHECK, rule: CW-R06}
       - {n: 4, do: COMPUTE, rule: "CW-F03, CW-F03B", note: "Use boarding time instead of cancellation time, and FREE_WAIT_S as the threshold"}
-      - {n: 5, do: COMPUTE, rule: CW-F04}
+      - {n: 5, do: COMPUTE, rule: "CW-F04, CW-F04B", note: "Presence and F-GPS-LOGIC as for a no-show fee, over the free wait; if the fee stands while F-GPS-LOGIC is true, or would be true with a CW-F04B parameter (radius, ping gap, outlier length, tolerance, speed) at either end of its plausible range, the ruling needs approval (AUTH-02 trigger 12, D29)"}
       - {n: 6, do: CHECK, rule: CW-R05}
       - {n: 7, do: READ, rule: CW-F06, note: "Rider counter-evidence; read the statement, and the rider's calls and messages from the arrival indication to the end of CW-F04's window (the free wait, or boarding if earlier); the wait starts TS_TOLERANCE_S before the arrival indication; before it, from the driver's assignment, the rider's messages count unless they are only questions about the driver, contests, pick-up instructions, admissions or acknowledgments, and calls do not count; rider phone GPS at the pick-up before the wait counts (D30, D33)"}
       - {n: 8, do: GET, rule: GEN-R05, note: "Both advocates' briefs"}

@@ -460,7 +460,7 @@ def s_dt(wb, kb, rep):
                        summ["hits_per_row"][row["row"]], row.get("plain", "")])
     r0 = r
     r = table(ws, r, ["行"] + names + ["结果", "理由", "标记", "依赖的规则", "同时触发", "可信度", "命中组合数", "解释用语（plain）"], rows,
-              widths=[6, 14, 14, 12, 14, 16, 26, 18, 30, 26, 8, 10, 60])
+              widths=[6] + [14] * len(names) + [16, 26, 18, 30, 26, 8, 10, 60])
     for i, row in enumerate(dt["rows"], 1):
         c = ws.cell(row=r0 + i, column=len(names) + 7)
         c.fill, c.alignment = CRED_FILLS[row["credibility"]], CENTER

@@ -709,8 +709,8 @@ vocabularies:
       - {code: CHARGE_AMOUNT_MISMATCH, label: Amount charged differs from the policy amount of the profile}
       - {code: MARGIN_WITHIN_SPREAD, label: The decisive margin is not larger than the disagreement between sources about the same moment}
       - {code: RECORDS_MISSING, label: A decisive finding is UNKNOWN because records are missing}
-      - {code: GPS_OUTLIER, label: "An outside stretch shorter than LEFT_MIN_OUTSIDE_S followed by a return inside, or reached at an impossible speed, after the driver was seen inside the pick-up area; set aside (CW-F04)"}
-      - {code: GPS_AMBIGUOUS, label: "The driver's GPS cannot settle whether the driver left during the wait (a stretch set aside between inside pings far apart, a departure around the window end, or a single ping); human approval (CW-F04, AUTH-02)"}
+      - {code: GPS_OUTLIER, label: "An outside stretch shorter than LEFT_MIN_OUTSIDE_S followed by a return inside, or reached at an impossible speed, after the driver was seen inside the pick-up area; set aside (CW-F04B)"}
+      - {code: GPS_AMBIGUOUS, label: "The driver's GPS cannot settle whether the driver left during the wait (a stretch set aside between inside pings far apart, a departure around the window end, a wait that starts while the driver was last seen away, or a single ping); human approval (CW-F04B, AUTH-02)"}
       - {code: GPS_DATA_ERROR, label: Driver GPS implies a speed above SPEED_MAX_KMH; the jump is set aside and gate G1 fires (DQ-02)}
       - {code: ARRIVAL_UNCONFIRMED, label: "GPS did not confirm the driver at the pick-up point when arrival was indicated; the wait counts from the first confirming ping (CW-R06, CW-F03B)"}
       - {code: OTHER, label: Other}

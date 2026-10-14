@@ -331,7 +331,8 @@ finding_types:
   - {code: F-WAIT-ANCHOR, label: Canonical start of waiting, produced_by: [CW-F02, CW-F02B]}
   - {code: F-WAIT-ELAPSED, label: Seconds from the confirmed wait start (later of the anchor and the GPS confirmation) to cancellation, unit: s, produced_by: CW-F03}
   - {code: F-WAIT-MARGIN, label: Elapsed minus threshold, unit: s, produced_by: CW-F03}
-  - {code: F-PRESENCE, label: Driver presence at the pick-up point during the wait, values: [CONSISTENT, SPARSE, LEFT, UNKNOWN], produced_by: CW-F04}
+  - {code: F-PRESENCE, label: "Driver presence at the pick-up point during the wait (Ryde's condition, CW-F04, read from the pings by FairRyde's logic, CW-F04B)", values: [CONSISTENT, SPARSE, LEFT, UNKNOWN], produced_by: [CW-F04, CW-F04B]}
+  - {code: F-GPS-LOGIC, label: "FairRyde's GPS logic, not the pings alone, makes the driver count as arrived and present (a ping set aside that could change the arrival or the presence, an outside ping not counted as leaving, a later GPS confirmation, SPARSE or GPS_AMBIGUOUS)", values: [false, true], produced_by: CW-F04B}
   - {code: F-CONTACT, label: Contact attempts after arrival, values: [ADEQUATE, INSUFFICIENT, NONE], produced_by: CW-F05}
   - {code: F-RIDER-EVIDENCE, label: Rider counter-evidence strength, values: [NONE, WEAK, STRONG], produced_by: CW-F06}
   - {code: F-PIN-VENUE, label: Pickup pin to OneMap venue distance, unit: m, produced_by: CW-F07}
