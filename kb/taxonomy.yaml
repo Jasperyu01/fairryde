@@ -244,6 +244,7 @@ vocabularies:
             zh: 司机自行加收或要求在 app 外付款
             definition: The rider says the driver asked for or added a payment the app's fare does not include, such as cash on top of the fare, a 'commission', a 'VIP' or other charge the driver made up, or a transfer outside the app.
             excludes: "A surcharge or entry fee that Ryde lists (FC-SURCHARGE); ERP the driver keyed in (FC-TOLL). Threats used to obtain the payment are safety content (CLS-01, SE-CONDUCT)."
+            term_note: "A charge the driver made up raises a fraud signal against the driver (FRD-01), shown to the reviewer only; it never changes the outcome (GEN-R03). Jasper, 2026-10-14, open item D40 (b)."
             term_sources:
               - "Ryde driver article 33362721809049 'Driver Performance and Community Standards' (fraudulent activity: drivers who overcharge riders)"
               - "No rider article names the complaint; validation round 1 complaints C07, C18 and C19 (round 1 finding FX8)"
@@ -296,7 +297,7 @@ vocabularies:
           - code: SE-CONDUCT
             label: Inappropriate behavior or harassment
             zh: 不当行为或骚扰
-            definition: "A rider or driver reports behavior by the other party toward a person that threatens their safety or that Ryde lists as misconduct between drivers and passengers (Code of Conduct item 5, community standards): physical assault or an attempt, verbal or physical sexual harassment, unwanted sexual advances, threats and intimidation, kidnapping or being held against one's will, abuse or harassment of any kind (insults, slurs, overly personal questions, comments on appearance, personal contact after the trip), and discrimination because of race, ethnicity, religion, nationality, disability or a similar ground (including a refusal or a canceled trip for that reason). Rudeness alone (an unfriendly or impatient manner, a raised voice, a curt reply) with no abuse, threat or discrimination is feedback (EX-FEEDBACK)."
+            definition: "A rider or driver reports behavior by the other party toward a person that threatens their safety or that Ryde lists as misconduct between drivers and passengers (Code of Conduct item 5, community standards): physical assault or an attempt, verbal or physical sexual harassment, unwanted sexual advances, threats and intimidation, kidnapping or being held against one's will, abuse or harassment of any kind (insults, slurs, overly personal questions, comments on appearance, personal contact after the trip), and discrimination because of race, ethnicity, religion, nationality, disability or a similar ground (including a refusal or a canceled trip for that reason). Rudeness alone (an unfriendly or impatient manner, a raised voice, a curt reply) with no abuse, threat or discrimination is feedback (EX-FEEDBACK). A complaint that mentions discrimination sends the whole case to a person with the case file only, no recommendation (CLS-01, SE-R01)."
             excludes: "Unsafe driving (SE-DRIVING); a ride ended midway (SE-TERMINATED); a fee contested because of the behavior keeps its own claim as a secondary claim (CLS-02)."
             term_sources:
               - "Handbook: 'Driver behaved inappropriately during the trip.'"

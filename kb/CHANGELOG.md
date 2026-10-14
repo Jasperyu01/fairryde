@@ -35,8 +35,8 @@ Credibility is shown as v0.1 → v0.2 where it changed.
 
 | Item | Steps | Fix | Change |
 |---|---|---|---|
-| CLS-01 | A3, A4 | FX4, FX6 | Definition read for meaning (mode READ), with examples from Ryde's Code of Conduct items 5 to 8 and the community standards. Unclear text is S1. Rudeness alone is feedback, and a money or damage dispute alone is not safety content. Full SE-type mapping. C → D. |
-| CLS-02 | A4 | FX6 | Any SE claim is primary, including against the organizer's code. |
+| CLS-01 | A3, A4 | FX4, FX6 | Definition read for meaning (mode READ), with examples from Ryde's Code of Conduct items 5 to 8 and the community standards. Unclear text is S1. Rudeness alone is feedback, and a money or damage dispute alone is not safety content. Full SE-type mapping. A complaint that mentions discrimination sends the whole case to a person with the case file only (Jasper, 14 Oct). C → D. |
+| CLS-02 | A4, 14 Oct | FX6 | Any SE claim is primary, including against the organizer's code. With discrimination, a contested fee is a secondary claim with no proposed outcome (Jasper, 14 Oct). |
 | CLS-03 | A4 | FX6 | The exception covers any SE type; applies_to adds SE. |
 | CLS-05 | A4 | FX8 | For a cancellation-fee claim the trip record decides the type, over the code (CLS-06). |
 | CLS-06 (new) | A4 | FX8 | Who canceled comes from the reason, cancelled_by, the cancel events and the system message. Rider: CW-RIDERCANCEL. Driver for another reason, or system: CW-OTHER. Disagreeing, unreadable or silent records, or a driver cancellation with no reason: REQUEST_INFO at tier HUMAN. D. |
@@ -69,15 +69,17 @@ Credibility is shown as v0.1 → v0.2 where it changed.
 | FC-R07 | A2, A3 | FX3, FX4 | Compares against the rider's share. A → D (Jasper, 14 Oct). |
 | FC-R08 | A2, A4 | FX3, FX7 | The refund is bounded by the rider's share, with the PDVL-only note and no ruling on metered fares (D32). Uses the final itinerary. C → D. |
 | FC-R12 | A2, A4 | FX3, FX7 | ERP data gaps. A changed itinerary whose route on record does not follow it, when the route can change the amount. |
+| FRD-01 | 14 Oct | FX8 | A charge the driver made up (FC-DRIVERCHARGE) raises a fraud signal against the driver; it never changes the outcome and is shown to the reviewer only (Jasper, 14 Oct). |
 | FRD-02 | A2 | FX5 | The fraud signal never changes the outcome, and G3 is described. |
+| SE-R01 | 14 Oct | FX6 | With a mention of discrimination, FairRyde prepares the case file only and makes no recommendation of any kind (Jasper, 14 Oct). |
 | SE-R02 | A3 | FX4 | Ryde examples and breakdown quoted. |
 | SE-R04 | A3 | FX4 | "Traffic accident report" instead of a police report. |
-| PB-INTAKE | A4 | FX6, FX8 | CLS-01 is a READ step; CLS-06 at classification. |
+| PB-INTAKE | A4, 14 Oct | FX6, FX8 | CLS-01 is a READ step; CLS-06 at classification; a discrimination complaint goes to a person whole. |
 | PB-CW-NOSHOW | A1, A1b, A3, A4 | FX1, FX4, FX8 | Reading steps, D29 at step 9, and the CLS-06 precondition with its evidence. |
 | PB-CW-WAITING | A1, A1b, A3 | FX1, FX4 | Window of the reading; D29 for waiting fees (step 5). |
 | PB-CW-RIDERCANCEL | A3, A4, 14 Oct | FX4, FX8, FX9 | CLS-06 precondition; CW-R08's two FairRyde elements named; a CW-R08 waiver needs approval. |
 | PB-FC-ROUTE, PB-FC-TOLL | A1, A2, A4 | FX2, FX3, FX7 | Metered exclusion, ERP share and evidence for the final itinerary. |
-| PB-TRIAGE-HUMAN, PB-ROUTE-SUPPORT | A4 | FX6 | CLS-01 is a READ step. |
+| PB-TRIAGE-HUMAN, PB-ROUTE-SUPPORT | A4, 14 Oct | FX6 | CLS-01 is a READ step; with discrimination, the case file only (PB-TRIAGE-HUMAN step 6). |
 
 ### Taxonomy, ontology and reference data
 
@@ -91,7 +93,7 @@ Credibility is shown as v0.1 → v0.2 where it changed.
   - has_dropoff is 1:N. The destination-change events are annotated, and so is the recommended route.
   - New finding F-GPS-LOGIC; F-PRESENCE is produced by CW-F04 and CW-F04B; F-ERP-EXPECTED is at the rider's share.
   - The wraps and rebuts relations are labeled FairRyde design.
-- **Reference data:** the new table ERP_RIDER_SHARE (A2). LEFT_MIN_OUTSIDE_S belongs to CW-F04B (A3). ARRIVAL_GEOFENCE_M's plausible range is [20, 100] (Jasper, 14 Oct).
+- **Reference data:** the new table ERP_RIDER_SHARE (A2). LEFT_MIN_OUTSIDE_S belongs to CW-F04B (A3). ARRIVAL_GEOFENCE_M's plausible range is [25, 100] (Jasper, 14 Oct).
 - **Annotation schema:** decision-table row R11, and the autonomy tier of REQUEST_INFO.
 
 ### Tools and outputs
@@ -102,7 +104,7 @@ Credibility is shown as v0.1 → v0.2 where it changed.
   - `kb/tools/engine_gates.py`: gate G3.
   - `kb/tools/explain.py`: party explanations, with the EXP-03 quote exemption.
 - **Tests (`kb/tools/selftest.py`):**
-  - 126 no-show variants and 565 message readings.
+  - 128 no-show variants and 565 message readings.
   - 53 ERP cases and the FC-R01 split (R1 to R10).
   - The A2, A3 and A4 rule-card checks, the census check, and the GPS fuzz invariants (`kb/tools/fuzz_presence.py`).
 - **Workbooks:** the names follow the KB version: `kb/out/FairRyde_KB_v0.2.xlsx` and `kb/out/FairRyde_Annotation_v0.2.xlsx`. The repository's annotation workbook had no human labels. A labeled v0.1 copy elsewhere is not overwritten; move its labels by content.
@@ -110,15 +112,23 @@ Credibility is shown as v0.1 → v0.2 where it changed.
 
 ### Jasper's decisions of 14 Oct on the points A3 and A4 left open
 
-Applied after A5 and before the freeze, checked by the build and the self-tests only, on Jasper's instruction:
+Applied after A5 and before the freeze. They were checked by the build, the self-tests and the E01 to E04 rerun, not by kb-step-check, on Jasper's instruction.
 
-- **D29's radius part (D39 (g)):** the plausible range of ARRIVAL_GEOFENCE_M now starts at 20 m instead of the platform's 10 m check. 20 m is above ordinary phone GPS error: about 4.9 m under open sky (gps.gov) and a mean of about 14.5 m in a high-rise urban canyon (arXiv 2109.00683). The value stays 50 m and the credibility D. A ping between 20 and 50 m from the pin still sends an uphold to approval. In the jitter simulation, automatic upholds of 600 clean cases go from 29 back to 204 (A2: 235). Tests V99 and V99B pin both sides.
+- **D29's radius part (D39 (g)):** the plausible range of ARRIVAL_GEOFENCE_M now starts at 25 m instead of the platform's 10 m check.
+  - The reason is FairRyde's own design, with no outside source: the GPS position of a car parked near tall buildings drifts while it stands still. At the low end, that drift must not count as being away.
+  - The value stays 50 m and the credibility D. A ping between 25 and 50 m from the pin still sends an uphold to approval.
+  - In the jitter simulation, automatic upholds of 600 clean cases go from 29 back to 347 (A2: 235).
+  - Tests V99 (a 30 m ping, approval) and V99B (a 20 m ping, automatic) pin both sides.
 - **CW-R08:** a rider's cancellation fee waived because the driver was late or not moving always needs approval, in line with D29. This is the new AUTH-02 trigger 13, also stated in CW-R08 and PB-CW-RIDERCANCEL step 5.
+- **A charge the driver made up (D40 (b)):** FRD-01 raises a fraud signal against the driver for FC-DRIVERCHARGE. The basis is Ryde's community standards: 'Drivers who overcharge riders ...'. As with FRD-02's signal, it never changes the outcome and is shown to the reviewer only.
+- **Discrimination (D40 (c)):** a complaint that mentions discrimination is always safety content, and the whole case goes to a person.
+  - FairRyde prepares the case file only: the claims, the evidence and the findings. It proposes no outcome, amount or measure on any claim.
+  - A contested fee is a secondary claim in the file.
+  - Rules: CLS-01, CLS-02, SE-R01, PB-INTAKE step 2 and PB-TRIAGE-HUMAN step 6.
+  - Engine: it stops before the decision table. V106, V119 and V120 pin it.
 - **Kept as they are:** CW-R06, FC-R01 and AUTH-03 at B (D39 (a) to (c)). An unrecorded is_carpool goes to a person only for RydeFLASH (D35 item 8). The line between rudeness and abuse stays as A4 drew it (D40 (e)).
 - **Known limitations of v0.2:** the reference engine's safety check is a pattern list that misses paraphrases (D40 (a)), and the case data has no field for several drop-offs, trip_data.stops (D40 (d)).
 
 ### Still open
 
-- D40 (b): whether a made-up driver charge should raise a fraud signal. FC-FAREMISMATCH and FC-DRIVERCHARGE stay with a person.
-- D40 (c): discrimination makes a claim a primary safety claim even when it is mainly about a fee.
-- The other points of D39 and D40 are recorded for information: engine gaps not fixed, FC-R12 materiality, the narrower safety examples.
+- The other points of D39 and D40 are recorded for information: engine gaps not fixed, FC-R12 materiality, and the narrower safety examples.

@@ -3,16 +3,16 @@
 Generated from the YAML source files (knowledge base dated 2026-10-14).
 
 * Rules: 90; vocabularies: 22; TX-CASE leaves: 35; entities: 20; events: 35; playbooks: 11
-* Rule sources: 190; VERIFIED 148, NO_QUOTE (design assumption) 35, PARAPHRASE 7
+* Rule sources: 191; VERIFIED 149, NO_QUOTE (design assumption) 35, PARAPHRASE 7
 * Credibility: A 26, B 9, C 1, D 54; modes: HARD 75, READ 9, HARD+READ 6
 * DISP-002 fields mapped: 59 of 59 leaf paths
 * DT-CW-NOSHOW enumeration: {'combinations': 192, 'unique': 192, 'gaps': 0, 'overlaps': 0}
 * State machines: {'SM-TRIP': {'states': 12, 'reachable': 12, 'terminal': ['CANCELLED_BY_DRIVER', 'CANCELLED_BY_RIDER', 'CANCELLED_NO_SHOW', 'COMPLETED', 'TERMINATED_MID_TRIP']}, 'SM-CHARGE': {'states': 7, 'reachable': 7, 'terminal': []}, 'SM-TICKET': {'states': 8, 'reachable': 8, 'terminal': ['MERGED']}, 'SM-RULING': {'states': 5, 'reachable': 5, 'terminal': []}}
-* Engine self-test: 126/126 variants pass
+* Engine self-test: 128/128 variants pass
 * ERP rules self-test: 53 ERP cases, the FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: all pass
 * Privacy dry run on DISP-002 (counts only): before {'PERSON_NAME': 3, 'PERSON_NAME_TOKEN': 8, 'VEHICLE_PLATE': 3, 'SG_PLATE': 3, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; after {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0}; fragments after 0; clean True
 * Leak scan of generated outputs (counts only): {'PERSON_NAME': 0, 'PERSON_NAME_TOKEN': 0, 'VEHICLE_PLATE': 0, 'SG_PLATE': 0, 'PHONE': 0, 'EMAIL': 0, 'NRIC_FIN': 0, 'UNIT_NUMBER': 0, 'LONG_NUMBER': 0, 'NAME_FRAGMENTS': 0, 'total': 0}
-* Annotation workbook: FairRyde_Annotation_v0.2.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.2.20261014T120616.xlsx
+* Annotation workbook: FairRyde_Annotation_v0.2.xlsx 已生成（没有人工填写过），旧文件备份到 backup/FairRyde_Annotation_v0.2.20261014T125627.xlsx
 * Issues: ERROR 0, WARN 0, INFO 3
 
 * DISP-002 under organizer_case: **UPHOLD** (row R8), reasons CW-R-NOSHOW-VALID, CW-R-PIN-AMBIGUOUS, flags BOOKING_TYPE_INFERRED, BOUNDARY_MARGIN, MARGIN_WITHIN_SPREAD, NO_RIDER_EVIDENCE, PIN_VENUE_MISMATCH, FRAUD_SIGNAL, GENERIC_ASSUMPTION_USED, confidence 0.689, tier **APPROVE**
@@ -136,14 +136,14 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | V100 | V96 with the platform's arrival check: an outlier before the indication cannot contradict the check, so automatic | UPHOLD | R8 | AUTO | 0.964 | pass |
 | V97 | Ryde advance booking for 08:45, platform check at 08:38, one 150 m outlier at 08:40:15: it can change neither the arrival nor the wait, so the uphold stays automatic | UPHOLD | R8 | AUTO | 0.964 | pass |
 | V98 | V06 with the driver 150 m away from 08:46 to 08:48, those pings written in UTC: sorted by instant, a departure (R4) | WAIVE_FEE | R4 | AUTO | 1.0 | pass |
-| V99 | V06 with pings 3 m from the pin and one 25 m away: inside the 50 m area, but at the radius's 20 m low end it is an outlier, so the uphold would rest on FairRyde's logic (D29, radius part): approval | UPHOLD | R8 | APPROVE | 0.964 | pass |
-| V99B | as V99 with the far ping 15 m away: ordinary GPS error, inside the radius even at its 20 m low end (Jasper, 2026-10-14, D39 (g)), so the uphold rests on the pings alone: automatic | UPHOLD | R8 | AUTO | 0.964 | pass |
+| V99 | V06 with pings 3 m from the pin and one 30 m away: inside the 50 m area, but at the radius's 25 m low end it is an outlier, so the uphold would rest on FairRyde's logic (D29, radius part): approval | UPHOLD | R8 | APPROVE | 0.964 | pass |
+| V99B | as V99 with the far ping 20 m away: GPS drift around a parked car, inside the radius even at its 25 m low end (Jasper, 2026-10-14, D39 (g)), so the uphold rests on the pings alone: automatic | UPHOLD | R8 | AUTO | 0.964 | pass |
 | V101 | Ryde advance booking for 08:45 with the platform check at 08:38; an outlier 10 s after the indication is the last ping before 08:38:30, so without the logic it would contradict the check: R11 (D29) | UPHOLD | R11 | APPROVE | 0.964 | pass |
 | V102 | Ryde on-demand trip: at the pin until 08:45:00, then the next ping (08:46:40, 400 m) comes 40 s after the 3-minute wait ended: the driver may have left before it ended, so approval | UPHOLD | R11 | APPROVE | 1.0 | pass |
 | V103 | Ryde advance booking for 08:45: 400 m away from 08:40:20 to 08:44:50 and first back at the pin at 08:45:50: the pings cannot show the driver at the pick-up when the counted wait started, so approval | UPHOLD | R11 | APPROVE | 0.767 | pass |
 | V104 | safety content without v0.1's words in the description: 'After that he stopped on the PIE and told me to get out of the car.' | UPHOLD | R8 | HUMAN | 0.689 | pass |
 | V105 | safety content without v0.1's words in the description: 'He then drove the wrong way and would not let me out, I felt kidnapped.' | UPHOLD | R8 | HUMAN | 0.689 | pass |
-| V106 | safety content without v0.1's words in the description: 'He made racist remarks about me.' | UPHOLD | R8 | HUMAN | 0.689 | pass |
+| V106 | safety content without v0.1's words in the description: 'He made racist remarks about me.' | ESCALATE_HUMAN | None | HUMAN | None | pass |
 | V107 | rudeness alone in the description: not safety content, the no-show ruling stands as for DISP-002 | UPHOLD | R8 | APPROVE | 0.689 | pass |
 | V108 | every record says the rider canceled: a rider cancellation fee case (CW-RIDERCANCEL), not ruled here | None | None | n/a (reclassified to CW-RIDERCANCEL) | None | pass |
 | V109 | reason rider_no_show, but the app events record a rider cancellation: the records disagree (CLS-06) | REQUEST_INFO | None | HUMAN | None | pass |
@@ -156,6 +156,8 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | V116 | the system canceled and the record gives no reason: CW-OTHER (CLS-06) | None | None | n/a (reclassified to CW-OTHER) | None | pass |
 | V117 | the reason written RIDER_NO_SHOW is still a driver's no-show cancellation: as DISP-002 | UPHOLD | R8 | APPROVE | 0.689 | pass |
 | V118 | the driver canceled and the record gives no reason: ask for the trip record (CLS-06) | REQUEST_INFO | None | HUMAN | None | pass |
+| V119 | a clean automatic uphold, but the rider's message says the driver canceled because of the rider's ethnicity: no proposed outcome, the whole case to a person, the fee a secondary claim (CLS-01, SE-R01) | ESCALATE_HUMAN | None | HUMAN | None | pass |
+| V120 | a rider cancellation whose description mentions discrimination: reclassified, and the whole case to a person | None | None | HUMAN | None | pass |
 
 ## Entity coverage (ONT.6)
 
@@ -363,6 +365,7 @@ Generated from the YAML source files (knowledge base dated 2026-10-14).
 | GEN-R07 | 1 | INTERNAL_STANDARD | INT-CHORDX-ONT | 2026-09-25 |  | VERIFIED | sources/chordx_knowledge_base.md | 把规则库偷偷换成"通用预设规则"，会让人误以为系统读了合同 |  |
 | FRD-01 | 1 | RYDE_POLICY | RYDE-33362721809049 | 2026-04-10 |  | VERIFIED | corpus body | 5. Remaining stationary and uncontactable after accepting a ride to trigger cancellation or waiting fees |  |
 | FRD-01 | 2 | RYDE_POLICY | RYDE-33362721809049 | 2026-04-10 |  | VERIFIED | corpus body | 8. Abuse of Cancellation and Waiting Fee Policy |  |
+| FRD-01 | 3 | RYDE_POLICY | RYDE-33362721809049 | 2026-04-10 |  | VERIFIED | corpus body | Drivers who overcharge riders and/or complete the trip without the rider onboard. | Community standards, 'Fraudulent Activity': the basis for the signal on a charge the drive |
 | FRD-02 | 1 | FAIRRYDE | FAIRRYDE-DECISIONS | 2026-10-05 |  | NO_QUOTE (design assumption) |  |  |  |
 | AUTH-00 | 1 | RYDE_TOU | RYDE-TOU | last modified 6 Apr 2022 (contains later content, such as the S$200 cleaning cap) |  | VERIFIED | Section A, 7. Cancellation, 7.2 Cancellation Terms for Users (paragraph 3) | Ryde reserves its absolute discretion to any refunds to you |  |
 | AUTH-01 | 1 | GOV_GUIDANCE | GOV-MGF2 | 2020-01-21 |  | PARAPHRASE |  |  | Model AI Governance Framework (2nd ed.) paras 3.14 to 3.16: human-over-the-loop for low-se |

@@ -45,6 +45,18 @@ SAFETY_PATTERNS = [
     r"\b(texted|messaged|called|contacted|whatsapp(ed)?) me (again )?after the (trip|ride)\b"]
 
 
+# CLS-01, SE-R01 (Jasper, 2026-10-14, D40 (c)): a complaint that mentions discrimination sends the whole case to a person,
+# with the case file only and no proposed outcome. Offline stand-in, like SAFETY_PATTERNS.
+_GROUND = r"(race|racial|religion|religious|skin|colou?r|nationality|accent|ethnicity|disab\w*|wheelchair|foreign\w*|muslim|hindu|christian|malay|indian|chinese|black)"
+DISCRIMINATION_PATTERNS = [
+    r"\bracis(t|m)\b", r"\bracial", r"\bdiscriminat", r"\bxenophob", r"\bslurs?\b",
+    r"\bcomment(ed|s|ing)? (about|on) my " + _GROUND + r"\b", r"\bbecause (of )?(my|i'?m|i am|we'?re|we are) " + _GROUND + r"\b"]
+
+
+def discrimination_hits(texts: list[str]) -> list[str]:
+    return sorted({m.group(0).lower() for x in texts for p in DISCRIMINATION_PATTERNS for m in [re.search(p, x, re.I)] if m})
+
+
 def safety_hits(texts: list[str]) -> list[str]:
     """The stand-in for CLS-01's reading: the matched phrases, after removing the ordinary phrases in SAFETY_IGNORE."""
     hits = set()
@@ -454,8 +466,10 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
         tr.flag("INJECTION_SUSPECTED")
     tr.step("PB-INTAKE", 1, "GEN-R04", f"instruction-like text from {', '.join(tr.injection_authors)} flagged and ignored" if tr.injection_authors
             else "no instructions found in party text", ["E-TKT-01"] + _ev_id("E-CHT", case, "chat_logs", lambda c: c["type"] == "message"))
-    hits_ = safety_hits(free_text)
+    disc = discrimination_hits(free_text)
+    hits_ = sorted(set(safety_hits(free_text)) | set(disc))
     tr.findings["_safety"] = bool(hits_)
+    tr.findings["_discrimination"] = bool(disc)
     tr.step("PB-INTAKE", 2, "CLS-01", f"safety content (offline stand-in for the reading): {hits_}" if hits_ else "no safety content found (offline stand-in for the reading)", ["E-TKT-01"])
     tr.claim_type = kb.resolve("TX-CASE", tk["dispute_type"])
     tr.step("PB-INTAKE", 3, "CLS-05, CLS-02, CLS-06, CLS-04",
@@ -1019,6 +1033,16 @@ def evaluate(kb: KB, case: dict, profile: str | None = None, overrides: dict | N
     # 13 GEN-R05 advocates: not simulated here
     tr.step(pb, 13, "GEN-R05", "advocate briefs are produced at run time by the Rider and Driver Advocates; not simulated in this offline check", [], status="missing")
 
+    if tr.findings.get("_discrimination"):       # CLS-01, CLS-02, SE-R01 (D40 (c)): the case file only, no proposed outcome
+        tr.outcome, tr.reasons = "ESCALATE_HUMAN", ["SE-R-HUMAN-DECIDES"]
+        tr.secondary_claims = [{"claim": "CANCELLATION_FEE", "amount_sgd": float(t.get("cancellation_fee") or 0), "proposed_outcome": None}]
+        tr.amount_at_stake = float(t.get("cancellation_fee") or 0)
+        tr.confidence = {"A": None, "M": None, "E": None, "R": None, "C": None, "assumed": [], "evidence_present": {}, "soft_flags": []}
+        tr.step(pb, 14, "CLS-01, CLS-02, SE-R01", "the complaint mentions discrimination: the whole case goes to a person; the findings above are "
+                "the case file, no outcome, amount or measure is proposed, and the contested fee is a secondary claim in the file", ["E-TKT-01"])
+        tr.path("CLS-01", "SE-R01")
+        return tr
+
     # 14 DT-CW-NOSHOW
     env = {"arrival_valid": arrival, "presence": presence, "threshold_met": met, "rider_evidence": rider_ev, "gps_logic_decides": gps_logic}
     dt = kb.y["rules"]["decision_tables"]["DT-CW-NOSHOW"]
@@ -1203,6 +1227,10 @@ def start_test(kb: KB, case: dict, profile: str, base: Trace) -> list[dict]:
 def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
     tau = kb.pval("TAU", tr.profile, tr.overrides)
     limit = kb.pval("AUTO_LIMIT_SGD", tr.profile, tr.overrides)
+    if tr.findings.get("_discrimination"):                              # CLS-01, SE-R01 (D40 (c)): no proposed outcome, a person decides
+        return {"tier": "HUMAN", "decisive": [], "gates": ["G4 safety content"], "runtime_only_gates": [], "favoured_party": None,
+                "triggers": ["the complaint mentions discrimination: the whole case goes to a person with the case file only (CLS-01, SE-R01)"],
+                "tau": tau, "auto_limit": limit}
     if tr.reclassified_to or tr.outcome == "REQUEST_INFO":             # CLS-06: not ruled under this table
         safety = ["G4 safety content"] if tr.findings.get("_safety") else []   # CLS-01: whatever else the ticket contains
         if tr.reclassified_to:
@@ -1284,7 +1312,7 @@ def decide_tier(kb: KB, tr: Trace, sens: list[dict], reads: list[dict]) -> dict:
 
 def run(kb: KB, case: dict, profile: str | None = None) -> dict:
     base = evaluate(kb, copy.deepcopy(case), profile)
-    if base.reclassified_to or base.outcome == "REQUEST_INFO":
+    if base.reclassified_to or base.outcome == "REQUEST_INFO" or base.findings.get("_discrimination"):
         return {"trace": base, "sensitivity": [], "readings": [], "tier": decide_tier(kb, base, [], []), "case": case}
     sens = sensitivity(kb, case, base.profile, base)
     reads = reading_test(kb, case, base.profile, base) + start_test(kb, case, base.profile, base)

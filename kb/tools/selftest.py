@@ -718,12 +718,12 @@ def variants(base: dict):
             jit = (VENUE[0] + 0.000027, VENUE[1])            # about 3 m from the pin
             _set_wait_pings(c, [(h, *((VENUE[0] + far, VENUE[1]) if h == "08:47:00" else jit), st) for h, _, _, st in _every_30s()])
         return f
-    v("V99", "V06 with pings 3 m from the pin and one 25 m away: inside the 50 m area, but at the radius's 20 m low end it is an outlier, "
-      "so the uphold would rest on FairRyde's logic (D29, radius part): approval", v99(0.000225),
+    v("V99", "V06 with pings 3 m from the pin and one 30 m away: inside the 50 m area, but at the radius's 25 m low end it is an outlier, "
+      "so the uphold would rest on FairRyde's logic (D29, radius part): approval", v99(0.00027),
       {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "findings": {"F-GPS-LOGIC": False}, "decisive": ["CW-F04B"],
        "triggers": ["would decide it with ARRIVAL_GEOFENCE_M"]})
-    v("V99B", "as V99 with the far ping 15 m away: ordinary GPS error, inside the radius even at its 20 m low end (Jasper, 2026-10-14, "
-      "D39 (g)), so the uphold rests on the pings alone: automatic", v99(0.000135),
+    v("V99B", "as V99 with the far ping 20 m away: GPS drift around a parked car, inside the radius even at its 25 m low end (Jasper, "
+      "2026-10-14, D39 (g)), so the uphold rests on the pings alone: automatic", v99(0.00018),
       {"outcome": "UPHOLD", "row": "R8", "tier": "AUTO", "findings": {"F-GPS-LOGIC": False}, "not_decisive": ["CW-F04B"], "not_triggers": ["D29"]})
 
     def v101(c):
@@ -767,7 +767,9 @@ def variants(base: dict):
                       ("V106", " He made racist remarks about me.")):
         v(vid, f"safety content without v0.1's words in the description: '{text.strip()}'",
           (lambda t: lambda c: c["dispute_ticket"].update(description=c["dispute_ticket"]["description"] + t))(text),
-          {"tier": "HUMAN", "gates": ["G4"]})
+          {"tier": "HUMAN", "gates": ["G4"]} if vid != "V106" else       # discrimination: the case file only (D40 (c))
+          {"tier": "HUMAN", "gates": ["G4"], "outcome": "ESCALATE_HUMAN", "reasons": ["SE-R-HUMAN-DECIDES"], "row": None,
+           "triggers": ["mentions discrimination"]})
     v("V107", "rudeness alone in the description: not safety content, the no-show ruling stands as for DISP-002",
       lambda c: c["dispute_ticket"].update(description=c["dispute_ticket"]["description"] + " The driver was rude and shouted at me on the phone."),
       {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE", "not_gates": ["G4"]})
@@ -822,6 +824,20 @@ def variants(base: dict):
       lambda c: c["trip_data"].update(cancellation_reason="RIDER_NO_SHOW"), {"outcome": "UPHOLD", "row": "R8", "tier": "APPROVE"})
     v("V118", "the driver canceled and the record gives no reason: ask for the trip record (CLS-06)",
       lambda c: c["trip_data"].pop("cancellation_reason", None), ask)
+
+    # Jasper, 2026-10-14, D40 (c): a complaint that mentions discrimination goes to a person whole, with the case file only
+    def disc_chat(c):
+        clean(c)
+        c["chat_logs"].append({"timestamp": _ts("08:44:30"), "sender": "rider", "type": "message", "content": "He cancelled because I'm Malay, I saw him laugh."})
+    v("V119", "a clean automatic uphold, but the rider's message says the driver canceled because of the rider's ethnicity: no proposed "
+      "outcome, the whole case to a person, the fee a secondary claim (CLS-01, SE-R01)", disc_chat,
+      {"outcome": "ESCALATE_HUMAN", "reasons": ["SE-R-HUMAN-DECIDES"], "row": None, "tier": "HUMAN", "gates": ["G4"]})
+
+    def disc_rider(c):
+        by_rider(c)
+        c["dispute_ticket"]["description"] += " The driver was racist to me before I cancelled."
+    v("V120", "a rider cancellation whose description mentions discrimination: reclassified, and the whole case to a person", disc_rider,
+      {"reclassified": "CW-RIDERCANCEL", "tier": "HUMAN", "gates": ["G4"]})
     return out
 
 
@@ -1313,12 +1329,21 @@ def a4_check(kb) -> list:
               "asked if I had a boyfriend and whether I lived alone", "He was driving dangerously", "He left me at a dark isolated road at night.",
               "He refused to stop the car when I asked.", "We had an accident on the way", "I felt unsafe in the car"):
         need("CLS-01", bool(hit(x)), f"the safety stand-in misses {x!r}")
-    # Jasper's decisions of 2026-10-14 on A3 and A4's open points: the radius's low end above ordinary GPS error (D39 (g)),
+    # Jasper's decisions of 2026-10-14 on A3 and A4's open points: the radius's low end above GPS drift around a parked car (D39 (g)),
     # and every CW-R08 waiver needs approval (D40 (k))
     lo = kb.param("ARRIVAL_GEOFENCE_M", "ryde_2026")["plausible_range"][0]
-    need("ARRIVAL_GEOFENCE_M", lo >= 20, f"the radius's plausible range starts at {lo} m, below ordinary phone GPS error (D39 (g): 20 m)")
+    need("ARRIVAL_GEOFENCE_M", lo == 25, f"the radius's plausible range starts at {lo} m; Jasper set 25 m (D39 (g))")
     need("AUTH-02", "(13)" in t("AUTH-02") and "CW-R08" in t("AUTH-02"), "AUTH-02 has no trigger for a CW-R08 waiver (D40 (k))")
     need("CW-R08", "always needs human approval" in t("CW-R08"), "CW-R08 must say a waiver needs approval (D40 (k))")
+    # Jasper's later decisions of 2026-10-14: a made-up driver charge raises the driver's fraud signal (D40 (b)); a complaint that
+    # mentions discrimination goes to a person whole, with the case file only (D40 (c))
+    need("FRD-01", "FC-DRIVERCHARGE" in t("FRD-01") and "never changes the outcome" in t("FRD-01"), "FRD-01 must flag a made-up driver charge (D40 (b))")
+    need("CLS-01", "mentions discrimination" in t("CLS-01") and "proposes no outcome" in t("CLS-01"), "CLS-01 must send a discrimination complaint to a person whole (D40 (c))")
+    need("SE-R01", "no recommendation of any kind" in t("SE-R01"), "SE-R01 must allow no recommendation on a discrimination complaint (D40 (c))")
+    for x in ("He made racist remarks", "he cancelled because I'm Indian", "he kept making comments about my religion", "I felt discriminated against"):
+        need("CLS-01", bool(E.discrimination_hits([x])), f"the discrimination stand-in misses {x!r}")
+    for x in ("I'm at the Malay restaurant entrance", "Wearing a black shirt, at the lobby", "his speech was slurred"):
+        need("CLS-01", not E.discrimination_hits([x]), f"the discrimination stand-in fires on ordinary text {x!r}")
     import explain as X                     # EXP-03: a number inside a verbatim clause quote is exempt, other quoted numbers are not
     q = X.clause_quotes(kb)
     need("EXP-03", X.exp03_check('Ryde: "Has waited for more than 3 mins".', set(), q) == [], "a number in a verbatim clause quote is not exempt")

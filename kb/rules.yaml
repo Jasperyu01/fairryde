@@ -199,10 +199,13 @@ rules:
       feedback (EX-FEEDBACK). A dispute about money (a fare, a fee, an overcharge, a charge the driver made up) or about damage
       to the car is not safety content by itself, even where the conduct may be a crime; it becomes safety content when it
       comes with violence, threats, danger, abuse or discrimination. Severity S0 when someone was hurt, held, assaulted, threatened with harm or put in immediate
-      danger; S1 otherwise. The SE type follows the taxonomy definitions (SE-CONDUCT for behavior toward a person,
+      danger; S1 otherwise. A complaint that mentions discrimination is always safety content, and the whole case goes to a
+      person: FairRyde prepares the case file (the claims, the evidence and the findings) and proposes no outcome, amount or
+      measure for any claim in it, and a contested fee is recorded in the file as a secondary claim (CLS-02, SE-R01; Jasper,
+      2026-10-14, open item D40 (c)). The SE type follows the taxonomy definitions (SE-CONDUCT for behavior toward a person,
       SE-DRIVING, SE-ACCIDENT, SE-TERMINATED for a ride ended midway, SE-MISMATCH for a driver or car that does not match the
       app, SE-RECORDING for an in-vehicle recording device, SE-OTHER otherwise).
-    zh: 案件里任何自由文本（描述、聊天、补充证据）含有安全相关内容时，单独建 SE 主张，定严重度 S0 或 S1，转人工，不管工单里还有什么。安全相关内容是任何一方讲述的以下情形：暴力或暴力威胁（攻击或企图攻击、打人、抓伤、凶器、威胁恐吓）；性不当行为（骚扰、不受欢迎的示好或触碰）；对人的任何形式的辱骂或骚扰（侮辱、带歧视的辱骂或冲人骂脏话、过分私人的问题、评论外貌、行程后因私联系乘客）；被违背意愿扣留或带走（绑架、劫持，司机不让乘客下车或要求停车也不停）；被置于危险之中（鲁莽或危险驾驶，司机受酒精或药物影响，不安全的下车，例如被赶下车留在快速公路或路肩上，或在偏僻处、夜里被司机赶下车或丢下）；事故或受伤；因种族、族裔、宗教、国籍、残疾或类似理由受到歧视；或其他犯罪。按意思判断，不按关键词：这些只是例子，不是封闭清单，没用这些词的文字也可能是安全内容（"他停在 PIE 上叫我下车"）。拿不准是不是安全内容时按安全内容处理（S1），让人工看到。只是态度不好（不友善或不耐烦、大声、回话生硬），没有辱骂、威胁、危险或歧视，不是安全内容，属于一般反馈（EX-FEEDBACK）。关于钱的争议（车费、费用、多收、司机自己加的收费）或车辆损坏，本身不是安全内容，即使这种行为可能构成犯罪；伴有暴力、威胁、危险、辱骂或歧视时才是安全内容。有人受伤、被扣留、被攻击、受到伤害威胁或处于紧迫危险时为 S0，其余为 S1。SE 类型按分类定义选（对人的行为为 SE-CONDUCT，另有 SE-DRIVING、SE-ACCIDENT，行程中途被终止为 SE-TERMINATED，司机或车辆与 App 不符为 SE-MISMATCH，车内录像设备为 SE-RECORDING，其余为 SE-OTHER）。
+    zh: 案件里任何自由文本（描述、聊天、补充证据）含有安全相关内容时，单独建 SE 主张，定严重度 S0 或 S1，转人工，不管工单里还有什么。安全相关内容是任何一方讲述的以下情形：暴力或暴力威胁（攻击或企图攻击、打人、抓伤、凶器、威胁恐吓）；性不当行为（骚扰、不受欢迎的示好或触碰）；对人的任何形式的辱骂或骚扰（侮辱、带歧视的辱骂或冲人骂脏话、过分私人的问题、评论外貌、行程后因私联系乘客）；被违背意愿扣留或带走（绑架、劫持，司机不让乘客下车或要求停车也不停）；被置于危险之中（鲁莽或危险驾驶，司机受酒精或药物影响，不安全的下车，例如被赶下车留在快速公路或路肩上，或在偏僻处、夜里被司机赶下车或丢下）；事故或受伤；因种族、族裔、宗教、国籍、残疾或类似理由受到歧视；或其他犯罪。按意思判断，不按关键词：这些只是例子，不是封闭清单，没用这些词的文字也可能是安全内容（"他停在 PIE 上叫我下车"）。拿不准是不是安全内容时按安全内容处理（S1），让人工看到。只是态度不好（不友善或不耐烦、大声、回话生硬），没有辱骂、威胁、危险或歧视，不是安全内容，属于一般反馈（EX-FEEDBACK）。关于钱的争议（车费、费用、多收、司机自己加的收费）或车辆损坏，本身不是安全内容，即使这种行为可能构成犯罪；伴有暴力、威胁、危险、辱骂或歧视时才是安全内容。有人受伤、被扣留、被攻击、受到伤害威胁或处于紧迫危险时为 S0，其余为 S1。提到歧视的投诉一律是安全内容，整个案子转人工：AI 只准备案卷（主张、证据、事实认定），对其中任何主张都不给结果、金额或措施建议；争议费用作为次要诉求写进案卷（CLS-02、SE-R01；Jasper，2026-10-14，待办 D40 (c)）。SE 类型按分类定义选（对人的行为为 SE-CONDUCT，另有 SE-DRIVING、SE-ACCIDENT，行程中途被终止为 SE-TERMINATED，司机或车辆与 App 不符为 SE-MISMATCH，车内录像设备为 SE-RECORDING，其余为 SE-OTHER）。
     produces: [SE-R-HUMAN-DECIDES]
     sources:
       - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Assault, harassment, or abuse of any kind will not be tolerated.', note: "Ryde Code of Conduct item 5."}
@@ -238,8 +241,9 @@ rules:
       chose an SE type for it) is always the primary claim; otherwise the primary claim
       is the one contesting the largest charge; otherwise the first stated issue. Other claims are secondary. If the free text
       contradicts the organizer's dispute code, the code stays primary, the text's issue becomes a secondary claim, and the case
-      is flagged for review; a safety claim still comes first.
-    zh: 每个争议款项或问题一个主张。安全主张（任何 SE 类型，不论是 CLS-01 建的还是分类时选的）永远是主项；没有安全主张时，争议金额最大的主张为主项；再没有时，以最先提出的问题为主项。其他主张为次项。自由文本与组织方争议代码矛盾时，代码仍为主项，文字所述问题列为次项，并标记复核（安全主张仍优先于代码）。
+      is flagged for review; a safety claim still comes first. In a case that mentions discrimination, a contested fee is a
+      secondary claim recorded in the case file, with no proposed outcome (CLS-01).
+    zh: 每个争议款项或问题一个主张。安全主张（任何 SE 类型，不论是 CLS-01 建的还是分类时选的）永远是主项；没有安全主张时，争议金额最大的主张为主项；再没有时，以最先提出的问题为主项。其他主张为次项。自由文本与组织方争议代码矛盾时，代码仍为主项，文字所述问题列为次项，并标记复核（安全主张仍优先于代码）。提到歧视的案子里，争议费用是写进案卷的次要诉求，不给任何结果建议（CLS-01）。
     sources:
       - {type: INTERNAL_STANDARD, doc: INT-CHORDX-ONT, clause: ONT.8, quote: '一封邮件/单据涉及多个事件，只选一个会丢信息，全多选又没主次'}
     credibility: D
@@ -1594,8 +1598,10 @@ rules:
     applies_to: [SE]
     statement: >-
       For any SE claim, FairRyde classifies, preserves and hashes the evidence, writes a neutral summary and may recommend
-      reversible interim measures (for example not matching the two parties again); a human decides.
-    zh: 安全类主张由 AI 分类、保全证据、写中立摘要，可建议可逆的临时措施（如不再匹配二人），由人裁决。
+      reversible interim measures (for example not matching the two parties again); a human decides. When the complaint
+      mentions discrimination, FairRyde only prepares the case file and makes no recommendation of any kind, not even an
+      interim measure, on any claim in the case (CLS-01; Jasper, 2026-10-14, open item D40 (c)).
+    zh: 安全类主张由 AI 分类、保全证据、写中立摘要，可建议可逆的临时措施（如不再匹配二人），由人裁决。投诉提到歧视时，AI 只准备案卷，对案子里任何主张都不给任何建议，临时措施也不建议（CLS-01；Jasper，2026-10-14，待办 D40 (c)）。
     produces: [SE-R-HUMAN-DECIDES]
     sources:
       - {type: RYDE_POLICY, doc: RYDE-15395890865561, quote: 'Violations of these guidelines will result in immediate termination and legal action where applicable.'}
@@ -1782,13 +1788,18 @@ rules:
       Raise FRAUD_SIGNAL against the driver if: arrival was indicated without GPS presence (CW-R06 FALSE, or, with no platform
       arrival check, a remaining GPS ping outside the pick-up area more than TS_TOLERANCE_S after the arrival indication and
       before GPS first confirmed the driver there; pings within the tolerance are not evidence either way, and a CONTESTED
-      arrival goes to a person without a signal); the driver stayed stationary and uncontactable after accepting; or repeated
-      no-show cancellations occur at the same spot. A human decides any consequence.
-    zh: 无 GPS 在点却标到达（CW-R06 为 FALSE；或没有平台到达校验时，到达标记 TS_TOLERANCE_S 之后、GPS 首次确认之前有剩下的点在半径外；容差以内的点不算证据，CONTESTED 交给人工、不打信号）、接单后不动且不联系、同一地点反复 no-show，对司机打欺诈信号；后果由人决定。
+      arrival goes to a person without a signal); the driver stayed stationary and uncontactable after accepting; repeated
+      no-show cancellations occur at the same spot; or the driver charged the rider something the app's fare does not
+      include (FC-DRIVERCHARGE: a fee the driver made up, a demand for extra payment, a transfer outside the app; Jasper,
+      2026-10-14, open item D40 (b)). As FRD-02 says for the rider's signal, a fraud signal never changes the outcome
+      (GEN-R03); it is shown to the reviewer only, not to the parties, and requires approval (AUTH-02 trigger 2). A human
+      decides any consequence.
+    zh: 无 GPS 在点却标到达（CW-R06 为 FALSE；或没有平台到达校验时，到达标记 TS_TOLERANCE_S 之后、GPS 首次确认之前有剩下的点在半径外；容差以内的点不算证据，CONTESTED 交给人工、不打信号）、接单后不动且不联系、同一地点反复 no-show、或司机向乘客收取 app 车费不包含的费用（FC-DRIVERCHARGE：司机自己加的费用、要求额外付款、要求在 app 外转账；Jasper，2026-10-14，待办 D40 (b)），对司机打欺诈信号。和 FRD-02 对乘客信号的规定一样，欺诈信号不改变判决结果（GEN-R03），只给审核人看、不给双方看，并需人工批准（AUTH-02 第 2 项）。后果由人决定。
     params: [TS_TOLERANCE_S]
     sources:
       - {type: RYDE_POLICY, doc: RYDE-33362721809049, quote: '5. Remaining stationary and uncontactable after accepting a ride to trigger cancellation or waiting fees'}
       - {type: RYDE_POLICY, doc: RYDE-33362721809049, quote: '8. Abuse of Cancellation and Waiting Fee Policy'}
+      - {type: RYDE_POLICY, doc: RYDE-33362721809049, quote: 'Drivers who overcharge riders and/or complete the trip without the rider onboard.', note: "Community standards, 'Fraudulent Activity': the basis for the signal on a charge the driver made up (D40 (b))."}
     credibility: D
     credibility_note: Ryde defines the prohibited behavior (A). The detection signals (arrival marked without GPS presence, repeated no-shows at one spot) are FairRyde's reading of it (D); the rule is READ and never changes an outcome.
     mode: READ
