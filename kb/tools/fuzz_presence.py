@@ -148,14 +148,14 @@ def check(c, platform, r):
     return None
 
 
-def run(kb, n, seed):
+def run(kb, n, seed, profile=None):
     """Returns (cases, automatic rulings, crashes, findings)."""
     rng = random.Random(seed)
     bad, autos, crashes = [], 0, 0
     for it in range(n):
         c, platform = make(kb, rng)
         try:
-            r = E.run(kb, c, None)
+            r = E.run(kb, c, profile)
         except Exception as e:                        # any crash is a finding
             crashes += 1
             bad.append((it, f"CRASH {type(e).__name__}: {e}", platform, [(g["timestamp"][11:19], round(E.hav(g["lat"], g["lng"], *S.VENUE))) for g in c["gps_telemetry"]]))

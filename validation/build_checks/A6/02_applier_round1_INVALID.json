@@ -1,0 +1,574 @@
+[
+ {
+  "case_id": "DISP-001",
+  "kb_type": "UNVERIFIED (case file missing). KB text alone (CLS-05) maps DISP-001 / route_deviation to FC-ROUTE, but I could not check this against the case.",
+  "playbook": "PB-FC-ROUTE (from the FC-ROUTE taxonomy entry; not confirmed against the case)",
+  "steps": [
+   {
+    "step": "0. Read the case file",
+    "rule_id": "MAT-01",
+    "finding": "No decision made. The case file does not exist at the assigned path, so no playbook step could be run on case evidence. I did not fill the gap from other files or from my own knowledge of Ryde.",
+    "case_evidence": "/home/user/fairryde/validation/V4_e2e/cases/DISP-001.json does not exist. Read failed with 'File does not exist'. An ls of the cases directory shows only E01.json to E15.json, and the parent directory lists no DISP-* file."
+   }
+  ],
+  "outcome": "NOT_DECIDED: case file DISP-001.json is missing, so there is no ruling to give. This is not a TX-OUTCOME value. If the KB's own fallback were applied to an unresolvable trip, MAT-01 / GEN-R-NEED-INFO / REQUEST_INFO would be the closest, but I am not asserting that as the decision.",
+  "amount_sgd": null,
+  "reasons": [
+   "CASE-FILE-MISSING (not a TX-REASON code; there is no evidence to apply any reason code to)"
+  ],
+  "tier": "HUMAN",
+  "tier_basis": "No ruling exists, so no AUTH rule was applied. HUMAN is the safe default, because nothing can be auto-resolved or recommended for approval. This tier is not derived from AUTH-01 to AUTH-07.",
+  "rules_cited": [
+   "CLS-05",
+   "MAT-01",
+   "META-01"
+  ],
+  "kb_silent": [
+   "The KB has no rule for a case file that is absent from the harness path. MAT-01 covers a trip that cannot be matched, which is not the same thing.",
+   "The KB-based expectation that DISP-001 is FC-ROUTE under profile organizer_v2_1 (CLS-05, META-01, reference_data.yaml) rests on the id and the organizer code, and I could not check it against the case.",
+   "I did not read the files that might hold the case content, such as kb/sources and organizer samples. The task forbade opening anything beyond the five KB files and the named case file."
+  ],
+  "confidence": 1,
+  "note": "The orchestrator should check the path and re-run. The name DISP-001.json may be wrong, since the cases directory holds only E01 to E15, or the file may need to be placed there. The kb/rules.yaml and kb/ontology.yaml reads were also truncated and were not fully paged through, because there was no case to apply them to. I changed no files.",
+  "payer": null,
+  "payee": null
+ },
+ {
+  "case_id": "DISP-002",
+  "kb_type": "NOT_CLASSIFIED (case file missing)",
+  "playbook": "NONE (no playbook can be run without the case evidence)",
+  "steps": [],
+  "outcome": "NO_DECISION_CASE_FILE_MISSING",
+  "amount_sgd": null,
+  "payer": null,
+  "payee": null,
+  "reasons": [
+   "The only case file I was allowed to open, /home/user/fairryde/validation/V4_e2e/cases/DISP-002.json, does not exist. The Read call returned 'File does not exist'.",
+   "A glob of validation/V4_e2e/cases/ lists only E01 to E15. A glob for **/DISP-002* under the repo finds nothing.",
+   "Any classification, playbook step, amount, payer, payee or reason code would come from my guess about the case, not from case evidence. The instructions forbid that, so I made no ruling."
+  ],
+  "tier": "HUMAN",
+  "tier_basis": "No ruling exists, so there is nothing for AUTO or APPROVE to apply to. The nearest KB analogue is AUTH-06 (an outcome that is not an AI ruling goes to tier HUMAN). I did not read the AUTH rules in rules.yaml (I read only lines 1-536 of the 2455), so I cite no AUTH rule ID as applied.",
+  "rules_cited": [],
+  "kb_silent": [
+   "The case file for DISP-002 is not at the stated path. The task text does not say where else to find it.",
+   "The KB's own text suggests DISP-002 is the organizer sample case. It names organizer_code no_show_charge (CW-NOSHOW, playbook PB-CW-NOSHOW) and an embedded cancellation_policy object. I did not use this as a classification, because it comes from KB commentary and not from the case file. I was also told not to open anything beyond the named KB files and the case.",
+   "Rules.yaml was read only from line 1 to 536 of 2455. The CW, AUTH, EXP and GEN rules are in the unread part, since the run stopped once the case file proved missing.",
+   "The KB has no rule for a missing or unreadable case file as input. MAT-01 and GEN-R-NEED-INFO cover a trip that cannot be identified, which is a different situation."
+  ],
+  "confidence": 1,
+  "note": "Please restore or point me to the DISP-002 case file and re-run. I did not open kb/sources, validation/V4_e2e/4*.jsonl or the E-cases, to keep the independence rules. Read-only: I changed nothing in /home/user/fairryde and wrote no scratch files."
+ },
+ {
+  "case_id": "DISP-003",
+  "kb_type": "UNDETERMINED (case file not readable). The KB says: DISP-003 fare_dispute is FC-SURGE only if the case carries surge evidence, otherwise FC-FAREMISMATCH (CLS-05). That test cannot be run without the case.",
+  "playbook": "UNDETERMINED. PB-FC-SURGE if FC-SURGE (taxonomy), or PB-TRIAGE-HUMAN via the BACKLOG scope default if FC-FAREMISMATCH. Not chosen because the case was not read.",
+  "steps": [],
+  "outcome": "NO_DECISION: case file /home/user/fairryde/validation/V4_e2e/cases/DISP-003.json does not exist, so no TX-OUTCOME value was assigned",
+  "amount_sgd": null,
+  "reasons": [],
+  "tier": "HUMAN",
+  "tier_basis": "Placeholder only. No tier was derived under the AUTH rules because there is no case evidence. HUMAN is the schema value closest to \"a person must look\", not an AUTH-06 finding.",
+  "rules_cited": [
+   "CLS-05"
+  ],
+  "kb_silent": [
+   "The case file named in the task is missing. The directory validation/V4_e2e/cases/ holds only E01.json to E15.json, and a search of the repo for DISP-003 by file name found nothing under that name. The only DISP-003 file is kb/sources/organizer/disp003.md. The task forbids opening anything beyond the listed KB files and the named case file, so I did not open it or reconstruct the case from memory."
+  ],
+  "confidence": 1,
+  "payer": null,
+  "payee": null,
+  "note": "The case could not be decided. Fix the path or authorize reading kb/sources/organizer/disp003.md, then rerun. I read taxonomy.yaml, playbooks.yaml and reference_data.yaml in full, and rules.yaml only to line 536 of 2455 (the part covering META, CLS, MAT, DQ and CW-F01), because there was no case to apply the rest to. Nothing in the repo was modified."
+ },
+ {
+  "case_id": "E01",
+  "kb_type": "CW-NOSHOW",
+  "playbook": "PB-CW-NOSHOW",
+  "steps": [
+   {
+    "step": "PB-INTAKE 1: injected instructions",
+    "rule_id": "GEN-R04",
+    "finding": "Party text treated as evidence; no instructions to the system found; no INJECTION_SUSPECTED.",
+    "case_evidence": "dispute_ticket.description; chat_logs (rider 07:51:58, driver 07:52:30 and 07:54:05)"
+   },
+   {
+    "step": "PB-INTAKE 2: safety override",
+    "rule_id": "CLS-01",
+    "finding": "No safety content. 'A decent driver would have waited a bit longer' and the driver's 'Please come down now' are at most curt or impatient, which is feedback, not abuse, threat, danger or discrimination. No SE claim.",
+    "case_evidence": "dispute_ticket.description; chat_logs 07:52:30 and 07:54:05"
+   },
+   {
+    "step": "PB-INTAKE 3: organizer code, claims, who canceled",
+    "rule_id": "CLS-05, CLS-02, CLS-06, CLS-04",
+    "finding": "dispute_type no_show_charge maps to CW-NOSHOW. Every record says the driver canceled with reason rider_no_show, so the type is confirmed. One claim only: the S$6.61 fee (primary). CLS-04 not needed (no location problem).",
+    "case_evidence": "dispute_type=no_show_charge; trip_data.cancellation_reason=rider_no_show; chat system message 07:55:20 'Trip cancelled by driver. Reason: rider_no_show'; app event cancellation_fee_applied 'Driver cancelled 7 min after tapping I'm Here (rider_no_show)'"
+   },
+   {
+    "step": "PB-INTAKE 4: not a dispute",
+    "rule_id": "CLS-03",
+    "finding": "Not applicable: a charge (S$6.61) and a remedy (refund) are contested.",
+    "case_evidence": "dispute_ticket.description 'Please refund the $6.61'"
+   },
+   {
+    "step": "PB-INTAKE 5-7: trip, relation, appeal",
+    "rule_id": "MAT-01, MAT-02, MAT-03",
+    "finding": "Exactly one trip (TRIP-2026-31408). Relation NEW (no other ticket shown). Not an appeal.",
+    "case_evidence": "dispute_ticket.trip_id=trip_data.trip_id=TRIP-2026-31408; status open"
+   },
+   {
+    "step": "PB-INTAKE 8: policy profile and version",
+    "rule_id": "META-01, META-02",
+    "finding": "dispute_id E01 is not DISP-nnn and the case embeds no policy object, so profile ryde_2026 (effective 2026-02-17); trip date 2026-09-08 is in force. organizer_v2_1 and organizer_case do not apply.",
+    "case_evidence": "dispute_ticket.dispute_id=E01; no cancellation_policy object; scheduled_time 2026-09-08"
+   },
+   {
+    "step": "PB-INTAKE 9: data sanity",
+    "rule_id": "DQ-03, DQ-04",
+    "finding": "Coordinates inside SG_BBOX; timeline ordered (booking 07:41:00, assignment 07:41:20, arrival 07:48:20, cancel 07:55:20, filed 09:12 same day).",
+    "case_evidence": "trip_data pickup lat 1.3589 lng 103.9532; app_events; dispute_ticket.filed_at"
+   },
+   {
+    "step": "PB-CW-NOSHOW 1: precondition",
+    "rule_id": "CLS-06, CW-R03",
+    "finding": "Precondition holds: driver canceled, reason rider_no_show, no record disagrees. Decision table DT-CW-NOSHOW is used.",
+    "case_evidence": "trip_data.cancellation_reason; system message; app event 07:55:20; gps status 'cancelled'"
+   },
+   {
+    "step": "PB-CW-NOSHOW 2: waiver window",
+    "rule_id": "MAT-04",
+    "finding": "Filed the same day as the trip, inside WAIVER_WINDOW_DAYS = 30. Not out of window.",
+    "case_evidence": "filed_at 2026-09-08T09:12 vs trip 2026-09-08; reference_data ryde_2026 WAIVER_WINDOW_DAYS=30"
+   },
+   {
+    "step": "PB-CW-NOSHOW 3: scope",
+    "rule_id": "CW-R00",
+    "finding": "Service is RydeX (named in the booking event), not RydeTAXI, so the policy applies. The structured service_type is a data gap in the ontology; see kb_silent.",
+    "case_evidence": "app event booking_confirmed 07:41:00 'on-demand RydeX trip'"
+   },
+   {
+    "step": "PB-CW-NOSHOW 4: booking type",
+    "rule_id": "CW-F01",
+    "finding": "ON_DEMAND. The booking event says on-demand; the inference path agrees (assigned 20 s after booking, within BOOKING_INFER_MATCH_S=60; ETA 7 min lands on the 07:48 scheduled_time within BOOKING_INFER_ETA_S=120). No BOOKING_TYPE_INFERRED needed.",
+    "case_evidence": "app events 07:41:00 and 07:41:20 (ETA 7 min); trip_data.scheduled_time 07:48:00"
+   },
+   {
+    "step": "PB-CW-NOSHOW 5: wait anchor",
+    "rule_id": "CW-F02",
+    "finding": "Ryde profile, on-demand: the wait starts when the driver presses I'm Here with GPS at the pickup: 07:48:20. (CW-F02B would give the later of arrival and scheduled_time = 07:48:20 as well, so no sensitivity.)",
+    "case_evidence": "app event driver_arrived 07:48:20; trip_data.driver_wait_start 07:48:20"
+   },
+   {
+    "step": "PB-CW-NOSHOW 6: cross-source timestamps and speed",
+    "rule_id": "DQ-01, DQ-02",
+    "finding": "Arrival records (trip, event, GPS ping) all 07:48:20; wait start records 07:48:20; end records (cancellation_time, fee event, system message, GPS cancelled ping) all 07:55:20. Spread 0 s, within TS_TOLERANCE_S=30. Speed 0 km/h at every ping in the wait; no SPEED_INCONSISTENT, no TIMER_ANCHOR_MISMATCH.",
+    "case_evidence": "trip_data times; app_events; gps_telemetry 07:48:20 to 07:55:20"
+   },
+   {
+    "step": "PB-CW-NOSHOW 7: arrival valid",
+    "rule_id": "CW-R06",
+    "finding": "TRUE. The platform's check (driver GPS within 8 m, speed 0) confirms arrival and the moment ping at 07:48:20 is at the pin (0 m, inside ARRIVAL_GEOFENCE_M=50). No outliers, no CONTESTED, no ARRIVAL_UNCONFIRMED.",
+    "case_evidence": "app event driver_arrived 07:48:20 'within 8m of pickup point'; gps ping 07:48:20 status arrived at 1.3589,103.9532 = pickup"
+   },
+   {
+    "step": "PB-CW-NOSHOW 8: elapsed wait and margin",
+    "rule_id": "CW-F03, CW-F03B",
+    "finding": "elapsed = 07:55:20 - 07:48:20 = 420 s. Threshold NO_SHOW_THRESHOLD_S=180 s compared 'more than'. margin = +240 s, outside BOUNDARY_BAND_S=30, so no BOUNDARY_MARGIN or MARGIN_WITHIN_SPREAD. threshold_met = true. CW-F03B does not move the start (arrival confirmed at the indication). The app's free-wait timer also ended at 07:51:20 (180 s).",
+    "case_evidence": "trip_data.driver_wait_start / cancellation_time; app event wait_timer_expired 07:51:20"
+   },
+   {
+    "step": "PB-CW-NOSHOW 9: driver presence",
+    "rule_id": "CW-F04, CW-F04B",
+    "finding": "Window 07:48:20 to 07:51:20 (start to the threshold). Two pings inside the window (07:48:20, 07:50:00), both at the pin; no outside pings; longest gap 100 s is at most PING_MAX_GAP_S=300. F-PRESENCE = CONSISTENT; F-GPS-LOGIC = false at default parameters. SENSITIVITY: with PING_MAX_GAP_S at the low end of its plausible range (60 s) the 100 s gap exceeds it, presence becomes SPARSE and F-GPS-LOGIC would be true (row R9 rated D instead of R8 rated B). Other parameters (ARRIVAL_GEOFENCE_M 25 to 100, LEFT_MIN_OUTSIDE_S, SPEED_MAX_KMH, TS_TOLERANCE_S) do not change the finding.",
+    "case_evidence": "gps_telemetry 07:48:20 (arrived), 07:50:00 (waiting), later pings 07:52:00, 07:54:00, 07:55:20 all at 1.3589,103.9532; reference_data shared_params PING_MAX_GAP_S value 300, range [60,420]"
+   },
+   {
+    "step": "PB-CW-NOSHOW 10: contact attempts",
+    "rule_id": "CW-F05",
+    "finding": "ADEQUATE under the Ryde profile: the driver placed 1 in-app call (07:50:10, unanswered, calls count) and sent 2 messages after arrival (07:52:30, 07:54:05; also an arrival message at 07:48:40); the rider also replied (07:51:58). CW-R04 not triggered; no CONTACT_NOT_ATTEMPTED.",
+    "case_evidence": "chat_logs call 07:50:10; messages 07:48:40, 07:52:30, 07:54:05; app event driver_called_rider 07:50:10"
+   },
+   {
+    "step": "PB-CW-NOSHOW 11: rider counter-evidence",
+    "rule_id": "CW-F06",
+    "finding": "NONE. No failure to notify the rider (push and in-app alert sent 07:48:25). No rider GPS or rider-side record at the pin or venue. The rider's only message during the wait ('sorry uncle still getting ready. can wait another 10 min?') admits being late and is not counter-evidence. The ticket statement admits 'running a few minutes late getting ready' and asks for more waiting (a goodwill request); it does not contest the driver's presence or the place. Alternative reading (WEAK, because she says 'I told the driver I was coming down' and disputes the no-show label) leaves R8/R11 UPHOLD at default parameters. Nothing before the wait counts.",
+    "case_evidence": "chat_logs rider 07:51:58; dispute_ticket.description; app event rider_notified 07:48:25"
+   },
+   {
+    "step": "PB-CW-NOSHOW 12: pin versus venue",
+    "rule_id": "CW-F07",
+    "finding": "Not applicable: no named venue differs from the pin (pickup name is the block address itself); no PIN_VENUE_MISMATCH, no CW-R-PIN-AMBIGUOUS.",
+    "case_evidence": "trip_data.pickup_location.name 'Blk 456 Tampines Street 42 (drop-off porch)'; description names no venue"
+   },
+   {
+    "step": "PB-CW-NOSHOW 13: advocate briefs",
+    "rule_id": "GEN-R05",
+    "finding": "Step reported missing: the case file carries no Rider Advocate or Driver Advocate brief. Procedural only; never changes the outcome. The driver's side is on file through the chat log and trip record.",
+    "case_evidence": "E01.json has no briefs"
+   },
+   {
+    "step": "PB-CW-NOSHOW 14: decision table",
+    "rule_id": "DT-CW-NOSHOW row R8, CW-R03",
+    "finding": "Inputs arrival_valid=TRUE, presence=CONSISTENT, threshold_met=true, rider_evidence=NONE, gps_logic_decides=false hit row R8 (credibility B): outcome UPHOLD, reason CW-R-NOSHOW-VALID. Overrides: no policy gap; not organizer_v2_1 so CW-R13 does not apply; MAT-04 inside window; no source conflict that changes the outcome.",
+    "case_evidence": "findings of steps 7 to 11"
+   },
+   {
+    "step": "PB-CW-NOSHOW 15: after-table checks",
+    "rule_id": "CW-R11, CW-R04, DQ-06",
+    "finding": "CW-R11: no pin/venue mismatch. CW-R04: contact adequate. DQ-06: charged S$6.61 = NO_SHOW_FEE_SGD 6.61 (ryde_2026), within MONEY_TOLERANCE_SGD; no CHARGE_AMOUNT_MISMATCH. CW-R13 not applicable under ryde_2026.",
+    "case_evidence": "trip_data.cancellation_fee 6.61; app event cancellation_fee_applied; reference_data ryde_2026 NO_SHOW_FEE_SGD 6.61"
+   },
+   {
+    "step": "PB-CW-NOSHOW 16: payee and remedy form",
+    "rule_id": "CW-R09, CW-R10",
+    "finding": "Fee stands, so nothing is waived or refunded (no voucher under CW-R10). Fee flows from the rider (payer) to the driver (payee DRIVER, FEE_PAYEE).",
+    "case_evidence": "reference_data ryde_2026 FEE_PAYEE=DRIVER; rider_profile.payment_method card"
+   },
+   {
+    "step": "PB-CW-NOSHOW 17: fraud signals",
+    "rule_id": "FRD-01, FRD-02, GEN-R03, GEN-R06",
+    "finding": "No driver signal (arrival confirmed by GPS, 3 other dispute-history facts irrelevant: 0 upheld against, 0 fraud flags). No rider signal (1 prior dispute, below RIDER_ABUSE_MIN_DISPUTES=3; 0 fraud flags). History plays no role in the outcome; no account action.",
+    "case_evidence": "rider_profile.dispute_history total 1, fraud_flags 0; driver_profile fraud_flags 0, dispute_history 3 total, upheld_against 0"
+   },
+   {
+    "step": "PB-CW-NOSHOW 18: composite confidence",
+    "rule_id": "AUTH-05",
+    "finding": "A=1.0 offline; M=1.0 (margin 240 s >= 2x30); E=1.0 (all required evidence present, no soft flags at default parameters); R=1.0. C about 1.0, above TAU=0.60.",
+    "case_evidence": "findings above; CONFIDENCE_WEIGHTS"
+   },
+   {
+    "step": "PB-CW-NOSHOW 19: autonomy tier",
+    "rule_id": "AUTH-01, AUTH-02 (1) and (12), AUTH-04, AUTH-06, META-05",
+    "finding": "APPROVE. Amount 6.61 is below AUTO_LIMIT_SGD 10, confidence above TAU, no gate and no other trigger, but the decisive test (decisive_definition clause 2 and AUTH-02 trigger 12 / D29) fails for AUTO: moving PING_MAX_GAP_S to 60 s turns the finding SPARSE and moves the same UPHOLD from row R8 (B) to row R9 (D). So CW-F04B (D) is decisive, a human approves, and flag GENERIC_ASSUMPTION_USED applies. Outcome is not ESCALATE_HUMAN, so not tier HUMAN.",
+    "case_evidence": "gps pings 07:48:20 and 07:50:00 are 100 s apart; PING_MAX_GAP_S range [60,420]"
+   },
+   {
+    "step": "PB-CW-NOSHOW 20: explanation",
+    "rule_id": "EXP-01, EXP-02, EXP-03, META-05, AUTH-00",
+    "finding": "Tell both parties: fee stands under the Ryde cancellation policy (driver arrived 07:48:20, GPS-confirmed, waited 7 min vs 3 min free wait, contacted the rider by call and messages); list rules with credibility; mark CW-F04B (D) as the generic assumption that made the ruling need approval; say history was not used; wording 'eligible for', not 'entitled to'; the rider's lateness was admitted in her own message; how to request human review.",
+    "case_evidence": "findings above"
+   }
+  ],
+  "outcome": "UPHOLD",
+  "amount_sgd": 6.61,
+  "payer": "Rider R-5512 (card on file)",
+  "payee": "Driver D-4127 (FEE_PAYEE = DRIVER, CW-R09)",
+  "reasons": [
+   "CW-R-NOSHOW-VALID"
+  ],
+  "tier": "APPROVE",
+  "tier_basis": "Outcome is UPHOLD (row R8 of DT-CW-NOSHOW, credibility B) with no escalation gate, amount S$6.61 below AUTO_LIMIT_SGD S$10 and confidence about 1.0 above TAU, so AUTO would otherwise hold. It is APPROVE instead because the sensitivity test makes CW-F04B decisive: with PING_MAX_GAP_S at the low end of its plausible range (60 s) the two in-window pings 100 s apart make presence SPARSE, F-GPS-LOGIC true, and the same UPHOLD would rest on row R9 (credibility D). AUTH-02 trigger 12 (D29) and decisive_definition clause 2 then require human approval. Not HUMAN because the outcome is not ESCALATE_HUMAN (AUTH-06).",
+  "rules_cited": [
+   "CLS-01",
+   "CLS-02",
+   "CLS-03",
+   "CLS-04",
+   "CLS-05",
+   "CLS-06",
+   "MAT-01",
+   "MAT-02",
+   "MAT-03",
+   "MAT-04",
+   "META-01",
+   "META-02",
+   "META-05",
+   "DQ-01",
+   "DQ-02",
+   "DQ-03",
+   "DQ-04",
+   "DQ-06",
+   "CW-F01",
+   "CW-F02",
+   "CW-F03",
+   "CW-F03B",
+   "CW-F04",
+   "CW-F04B",
+   "CW-F05",
+   "CW-F06",
+   "CW-F07",
+   "CW-R00",
+   "CW-R03",
+   "CW-R04",
+   "CW-R06",
+   "CW-R09",
+   "CW-R10",
+   "CW-R11",
+   "DT-CW-NOSHOW",
+   "GEN-R01",
+   "GEN-R03",
+   "GEN-R04",
+   "GEN-R05",
+   "GEN-R06",
+   "FRD-01",
+   "FRD-02",
+   "AUTH-00",
+   "AUTH-01",
+   "AUTH-02",
+   "AUTH-04",
+   "AUTH-05",
+   "AUTH-06",
+   "EXP-01",
+   "EXP-02",
+   "EXP-03"
+  ],
+  "kb_silent": [
+   "Booking type and service type: the ontology marks booking_type and service_type as data gaps (no structured field). The only record is the free text of the booking_confirmed app event ('on-demand RydeX'). The KB does not say whether free text in an app event counts as a recorded booking or service type; I used it (CW-R00 not RydeTAXI, CW-F01 ON_DEMAND), and the CW-F01 inference path gives the same ON_DEMAND, so the outcome does not depend on it.",
+   "Playbook step 13 (GEN-R05) expects both advocates' briefs; the case file has none and the KB gives no fallback beyond 'procedural, never changes the outcome'. Reported as missing.",
+   "CW-F06 reading of the rider's ticket statement ('I told the driver I was coming down ... I wasn't a no-show ... a decent driver would have waited a bit longer'): the KB gives no rule for a statement that admits lateness yet disputes the no-show label and the driver's refusal to wait longer. Read as admission plus goodwill request (NONE). The other reading (WEAK) does not change R8 at default parameters, but combined with PING_MAX_GAP_S=60 (SPARSE) it would hit R10 (ESCALATE_HUMAN). The reading rule is frozen (D34) so this is recorded, not extended.",
+   "The ticket says 'I told the driver I was coming down' while the chat shows 'still getting ready' and a request for 10 more minutes; the KB has no rule for rider statement versus chat discrepancies beyond treating the statement as tier D evidence (TX-EVIDENCE).",
+   "No rule says whether a driver must grant a rider's request for an extra wait (10 min) beyond the free wait; the fee conditions are met regardless.",
+   "No rule covers consequential losses claimed by the rider (booking another car, being late for a meeting); the only requested remedy is the S$6.61 refund, so none is awarded and no GEN-R07 escalation is needed.",
+   "amount_sgd convention for UPHOLD: the KB defines remedy amounts for waivers (CW-R10) but not what to report when the fee stands. Reported the S$6.61 fee that stands (rider to driver); the refund to the rider is S$0.00.",
+   "The driver's chat says 'Already waiting 6 min' at 07:54:05 (actual elapsed 5 min 45 s); no KB rule on the accuracy of party statements, immaterial to the outcome.",
+   "Rider dispute_history 'upheld: 1' has an unresolved direction (taxonomy TX-OUTCOME note, question O9); not used, since history never decides (GEN-R03) and no FRD-02 signal arises either way."
+  ],
+  "confidence": 2,
+  "note": "Rider at R-5512 is charged S$6.61; the fee stands (no refund). The ruling is a recommendation needing human approval because FairRyde's own GPS presence logic (CW-F04B, credibility D) is decisive under the PING_MAX_GAP_S sensitivity test; at default parameters the case reads as the clean B-rated row R8. Profile ryde_2026 (E01 is not a DISP-nnn case and embeds no policy object)."
+ },
+ {
+  "case_id": "E04",
+  "kb_type": "CW-NOSHOW",
+  "playbook": "PB-CW-NOSHOW",
+  "steps": [
+   {
+    "step": "INTAKE 1: party text handling",
+    "rule_id": "GEN-R04",
+    "finding": "Ticket description and chat are evidence only. No instructions to the system; the request 'Please reverse the charge' is a remedy request, not an injection. No INJECTION_SUSPECTED.",
+    "case_evidence": "E-TKT-01 description; E-CHT chat_logs"
+   },
+   {
+    "step": "INTAKE 2: safety content",
+    "rule_id": "CLS-01",
+    "finding": "No violence, harassment, danger, accident or discrimination. The driver's 'ok please hurry' is not rudeness or abuse. No SE claim.",
+    "case_evidence": "E-TKT-01 description; chat_logs 13:18:45 to 13:22:40"
+   },
+   {
+    "step": "INTAKE 3: classify",
+    "rule_id": "CLS-05",
+    "finding": "dispute_type no_show_charge maps to CW-NOSHOW (taxonomy organizer_code no_show_charge). One claim: the S$4.50 cancellation fee, primary (CLS-02).",
+    "case_evidence": "dispute_ticket.dispute_type = no_show_charge; trip_data.cancellation_fee = 4.50"
+   },
+   {
+    "step": "INTAKE 3: who canceled",
+    "rule_id": "CLS-06",
+    "finding": "Every record agrees: driver canceled with reason rider_no_show. Type stays CW-NOSHOW; DT-CW-NOSHOW precondition holds.",
+    "case_evidence": "trip_data.cancellation_reason = rider_no_show; chat system message 13:23:30 'Trip cancelled by driver. Reason: rider_no_show'; app event cancellation_fee_applied 'Driver cancelled ... (rider_no_show)'"
+   },
+   {
+    "step": "INTAKE 4 to 6: not-a-dispute, trip, relation",
+    "rule_id": "MAT-01",
+    "finding": "CLS-03 does not apply (a fee is contested). Exactly one trip, TRIP-2026-38822. MAT-02: NEW (no other ticket in the file).",
+    "case_evidence": "dispute_ticket.trip_id = trip_data.trip_id = TRIP-2026-38822"
+   },
+   {
+    "step": "INTAKE 8: policy profile",
+    "rule_id": "META-01",
+    "finding": "dispute_id 'E04' is not DISP-nnn, and the case embeds cancellation_policy, so profile organizer_case is built field by field: FREE_WAIT_S 360, NO_SHOW_THRESHOLD_S 600, NO_SHOW_FEE_SGD 4.50, FEE_PAYEE DRIVER (credibility A, from the case). organizer_case params: THRESHOLD_COMPARISON at_least, WAIT_ANCHOR_FIELD trip_data.driver_wait_start, REMEDY_FORM WALLET_VOUCHER (D). Everything else falls back to ryde_2026. organizer_v2_1 is not used.",
+    "case_evidence": "cancellation_policy {free_wait_time_min 6, cancellation_fee_after_wait 4.50, no_show_threshold_min 10, fee_goes_to driver_compensation}"
+   },
+   {
+    "step": "INTAKE 8: version in force",
+    "rule_id": "META-02",
+    "finding": "Trip date 2026-09-24 is after the ryde_2026 effective date 2026-02-17 (fallback parameters available); the organizer_case profile is case-specific. No policy gap.",
+    "case_evidence": "trip_data.scheduled_time 2026-09-24T13:18:00+08:00"
+   },
+   {
+    "step": "INTAKE 9: coordinates and timeline",
+    "rule_id": "DQ-03",
+    "finding": "All coordinates are inside SG_BBOX. DQ-04: events are in time order, nothing precedes booking (13:09:30), dispute filed 14:05 after the 13:23:30 cancellation.",
+    "case_evidence": "pickup (1.3705, 103.8381); gps_telemetry; app_events; filed_at 14:05"
+   },
+   {
+    "step": "1 Precondition",
+    "rule_id": "CW-R03",
+    "finding": "Precondition met: driver canceled with reason rider_no_show according to all records (see CLS-06). No reclassification, no REQUEST_INFO.",
+    "case_evidence": "trip_data.cancellation_reason; chat system message; cancellation_fee_applied event"
+   },
+   {
+    "step": "2 Filing window",
+    "rule_id": "MAT-04",
+    "finding": "Filed 2026-09-24T14:05 for a trip of 2026-09-24 13:23: same day, within 30 days. F-FILING-WINDOW = 0 days.",
+    "case_evidence": "dispute_ticket.filed_at; trip_data.cancellation_time"
+   },
+   {
+    "step": "3 Scope",
+    "rule_id": "CW-R00",
+    "finding": "Not RydeTAXI: the booking event says RydeX. Policy applies.",
+    "case_evidence": "app_event booking_confirmed 13:09:30 'on-demand RydeX trip'"
+   },
+   {
+    "step": "4 Booking type",
+    "rule_id": "CW-F01",
+    "finding": "ON_DEMAND (stated in the booking event). The inference rule agrees: matched 20 s after booking (<= 60 s), assignment ETA 8 min gives 13:17:50 against scheduled 13:18:00 (<= 120 s). It does not affect the wait anchor under this profile.",
+    "case_evidence": "booking_confirmed 13:09:30; driver_assigned 13:09:50 'ETA 8 min'; trip_data.scheduled_time 13:18:00"
+   },
+   {
+    "step": "5 Wait anchor",
+    "rule_id": "CW-F02",
+    "finding": "Organizer-case reading: wait starts at trip_data.driver_wait_start = 13:18:20 (credibility A). CW-F02B (Ryde advance bookings) and CW-F02C (v2.1) do not apply.",
+    "case_evidence": "trip_data.driver_wait_start 13:18:20"
+   },
+   {
+    "step": "6 Cross-source timestamps and speed",
+    "rule_id": "DQ-01",
+    "finding": "Arrival: trip record, driver_arrived event and GPS 'arrived' ping all 13:18:20. Wait start: driver_wait_start and wait_timer_started both 13:18:20. End: cancellation_time, fee event, system message and GPS 'cancelled' ping all 13:23:30. Spread 0 s, no TIMER_ANCHOR_MISMATCH. DQ-02: all wait pings 0 km/h at the same coordinates, no SPEED_INCONSISTENT or GPS_DATA_ERROR.",
+    "case_evidence": "trip_data; app_events 13:18:20 and 13:23:30; gps_telemetry 13:18:20 to 13:23:30"
+   },
+   {
+    "step": "7 Arrival valid",
+    "rule_id": "CW-R06",
+    "finding": "TRUE. The platform's arrival check confirmed the driver within 9 m, and the moment ping at 13:18:20 is at the pin (0 m, inside ARRIVAL_GEOFENCE_M, also at the 25 m low end). No outlier, no contradiction, no ARRIVAL_UNCONFIRMED.",
+    "case_evidence": "app_event driver_arrived 13:18:20 'Driver GPS within 9m of pickup point. Speed 0 km/h. Arrival confirmed.'; gps ping 13:18:20 status arrived at (1.3705, 103.8381)"
+   },
+   {
+    "step": "8 Elapsed wait and margin",
+    "rule_id": "CW-F03",
+    "finding": "Wait start 13:18:20 (CW-F03B: arrival confirmed at the indication, so no later start). Elapsed = 13:23:30 - 13:18:20 = 310 s. Threshold NO_SHOW_THRESHOLD_S = 600 s, compared at_least. Margin = -290 s, so threshold_met = false. Outside BOUNDARY_BAND_S (30 s), no BOUNDARY_MARGIN. The elapsed wait is also below the 360 s free wait; the app timer would have ended at 13:24:20.",
+    "case_evidence": "trip_data.driver_wait_start, cancellation_time; cancellation_policy.no_show_threshold_min = 10; app_event wait_timer_started 'ends at 13:24:20'"
+   },
+   {
+    "step": "9 Driver presence",
+    "rule_id": "CW-F04B",
+    "finding": "Window 13:18:20 to 13:23:30. All 5 pings in the window are at the pin; longest gap 120 s < PING_MAX_GAP_S 300 s. F-PRESENCE = CONSISTENT; F-GPS-LOGIC = false. At the low end of PING_MAX_GAP_S (60 s) presence would read SPARSE, and row R6 still gives the same outcome, so no parameter is decisive.",
+    "case_evidence": "gps_telemetry pings at 13:18:20, 13:19:30, 13:21:30, 13:23:00, 13:23:30"
+   },
+   {
+    "step": "10 Contact attempts",
+    "rule_id": "CW-F05",
+    "finding": "ADEQUATE under the generic (organizer_case) rule: 1 in-app call (13:20:50, rang 20 s, unanswered) meets CONTACT_MIN_CALLS 1, the driver sent 2 messages (13:18:45, 13:22:40), and the rider contacted the driver (13:22:05). CW-R13 (v2.1 only) does not apply. CW-R04 does not fire.",
+    "case_evidence": "chat_logs 13:18:45, 13:20:50 (call), 13:22:05, 13:22:40; app_event driver_called_rider 13:20:50"
+   },
+   {
+    "step": "11 Rider counter-evidence",
+    "rule_id": "CW-F06",
+    "finding": "WEAK. The statement contests the timing ('waited about 5 minutes', 6-minute free wait). Her message 'Sorry coming down, lift very slow, 2 min' admits being late and still on the way, so it is not counter-evidence. No rider GPS, no failed notification (rider_notified at 13:18:25). Row R6 does not use this input, so the reading is not decisive (STRONG would not change R6).",
+    "case_evidence": "E-TKT-01 description; chat_logs 13:22:05; app_event rider_notified 13:18:25"
+   },
+   {
+    "step": "12 Pin versus venue",
+    "rule_id": "CW-F07",
+    "finding": "Not applicable. The pickup is the rider's own block porch; no separate named venue and no OneMap reference. No PIN_VENUE_MISMATCH.",
+    "case_evidence": "pickup_location.name 'Blk 115 Ang Mo Kio Avenue 4 (drop-off porch)'; reference_data VENUES has no matching row"
+   },
+   {
+    "step": "13 Advocate briefs",
+    "rule_id": "GEN-R05",
+    "finding": "No Rider or Driver Advocate brief exists in the case file. Procedural only, and it never changes the outcome. Reported as missing.",
+    "case_evidence": "none in E04.json"
+   },
+   {
+    "step": "14 Decision table",
+    "rule_id": "DT-CW-NOSHOW",
+    "finding": "arrival_valid TRUE, presence CONSISTENT, threshold_met false: row R6 fires (hit policy UNIQUE), outcome WAIVE_FEE, reason CW-R-WAIT-SHORT, credibility A, rules CW-R03 and CW-F03. R7, R8 and R11 need threshold_met true. No override: no policy gap, MAT-04 passed, CW-R13 and META-04 conflict escalation belong to organizer_v2_1 only.",
+    "case_evidence": "Findings from steps 7 to 11"
+   },
+   {
+    "step": "15 Pin, contact, amount, void checks",
+    "rule_id": "DQ-06",
+    "finding": "Charged S$4.50 equals NO_SHOW_FEE_SGD 4.50 from the case: consistent, no CHARGE_AMOUNT_MISMATCH. CW-R11 not applicable (no venue). CW-R04 not triggered (contact ADEQUATE). CW-R13 not applicable (profile organizer_case).",
+    "case_evidence": "trip_data.cancellation_fee 4.50; cancellation_policy.cancellation_fee_after_wait 4.50"
+   },
+   {
+    "step": "16 Payee and remedy form",
+    "rule_id": "CW-R10",
+    "finding": "Granted waiver returns the fee charged, S$4.50, as a non-cash Ryde wallet voucher (organizer_case REMEDY_FORM WALLET_VOUCHER, credibility D, changes only the form). The original fee payee was the DRIVER (CW-R09, fee_goes_to driver_compensation). On waiver, the voucher is issued by the platform to the rider (ontology role_notes).",
+    "case_evidence": "cancellation_policy.fee_goes_to = driver_compensation; rider_profile.payment_method = card"
+   },
+   {
+    "step": "17 Fraud and history",
+    "rule_id": "FRD-01",
+    "finding": "No driver signal: arrival was GPS-confirmed, the driver was contactable, no repeat-spot or made-up-charge data. FRD-02: rider has 1 dispute (below RIDER_ABUSE_MIN_DISPUTES 3), fraud_flags 0, no signal. GEN-R03: history not used. GEN-R06: no account action.",
+    "case_evidence": "rider_profile.dispute_history {1,1,0}, fraud_flags 0; driver_profile fraud_flags 0, dispute_history {1,0,1}"
+   },
+   {
+    "step": "18 Confidence",
+    "rule_id": "AUTH-05",
+    "finding": "C = 0.35A + 0.25M + 0.25E + 0.15R. M = min(1, 290/60) = 1. E about 1.0: all required evidence present (the cancel event is in the chat system message and fee event), no soft flags. A and R taken as 1.0 offline. C about 0.98 to 1.0, above TAU 0.60.",
+    "case_evidence": "margin -290 s; evidence set E-TKT-01, E-TRP-01, E-APP-*, E-GPS-*, E-CHT-*, E-POL-01 all present"
+   },
+   {
+    "step": "19 Tier",
+    "rule_id": "AUTH-01",
+    "finding": "AUTO. Nothing is decisive: row R6 is credibility A and all its inputs hold at either end of every CW-F04B plausible range. Amount S$4.50 <= AUTO_LIMIT_SGD 10.00. C >= TAU. No AUTH-02 trigger (no fraud signal, no RECORDS_MISSING, no CHARGE_AMOUNT_MISMATCH, no BOUNDARY or MARGIN_WITHIN_SPREAD, no GPS_AMBIGUOUS, no injection, fee not upheld, no source conflict, not an appeal). No gate G1 to G8. Outcome is not ESCALATE_HUMAN (AUTH-06) and no safety content (AUTH-03).",
+    "case_evidence": "All findings above; amount 4.50"
+   },
+   {
+    "step": "20 Explanation labels",
+    "rule_id": "META-05",
+    "finding": "No C or D rule is decisive, so no GENERIC_ASSUMPTION_USED flag. D-rated rules used but not decisive (CW-F04B, CW-F05, CW-F06, DQ-01, DQ-06, REMEDY_FORM) are listed with their credibility labels. EXP-01 to EXP-03: each number equals a finding (310 s, 600 s, 360 s, S$4.50). Wording is 'eligible for' (AUTH-00).",
+    "case_evidence": "Findings above"
+   }
+  ],
+  "outcome": "WAIVE_FEE",
+  "amount_sgd": 4.5,
+  "payer": "PLATFORM",
+  "payee": "RIDER",
+  "reasons": [
+   "CW-R-WAIT-SHORT"
+  ],
+  "tier": "AUTO",
+  "tier_basis": "AUTH-01: nothing decisive (DT-CW-NOSHOW row R6 is credibility A; no CW-F04B parameter at either end of its plausible range changes the row or the outcome); S$4.50 is under AUTO_LIMIT_SGD 10.00; confidence about 1.0 is above TAU 0.60; no AUTH-02 trigger and no AUTH-04 gate fires; not an appeal (MAT-03); outcome is not ESCALATE_HUMAN (AUTH-06); no safety content (AUTH-03).",
+  "rules_cited": [
+   "CLS-01",
+   "CLS-02",
+   "CLS-03",
+   "CLS-05",
+   "CLS-06",
+   "MAT-01",
+   "MAT-02",
+   "MAT-04",
+   "META-01",
+   "META-02",
+   "META-05",
+   "DQ-01",
+   "DQ-02",
+   "DQ-03",
+   "DQ-04",
+   "DQ-06",
+   "CW-R00",
+   "CW-R03",
+   "CW-R04",
+   "CW-R06",
+   "CW-R09",
+   "CW-R10",
+   "CW-R11",
+   "CW-F01",
+   "CW-F02",
+   "CW-F03",
+   "CW-F03B",
+   "CW-F04",
+   "CW-F04B",
+   "CW-F05",
+   "CW-F06",
+   "CW-F07",
+   "DT-CW-NOSHOW",
+   "GEN-R03",
+   "GEN-R04",
+   "GEN-R05",
+   "GEN-R06",
+   "FRD-01",
+   "FRD-02",
+   "AUTH-00",
+   "AUTH-01",
+   "AUTH-02",
+   "AUTH-03",
+   "AUTH-04",
+   "AUTH-05",
+   "AUTH-06",
+   "EXP-01",
+   "EXP-02",
+   "EXP-03"
+  ],
+  "kb_silent": [
+   "Profile choice versus the public default: META-01 gives the embedded policy object precedence (10-minute no-show threshold), while the Ryde profile's 3-minute threshold would uphold the fee (310 s > 180 s). META-04 covers only conflicts between two Ryde pages, so no SOURCE_CONFLICT flag was raised. META-01 is rated D and has no plausible_range, and decisive_definition does not say whether choosing the profile can itself be decisive. I treated it as not decisive because the KB names E04 as the organizer_case regression case.",
+   "Booking and service type: TX-BOOKING and TX-SERVICE are data gaps, and E04 states 'on-demand RydeX' only in the booking_confirmed event text. The KB does not say if that counts as 'recorded' for CW-F01 (BOOKING_TYPE_INFERRED). Both routes give ON_DEMAND, and it does not change the outcome under the organizer wait anchor.",
+   "Refund form and payer for a card-paid fee under organizer_case: REMEDY_FORM WALLET_VOUCHER is a D assumption, and whether the driver's compensation is recovered is open decision D7. I named the platform as payer and the rider as payee from the ontology role_notes.",
+   "No rule covers a driver who cancels about 50 s after replying 'ok please hurry' to a rider who said she was 2 minutes away, beyond the wait-length test (R6). FRD-01 lists no early-cancellation signal, so none was raised.",
+   "CW-F07 and the VENUES table do not cover a pickup that is the rider's own block porch, so I treated pin versus venue as not applicable.",
+   "GEN-R05 requires Rider and Driver Advocate briefs, but none exist in the case file. Procedural only; reported as missing.",
+   "AUTH-05 E counts a cancel event among the required app events, but E04 has no driver_cancelled app event. The cancellation is in the chat system message and the fee event, so I counted it as present, as TX-EVENT notes for DISP-002.",
+   "Under organizer_v2_1 the result could differ (5 minutes counted from the scheduled time gives 310 s > 300 s, fee S$5.00), but E04 is not a DISP-nnn case, so v2.1 was not applied."
+  ],
+  "confidence": 3,
+  "note": "The wait was 310 s (13:18:20 to 13:23:30), below the case's own 600 s no-show threshold and the 360 s free wait. The driver cancelled before the free wait ended (13:24:20), so the fee is waived (row R6, reason CW-R-WAIT-SHORT). Under the Ryde public default of 180 s the fee would stand, but META-01 makes the case's embedded policy object govern. Remedy is S$4.50 as a wallet voucher, payer and payee as read from ontology role_notes; the driver's earlier credit is a separate open decision (D7)."
+ }
+]

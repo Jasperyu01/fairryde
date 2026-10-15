@@ -3,7 +3,7 @@
 # Counts marked {n_...} are filled in by build_kb.py from the YAML files.
 
 meta:
-  version: 0.2.0
+  version: 0.3.0
   updated: 2026-10-05
   owner: Jasper
   method: "Each 'before' statement was checked against the text of the 4 Oct report; an independent reviewer then checked both columns against the files."

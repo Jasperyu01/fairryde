@@ -6,7 +6,7 @@
 meta:
   kb: FairRyde Knowledge Base
   layer: Rules / reference data
-  version: 0.2.0
+  version: 0.3.0
   status: draft
   updated: 2026-10-14
   owner: Jasper
@@ -30,8 +30,48 @@ meta:
 # =====================================================================
 profiles:
 
+  organizer_v2_1:
+    applies_when: >-
+      The default for organizer cases (a dispute_id of the form DISP-nnn): the Rider Advocate, Driver Advocate and Judge work under the organizer's
+      Ryde Dispute Resolution Policy v2.1, which says so itself ("Applies To: All AI dispute resolution agents (Rider Advocate, Driver Advocate,
+      Judge) and human reviewers in the RydeResolve system."). Decision D41 (Jasper, 14 Oct 2026).
+    effective_from: 2026-01-01
+    effective_note: "Policy v2.1 'Effective Date: 1 January 2026' (Appendix B, revision 2.1 of 2026-01-01). A trip before that date is escalated as a policy gap (META-02, GEN-R07)."
+    fallback_profile: ryde_2026
+    fallback_note: >-
+      Every parameter that v2.1 governs is listed below and none is inherited. What v2.1 does not cover (the rider cancellation fee, the waiting
+      time fee, the waiver window, the ERP rates, the destination-edit fee) uses the Ryde profile, and the trace says so (META-01).
+    embedded_policy_object: >-
+      DISP-002 also embeds a cancellation_policy object. Under this profile it is read as a cross-check, not as the source of the numbers: free_wait_time_min 5
+      and cancellation_fee_after_wait 5.00 agree with v2.1 (Sections 2.1 and 2.2); no_show_threshold_min 8 has no counterpart in v2.1 and is not used. Where
+      the object and v2.1 give different outcomes the case is escalated (SOURCE_CONFLICT, META-04); decision D41.
+    params:
+      FREE_WAIT_S: {value: 300, unit: s, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 2.1: 'free wait time of 5 minutes' from the scheduled pickup time", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A, note: "Ryde profile: 180 s from the driver's arrival (RYDE-23534478435353). Decision D42."}
+      NO_SHOW_THRESHOLD_S: {value: 300, unit: s, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 2.1: 'After 5 minutes, the driver may cancel the trip as a \"rider no-show.\"'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A, note: "The free wait and the no-show threshold are the same 5 minutes in v2.1; there is no separate 8-minute threshold (DISP-002's embedded object has one). Decision D42."}
+      THRESHOLD_COMPARISON: {value: more_than, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 2.1: 'After 5 minutes'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A}
+      NO_SHOW_FEE_SGD: {value: 5.00, unit: SGD, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 2.2: 'A no-show cancellation fee of $5.00 is charged to the rider'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A, note: "Ryde profile: S$6.61 (S$5.00 base plus platform and transaction fees). Decision D43."}
+      FEE_PAYEE: {value: DRIVER, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 2.2: 'The cancellation fee is transferred to the driver as compensation for time and fuel.'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A}
+      WAIT_ANCHOR_FIELD: {value: trip_data.scheduled_time, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 2.1: 'free wait time of 5 minutes from the scheduled pickup time'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A, note: "Without a scheduled time the engine falls back to the driver's arrival record (CW-F02C). Decision D42."}
+      CONTACT_MIN_CALLS: {value: 1, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 2.3: 'At least 1 phone call (via the in-app calling system).'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A}
+      CONTACT_MIN_MESSAGES: {value: 1, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 2.3: 'At least 1 in-app chat message'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A, note: "Both obligations are required (AND), and failing either voids the fee (CW-R13). Decision D44."}
+      CONTACT_VOID_WHEN: {value: either_missing, source_type: FAIRRYDE, credibility: D, retrieved: 2026-10-14, source: "ORG-POLICY-V21 Section 2.3: 'If the driver fails to meet both contact obligations, the cancellation fee is voided'", note: "Reading of an ambiguous sentence (decision D44): either_missing voids the fee when the driver sent no message or made no call; both_missing only when the driver did neither (Precedent 7.3's facts). The reading test tests the other value."}
+      DRIVER_LATE_GRACE_S: {value: 300, unit: s, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 2.4: 'scheduled pickup time + 5 minutes'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A, note: "Replaces the Ryde profile's 180 s (Grab and Gojek practice, credibility C). The reference is the scheduled pickup time, not the assignment ETA. Decision D45."}
+      DRIVER_NOSHOW_CREDIT_SGD: {value: 5.00, unit: SGD, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 2.4: 'the rider is eligible for a $5.00 goodwill credit'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A}
+      DEVIATION_TOLERANCE_KM: {value: 1.0, unit: km, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 1.3: 'Deviation > 1km?'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A, note: "More than 1 km is a deviation; 1 km or less is within tolerance. Replaces DETOUR_RATIO_MIN and DETOUR_EXTRA_KM_MIN (DiDi, C) for organizer cases."}
+      ROUTE_AI_MAX_KM: {value: 2.0, unit: km, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 6.2: 'AI agent ruling if confidence \u2265 80% and deviation \u2264 2km, else escalate'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A}
+      TOLLS_TREATMENT: {value: PASS_THROUGH, source_type: ORGANIZER, source: "ORG-DISP001 recommended_ruling.breakdown.note: 'Only the excess distance fare is refunded. Tolls are passed through at cost.'", source_date: 2026-09, retrieved: 2026-10-14, credibility: D, note: "FC-R08 and the FC-R01 toll claim refund nothing under this profile. Policy v2.1 itself is silent on tolls; the one statement is the reference answer of sample DISP-001, used here as a rule source for this single parameter on Jasper's decision (D47), so it is D. The organizer is asked about tolls together with 'full refund' (O17)."}
+      RULING_FINAL_BELOW_SGD: {value: 10.00, unit: SGD, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 6.1: 'Under $10 | AI agent ruling is final | Any confidence level'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A, note: "Strictly under. Replaces AUTO_LIMIT_SGD for organizer cases. Decision D48."}
+      HUMAN_REVIEW_ABOVE_SGD: {value: 50.00, unit: SGD, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 6.1: 'Above $50 | Always human review'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A, note: "Strictly above; S$50.00 itself is in the $10 to $50 band."}
+      CONFIDENCE_MIN: {value: 0.80, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 6.1: '$10 - $50 | AI agent ruling with 80%+ confidence'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A, note: "Replaces TAU (0.60) for organizer cases."}
+      CONFIDENCE_MIN_FRAUD_FLAG: {value: 0.95, source_type: ORGANIZER, source: "ORG-POLICY-V21 Section 6.3: 'If any party has a fraud flag \u2265 1, the confidence threshold is raised to 95% regardless of dispute value.'", source_date: 2026-01-01, retrieved: 2026-10-14, credibility: A}
+      D29_CONFIDENCE_PENALTY: {value: 0.10, source_type: FAIRRYDE, credibility: D, plausible_range: [0.05, 0.25], retrieved: 2026-10-14, note: "Decision D52 (Jasper, 14 Oct 2026): D29 (an uphold that rests on FairRyde's own GPS presence logic always needs approval) conflicts with Section 6.2 ('No-show / cancellation | AI agent ruling is final'). Under this profile D29 is a confidence penalty on C; Section 6 decides the tier from C. The penalty changes a tier only where C meets a threshold (95% with a fraud flag, 80% in the S$10 to S$50 band); below S$10 without a fraud flag Section 6.1 accepts any confidence. The old D29 approval also remains through decision-table rows R9 and R11 (D52, question O26)."}
+      REMEDY_FORM: {value: ORIGINAL_PAYMENT_METHOD, source_type: ORGANIZER, source: "ORG-DISP001 recommended_ruling.actions[0].method: 'original_payment_method'; ORG-POLICY-V21 precedent 7.3: 'The $5.00 fee is reversed and refunded to the rider.'", source_date: 2026-09, retrieved: 2026-10-14, credibility: A, note: "Section 3.3 does not name a form; the surge refund and the fee void take the form the route sample and Precedent 7.3 show."}
+
   organizer_case:
-    applies_when: The case embeds its own cancellation_policy object (organizer cases such as DISP-002).
+    applies_when: >-
+      LEGACY (KB v0.2, superseded as the organizer default by organizer_v2_1 on 14 Oct 2026, decision D41). It still applies to a case that is not an
+      organizer case (no DISP-nnn id) but embeds its own cancellation_policy object, such as regression case E04, so META-01's reading of an embedded
+      object stays testable, and it can be forced to reproduce the v0.2 result for DISP-002.
     built_from_case: >-
       At run time the engine reads the case's own cancellation_policy object through ontology.yaml disp002_mapping (field,
       parameter, scale): the four case_fields below come only from the case. Anything the object does not carry, and every
@@ -80,6 +120,7 @@ profiles:
       CLEANING_CAP_VOMIT_SGD: {value: 200, unit: SGD, source_type: RYDE_POLICY, source: "RYDE-900004381243: 'Up to S$200'", source_date: 2026-04-09, retrieved: 2026-10-05, credibility: A}
       DRIVER_RATING_MIN: {value: 4.80, source_type: RYDE_POLICY, source: "RYDE-33362721809049: 'Driver Rating (DR) | < 4.80'", source_date: 2026-04-10, retrieved: 2026-10-05, credibility: A, note: "Ops threshold for temporary disabling; FairRyde never applies it (GEN-R06)."}
       DRIVER_CANCEL_RATE_MAX: {value: 0.175, source_type: RYDE_POLICY, source: "RYDE-33362721809049: 'Cancellation Rate (CR) | > 17.5%'", source_date: 2026-04-10, retrieved: 2026-10-05, credibility: A, note: "Ops threshold; never applied by FairRyde."}
+      TOLLS_TREATMENT: {value: REFUND_DETOUR_ERP, source_type: FAIRRYDE, credibility: D, retrieved: 2026-10-14, note: "FC-R08 refunds the ERP an unjustified detour caused (FairRyde's generalization of the route duty, rule FC-R08). Organizer profile organizer_v2_1: PASS_THROUGH (decision D47)."}
       ACCIDENT_REPORT_H: {value: 1, unit: h, source_type: RYDE_POLICY, source: "RYDE-900003838386: 'within 1 hour'", source_date: 2023-09-19, retrieved: 2026-10-05, credibility: B}
 
 # =====================================================================
@@ -99,6 +140,7 @@ shared_params:
   DETOUR_EXTRA_KM_MIN: {value: 3.0, unit: km, source_type: INDUSTRY, credibility: C, plausible_range: [1.5, 5.0], retrieved: 2026-10-05, note: "DiDi: detour >= 3 km."}
   BORDERLINE_RATIO_MIN: {value: 1.10, source_type: FAIRRYDE, credibility: D, plausible_range: [1.05, 1.15], retrieved: 2026-10-05}
   BORDERLINE_EXTRA_KM_MIN: {value: 1.5, unit: km, source_type: FAIRRYDE, credibility: D, plausible_range: [1.0, 2.0], retrieved: 2026-10-05}
+  ROUTE_BOUNDARY_BAND_KM: {value: 0.2, unit: km, source_type: FAIRRYDE, credibility: D, plausible_range: [0.1, 0.5], flag_only: true, retrieved: 2026-10-14, note: "Route cases under organizer_v2_1: a deviation within this distance of the 1 km tolerance adds the BOUNDARY_MARGIN flag and sets the margin term M of the confidence score, as BOUNDARY_BAND_S does for a wait."}
   CORRIDOR_HALF_WIDTH_M: {value: 100, unit: m, source_type: FAIRRYDE, credibility: D, plausible_range: [50, 200], retrieved: 2026-10-05}
   CORRIDOR_MIN_CONSEC_PINGS: {value: 2, source_type: FAIRRYDE, credibility: D, plausible_range: [2, 3], retrieved: 2026-10-05}
   ENDPOINT_EXCLUSION_M: {value: 500, unit: m, source_type: FAIRRYDE, credibility: D, plausible_range: [200, 800], retrieved: 2026-10-05}
@@ -111,10 +153,10 @@ shared_params:
   SG_BBOX: {value: [1.15, 103.59, 1.48, 104.10], note: "lat_min, lng_min, lat_max, lng_max", source_type: FAIRRYDE, credibility: D, retrieved: 2026-10-05}
   RIDER_ABUSE_MIN_DISPUTES: {value: 3, source_type: FAIRRYDE, credibility: D, plausible_range: [2, 5], retrieved: 2026-10-05, note: "FRD-02. Affects the approval tier only."}
   RIDER_ABUSE_REJECT_SHARE_MIN: {value: 0.5, source_type: FAIRRYDE, credibility: D, plausible_range: [0.4, 0.8], retrieved: 2026-10-05, note: "FRD-02. Affects the approval tier only."}
-  AUTO_LIMIT_SGD: {value: 10.00, unit: SGD, source_type: FAIRRYDE, credibility: D, plausible_range: [5, 20], retrieved: 2026-10-05, note: "To confirm with the organizer or Ryde. Affects the approval tier only."}
-  TAU: {value: 0.60, source_type: FAIRRYDE, credibility: D, plausible_range: [0.50, 0.80], retrieved: 2026-10-05, note: "Calibrate on the dev set: the lowest value at which no wrong ruling is auto-resolved. Affects the approval tier only."}
+  AUTO_LIMIT_SGD: {value: 10.00, unit: SGD, source_type: FAIRRYDE, credibility: D, plausible_range: [5, 20], retrieved: 2026-10-05, note: "To confirm with the organizer or Ryde. Affects the approval tier only. Organizer cases (organizer_v2_1) use RULING_FINAL_BELOW_SGD from policy v2.1 Section 6.1 instead (decision D48); the same S$10 figure, now with an organizer source."}
+  TAU: {value: 0.60, source_type: FAIRRYDE, credibility: D, plausible_range: [0.50, 0.80], retrieved: 2026-10-05, note: "Calibrate on the dev set: the lowest value at which no wrong ruling is auto-resolved. Affects the approval tier only. Organizer cases (organizer_v2_1) use CONFIDENCE_MIN (80%) and CONFIDENCE_MIN_FRAUD_FLAG (95%) from policy v2.1 Sections 6.1 and 6.3 instead (decision D48)."}
   CONFIDENCE_WEIGHTS: {value: {A_run_agreement: 0.35, M_threshold_margin: 0.25, E_evidence_completeness: 0.25, R_rules_engine_agreement: 0.15}, source_type: FAIRRYDE, credibility: D, retrieved: 2026-10-05, note: "Rule AUTH-05."}
-  PROFILE: {value: "organizer_case (built from the case's own policy object) if the case embeds one, else the Ryde profile in force on the trip date", source_type: FAIRRYDE, credibility: D, retrieved: 2026-10-05}
+  PROFILE: {value: "organizer_v2_1 for an organizer case (a DISP-nnn id); organizer_case (built from the case's own policy object, legacy) for another case that embeds one; else the Ryde profile in force on the trip date", source_type: FAIRRYDE, credibility: D, retrieved: 2026-10-14}
 
 # =====================================================================
 tables:

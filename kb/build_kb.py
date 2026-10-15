@@ -20,12 +20,16 @@ sys.path.insert(0, str(HERE / "tools"))
 
 from kbload import KB  # noqa: E402
 import checks  # noqa: E402
+import kbload  # noqa: E402
 import engine_noshow  # noqa: E402
+import case_adapter  # noqa: E402
+import engines  # noqa: E402
 import explain  # noqa: E402
 import fuzz_presence  # noqa: E402
 import privacy_scan  # noqa: E402
 import report_md  # noqa: E402
 import selftest  # noqa: E402
+import selftest_v21  # noqa: E402
 import stats  # noqa: E402
 
 RECALC = Path("/mnt/skills/public/xlsx/scripts/recalc.py")     # LibreOffice recalculation, when available
@@ -44,13 +48,15 @@ def recalc(path: Path) -> dict:
 
 def main(argv):
     kb = KB(HERE)
-    cases = {"DISP-002": kb.disp002}
+    cases = dict(kb.organizer_cases)                       # DISP-001, DISP-002 and DISP-003: the organizer's samples
     rep = checks.run_all(kb, set(engine_noshow.evidence_index(kb.disp002, kb)), cases)
-    runs = {prof: engine_noshow.run(kb, kb.disp002, prof) for prof in ("organizer_case", "ryde_2026")}
+    # DISP-002 under the default profile (organizer_v2_1), the legacy profile that reads its embedded object, and the Ryde profile
+    runs = {prof: engine_noshow.run(kb, kb.disp002, prof) for prof in ("organizer_v2_1", "organizer_case", "ryde_2026")}
+    org_runs = {cid: engines.run_case(kb, case)["result"] for cid, case in kb.organizer_cases.items()}      # the three samples through the dispatcher
     dt_enum = engine_noshow.dt_enumeration(kb)
-    priv = privacy_scan.dry_run(kb.disp002)
+    priv = privacy_scan.dry_run_all(list(kb.organizer_cases.values()))
     if not priv["clean"]:
-        rep.add("ERROR", "privacy", "DISP-002", "pseudonymization dry run left identifiers (see counts)")
+        rep.add("ERROR", "privacy", "organizer cases", "pseudonymization dry run left identifiers (see counts)")
 
     # engine self-test, its coverage, and the number check of every explanation draft (EXP-03)
     tests = selftest.run(kb)
@@ -66,6 +72,13 @@ def main(argv):
         rep.add("ERROR", "erp-g3-selftest", x["id"], f"{x['variant']}: " + "; ".join(x["problems"]))
     erp_line = (f"ERP rules self-test: {len(selftest.erp_cases())} ERP cases, the FC-R01 split, gate G3, the A2, A3 and A4 rule-card checks and the census: "
                 + ("all pass" if not a2_bad else f"{len(a2_bad)} problem(s)"))
+    v21 = selftest_v21.run(kb)                  # step A6: the organizer samples pinned to their expected rulings, variants, regression, reconciliation records
+    for x in v21:
+        if not x["ok"]:
+            rep.add("ERROR", "v21-selftest", x["id"], x["variant"][:70] + ": " + "; ".join(x["problems"]))
+    v21_line = (f"Policy v2.1 self-test (A6): {sum(x['ok'] for x in v21)}/{len(v21)} pass (the three organizer samples pinned to their expected rulings, one-factor variants, "
+                "tolls pass-through, regression E01 to E04 and E11, and the reconciliation records)")
+    erp_line = erp_line + "\n* " + v21_line
     decided = {t["got"]["row"] for t in tests if t["got"]["row"] and t["got"]["reasons"]
                and t["got"]["reasons"][0] not in ("CW-R-OUT-OF-WINDOW", "GEN-R-POLICY-GAP")}
     for row in kb.y["rules"]["decision_tables"]["DT-CW-NOSHOW"]["rows"]:
@@ -77,12 +90,8 @@ def main(argv):
     for g in ("G1", "G4", "G6"):
         if not any(any(x.startswith(g) for x in t["gates"]) for t in tests):
             rep.add("ERROR", "selftest-coverage", g, "no self-test variant fires this gate")
-    for vid, desc, case, exp, prof in selftest.variants(kb.disp002):
-        run_v = engine_noshow.run(kb, case, prof)
-        ex = explain.noshow(kb, run_v)
-        if ex["exp03_unmatched"]:
-            rep.add("ERROR", "exp03", vid, f"explanation numbers not registered as findings: {ex['exp03_unmatched']}")
-        tv = run_v["trace"]                     # every code the engine emits must exist in the taxonomy (layer convergence)
+    def check_trace_codes(vid, tv, tier_name):
+        """Every code an engine emits must exist in the taxonomy and the ontology (layer convergence)."""
         for f in tv.flags:
             if f not in kb.vocab["TX-FLAG"]:
                 rep.add("ERROR", "engine-codes", vid, f"flag {f} is not in TX-FLAG")
@@ -91,8 +100,8 @@ def main(argv):
                 rep.add("ERROR", "engine-codes", vid, f"reason {rc} is not in TX-REASON")
         if tv.outcome and tv.outcome not in kb.vocab["TX-OUTCOME"]:
             rep.add("ERROR", "engine-codes", vid, f"outcome {tv.outcome} is not in TX-OUTCOME")
-        if not tv.reclassified_to and run_v["tier"]["tier"] not in kb.vocab["TX-TIER-AUTONOMY"]:
-            rep.add("ERROR", "engine-codes", vid, f"tier {run_v['tier']['tier']} is not in TX-TIER-AUTONOMY")
+        if not tv.reclassified_to and tier_name not in kb.vocab["TX-TIER-AUTONOMY"]:
+            rep.add("ERROR", "engine-codes", vid, f"tier {tier_name} is not in TX-TIER-AUTONOMY")
         for rid in tv.rules_on_path + tv.rules_used:
             if rid not in kb.rules:
                 rep.add("ERROR", "engine-codes", vid, f"rule {rid} on the trace does not exist")
@@ -109,29 +118,56 @@ def main(argv):
                 allowed = list(kb.vocab.get(allowed, {}))
             if allowed and fd["value"] is not None and str(fd["value"]) not in [str(v) for v in allowed]:
                 rep.add("ERROR", "engine-codes", vid, f"finding {code} = {fd['value']} is not one of its values {allowed}")
+        for st in tv.steps:                         # every rule a step names exists (the step's rule field lists IDs and 'or' / ranges)
+            for rid in kbload.expand_rule_refs(st["rule"]):
+                if rid not in kb.rules and rid not in kb.y["rules"].get("decision_tables", {}) and not rid.startswith("E-"):
+                    rep.add("ERROR", "engine-codes", vid, f"step {st['playbook']} {st['n']} names rule {rid}, which does not exist")
+
+    for vid, desc, case, exp, prof in selftest.variants(kb.disp002):
+        run_v = engine_noshow.run(kb, case, prof or ("organizer_case" if case.get("cancellation_policy") else "ryde_2026"))
+        ex = explain.noshow(kb, run_v)
+        if ex["exp03_unmatched"]:
+            rep.add("ERROR", "exp03", vid, f"explanation numbers not registered as findings: {ex['exp03_unmatched']}")
+        check_trace_codes(vid, run_v["trace"], run_v["tier"]["tier"])
+    for cid, res in org_runs.items():              # the three organizer samples under organizer_v2_1, with the explanations that cite the policy sections
+        ex = explain.policy_v21(kb, res)
+        if ex["exp03_unmatched"]:
+            rep.add("ERROR", "exp03", cid, f"explanation numbers not registered as findings: {ex['exp03_unmatched']}")
+        check_trace_codes(cid, res["trace"], res["tier"]["tier"])
+    for vid, desc, case, exp in selftest_v21.variants(kb):
+        if "overrides" not in exp:
+            res = engines.run_case(kb, case)["result"]
+            check_trace_codes(vid, res["trace"], res["tier"]["tier"])
 
     fuzz = None
     if "--no-fuzz" not in argv:           # randomized GPS check: no automatic ruling may rest on GPS that leaves the question open
-        fuzz = fuzz_presence.run(kb, 150, 7)
+        fuzz = fuzz_presence.run(kb, 150, 7)                       # the default profile (organizer_v2_1 for these DISP-002 based cases)
+        for prof in ("organizer_case", "ryde_2026"):               # A6 round 1: the other profiles keep the guard
+            more = fuzz_presence.run(kb, 100, 7, prof)
+            fuzz = (fuzz[0] + more[0], fuzz[1] + more[1], fuzz[2] + more[2], fuzz[3] + more[3])
         for b in fuzz[3]:
             rep.add("ERROR", "gps-fuzz", f"case {b[0]}", str(b[1])[:200])
 
     out = HERE / "out"
     out.mkdir(exist_ok=True)
-    terms = privacy_scan.dictionary(kb.disp002)
+    terms = privacy_scan.dictionary_all(list(kb.organizer_cases.values()))
     ann_status = {"message": "workbooks skipped (--no-xlsx)"}
     files = []
     if "--no-xlsx" not in argv:
         import make_xlsx
         ann_path = out / f"FairRyde_Annotation_{kb.vtag}.xlsx"
-        ann_status = make_xlsx.build_annotation(kb, ann_path, [privacy_scan.pseudonymize(kb.disp002, terms)])
+        ann_cases = []
+        for case in kb.organizer_cases.values():          # the three organizer samples, each pseudonymized with its own dictionary, without the organizer's own answer blocks
+            canon, _ref = case_adapter.prepare(case)
+            ann_cases.append(privacy_scan.pseudonymize(canon, privacy_scan.dictionary(case)))
+        ann_status = make_xlsx.build_annotation(kb, ann_path, ann_cases)
         if ann_status.get("written"):
             rc = recalc(ann_path)
             ann_status["recalc"] = rc
             if rc.get("status") == "errors_found" or rc.get("error"):
                 rep.add("ERROR", "xlsx-formulas", ann_path.name, f"recalculation: {rc}")
         kb_path = out / f"FairRyde_KB_{kb.vtag}.xlsx"
-        kb_status = make_xlsx.build_kb_workbook(kb, rep, runs, dt_enum, priv, tests, kb_path, ann_status)
+        kb_status = make_xlsx.build_kb_workbook(kb, rep, runs, dt_enum, priv, tests, kb_path, ann_status, None, org_runs)
         files = [kb_path, ann_path]
 
     (out / "disp002_trace.md").write_text(report_md.trace_report(kb, runs), encoding="utf-8")
@@ -152,7 +188,7 @@ def main(argv):
     if out_scan["total"]:
         rep.add("ERROR", "privacy-outputs", "out/", f"generated outputs contain identifiers (counts only): {out_scan}")
     if files:       # second pass: the summary sheet now shows the leak-scan result and the final error count
-        kb_status = make_xlsx.build_kb_workbook(kb, rep, runs, dt_enum, priv, tests, kb_path, ann_status, out_scan)
+        kb_status = make_xlsx.build_kb_workbook(kb, rep, runs, dt_enum, priv, tests, kb_path, ann_status, out_scan, org_runs)
         rescan = privacy_scan.output_scan(privacy_scan.xlsx_strings(kb_path), terms, allow)
         if rescan["total"] and not out_scan["total"]:
             rep.add("ERROR", "privacy-outputs", kb_path.name, f"the regenerated workbook contains identifiers (counts only): {rescan}")
@@ -164,9 +200,18 @@ def main(argv):
     for prof, r in runs.items():
         t = r["trace"]
         print(f"DISP-002 [{prof}]: {t.outcome} via {t.dt_row}, reasons {t.reasons}, flags {t.flags}, C={t.confidence['C']}, tier {r['tier']['tier']}")
+    for cid in ("DISP-001", "DISP-003"):
+        r = org_runs[cid]
+        t = r["trace"]
+        print(f"{cid} [{t.profile}]: {t.outcome} S${(t.remedy or {}).get('amount_sgd')}, reasons {t.reasons}, flags {t.flags}, C={t.confidence['C']}, tier {r['tier']['tier']}")
+    for cid, r in org_runs.items():
+        sc = engines.score(kb, cid, r)
+        print(f"  expected ruling of {cid}: {'matches' if sc['ok'] else 'DIFFERS ' + str(sc['problems'])}")
+        if not sc["ok"]:
+            rep.add("ERROR", "organizer-expected", cid, "; ".join(sc["problems"]))
     print(f"DT-CW-NOSHOW enumeration: {dt_enum}")
     print(f"engine self-test: {sum(t['ok'] for t in tests)}/{len(tests)} variants pass; rows decided by self-tests: {sorted(decided, key=lambda s: int(s[1:]))}")
-    print(erp_line)
+    print(erp_line.replace("\n* ", "\n"))
     n_read = len(selftest.READING_CASES) + len(selftest.BEFORE_ARRIVAL_CASES) + len(selftest.reading_corpus())
     print(f"CW-F06 message readings: {n_read - len(reading_bad)}/{n_read} pass (exact cases and the reviewers' corpus)")
     if fuzz:

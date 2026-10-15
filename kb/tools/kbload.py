@@ -18,7 +18,22 @@ TODAY = "2026-10-05"
 A_CUTOFF = "2025-10-05"          # Ryde articles edited on or after this date are "within 12 months"
 
 YAML_FILES = ["taxonomy", "ontology", "rules", "reference_data", "playbooks", "sources",
-              "inventory", "annotation_schema", "scope", "privacy", "open_items", "protocol_gap"]
+              "inventory", "annotation_schema", "scope", "privacy", "open_items", "protocol_gap", "precedents", "organizer_cases"]
+
+ORGANIZER_FILES = {"DISP-001": "disp001.md", "DISP-002": "disp002.md", "DISP-003": "disp003.md"}     # sources/organizer/
+ORGANIZER_PROFILE = "organizer_v2_1"          # the default profile of an organizer case (rule META-01, decision D41)
+
+
+def is_organizer_case(case: dict) -> bool:
+    """An organizer case carries the organizer's own dispute id (DISP-nnn); the regression and synthetic cases do not."""
+    return bool(re.fullmatch(r"DISP-(\d{4}-)?\d+", str((case.get("dispute_ticket") or {}).get("dispute_id", ""))))
+
+
+def default_profile(case: dict) -> str:
+    """META-01: organizer_v2_1 for an organizer case; organizer_case (legacy) for another case that embeds a policy object; else ryde_2026."""
+    if is_organizer_case(case):
+        return ORGANIZER_PROFILE
+    return "organizer_case" if case.get("cancellation_policy") else "ryde_2026"
 
 
 def norm(text: str) -> str:
@@ -43,6 +58,13 @@ class KB:
         md = (self.dir / "sources/organizer/disp002.md").read_text(encoding="utf-8")
         self.disp002_md = md
         self.disp002 = json.loads(re.search(r"```json\n(.*?)\n```", md, re.S).group(1))
+        self.organizer_cases = {}                  # the organizer's sample cases, as the files give them (never edited)
+        for cid, fname in ORGANIZER_FILES.items():
+            txt = (self.dir / "sources/organizer" / fname).read_text(encoding="utf-8")
+            self.organizer_cases[cid] = json.loads(re.search(r"```json\n(.*?)\n```", txt, re.S).group(1))
+        self.disp001, self.disp003 = self.organizer_cases["DISP-001"], self.organizer_cases["DISP-003"]
+        self.precedents = {p["id"]: p for p in self.y["precedents"]["precedents"]}
+        self.expected = {c["id"]: c for c in self.y["organizer_cases"]["cases"]}
         self.articles = {str(a["id"]): a for a in self.corpus["articles"]}
         self.version = str(self.y["rules"]["meta"]["version"])             # e.g. 0.2.0; names the workbooks (v0.2)
         self.vtag = "v" + ".".join(self.version.split(".")[:2])

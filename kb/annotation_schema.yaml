@@ -1,7 +1,7 @@
 # FairRyde Knowledge Base - ANNOTATION SHEET DESIGN (ChordX ONT.5) and VALIDATION PLAN (ONT.6)
 
 meta:
-  version: 0.2.0
+  version: 0.3.0
   updated: 2026-10-14
   owner: Jasper
   principle: >-
@@ -37,7 +37,7 @@ groups:
       - {name: case_source, fill: AUTO, values: [ORGANIZER, SYNTHETIC, HANDWRITTEN], example: HANDWRITTEN}
       - {name: split, fill: AUTO, values: [ORGANIZER_PUBLIC, DEV, HELDOUT], note: "Assigned by seed family; all variants of a seed share one split (ONT.10.3). ORGANIZER_PUBLIC cases are known to the team, so they are reported separately and cannot measure generalization.", example: DEV}
       - {name: seed_family, fill: AUTO, example: SEED-EX01}
-      - {name: policy_profile, fill: AUTO, values: [organizer_case, ryde_2026], example: ryde_2026}
+      - {name: policy_profile, fill: AUTO, values: [organizer_v2_1, organizer_case, ryde_2026], note: "organizer_v2_1: the organizer's policy v2.1, the default for an organizer case (DISP-nnn) since KB v0.3; organizer_case: legacy, a case that embeds its own policy object; ryde_2026: the public help center.", example: ryde_2026}
       - {name: filed_by, fill: AUTO, vocab: TX-ROLE, example: RIDER}
       - {name: dispute_type_raw, fill: AUTO, example: cancellation_fee}
       - {name: description, fill: AUTO, note: verbatim, example: "I cancelled one minute after the driver was assigned because I set the wrong pickup, but I was still charged $6.61."}
@@ -60,12 +60,14 @@ groups:
       - {name: wait_pings, fill: AUTO, note: "Count of driver pings from the wait anchor (CW-F02, CW-F02B) to the cancellation", example: 0}
       - {name: policy_threshold_s, fill: AUTO, note: "No-show threshold of this case: the case's own policy object (no_show_threshold_min x 60), else the Ryde profile value (META-01)", example: 180}
       - {name: policy_fee_sgd, fill: AUTO, note: "Fee amount in the policy that applies to this case (policy object, else the Ryde profile)", example: 6.61}
-      - {name: wait_elapsed_s, fill: FORMULA, formula: "=(cancellation_time - wait anchor)*86400; anchor = driver_wait_start (organizer profile), later of arrival and scheduled time (recorded ADVANCE booking), else driver_arrival_time", hide_in_blind: true, note: "Pre-computed; hidden in blind mode so the annotator works from the raw times", example: ""}
+      - {name: wait_elapsed_s, fill: FORMULA, formula: "=(cancellation_time - wait anchor)*86400; anchor = scheduled_time, moved to the arrival when the driver came later (organizer_v2_1, CW-F02C), driver_wait_start (legacy organizer_case), later of arrival and scheduled time (recorded ADVANCE booking), else driver_arrival_time", hide_in_blind: true, note: "Pre-computed; hidden in blind mode so the annotator works from the raw times", example: ""}
       - {name: filing_delay_days, fill: FORMULA, formula: "=filed_at - cancellation_time", hide_in_blind: true, note: "Pre-computed input of MAT-04; hidden in blind mode", example: 0.02}
       - {name: wait_margin_s, fill: FORMULA, formula: "=wait_elapsed_s - policy_threshold_s", hide_in_blind: true, note: "Pre-computes the threshold comparison; hidden in blind mode", example: ""}
       - {name: rider_contacts, fill: AUTO, hide_in_blind: true, note: "Rider calls and messages in CW-F06's windows: from the driver's assignment to the cancellation (no-show fee), or to the end of CW-F04's window (waiting fee); before the arrival indication only the rider's own placement counts (D30). Counts contacts only; whether they are counter-evidence depends on what they say (CW-F06). Pre-computes part of CW-F06, so hidden in blind mode.", example: 0}
       - {name: rider_side_evidence, fill: AUTO, values: [none, statement_only, system_records], hide_in_blind: true, note: "Which rider-side material exists (mechanical): system_records = rider GPS or a rider call or message from the driver's assignment on, or a notification failure. Whether a rider call or message places the rider at the pick-up or contests presence (an admission of lateness does not), and whether the statement contests presence, are the annotator's call (CW-F06). Hidden in blind mode.", example: statement_only}
       - {name: chat_summary, fill: AI_OK, hide_in_blind: true, note: "Neutral summary only", example: "No messages between rider and driver."}
+      - {name: organizer_expected_outcome, fill: AUTO, vocab: TX-OUTCOME, hide_in_blind: true, note: "The organizer's expected ruling for an organizer sample (kb/organizer_cases.yaml; DISP-003's was stated by Jasper on 14 Oct 2026). A reference copied from the organizer's material, not an annotation: the annotator never copies it into the answer columns, and blind mode hides it. Blank for every other case.", example: ""}
+      - {name: organizer_expected_amount_sgd, fill: AUTO, hide_in_blind: true, note: "The organizer's expected refund amount (blank when the fee stands or the case has no organizer ruling). Same rules as organizer_expected_outcome.", example: ""}
 
   ANSWER:
     zh: 标准答案列（人工判断）

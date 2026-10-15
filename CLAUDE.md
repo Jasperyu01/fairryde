@@ -11,7 +11,7 @@ Tencent Cloud x AI Singapore hackathon 2026, Ryde track: multi-agent resolution 
 ## Commands
 
 - Build and check the KB: `python3 kb/build_kb.py` (must end with `ERROR 0 | WARN 0`). Faster: `--no-xlsx --no-fuzz`.
-- Self-tests only: `python3 kb/tools/selftest.py`. Privacy scan: `python3 kb/tools/privacy_scan.py`.
+- Self-tests only: `python3 kb/tools/selftest.py` and `python3 kb/tools/selftest_v21.py` (policy v2.1, A6). Privacy scan: `python3 kb/tools/privacy_scan.py`.
 - Validation scripts: `validation/tools/` (`freeze.py`, `evidence_check.py`, `scorecard.py`, `timeline.py`, `render_page.py`).
 
 ## Rules for every session
@@ -26,6 +26,6 @@ Tencent Cloud x AI Singapore hackathon 2026, Ryde track: multi-agent resolution 
 - Every rule element needs a source or an open FairRyde label. A rule's credibility is its weakest essential element: a Ryde condition extended by FairRyde is D.
 - Writing style in docs and messages: no em dashes or en dashes; American spelling.
 
-## Status (11 Oct 2026)
+## Status (14 Oct 2026)
 
-KB v0.1 was validated on 7 Oct: NO-GO. M1 taxonomy 0.90 (good), M2 ontology 0.79, M3 rules 0.65, M4 conflict/unsupported 0.21 (all three bad), M5 held-out decisions 0.73 (acceptable). The fix list is `validation/V5_scorecard/54_fix_list.json` (FX1 to FX7 are priority 1). Next: build v0.2, then validation round 2.
+KB v0.1 was validated on 7 Oct: NO-GO (M1 0.90, M2 0.79, M3 0.65, M4 0.21, M5 0.73). KB v0.2 applied the fix list `validation/V5_scorecard/54_fix_list.json` (A1 to A5). KB v0.3.0 (step A6) adds the organizer's Ryde Dispute Resolution Policy v2.1 as the primary policy (profile `organizer_v2_1`, default for organizer cases; `ryde_2026` stays for E01 to E15 as regression) and the sample cases DISP-001, DISP-002 and DISP-003 (decisions D41 to D55 in `kb/open_items.yaml`). Next: validation round 2 on the frozen v0.3.0.

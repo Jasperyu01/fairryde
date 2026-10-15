@@ -1,0 +1,52 @@
+# FairRyde Knowledge Base - THE ORGANIZER'S SAMPLE CASES AND THEIR EXPECTED RULINGS
+# The expected rulings score the engine (pinned tests, the annotation workbook's reference columns). They are never an input of a rule or an engine
+# (kb/tools/case_adapter.py removes the organizer's own answer blocks before the engines read a case; ENT-ORGREF).
+# expected_tier is what Jasper's brief of 14 Oct 2026 asks of policy v2.1 Section 6; it is a design target, not an organizer statement.
+
+meta:
+  version: 0.3.0
+  updated: 2026-10-14
+  owner: Jasper
+  profile: organizer_v2_1
+
+cases:
+
+  - id: DISP-001
+    file: sources/organizer/disp001.md
+    source_doc: ORG-DISP001
+    dispute_type: route_deviation
+    taxonomy_code: FC-ROUTE
+    expected_outcome: PARTIAL_REFUND
+    expected_amount_sgd: 3.44
+    expectation_source: "The file itself: case_metadata.expected_ruling 'partial_refund' and expected_refund_amount 3.44."
+    expected_tier: APPROVE
+    tier_note: "Human review with S$3.44 as the recommended remedy: the deviation is 4.3 km, above the 2 km limit of Section 6.2 (decision D53)."
+    basis_sections: ["Section 1.2", "Section 1.3", "Section 1.4", "Section 6.2", "Precedent 7.1"]
+    expected_reasons: [FC-R-DEVIATION-UNNOTIFIED]
+    not_refunded: "Tolls (S$2.22) pass through at cost; time fare and surge are not refunded (decision D47)."
+
+  - id: DISP-002
+    file: sources/organizer/disp002.md
+    source_doc: ORG-DISP002
+    dispute_type: no_show_charge
+    taxonomy_code: CW-NOSHOW
+    expected_outcome: UPHOLD
+    expected_amount_sgd: null
+    expectation_source: "The file's header: 'Expected ruling: Cancellation charge UPHELD'. The S$5.00 fee stands; nothing is refunded."
+    expected_tier: APPROVE
+    tier_note: "The rider has a fraud flag, so Section 6.3 raises the confidence threshold to 95%, and the confidence of this ruling is lower (decision D52 keeps D29 as a confidence penalty)."
+    basis_sections: ["Section 2.1", "Section 2.2", "Section 2.3", "Section 6.2", "Section 6.3", "Precedent 7.3 (distinguished)"]
+    expected_reasons: [CW-R-NOSHOW-VALID]
+
+  - id: DISP-003
+    file: sources/organizer/disp003.md
+    source_doc: ORG-DISP003
+    dispute_type: fare_dispute
+    taxonomy_code: FC-SURGE
+    expected_outcome: FULL_REFUND
+    expected_amount_sgd: 4.50
+    expectation_source: "Not in the file. Stated by Jasper on 14 Oct 2026 as the organizer's expected ruling: refund of the S$4.50 surge differential (the policy calls it a full refund of the surge differential, Sections 3.3 and 3.4, Precedent 7.2)."
+    expected_tier: AUTO
+    tier_note: "Under S$10, so the AI ruling is final (Section 6.1)."
+    basis_sections: ["Section 3.1", "Section 3.2", "Section 3.3", "Section 3.4", "Section 3.5", "Section 6.1", "Precedent 7.2"]
+    expected_reasons: [FC-R-SURGE-UNNOTIFIED]
