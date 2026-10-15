@@ -1,0 +1,108 @@
+{
+ "case_id": "E13",
+ "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
+ "source": "composed from the deterministic stages",
+ "responses": {
+  "rider_advocate:case_file": {
+   "party": "rider",
+   "account_summary": "The rider's ticket says: \"During the ride the driver kept commenting on my looks, asked if I had a boyfriend and whether I lived alone, and wanted to know which floor I stay on. I gave short answers and pretended to be on my phone.\" [E-TKT-01]. The rider also wrote 1 message(s) in the chat [E-CHT-02].",
+   "evidence": [
+    "E-TKT-01",
+    "E-CHT-02"
+   ],
+   "open_questions": [
+    "What further records exist on the rider's side?"
+   ],
+   "safety_concern": true
+  },
+  "driver_advocate:case_file": {
+   "party": "driver",
+   "account_summary": "The driver has filed no statement in this case file. The driver wrote 2 message(s) in the chat [E-CHT-01, E-CHT-03].",
+   "evidence": [
+    "E-CHT-01",
+    "E-CHT-03",
+    "E-TRP-01"
+   ],
+   "open_questions": [
+    "Does the driver wish to give an account?"
+   ],
+   "safety_concern": true
+  },
+  "judge:case_file": {
+   "case_summary": "This case goes to a person because of a safety concern. The ticket is a claim of type Inappropriate behavior or harassment filed by the RIDER [E-TKT-01]. The agents gathered the evidence and summarized the accounts; they propose no outcome, amount or measure.",
+   "timeline": [
+    {
+     "ts": "23:08:00",
+     "event": "23:08:00 booking_confirmed",
+     "evidence": [
+      "E-APP-01"
+     ]
+    },
+    {
+     "ts": "23:08:20",
+     "event": "23:08:20 driver_assigned",
+     "evidence": [
+      "E-APP-02"
+     ]
+    },
+    {
+     "ts": "23:08:25",
+     "event": "23:08:25 driver_en_route",
+     "evidence": [
+      "E-APP-03"
+     ]
+    },
+    {
+     "ts": "23:13:10",
+     "event": "23:13:10 driver_arrived",
+     "evidence": [
+      "E-APP-04"
+     ]
+    },
+    {
+     "ts": "23:13:20",
+     "event": "23:13:20 driver message",
+     "evidence": [
+      "E-CHT-01"
+     ]
+    },
+    {
+     "ts": "23:13:40",
+     "event": "23:13:40 rider message",
+     "evidence": [
+      "E-CHT-02"
+     ]
+    },
+    {
+     "ts": "23:14:00",
+     "event": "23:14:00 rider_picked_up",
+     "evidence": [
+      "E-APP-05"
+     ]
+    },
+    {
+     "ts": "23:14:05",
+     "event": "23:14:05 trip_started",
+     "evidence": [
+      "E-APP-06"
+     ]
+    }
+   ],
+   "disputed_points": [],
+   "evidence": [
+    "E-TKT-01",
+    "E-TRP-01",
+    "E-CHT-01",
+    "E-CHT-02",
+    "E-CHT-03",
+    "E-APP-01",
+    "E-APP-02",
+    "E-APP-03"
+   ],
+   "open_questions": [
+    "What further records exist?"
+   ],
+   "safety_concern": true
+  }
+ }
+}

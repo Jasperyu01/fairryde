@@ -1,0 +1,5 @@
+__pycache__/
+.pytest_cache/
+# run logs are local; the committed examples live in runs/examples/
+runs/*.json
+!runs/examples/

@@ -1,0 +1,107 @@
+{
+ "case_id": "E06",
+ "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
+ "source": "composed from the deterministic stages",
+ "responses": {
+  "rider_advocate:case_file": {
+   "party": "rider",
+   "account_summary": "The rider's ticket says: \"I had a 6:30am advance booking to the airport. My airline moved my flight, so I cancelled at 6:12, more than 15 minutes before pickup, and I even messaged the driver to apologise.\" [E-TKT-01]. The rider also wrote 1 message(s) in the chat [E-CHT-02].",
+   "evidence": [
+    "E-TKT-01",
+    "E-CHT-02"
+   ],
+   "open_questions": [
+    "What further records exist on the rider's side?"
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate:case_file": {
+   "party": "driver",
+   "account_summary": "The driver has filed no statement in this case file. The driver wrote 1 message(s) in the chat [E-CHT-01].",
+   "evidence": [
+    "E-CHT-01",
+    "E-TRP-01"
+   ],
+   "open_questions": [
+    "Does the driver wish to give an account?"
+   ],
+   "safety_concern": false
+  },
+  "judge:case_file": {
+   "case_summary": "This case goes to a person because of no written rule in code for this claim type (GEN-R07). The ticket is a claim of type cancellation_fee filed by the RIDER [E-TKT-01]. The agents gathered the evidence and summarized the accounts; they propose no outcome, amount or measure.",
+   "timeline": [
+    {
+     "ts": "21:15:00",
+     "event": "21:15:00 booking_confirmed",
+     "evidence": [
+      "E-APP-01"
+     ]
+    },
+    {
+     "ts": "22:02:00",
+     "event": "22:02:00 driver_assigned",
+     "evidence": [
+      "E-APP-02"
+     ]
+    },
+    {
+     "ts": "05:45:00",
+     "event": "05:45:00 reminder_sent",
+     "evidence": [
+      "E-APP-03"
+     ]
+    },
+    {
+     "ts": "06:05:00",
+     "event": "06:05:00 driver_en_route",
+     "evidence": [
+      "E-APP-04"
+     ]
+    },
+    {
+     "ts": "06:05:20",
+     "event": "06:05:20 driver message",
+     "evidence": [
+      "E-CHT-01"
+     ]
+    },
+    {
+     "ts": "06:11:50",
+     "event": "06:11:50 rider message",
+     "evidence": [
+      "E-CHT-02"
+     ]
+    },
+    {
+     "ts": "06:12:30",
+     "event": "06:12:30 system system",
+     "evidence": [
+      "E-CHT-03"
+     ]
+    },
+    {
+     "ts": "06:12:30",
+     "event": "06:12:30 rider_cancelled",
+     "evidence": [
+      "E-APP-05"
+     ]
+    }
+   ],
+   "disputed_points": [],
+   "evidence": [
+    "E-TKT-01",
+    "E-TRP-01",
+    "E-CHT-01",
+    "E-CHT-02",
+    "E-CHT-03",
+    "E-APP-01",
+    "E-APP-02",
+    "E-APP-03"
+   ],
+   "open_questions": [
+    "Which written rule, if any, applies to this claim?"
+   ],
+   "safety_concern": false
+  }
+ }
+}

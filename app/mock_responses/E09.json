@@ -1,0 +1,107 @@
+{
+ "case_id": "E09",
+ "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
+ "source": "composed from the deterministic stages",
+ "responses": {
+  "rider_advocate:case_file": {
+   "party": "rider",
+   "account_summary": "The rider's ticket says: \"The driver went the long way. Instead of taking the ECP and KPE like the app showed, he went up the CTE and through Ang Mo Kio.\" [E-TKT-01]. The rider also wrote 1 message(s) in the chat [E-CHT-02].",
+   "evidence": [
+    "E-TKT-01",
+    "E-CHT-02"
+   ],
+   "open_questions": [
+    "What further records exist on the rider's side?"
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate:case_file": {
+   "party": "driver",
+   "account_summary": "The driver has filed no statement in this case file. The driver wrote 1 message(s) in the chat [E-CHT-01].",
+   "evidence": [
+    "E-CHT-01",
+    "E-TRP-01"
+   ],
+   "open_questions": [
+    "Does the driver wish to give an account?"
+   ],
+   "safety_concern": false
+  },
+  "judge:case_file": {
+   "case_summary": "This case goes to a person because of no written rule in code for this claim type (GEN-R07). The ticket is a claim of type Route deviation / longer route filed by the RIDER [E-TKT-01]. The agents gathered the evidence and summarized the accounts; they propose no outcome, amount or measure.",
+   "timeline": [
+    {
+     "ts": "15:12:00",
+     "event": "15:12:00 booking_confirmed",
+     "evidence": [
+      "E-APP-01"
+     ]
+    },
+    {
+     "ts": "15:12:20",
+     "event": "15:12:20 driver_assigned",
+     "evidence": [
+      "E-APP-02"
+     ]
+    },
+    {
+     "ts": "15:12:25",
+     "event": "15:12:25 driver_en_route",
+     "evidence": [
+      "E-APP-03"
+     ]
+    },
+    {
+     "ts": "15:17:10",
+     "event": "15:17:10 driver_arrived",
+     "evidence": [
+      "E-APP-04"
+     ]
+    },
+    {
+     "ts": "15:17:20",
+     "event": "15:17:20 driver message",
+     "evidence": [
+      "E-CHT-01"
+     ]
+    },
+    {
+     "ts": "15:17:50",
+     "event": "15:17:50 rider message",
+     "evidence": [
+      "E-CHT-02"
+     ]
+    },
+    {
+     "ts": "15:18:30",
+     "event": "15:18:30 rider_picked_up",
+     "evidence": [
+      "E-APP-05"
+     ]
+    },
+    {
+     "ts": "15:18:35",
+     "event": "15:18:35 trip_started",
+     "evidence": [
+      "E-APP-06"
+     ]
+    }
+   ],
+   "disputed_points": [],
+   "evidence": [
+    "E-TKT-01",
+    "E-TRP-01",
+    "E-CHT-01",
+    "E-CHT-02",
+    "E-APP-01",
+    "E-APP-02",
+    "E-APP-03",
+    "E-APP-04"
+   ],
+   "open_questions": [
+    "Which written rule, if any, applies to this claim?"
+   ],
+   "safety_concern": false
+  }
+ }
+}

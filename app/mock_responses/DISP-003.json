@@ -1,0 +1,274 @@
+{
+ "case_id": "DISP-003",
+ "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
+ "source": "hand-written",
+ "responses": {
+  "rider_advocate": {
+   "party": "rider",
+   "stance": "The rider is owed the S$4.50 surge differential: the surge rose after the quote and nobody told the rider.",
+   "requested_outcome": "refund of the S$4.50 surge differential",
+   "brief": "The quote was S$12.00 at a 1.0x multiplier and the final fare was S$16.50 at 1.5x [E-PAY-01] [E-TRP-01]. The platform's own surge record shows the multiplier moved to 1.5x at 21:04:30, before the trip started at 21:05, and that the rider was not notified, with no method and no time recorded [E-SRG-01]. Section 3.2 requires an in-app notification before or at pickup. Section 3.3 gives a full refund of the surge differential, actual fare minus quote, when the rider was not notified, and Section 3.4 confirms the whole S$4.50 is surge: the surgeable subtotal is S$9.00 in both fares [E-PAY-01]. Precedent 7.2 refunded the whole differential on the same facts [Precedent 7.2].",
+   "arguments": [
+    {
+     "point": "The multiplier rose from 1.0x to 1.5x between the quote and the start of the trip, and the quote is binding at the multiplier in effect when it was given.",
+     "evidence": [
+      "E-SRG-01",
+      "E-PAY-01"
+     ],
+     "rules": [
+      "FC-F07"
+     ],
+     "policy_sections": [
+      "Section 3.1"
+     ],
+     "precedents": []
+    },
+    {
+     "point": "The surge record shows no notification to the rider, in the app or otherwise.",
+     "evidence": [
+      "E-SRG-01"
+     ],
+     "rules": [
+      "FC-F08"
+     ],
+     "policy_sections": [
+      "Section 3.2"
+     ],
+     "precedents": []
+    },
+    {
+     "point": "The whole S$4.50 is attributable to the multiplier, so Section 3.3 refunds it in full, as Precedent 7.2 did.",
+     "evidence": [
+      "E-PAY-01",
+      "E-TRP-01"
+     ],
+     "rules": [
+      "FC-R14",
+      "FC-R15"
+     ],
+     "policy_sections": [
+      "Section 3.3",
+      "Section 3.4"
+     ],
+     "precedents": [
+      "Precedent 7.2"
+     ]
+    }
+   ],
+   "weaknesses": [
+    {
+     "point": "The rider only raised the fare at the end of the trip, after riding at the higher price.",
+     "evidence": [
+      "E-CHT-03"
+     ]
+    }
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate": {
+   "party": "driver",
+   "stance": "Surge pricing and the notification are the platform's, not the driver's; if a refund is due it must not be taken from the driver.",
+   "requested_outcome": "no consequence for the driver; any refund paid by the platform",
+   "brief": "The driver does not set the multiplier or send the surge notification; both sit in the platform's surge record [E-SRG-01]. Section 3.2 puts the notification duty on the platform ('the rider MUST be notified via an in-app notification'), so if the record shows none, the shortfall is the platform's. The driver accepts the figures: S$12.00 quote, S$16.50 final fare, a S$4.50 difference that is entirely the surge, with the booking fee exempt under Section 3.5 [E-PAY-01]. The chat shows the rider asked about the fare only after the ride [E-CHT-03]. The driver's request is that any refund of the differential be paid by the platform and not recovered from the driver.",
+   "arguments": [
+    {
+     "point": "The multiplier and the notification are platform functions recorded in the surge log; the driver took no action on either.",
+     "evidence": [
+      "E-SRG-01"
+     ],
+     "rules": [
+      "FC-F08"
+     ],
+     "policy_sections": [
+      "Section 3.2"
+     ],
+     "precedents": []
+    },
+    {
+     "point": "The rider first raised the fare after the trip ended, so the driver had no chance to explain it during the ride.",
+     "evidence": [
+      "E-CHT-03",
+      "E-TRP-01"
+     ],
+     "rules": [],
+     "policy_sections": [],
+     "precedents": []
+    }
+   ],
+   "rebuttals": [
+    {
+     "to_rider_argument": 1,
+     "reply": "Agreed on the figures; the change of multiplier is the platform's.",
+     "evidence": [
+      "E-SRG-01"
+     ],
+     "rules": [],
+     "policy_sections": [
+      "Section 3.1"
+     ]
+    },
+    {
+     "to_rider_argument": 2,
+     "reply": "The record says not notified; the driver has no evidence to the contrary.",
+     "evidence": [
+      "E-SRG-01"
+     ],
+     "rules": [],
+     "policy_sections": [
+      "Section 3.2"
+     ]
+    },
+    {
+     "to_rider_argument": 3,
+     "reply": "Accepted, provided the platform pays it.",
+     "evidence": [
+      "E-PAY-01"
+     ],
+     "rules": [],
+     "policy_sections": [
+      "Section 3.3"
+     ]
+    }
+   ],
+   "concessions": [
+    {
+     "point": "The surge record shows the rider was not notified.",
+     "evidence": [
+      "E-SRG-01"
+     ]
+    },
+    {
+     "point": "The full S$4.50 difference is the surge.",
+     "evidence": [
+      "E-PAY-01"
+     ]
+    }
+   ],
+   "safety_concern": false
+  },
+  "judge": {
+   "outcome": "FULL_REFUND",
+   "amount_sgd": 4.5,
+   "payer": "PLATFORM",
+   "payee": "RIDER",
+   "confidence": 0.97,
+   "tier": "AUTO",
+   "policy_sections": [
+    "Section 3.1",
+    "Section 3.2",
+    "Section 3.3",
+    "Section 3.4",
+    "Section 3.5",
+    "Section 6.1",
+    "Precedent 7.2"
+   ],
+   "rules": [
+    "FC-F07",
+    "FC-F08",
+    "FC-R14",
+    "FC-R15",
+    "DQ-05"
+   ],
+   "evidence": [
+    "E-SRG-01",
+    "E-PAY-01",
+    "E-TRP-01",
+    "E-CHT-03"
+   ],
+   "precedents": [
+    "Precedent 7.2"
+   ],
+   "reasoning": "The surge multiplier rose from 1.0x to 1.5x at 21:04:30, before the trip began at 21:05, and the platform's record shows the rider was not notified [E-SRG-01] [E-TRP-01]. The quote of S$12.00 is binding at the multiplier in force when it was given (Section 3.1), the final fare is S$16.50, and the S$4.50 difference is the surge alone: the surgeable subtotal is S$9.00 in both fares and the booking fee is exempt [E-PAY-01] [Section 3.4] [Section 3.5]. Section 3.3 refunds the whole surge differential when the rider was not notified [FC-R15]. Both advocates agree on the facts; the Driver Advocate's point is about who pays, and the notification duty is the platform's. Precedent 7.2 (1.4x, not notified, the whole differential refunded) is aligned. The amount is under S$10 and the Section 6 constraint shows no raised threshold, so under Section 6.1 the AI ruling is final. Confidence 0.97: the records are tier A and agree.",
+   "agreement_with_engine": true,
+   "disagreement_note": "",
+   "rider_explanation": "You are eligible for a refund of the surge differential, S$4.50, to your original payment method. The surge multiplier was 1.0x when you were quoted S$12.00 and 1.5x when the trip started, and the platform's record shows you were not notified in the app [E-SRG-01]. Section 3.2 requires that notice, and Section 3.3 refunds the whole differential when it is missing; the whole S$4.50 is the surge, so nothing else is adjusted [E-PAY-01]. Precedent 7.2 ruled the same way. This decision was made automatically (Section 6.1), and you can ask for a human review through RydeHELP.",
+   "driver_explanation": "The rider is refunded the surge differential, S$4.50, and the platform pays it. The surge multiplier rose from 1.0x to 1.5x before the trip started and the platform's record shows the rider was not notified in the app, which Section 3.2 requires [E-SRG-01]. The whole S$4.50 difference is the surge [E-PAY-01] (Section 3.3). Nothing in this decision concerns your conduct. This decision was made automatically (Section 6.1); you can ask for a human review through RydeHELP.",
+   "safety_concern": false
+  },
+  "rider_advocate:case_file": {
+   "party": "rider",
+   "account_summary": "The rider's ticket says: \"Final fare of $16.50 was charged, but the upfront quote shown at booking was only $12.00. The rider was not informed of any fare change, surge pricing, or price adjustment before or during the trip.\" [E-TKT-01]. The rider also wrote 2 message(s) in the chat [E-CHT-01, E-CHT-03].",
+   "evidence": [
+    "E-TKT-01",
+    "E-CHT-01",
+    "E-CHT-03"
+   ],
+   "open_questions": [
+    "What further records exist on the rider's side?"
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate:case_file": {
+   "party": "driver",
+   "account_summary": "The driver has filed no statement in this case file. The driver wrote 1 message(s) in the chat [E-CHT-02].",
+   "evidence": [
+    "E-CHT-02",
+    "E-TRP-01"
+   ],
+   "open_questions": [
+    "Does the driver wish to give an account?"
+   ],
+   "safety_concern": false
+  },
+  "judge:case_file": {
+   "case_summary": "This case goes to a person because of no written rule in code for this claim type (GEN-R07). The ticket is a claim of type Surge or dynamic price filed by the RIDER [E-TKT-01]. The agents gathered the evidence and summarized the accounts; they propose no outcome, amount or measure.",
+   "timeline": [
+    {
+     "ts": "21:02:15",
+     "event": "21:02:15 rider message",
+     "evidence": [
+      "E-CHT-01"
+     ]
+    },
+    {
+     "ts": "21:03:40",
+     "event": "21:03:40 driver message",
+     "evidence": [
+      "E-CHT-02"
+     ]
+    },
+    {
+     "ts": "21:18:30",
+     "event": "21:18:30 rider message",
+     "evidence": [
+      "E-CHT-03"
+     ]
+    }
+   ],
+   "disputed_points": [
+    {
+     "point": "F-FARE-FIGURES: {\"quote\": 12.0, \"final_fare\": 16.5, \"difference\": 4.5, \"surge_difference\": 4.5, \"consistent\": true}",
+     "evidence": [
+      "E-TRP-01",
+      "E-PAY-01"
+     ]
+    },
+    {
+     "point": "F-SURGE-CHANGE: {\"quote_time\": 1.0, \"trip_start\": 1.5, \"increased\": true, \"activated_at\": \"2026-09-14T21:04:30+08:00\"}",
+     "evidence": [
+      "E-SRG-01"
+     ]
+    },
+    {
+     "point": "F-SURGE-NOTICE: false",
+     "evidence": [
+      "E-SRG-01",
+      "E-CHT-01",
+      "E-CHT-03"
+     ]
+    }
+   ],
+   "evidence": [
+    "E-TKT-01",
+    "E-TRP-01",
+    "E-CHT-01",
+    "E-CHT-02",
+    "E-CHT-03"
+   ],
+   "open_questions": [
+    "Which written rule, if any, applies to this claim?"
+   ],
+   "safety_concern": false
+  }
+ }
+}

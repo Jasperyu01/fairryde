@@ -1,0 +1,108 @@
+{
+ "case_id": "E15",
+ "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
+ "source": "composed from the deterministic stages",
+ "responses": {
+  "rider_advocate:case_file": {
+   "party": "rider",
+   "account_summary": "The rider's ticket says: \"Yesterday's rider gave me 1 star and wrote that I am 'money-grabbing' just because I tapped the waiting fee. I waited almost 7 minutes at his block, called him and messaged him.\" [E-TKT-01]. The rider also wrote 1 message(s) in the chat [E-CHT-03].",
+   "evidence": [
+    "E-TKT-01",
+    "E-CHT-03"
+   ],
+   "open_questions": [
+    "What further records exist on the rider's side?"
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate:case_file": {
+   "party": "driver",
+   "account_summary": "The driver has filed no statement in this case file. The driver wrote 2 message(s) in the chat [E-CHT-01, E-CHT-04].",
+   "evidence": [
+    "E-CHT-01",
+    "E-CHT-04",
+    "E-TRP-01"
+   ],
+   "open_questions": [
+    "Does the driver wish to give an account?"
+   ],
+   "safety_concern": false
+  },
+  "judge:case_file": {
+   "case_summary": "This case goes to a person because of no written rule in code for this claim type (GEN-R07). The ticket is a claim of type rating_appeal filed by the DRIVER [E-TKT-01]. The agents gathered the evidence and summarized the accounts; they propose no outcome, amount or measure.",
+   "timeline": [
+    {
+     "ts": "17:28:00",
+     "event": "17:28:00 booking_confirmed",
+     "evidence": [
+      "E-APP-01"
+     ]
+    },
+    {
+     "ts": "17:28:20",
+     "event": "17:28:20 driver_assigned",
+     "evidence": [
+      "E-APP-02"
+     ]
+    },
+    {
+     "ts": "17:28:25",
+     "event": "17:28:25 driver_en_route",
+     "evidence": [
+      "E-APP-03"
+     ]
+    },
+    {
+     "ts": "17:34:30",
+     "event": "17:34:30 driver_arrived",
+     "evidence": [
+      "E-APP-04"
+     ]
+    },
+    {
+     "ts": "17:34:30",
+     "event": "17:34:30 wait_timer_started",
+     "evidence": [
+      "E-APP-05"
+     ]
+    },
+    {
+     "ts": "17:34:35",
+     "event": "17:34:35 rider_notified",
+     "evidence": [
+      "E-APP-06"
+     ]
+    },
+    {
+     "ts": "17:34:50",
+     "event": "17:34:50 driver message",
+     "evidence": [
+      "E-CHT-01"
+     ]
+    },
+    {
+     "ts": "17:36:10",
+     "event": "17:36:10 driver call",
+     "evidence": [
+      "E-CHT-02"
+     ]
+    }
+   ],
+   "disputed_points": [],
+   "evidence": [
+    "E-TKT-01",
+    "E-TRP-01",
+    "E-CHT-01",
+    "E-CHT-02",
+    "E-CHT-03",
+    "E-CHT-04",
+    "E-APP-01",
+    "E-APP-02"
+   ],
+   "open_questions": [
+    "Which written rule, if any, applies to this claim?"
+   ],
+   "safety_concern": false
+  }
+ }
+}
