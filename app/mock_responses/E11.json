@@ -1,0 +1,257 @@
+{
+ "case_id": "E11",
+ "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
+ "source": "composed from the deterministic stages",
+ "responses": {
+  "rider_advocate": {
+   "party": "rider",
+   "stance": "The rider is entitled to S$6.00: the records support the claim.",
+   "requested_outcome": "refund",
+   "brief": "The records support the rider: share 1.0: FC-R06 RYDEX expected ERP 2.50 for the rider (charged 8.50) [E-ERP-01] [E-ERP-00] [E-PAY-01]",
+   "arguments": [
+    {
+     "point": "share 1.0: FC-R06 RYDEX",
+     "evidence": [
+      "E-ERP-01",
+      "E-ERP-00",
+      "E-PAY-01"
+     ],
+     "rules": [
+      "FC-R06"
+     ],
+     "policy_sections": [],
+     "precedents": []
+    },
+    {
+     "point": "expected ERP 2.50 for the rider (charged 8.50)",
+     "evidence": [
+      "E-ERP-01",
+      "E-ERP-00",
+      "E-PAY-01"
+     ],
+     "rules": [
+      "FC-F04"
+     ],
+     "policy_sections": [],
+     "precedents": []
+    },
+    {
+     "point": "ERP overstated by 6.00",
+     "evidence": [
+      "E-ERP-01",
+      "E-ERP-00",
+      "E-PAY-01"
+     ],
+     "rules": [
+      "FC-R07"
+     ],
+     "policy_sections": [],
+     "precedents": []
+    }
+   ],
+   "weaknesses": [
+    {
+     "point": "The ticket alone is the rider's own statement.",
+     "evidence": [
+      "E-TKT-01"
+     ]
+    }
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate": {
+   "party": "driver",
+   "stance": "The charge should be limited to what the records show; the claim is contestable.",
+   "requested_outcome": "limit the refund",
+   "brief": "The driver contests the claim on the weight of the ticket, which is a statement, but concedes what the records show. [E-ERP-01] [E-ERP-00] [E-PAY-01]",
+   "arguments": [
+    {
+     "point": "The ticket is the claimant's own statement and is tier D evidence; the decisive facts come from the platform and GPS records.",
+     "evidence": [
+      "E-TKT-01"
+     ],
+     "rules": [],
+     "policy_sections": [],
+     "precedents": []
+    }
+   ],
+   "rebuttals": [
+    {
+     "to_rider_argument": 1,
+     "reply": "The platform and GPS records answer this point.",
+     "evidence": [
+      "E-ERP-01",
+      "E-ERP-00",
+      "E-PAY-01"
+     ],
+     "rules": [],
+     "policy_sections": []
+    }
+   ],
+   "concessions": [
+    {
+     "point": "share 1.0: FC-R06 RYDEX",
+     "evidence": [
+      "E-ERP-01",
+      "E-ERP-00",
+      "E-PAY-01"
+     ]
+    },
+    {
+     "point": "expected ERP 2.50 for the rider (charged 8.50)",
+     "evidence": [
+      "E-ERP-01",
+      "E-ERP-00",
+      "E-PAY-01"
+     ]
+    }
+   ],
+   "safety_concern": false
+  },
+  "judge": {
+   "outcome": "TOLL_REFUND",
+   "amount_sgd": 6.0,
+   "payer": null,
+   "payee": null,
+   "confidence": 0.86,
+   "tier": "APPROVE",
+   "policy_sections": [
+    "RYDE-115000772653",
+    "RYDE-115001438614",
+    "RYDE-33363192453785"
+   ],
+   "rules": [
+    "FC-R06",
+    "FC-F04",
+    "FC-R07",
+    "AUTH-02"
+   ],
+   "evidence": [
+    "E-ERP-01",
+    "E-ERP-00",
+    "E-PAY-01"
+   ],
+   "precedents": [],
+   "reasoning": "The rules engine's findings match the evidence: share 1.0: FC-R06 RYDEX expected ERP 2.50 for the rider (charged 8.50) ERP overstated by 6.00 The ruling is TOLL_REFUND; confidence 0.86 reflects the engine tier APPROVE.",
+   "agreement_with_engine": true,
+   "disagreement_note": "",
+   "rider_explanation": "The ERP gantry log shows S$2.50 for this trip, and S$8.50 was charged (FC-R07, E-ERP-01, E-PAY-01). The difference, S$6.00, is refunded to the rider. Account history did not affect the outcome.",
+   "driver_explanation": "The ERP gantry log shows S$2.50 for this trip, and S$8.50 was charged (FC-R07, E-ERP-01, E-PAY-01). The difference, S$6.00, is refunded to the rider. Account history did not affect the outcome.",
+   "safety_concern": false
+  },
+  "rider_advocate:case_file": {
+   "party": "rider",
+   "account_summary": "The rider's ticket says: \"The driver added $8.50 for ERP. We only went under one gantry on the CTE, and my husband's car was charged $2.50 at that same gantry around the same time this week.\" [E-TKT-01]. The rider also wrote 1 message(s) in the chat [E-CHT-02].",
+   "evidence": [
+    "E-TKT-01",
+    "E-CHT-02"
+   ],
+   "open_questions": [
+    "What further records exist on the rider's side?"
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate:case_file": {
+   "party": "driver",
+   "account_summary": "The driver has filed no statement in this case file. The driver wrote 1 message(s) in the chat [E-CHT-01].",
+   "evidence": [
+    "E-CHT-01",
+    "E-TRP-01"
+   ],
+   "open_questions": [
+    "Does the driver wish to give an account?"
+   ],
+   "safety_concern": false
+  },
+  "judge:case_file": {
+   "case_summary": "This case goes to a person because of no written rule in code for this claim type (GEN-R07). The ticket is a claim of type ERP / toll overcharge filed by the RIDER [E-TKT-01]. The agents gathered the evidence and summarized the accounts; they propose no outcome, amount or measure.",
+   "timeline": [
+    {
+     "ts": "08:17:00",
+     "event": "08:17:00 booking_confirmed",
+     "evidence": [
+      "E-APP-01"
+     ]
+    },
+    {
+     "ts": "08:17:20",
+     "event": "08:17:20 driver_assigned",
+     "evidence": [
+      "E-APP-02"
+     ]
+    },
+    {
+     "ts": "08:17:25",
+     "event": "08:17:25 driver_en_route",
+     "evidence": [
+      "E-APP-03"
+     ]
+    },
+    {
+     "ts": "08:22:30",
+     "event": "08:22:30 driver_arrived",
+     "evidence": [
+      "E-APP-04"
+     ]
+    },
+    {
+     "ts": "08:22:40",
+     "event": "08:22:40 driver message",
+     "evidence": [
+      "E-CHT-01"
+     ]
+    },
+    {
+     "ts": "08:23:00",
+     "event": "08:23:00 rider message",
+     "evidence": [
+      "E-CHT-02"
+     ]
+    },
+    {
+     "ts": "08:23:40",
+     "event": "08:23:40 rider_picked_up",
+     "evidence": [
+      "E-APP-05"
+     ]
+    },
+    {
+     "ts": "08:23:45",
+     "event": "08:23:45 trip_started",
+     "evidence": [
+      "E-APP-06"
+     ]
+    }
+   ],
+   "disputed_points": [
+    {
+     "point": "F-ERP-EXPECTED: 2.5",
+     "evidence": [
+      "E-ERP-01",
+      "E-ERP-00"
+     ]
+    },
+    {
+     "point": "F-ERP-CHARGED: 8.5",
+     "evidence": [
+      "E-PAY-01"
+     ]
+    }
+   ],
+   "evidence": [
+    "E-TKT-01",
+    "E-TRP-01",
+    "E-CHT-01",
+    "E-CHT-02",
+    "E-APP-01",
+    "E-APP-02",
+    "E-APP-03",
+    "E-APP-04"
+   ],
+   "open_questions": [
+    "Which written rule, if any, applies to this claim?"
+   ],
+   "safety_concern": false
+  }
+ }
+}

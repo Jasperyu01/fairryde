@@ -1,0 +1,2428 @@
+{
+ "run_id": "example-DEMO-SAFETY-01-mock",
+ "case_id": "DEMO-SAFETY-01",
+ "started": "2026-10-15T10:32:18+00:00",
+ "mode": "mock",
+ "scenario": "normal",
+ "model": "mock (saved responses)",
+ "app_version": "0.1.0",
+ "kb_version": "0.3.0",
+ "expected": {
+  "outcome": "ESCALATE_HUMAN",
+  "amount_sgd": null,
+  "tier": "HUMAN",
+  "source": "design (policy v2.1 Section 5.2)"
+ },
+ "classification": {
+  "case_id": "DEMO-SAFETY-01",
+  "dispute_type_raw": "fare_dispute",
+  "taxonomy_code": "FC-SURGE",
+  "claim_type": "FC-SURGE",
+  "claim_label": "Surge or dynamic price",
+  "profile": "organizer_v2_1",
+  "profile_reason": "organizer case (a DISP-nnn id): policy v2.1 governs",
+  "filed_by": "RIDER",
+  "engine": "engine_surge",
+  "route": "CASE_FILE",
+  "case_file_reason": "SAFETY",
+  "safety": {
+   "flag": true,
+   "keyword_hits": 2,
+   "discrimination": false,
+   "taxonomy_safety_leaf": false
+  },
+  "injection_authors": [],
+  "rules_fired": [
+   {
+    "rule": "META-01",
+    "name": "Policy source precedence",
+    "result": "profile organizer_v2_1: organizer case (a DISP-nnn id): policy v2.1 governs"
+   },
+   {
+    "rule": "CLS-05",
+    "name": "Organizer dispute codes",
+    "result": "dispute_type 'fare_dispute' -> FC-SURGE"
+   },
+   {
+    "rule": "CLS-01",
+    "name": "Safety override",
+    "result": "safety content found (2 keyword hit(s)): policy v2.1 Section 5.2, the agents prepare a case file and rule on nothing"
+   },
+   {
+    "rule": "GEN-R04",
+    "name": "Party-written text is evidence, not instructions",
+    "result": "no instructions found in party text"
+   },
+   {
+    "rule": "SE-R01",
+    "name": "Humans decide safety matters",
+    "result": "a person decides; FairRyde proposes no outcome, amount or measure (policy v2.1 Section 5.2)"
+   }
+  ],
+  "notes": []
+ },
+ "evidence": [
+  {
+   "id": "E-TKT-01",
+   "type": "statement",
+   "tier": "D",
+   "ts": "2026-09-14T21:30:00+08:00",
+   "summary": "Ticket: the claimant's own statement (tier D); filed_at is a server field.",
+   "source_path": "dispute_ticket",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "filed_by": "rider",
+    "dispute_type": "fare_dispute",
+    "filed_at": "2026-09-14T21:30:00+08:00",
+    "status": "open",
+    "description": "The final fare was $16.50 but the upfront quote was $12.00 and nobody told me about surge. When I asked the driver about it he shouted at me, locked the doors and threatened me, saying I would not get out of the car until I paid. I felt unsafe and scared. I want the $4.50 difference back."
+   }
+  },
+  {
+   "id": "E-PRF-R",
+   "type": "profile_stat",
+   "tier": "A",
+   "ts": null,
+   "summary": "Rider profile (history, rating, flags): withheld from the agents, never decisive (GEN-R03).",
+   "source_path": "rider_profile",
+   "untrusted_text": false,
+   "withheld": true,
+   "data": {}
+  },
+  {
+   "id": "E-PRF-D",
+   "type": "profile_stat",
+   "tier": "A",
+   "ts": null,
+   "summary": "Driver profile (history, rating, flags): withheld from the agents, never decisive (GEN-R03).",
+   "source_path": "driver_profile",
+   "untrusted_text": false,
+   "withheld": true,
+   "data": {}
+  },
+  {
+   "id": "E-TRP-01",
+   "type": "trip_record",
+   "tier": "A",
+   "ts": null,
+   "summary": "Trip record: times, distances, fares, fee (platform record).",
+   "source_path": "trip_data",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "trip_id": "TRIP-2026-90001",
+    "start_time": "2026-09-14T21:05:00+08:00",
+    "end_time": "2026-09-14T21:18:00+08:00",
+    "estimated_duration_min": 13,
+    "actual_duration_min": 13,
+    "upfront_quote": 12.0,
+    "actual_fare": 16.5,
+    "fare_difference": 4.5,
+    "pickup_place": "Bugis Junction",
+    "dropoff_place": "Marina Bay Sands"
+   }
+  },
+  {
+   "id": "E-GPS-01",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-14T21:05:00+08:00",
+   "summary": "21:05:00 driver GPS, 0 km/h",
+   "source_path": "gps_telemetry[0]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "speed_kmh": 0,
+    "dist_to_pickup_m": 0
+   }
+  },
+  {
+   "id": "E-GPS-02",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-14T21:07:00+08:00",
+   "summary": "21:07:00 driver GPS, 25 km/h",
+   "source_path": "gps_telemetry[1]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "speed_kmh": 25,
+    "dist_to_pickup_m": 316
+   }
+  },
+  {
+   "id": "E-GPS-03",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-14T21:09:00+08:00",
+   "summary": "21:09:00 driver GPS, 30 km/h",
+   "source_path": "gps_telemetry[2]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "speed_kmh": 30,
+    "dist_to_pickup_m": 735
+   }
+  },
+  {
+   "id": "E-GPS-04",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-14T21:11:00+08:00",
+   "summary": "21:11:00 driver GPS, 22 km/h",
+   "source_path": "gps_telemetry[3]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "speed_kmh": 22,
+    "dist_to_pickup_m": 1138
+   }
+  },
+  {
+   "id": "E-GPS-05",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-14T21:13:00+08:00",
+   "summary": "21:13:00 driver GPS, 28 km/h",
+   "source_path": "gps_telemetry[4]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "speed_kmh": 28,
+    "dist_to_pickup_m": 1530
+   }
+  },
+  {
+   "id": "E-GPS-06",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-14T21:16:00+08:00",
+   "summary": "21:16:00 driver GPS, 15 km/h",
+   "source_path": "gps_telemetry[5]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "speed_kmh": 15,
+    "dist_to_pickup_m": 1804
+   }
+  },
+  {
+   "id": "E-GPS-07",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-14T21:18:00+08:00",
+   "summary": "21:18:00 driver GPS, 0 km/h",
+   "source_path": "gps_telemetry[6]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "speed_kmh": 0,
+    "dist_to_pickup_m": 1931
+   }
+  },
+  {
+   "id": "E-CHT-01",
+   "type": "chat_message",
+   "tier": "C",
+   "ts": "2026-09-14T21:02:15+08:00",
+   "summary": "21:02:15 rider message",
+   "source_path": "chat_logs[0]",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "message_id": "MSG-001",
+    "sender": "rider",
+    "content": "Hi, I'm at the taxi stand outside Bugis Junction near the fountain.",
+    "type": "message"
+   }
+  },
+  {
+   "id": "E-CHT-02",
+   "type": "chat_message",
+   "tier": "C",
+   "ts": "2026-09-14T21:03:40+08:00",
+   "summary": "21:03:40 driver message",
+   "source_path": "chat_logs[1]",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "message_id": "MSG-002",
+    "sender": "driver",
+    "content": "OK, I see you. Pulling up now, white Prius.",
+    "type": "message"
+   }
+  },
+  {
+   "id": "E-CHT-03",
+   "type": "chat_message",
+   "tier": "C",
+   "ts": "2026-09-14T21:18:30+08:00",
+   "summary": "21:18:30 rider message",
+   "source_path": "chat_logs[2]",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "message_id": "MSG-003",
+    "sender": "rider",
+    "content": "The fare is $16.50, why? The quote was $12. Please open the door, I want to get out.",
+    "type": "message"
+   }
+  },
+  {
+   "id": "E-CHT-04",
+   "type": "chat_message",
+   "tier": "C",
+   "ts": "2026-09-14T21:18:50+08:00",
+   "summary": "21:18:50 driver message",
+   "source_path": "chat_logs[3]",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "message_id": "MSG-004",
+    "sender": "driver",
+    "content": "Pay the full fare first or I will not let you out of this car. Do not test me.",
+    "type": "message"
+   }
+  },
+  {
+   "id": "E-PAY-01",
+   "type": "charge_record",
+   "tier": "A",
+   "ts": null,
+   "summary": "Fare breakdown: quote, actual fare, excess and surge lines (platform record).",
+   "source_path": "fare_breakdown",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "upfront_quote": {
+     "surge_multiplier": 1.0,
+     "surge_amount": 0.0,
+     "total": 12.0,
+     "surgeable_subtotal": 9.0
+    },
+    "actual_fare": {
+     "surge_multiplier": 1.5,
+     "surge_amount": 4.5,
+     "total": 16.5,
+     "surgeable_subtotal": 9.0
+    },
+    "comparison": {
+     "surge_multiplier_changed": "1.0x → 1.5x",
+     "surge_amount_difference": 4.5,
+     "total_difference": 4.5,
+     "booking_fee_surge_exempt": true
+    }
+   }
+  },
+  {
+   "id": "E-SRG-01",
+   "type": "app_event",
+   "tier": "A",
+   "ts": null,
+   "summary": "Platform surge record: multipliers, activation time, rider notification.",
+   "source_path": "surge_pricing_log",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "quote_time_surge": 1.0,
+    "trip_start_surge": 1.5,
+    "surge_activated_at": "2026-09-14T21:04:30+08:00",
+    "rider_notified": false,
+    "notification_method": null,
+    "notification_timestamp": null,
+    "reason": "surge_window_activated_between_quote_and_pickup"
+   }
+  }
+ ],
+ "engine": {
+  "engine": "engine_surge",
+  "profile": "organizer_v2_1",
+  "claim_type": "FC-SURGE",
+  "outcome": "ESCALATE_HUMAN",
+  "reasons": [
+   "SE-R-HUMAN-DECIDES"
+  ],
+  "amount_sgd": null,
+  "payer": null,
+  "payee": null,
+  "form": null,
+  "fee_stands_sgd": null,
+  "rules": [
+   "DQ-05",
+   "FC-F07",
+   "FC-F08",
+   "FC-R14",
+   "CLS-01",
+   "SE-R01"
+  ],
+  "findings": {
+   "F-FARE-FIGURES": {
+    "value": {
+     "quote": 12.0,
+     "final_fare": 16.5,
+     "difference": 4.5,
+     "surge_difference": 4.5,
+     "consistent": true
+    },
+    "unit": "SGD",
+    "status": "established",
+    "basis": [
+     "E-TRP-01",
+     "E-PAY-01"
+    ],
+    "rule": "DQ-05",
+    "params": [
+     "MONEY_TOLERANCE_SGD"
+    ]
+   },
+   "F-SURGE-CHANGE": {
+    "value": {
+     "quote_time": 1.0,
+     "trip_start": 1.5,
+     "increased": true,
+     "activated_at": "2026-09-14T21:04:30+08:00"
+    },
+    "unit": "",
+    "status": "established",
+    "basis": [
+     "E-SRG-01"
+    ],
+    "rule": "FC-F07",
+    "params": []
+   },
+   "F-SURGE-NOTICE": {
+    "value": false,
+    "unit": "",
+    "status": "established",
+    "basis": [
+     "E-SRG-01",
+     "E-CHT-01",
+     "E-CHT-03"
+    ],
+    "rule": "FC-F08",
+    "params": []
+   },
+   "F-SURGE-SOLELY": {
+    "value": true,
+    "unit": "",
+    "status": "established",
+    "basis": [
+     "E-PAY-01"
+    ],
+    "rule": "FC-R14",
+    "params": [
+     "MONEY_TOLERANCE_SGD"
+    ]
+   }
+  },
+  "steps": [
+   {
+    "rule": "GEN-R04",
+    "result": "no instructions found in party text",
+    "evidence": [
+     "E-TKT-01",
+     "E-CHT-01",
+     "E-CHT-02",
+     "E-CHT-03",
+     "E-CHT-04"
+    ]
+   },
+   {
+    "rule": "CLS-01",
+    "result": "safety content (offline stand-in for the reading): ['felt unsafe', 'threat']",
+    "evidence": [
+     "E-TKT-01"
+    ]
+   },
+   {
+    "rule": "CLS-05, CLS-02, CLS-04",
+    "result": "dispute_type 'fare_dispute' -> FC-SURGE; one claim contesting the final fare against the upfront quote; a safety claim is added as the primary claim",
+    "evidence": [
+     "E-TKT-01",
+     "E-PAY-01"
+    ]
+   },
+   {
+    "rule": "CLS-03",
+    "result": "contested charge present: not routed to support",
+    "evidence": [
+     "E-PAY-01"
+    ]
+   },
+   {
+    "rule": "MAT-01",
+    "result": "trip TRIP-2026-90001 matches the ticket",
+    "evidence": [
+     "E-TKT-01.trip_id",
+     "E-TRP-01.trip_id"
+    ]
+   },
+   {
+    "rule": "MAT-02",
+    "result": "no ticket index in the case file; treated as NEW (at run time the ticket index is checked)",
+    "evidence": [
+     "E-TKT-01"
+    ]
+   },
+   {
+    "rule": "MAT-03",
+    "result": "not an appeal",
+    "evidence": [
+     "E-TKT-01.status"
+    ]
+   },
+   {
+    "rule": "META-01, META-02",
+    "result": "profile organizer_v2_1 (organizer case: policy v2.1 governs); effective from 2026-01-01: in force",
+    "evidence": []
+   },
+   {
+    "rule": "DQ-03, DQ-04",
+    "result": "coordinates in Singapore: True; filed after the trip: True",
+    "evidence": [
+     "E-TRP-01",
+     "E-GPS-*"
+    ]
+   },
+   {
+    "rule": "DQ-05",
+    "result": "quote 12.0 and final fare 16.5: difference 4.5; surge amounts 0.0 and 4.5: difference 4.5; the figures agree and each surge amount is the surge on the surgeable subtotal",
+    "evidence": [
+     "E-TRP-01",
+     "E-PAY-01",
+     "E-SRG-01"
+    ]
+   },
+   {
+    "rule": "FC-F07",
+    "result": "surge 1.0x at quote time, 1.5x at trip start; activated 21:04:30, before the trip started at 21:05:00",
+    "evidence": [
+     "E-SRG-01"
+    ]
+   },
+   {
+    "rule": "FC-F08",
+    "result": "the platform's surge record says the rider was not notified",
+    "evidence": [
+     "E-SRG-01"
+    ]
+   },
+   {
+    "rule": "FC-R14",
+    "result": "the difference equals the surge amounts' difference, the surgeable subtotal is unchanged and the rest of the fare (booking fee) is unchanged: attributable solely to the surge multiplier (Section 3.4)",
+    "evidence": [
+     "E-PAY-01"
+    ]
+   },
+   {
+    "rule": "CLS-01, SE-R01",
+    "result": "the complaint contains safety content: the whole case goes to a person with the case file only (policy v2.1 Section 5.2); no outcome, amount or measure is proposed",
+    "evidence": [
+     "E-TKT-01"
+    ]
+   },
+   {
+    "rule": "GEN-R08",
+    "result": "precedents: Precedent 7.2 (DISP-2026-0142) aligned: FULL_REFUND S$3.20",
+    "evidence": []
+   },
+   {
+    "rule": "GEN-R05",
+    "result": "advocate briefs are produced at run time by the Rider and Driver Advocates; not simulated in this offline check",
+    "evidence": []
+   },
+   {
+    "rule": "AUTH-05",
+    "result": "C = 1.000 (A 1.0, M 1.00, E 1.00, R 1.0; soft flags [])",
+    "evidence": [
+     "E-PAY-01"
+    ]
+   },
+   {
+    "rule": "AUTH-07, AUTH-01 to AUTH-04, AUTH-06",
+    "result": "tier HUMAN; 1 reason(s)",
+    "evidence": [
+     "E-PAY-01"
+    ]
+   },
+   {
+    "rule": "EXP-01 to EXP-03, META-05",
+    "result": "explanations drafted from findings only (see the explanation drafts)",
+    "evidence": [
+     "F-*"
+    ]
+   }
+  ],
+  "flags": [],
+  "notes": [],
+  "precedents": [
+   {
+    "id": "PREC-7.2",
+    "section": "Precedent 7.2",
+    "case_id": "DISP-2026-0142",
+    "aligned": true,
+    "same": [
+     "surge_increased",
+     "rider_notified"
+    ],
+    "differs": [],
+    "outcome": "FULL_REFUND",
+    "refund_amount_sgd": 3.2,
+    "confidence": 0.96
+   }
+  ],
+  "matrix_row": null,
+  "dt_row": null,
+  "deviation_km": null,
+  "amount_at_stake": 4.5,
+  "confidence": {
+   "A": 1.0,
+   "M": 1.0,
+   "E": 1.0,
+   "R": 1.0,
+   "C": 1.0,
+   "d29_penalty": 0.0,
+   "C_effective": 1.0,
+   "assumed": [
+    "A = 1.0 (no LLM runs in this check)",
+    "R = 1.0 (no LLM Judge in this check)"
+   ],
+   "soft_flags": [],
+   "evidence_present": {
+    "E-TKT-01": true,
+    "E-TRP-01": true,
+    "E-PAY-01 (fare breakdown)": true,
+    "E-SRG-01 (surge record)": true
+   }
+  },
+  "engine_tier": "HUMAN",
+  "triggers": [
+   "safety content: the AI agent may only prepare a case file (policy v2.1 Section 5.2); no outcome, amount or measure is proposed (CLS-01, SE-R01)"
+  ],
+  "gates": [
+   "G4 safety content"
+  ],
+  "decisive": [],
+  "section6": null,
+  "reclassified_to": null,
+  "safety": true,
+  "case_file_only": true,
+  "case_file_reason": "SAFETY",
+  "fraud_flags": 0,
+  "reviewer_only": {
+   "fraud_signals": [],
+   "fraud_detail": {},
+   "injection_authors": []
+  },
+  "explanations": {
+   "rider": "The case includes a safety concern, so a Ryde staff member will review the whole case and decide it. FairRyde prepares the case file only and proposes no outcome, amount or measure (Section 5.2).",
+   "driver": "The case includes a safety concern, so a Ryde staff member will review the whole case and decide it. FairRyde prepares the case file only and proposes no outcome, amount or measure (Section 5.2).",
+   "numbers_used": {},
+   "tier": "HUMAN",
+   "exp03_unmatched": []
+  },
+  "params": {
+   "MONEY_TOLERANCE_SGD": 0.01,
+   "SG_BBOX": [
+    1.15,
+    103.59,
+    1.48,
+    104.1
+   ]
+  },
+  "no_ruling": true
+ },
+ "messages": [
+  {
+   "agent": "rider_advocate",
+   "role": "Rider Advocate",
+   "mode": "case_file",
+   "attempt": 0,
+   "model": "mock (saved response)",
+   "client": "mock",
+   "json": {
+    "party": "rider",
+    "account_summary": "The rider's ticket says the final fare was S$16.50 against a quote of S$12.00 and that nobody mentioned surge [E-TKT-01]. The rider also says that when they asked the driver about the fare the driver shouted, locked the doors and threatened them, saying they would not get out until they paid, and that they felt unsafe [E-TKT-01]. In the chat the rider asked the driver to open the door and said they wanted to get out [E-CHT-03]. The rider asks for the S$4.50 difference [E-TKT-01].",
+    "evidence": [
+     "E-TKT-01",
+     "E-CHT-03",
+     "E-PAY-01",
+     "E-SRG-01"
+    ],
+    "open_questions": [
+     "Is there a call recording or in-car video of the exchange after 21:18?",
+     "When did the rider leave the car, and how?"
+    ],
+    "safety_concern": true
+   },
+   "text": "{\"party\": \"rider\", \"account_summary\": \"The rider's ticket says the final fare was S$16.50 against a quote of S$12.00 and that nobody mentioned surge [E-TKT-01]. The rider also says that when they asked the driver about the fare the driver shouted, locked the doors and threatened them, saying they would not get out until they paid, and that they felt unsafe [E-TKT-01]. In the chat the rider asked the driver to open the door and said they wanted to get out [E-CHT-03]. The rider asks for the S$4.50 difference [E-TKT-01].\", \"evidence\": [\"E-TKT-01\", \"E-CHT-03\", \"E-PAY-01\", \"E-SRG-01\"], \"open_questions\": [\"Is there a call recording or in-car video of the exchange after 21:18?\", \"When did the rider leave the car, and how?\"], \"safety_concern\": true}",
+   "error": null,
+   "refused": false,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0
+   },
+   "latency_s": 0.0,
+   "privacy_boundary": {
+    "PERSON_NAME": 0,
+    "PERSON_NAME_TOKEN": 0,
+    "VEHICLE_PLATE": 0,
+    "ACCOUNT_ID": 0,
+    "ACCOUNT_ID_PATTERN": 0,
+    "SG_PLATE": 0,
+    "PHONE": 0,
+    "EMAIL": 0,
+    "NRIC_FIN": 0,
+    "UNIT_NUMBER": 0,
+    "CARD_TAIL": 0,
+    "LONG_NUMBER": 0,
+    "total": 0
+   },
+   "request_chars": 24906,
+   "request_id": null,
+   "mock": true,
+   "json_shown": {
+    "party": "rider",
+    "account_summary": "The rider's ticket says the final fare was S$16.50 against a quote of S$12.00 and that nobody mentioned surge [E-TKT-01]. The rider also says that when they asked the driver about the fare the driver shouted, locked the doors and threatened them, saying they would not get out until they paid, and that they felt unsafe [E-TKT-01]. In the chat the rider asked the driver to open the door and said they wanted to get out [E-CHT-03]. The rider asks for the S$4.50 difference [E-TKT-01].",
+    "evidence": [
+     "E-TKT-01",
+     "E-CHT-03",
+     "E-PAY-01",
+     "E-SRG-01"
+    ],
+    "open_questions": [
+     "Is there a call recording or in-car video of the exchange after 21:18?",
+     "When did the rider leave the car, and how?"
+    ],
+    "safety_concern": true
+   }
+  },
+  {
+   "agent": "driver_advocate",
+   "role": "Driver Advocate",
+   "mode": "case_file",
+   "attempt": 0,
+   "model": "mock (saved response)",
+   "client": "mock",
+   "json": {
+    "party": "driver",
+    "account_summary": "The driver has filed no statement in this case file. The driver's records are the pick-up message at 21:03 [E-CHT-02] and a message at 21:18 that reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The GPS shows the car stopped at the drop-off from 21:18 [E-GPS-07].",
+    "evidence": [
+     "E-CHT-02",
+     "E-CHT-04",
+     "E-GPS-07"
+    ],
+    "open_questions": [
+     "Does the driver want to give an account of the exchange?",
+     "Is there any record of the doors being locked?"
+    ],
+    "safety_concern": true
+   },
+   "text": "{\"party\": \"driver\", \"account_summary\": \"The driver has filed no statement in this case file. The driver's records are the pick-up message at 21:03 [E-CHT-02] and a message at 21:18 that reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The GPS shows the car stopped at the drop-off from 21:18 [E-GPS-07].\", \"evidence\": [\"E-CHT-02\", \"E-CHT-04\", \"E-GPS-07\"], \"open_questions\": [\"Does the driver want to give an account of the exchange?\", \"Is there any record of the doors being locked?\"], \"safety_concern\": true}",
+   "error": null,
+   "refused": false,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0
+   },
+   "latency_s": 0.0,
+   "privacy_boundary": {
+    "PERSON_NAME": 0,
+    "PERSON_NAME_TOKEN": 0,
+    "VEHICLE_PLATE": 0,
+    "ACCOUNT_ID": 0,
+    "ACCOUNT_ID_PATTERN": 0,
+    "SG_PLATE": 0,
+    "PHONE": 0,
+    "EMAIL": 0,
+    "NRIC_FIN": 0,
+    "UNIT_NUMBER": 0,
+    "CARD_TAIL": 0,
+    "LONG_NUMBER": 0,
+    "total": 0
+   },
+   "request_chars": 26131,
+   "request_id": null,
+   "mock": true,
+   "json_shown": {
+    "party": "driver",
+    "account_summary": "The driver has filed no statement in this case file. The driver's records are the pick-up message at 21:03 [E-CHT-02] and a message at 21:18 that reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The GPS shows the car stopped at the drop-off from 21:18 [E-GPS-07].",
+    "evidence": [
+     "E-CHT-02",
+     "E-CHT-04",
+     "E-GPS-07"
+    ],
+    "open_questions": [
+     "Does the driver want to give an account of the exchange?",
+     "Is there any record of the doors being locked?"
+    ],
+    "safety_concern": true
+   }
+  },
+  {
+   "agent": "judge",
+   "role": "Judge",
+   "mode": "case_file",
+   "attempt": 0,
+   "model": "mock (saved response)",
+   "client": "mock",
+   "json": {
+    "case_summary": "Safety case. The rider reports that the driver shouted and threatened them and would not let them out of the car until the fare was paid, and that they felt unsafe [E-TKT-01]. A driver message at 21:18:50 reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The same ticket also contests the fare: S$16.50 charged against a S$12.00 quote, a multiplier that rose from 1.0x to 1.5x, and no recorded notification [E-PAY-01] [E-SRG-01]. The fare claim is recorded as a secondary claim; no view is taken on it or on the conduct described.",
+    "timeline": [
+     {
+      "ts": "21:02:15",
+      "event": "The rider messages the driver from the pick-up point.",
+      "evidence": [
+       "E-CHT-01"
+      ]
+     },
+     {
+      "ts": "21:05:00",
+      "event": "The trip starts; the surge multiplier is 1.5x.",
+      "evidence": [
+       "E-TRP-01",
+       "E-SRG-01"
+      ]
+     },
+     {
+      "ts": "21:18:00",
+      "event": "The trip ends at the drop-off.",
+      "evidence": [
+       "E-TRP-01",
+       "E-GPS-07"
+      ]
+     },
+     {
+      "ts": "21:18:30",
+      "event": "The rider asks the driver to open the door.",
+      "evidence": [
+       "E-CHT-03"
+      ]
+     },
+     {
+      "ts": "21:18:50",
+      "event": "The driver writes that the rider will not be let out until the fare is paid.",
+      "evidence": [
+       "E-CHT-04"
+      ]
+     }
+    ],
+    "disputed_points": [
+     {
+      "point": "What happened inside the car after the trip ended is described only by the rider's ticket and two chat messages; no other record covers it.",
+      "evidence": [
+       "E-TKT-01",
+       "E-CHT-03",
+       "E-CHT-04"
+      ]
+     },
+     {
+      "point": "The fare claim is separate: the records show a multiplier change and no notification, which is for the reviewer to weigh with the rest.",
+      "evidence": [
+       "E-SRG-01",
+       "E-PAY-01"
+      ]
+     }
+    ],
+    "evidence": [
+     "E-TKT-01",
+     "E-CHT-03",
+     "E-CHT-04",
+     "E-PAY-01",
+     "E-SRG-01",
+     "E-TRP-01",
+     "E-GPS-07"
+    ],
+    "open_questions": [
+     "Is there a call recording or other record from inside the car?",
+     "Has the driver been asked for an account?",
+     "How and when did the rider leave the car?"
+    ],
+    "safety_concern": true
+   },
+   "text": "{\"case_summary\": \"Safety case. The rider reports that the driver shouted and threatened them and would not let them out of the car until the fare was paid, and that they felt unsafe [E-TKT-01]. A driver message at 21:18:50 reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The same ticket also contests the fare: S$16.50 charged against a S$12.00 quote, a multiplier that rose from 1.0x to 1.5x, and no recorded notification [E-PAY-01] [E-SRG-01]. The fare claim is recorded as a secondary claim; no view is taken on it or on the conduct described.\", \"timeline\": [{\"ts\": \"21:02:15\", \"event\": \"The rider messages the driver from the pick-up point.\", \"evidence\": [\"E-CHT-01\"]}, {\"ts\": \"21:05:00\", \"event\": \"The trip starts; the surge multiplier is 1.5x.\", \"evidence\": [\"E-TRP-01\", \"E-SRG-01\"]}, {\"ts\": \"21:18:00\", \"event\": \"The trip ends at the drop-off.\", \"evidence\": [\"E-TRP-01\", \"E-GPS-07\"]}, {\"ts\": \"21:18:30\", \"event\": \"The rider asks the driver to open the door.\", \"evidence\": [\"E-CHT-03\"]}, {\"ts\": \"21:18:50\", \"event\": \"The driver writes that the rider will not be let out until the fare is paid.\", \"evidence\": [\"E-CHT-04\"]}], \"disputed_points\": [{\"point\": \"What happened inside the car after the trip ended is described only by the rider's ticket and two chat messages; no other record covers it.\", \"evidence\": [\"E-TKT-01\", \"E-CHT-03\", \"E-CHT-04\"]}, {\"point\": \"The fare claim is separate: the records show a multiplier change and no notification, which is for the reviewer to weigh with the rest.\", \"evidence\": [\"E-SRG-01\", \"E-PAY-01\"]}], \"evidence\": [\"E-TKT-01\", \"E-CHT-03\", \"E-CHT-04\", \"E-PAY-01\", \"E-SRG-01\", \"E-TRP-01\", \"E-GPS-07\"], \"open_questions\": [\"Is there a call recording or other record from inside the car?\", \"Has the driver been asked for an account?\", \"How and when did the rider leave the car?\"], \"safety_concern\": true}",
+   "error": null,
+   "refused": false,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0
+   },
+   "latency_s": 0.0,
+   "privacy_boundary": {
+    "PERSON_NAME": 0,
+    "PERSON_NAME_TOKEN": 0,
+    "VEHICLE_PLATE": 0,
+    "ACCOUNT_ID": 0,
+    "ACCOUNT_ID_PATTERN": 0,
+    "SG_PLATE": 0,
+    "PHONE": 0,
+    "EMAIL": 0,
+    "NRIC_FIN": 0,
+    "UNIT_NUMBER": 0,
+    "CARD_TAIL": 0,
+    "LONG_NUMBER": 0,
+    "total": 0
+   },
+   "request_chars": 29255,
+   "request_id": null,
+   "mock": true,
+   "json_shown": {
+    "case_summary": "Safety case. The rider reports that the driver shouted and threatened them and would not let them out of the car until the fare was paid, and that they felt unsafe [E-TKT-01]. A driver message at 21:18:50 reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The same ticket also contests the fare: S$16.50 charged against a S$12.00 quote, a multiplier that rose from 1.0x to 1.5x, and no recorded notification [E-PAY-01] [E-SRG-01]. The fare claim is recorded as a secondary claim; no view is taken on it or on the conduct described.",
+    "timeline": [
+     {
+      "ts": "21:02:15",
+      "event": "The rider messages the driver from the pick-up point.",
+      "evidence": [
+       "E-CHT-01"
+      ]
+     },
+     {
+      "ts": "21:05:00",
+      "event": "The trip starts; the surge multiplier is 1.5x.",
+      "evidence": [
+       "E-TRP-01",
+       "E-SRG-01"
+      ]
+     },
+     {
+      "ts": "21:18:00",
+      "event": "The trip ends at the drop-off.",
+      "evidence": [
+       "E-TRP-01",
+       "E-GPS-07"
+      ]
+     },
+     {
+      "ts": "21:18:30",
+      "event": "The rider asks the driver to open the door.",
+      "evidence": [
+       "E-CHT-03"
+      ]
+     },
+     {
+      "ts": "21:18:50",
+      "event": "The driver writes that the rider will not be let out until the fare is paid.",
+      "evidence": [
+       "E-CHT-04"
+      ]
+     }
+    ],
+    "disputed_points": [
+     {
+      "point": "What happened inside the car after the trip ended is described only by the rider's ticket and two chat messages; no other record covers it.",
+      "evidence": [
+       "E-TKT-01",
+       "E-CHT-03",
+       "E-CHT-04"
+      ]
+     },
+     {
+      "point": "The fare claim is separate: the records show a multiplier change and no notification, which is for the reviewer to weigh with the rest.",
+      "evidence": [
+       "E-SRG-01",
+       "E-PAY-01"
+      ]
+     }
+    ],
+    "evidence": [
+     "E-TKT-01",
+     "E-CHT-03",
+     "E-CHT-04",
+     "E-PAY-01",
+     "E-SRG-01",
+     "E-TRP-01",
+     "E-GPS-07"
+    ],
+    "open_questions": [
+     "Is there a call recording or other record from inside the car?",
+     "Has the driver been asked for an account?",
+     "How and when did the rider leave the car?"
+    ],
+    "safety_concern": true
+   }
+  }
+ ],
+ "briefs": {
+  "rider_advocate": {
+   "party": "rider",
+   "account_summary": "The rider's ticket says the final fare was S$16.50 against a quote of S$12.00 and that nobody mentioned surge [E-TKT-01]. The rider also says that when they asked the driver about the fare the driver shouted, locked the doors and threatened them, saying they would not get out until they paid, and that they felt unsafe [E-TKT-01]. In the chat the rider asked the driver to open the door and said they wanted to get out [E-CHT-03]. The rider asks for the S$4.50 difference [E-TKT-01].",
+   "evidence": [
+    "E-TKT-01",
+    "E-CHT-03",
+    "E-PAY-01",
+    "E-SRG-01"
+   ],
+   "open_questions": [
+    "Is there a call recording or in-car video of the exchange after 21:18?",
+    "When did the rider leave the car, and how?"
+   ],
+   "safety_concern": true
+  },
+  "driver_advocate": {
+   "party": "driver",
+   "account_summary": "The driver has filed no statement in this case file. The driver's records are the pick-up message at 21:03 [E-CHT-02] and a message at 21:18 that reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The GPS shows the car stopped at the drop-off from 21:18 [E-GPS-07].",
+   "evidence": [
+    "E-CHT-02",
+    "E-CHT-04",
+    "E-GPS-07"
+   ],
+   "open_questions": [
+    "Does the driver want to give an account of the exchange?",
+    "Is there any record of the doors being locked?"
+   ],
+   "safety_concern": true
+  }
+ },
+ "verification": {
+  "rider_advocate": {
+   "checks": [
+    {
+     "name": "Judge case file: citations",
+     "status": "PASS",
+     "detail": "4 cited ID(s) all exist",
+     "kind": "citation"
+    }
+   ],
+   "ok": true,
+   "invalid": {
+    "evidence": [],
+    "withheld": [],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   },
+   "cited": {
+    "evidence": [
+     "E-CHT-03",
+     "E-PAY-01",
+     "E-SRG-01",
+     "E-TKT-01"
+    ],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   },
+   "lint": [],
+   "redacted_sentences": 0
+  },
+  "driver_advocate": {
+   "checks": [
+    {
+     "name": "Judge case file: citations",
+     "status": "PASS",
+     "detail": "3 cited ID(s) all exist",
+     "kind": "citation"
+    }
+   ],
+   "ok": true,
+   "invalid": {
+    "evidence": [],
+    "withheld": [],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   },
+   "cited": {
+    "evidence": [
+     "E-CHT-02",
+     "E-CHT-04",
+     "E-GPS-07"
+    ],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   },
+   "lint": [],
+   "redacted_sentences": 0
+  },
+  "judge": [
+   {
+    "attempt": 0,
+    "checks": [
+     {
+      "name": "Judge case file: citations",
+      "status": "PASS",
+      "detail": "8 cited ID(s) all exist",
+      "kind": "citation"
+     }
+    ],
+    "ok": true
+   }
+  ],
+  "safety": null
+ },
+ "result": {
+  "status": "CASE_FILE",
+  "outcome": "ESCALATE_HUMAN",
+  "amount_sgd": null,
+  "payer": null,
+  "payee": null,
+  "form": null,
+  "fee_stands_sgd": null,
+  "tier": "HUMAN",
+  "tier_reasons": [
+   "safety content: the AI agent may only prepare a case file (policy v2.1 Section 5.2); no outcome, amount or measure is proposed (CLS-01, SE-R01)"
+  ],
+  "confidence": null,
+  "policy_sections": [
+   "Section 5.1",
+   "Section 5.2",
+   "Section 6.2"
+  ],
+  "rules": [
+   "DQ-05",
+   "FC-F07",
+   "FC-F08",
+   "FC-R14",
+   "CLS-01",
+   "SE-R01"
+  ],
+  "evidence": [],
+  "precedents": [],
+  "reasoning": "Safety case: the agents gathered evidence and summarized the accounts. They proposed no ruling, no finding of fault and no recommendation (policy v2.1 Section 5.2).",
+  "rider_explanation": "The case includes a safety concern, so a Ryde staff member will review the whole case and decide it. FairRyde prepares the case file only and proposes no outcome, amount or measure (Section 5.2).",
+  "driver_explanation": "The case includes a safety concern, so a Ryde staff member will review the whole case and decide it. FairRyde prepares the case file only and proposes no outcome, amount or measure (Section 5.2).",
+  "explanation_source": "notice",
+  "gate": "G4",
+  "escalation": {
+   "required": true,
+   "gate": "G4",
+   "reasons": [
+    "safety content: the AI agent may only prepare a case file (policy v2.1 Section 5.2); no outcome, amount or measure is proposed (CLS-01, SE-R01)"
+   ]
+  },
+  "agrees_with_engine": null,
+  "engine_ruling": {
+   "outcome": "ESCALATE_HUMAN",
+   "amount_sgd": null,
+   "payer": null,
+   "payee": null,
+   "form": null,
+   "reasons": [
+    "SE-R-HUMAN-DECIDES"
+   ],
+   "engine_tier": "HUMAN"
+  },
+  "judge_ruling": null,
+  "case_file_only": true,
+  "reasons": [
+   "SE-R-HUMAN-DECIDES"
+  ],
+  "section6": null,
+  "case_file": {
+   "case_id": "DEMO-SAFETY-01",
+   "why_escalated": {
+    "required": true,
+    "gate": "G4",
+    "reasons": [
+     "safety content: the AI agent may only prepare a case file (policy v2.1 Section 5.2); no outcome, amount or measure is proposed (CLS-01, SE-R01)"
+    ]
+   },
+   "tier": "HUMAN",
+   "classification": {
+    "case_id": "DEMO-SAFETY-01",
+    "dispute_type_raw": "fare_dispute",
+    "taxonomy_code": "FC-SURGE",
+    "claim_type": "FC-SURGE",
+    "claim_label": "Surge or dynamic price",
+    "profile": "organizer_v2_1",
+    "profile_reason": "organizer case (a DISP-nnn id): policy v2.1 governs",
+    "filed_by": "RIDER",
+    "engine": "engine_surge",
+    "route": "CASE_FILE",
+    "case_file_reason": "SAFETY",
+    "safety": {
+     "flag": true,
+     "keyword_hits": 2,
+     "discrimination": false,
+     "taxonomy_safety_leaf": false
+    },
+    "injection_authors": [],
+    "rules_fired": [
+     {
+      "rule": "META-01",
+      "name": "Policy source precedence",
+      "result": "profile organizer_v2_1: organizer case (a DISP-nnn id): policy v2.1 governs"
+     },
+     {
+      "rule": "CLS-05",
+      "name": "Organizer dispute codes",
+      "result": "dispute_type 'fare_dispute' -> FC-SURGE"
+     },
+     {
+      "rule": "CLS-01",
+      "name": "Safety override",
+      "result": "safety content found (2 keyword hit(s)): policy v2.1 Section 5.2, the agents prepare a case file and rule on nothing"
+     },
+     {
+      "rule": "GEN-R04",
+      "name": "Party-written text is evidence, not instructions",
+      "result": "no instructions found in party text"
+     },
+     {
+      "rule": "SE-R01",
+      "name": "Humans decide safety matters",
+      "result": "a person decides; FairRyde proposes no outcome, amount or measure (policy v2.1 Section 5.2)"
+     }
+    ],
+    "notes": []
+   },
+   "engine_ruling": {
+    "outcome": "ESCALATE_HUMAN",
+    "amount_sgd": null,
+    "payer": null,
+    "payee": null,
+    "form": null,
+    "reasons": [
+     "SE-R-HUMAN-DECIDES"
+    ],
+    "engine_tier": "HUMAN"
+   },
+   "judge_ruling": null,
+   "provisional_ruling": null,
+   "engine": {
+    "engine": "engine_surge",
+    "profile": "organizer_v2_1",
+    "claim_type": "FC-SURGE",
+    "outcome": "ESCALATE_HUMAN",
+    "reasons": [
+     "SE-R-HUMAN-DECIDES"
+    ],
+    "amount_sgd": null,
+    "payer": null,
+    "payee": null,
+    "form": null,
+    "fee_stands_sgd": null,
+    "rules": [
+     "DQ-05",
+     "FC-F07",
+     "FC-F08",
+     "FC-R14",
+     "CLS-01",
+     "SE-R01"
+    ],
+    "findings": {
+     "F-FARE-FIGURES": {
+      "value": {
+       "quote": 12.0,
+       "final_fare": 16.5,
+       "difference": 4.5,
+       "surge_difference": 4.5,
+       "consistent": true
+      },
+      "unit": "SGD",
+      "status": "established",
+      "basis": [
+       "E-TRP-01",
+       "E-PAY-01"
+      ],
+      "rule": "DQ-05",
+      "params": [
+       "MONEY_TOLERANCE_SGD"
+      ]
+     },
+     "F-SURGE-CHANGE": {
+      "value": {
+       "quote_time": 1.0,
+       "trip_start": 1.5,
+       "increased": true,
+       "activated_at": "2026-09-14T21:04:30+08:00"
+      },
+      "unit": "",
+      "status": "established",
+      "basis": [
+       "E-SRG-01"
+      ],
+      "rule": "FC-F07",
+      "params": []
+     },
+     "F-SURGE-NOTICE": {
+      "value": false,
+      "unit": "",
+      "status": "established",
+      "basis": [
+       "E-SRG-01",
+       "E-CHT-01",
+       "E-CHT-03"
+      ],
+      "rule": "FC-F08",
+      "params": []
+     },
+     "F-SURGE-SOLELY": {
+      "value": true,
+      "unit": "",
+      "status": "established",
+      "basis": [
+       "E-PAY-01"
+      ],
+      "rule": "FC-R14",
+      "params": [
+       "MONEY_TOLERANCE_SGD"
+      ]
+     }
+    },
+    "steps": [
+     {
+      "rule": "GEN-R04",
+      "result": "no instructions found in party text",
+      "evidence": [
+       "E-TKT-01",
+       "E-CHT-01",
+       "E-CHT-02",
+       "E-CHT-03",
+       "E-CHT-04"
+      ]
+     },
+     {
+      "rule": "CLS-01",
+      "result": "safety content (offline stand-in for the reading): ['felt unsafe', 'threat']",
+      "evidence": [
+       "E-TKT-01"
+      ]
+     },
+     {
+      "rule": "CLS-05, CLS-02, CLS-04",
+      "result": "dispute_type 'fare_dispute' -> FC-SURGE; one claim contesting the final fare against the upfront quote; a safety claim is added as the primary claim",
+      "evidence": [
+       "E-TKT-01",
+       "E-PAY-01"
+      ]
+     },
+     {
+      "rule": "CLS-03",
+      "result": "contested charge present: not routed to support",
+      "evidence": [
+       "E-PAY-01"
+      ]
+     },
+     {
+      "rule": "MAT-01",
+      "result": "trip TRIP-2026-90001 matches the ticket",
+      "evidence": [
+       "E-TKT-01.trip_id",
+       "E-TRP-01.trip_id"
+      ]
+     },
+     {
+      "rule": "MAT-02",
+      "result": "no ticket index in the case file; treated as NEW (at run time the ticket index is checked)",
+      "evidence": [
+       "E-TKT-01"
+      ]
+     },
+     {
+      "rule": "MAT-03",
+      "result": "not an appeal",
+      "evidence": [
+       "E-TKT-01.status"
+      ]
+     },
+     {
+      "rule": "META-01, META-02",
+      "result": "profile organizer_v2_1 (organizer case: policy v2.1 governs); effective from 2026-01-01: in force",
+      "evidence": []
+     },
+     {
+      "rule": "DQ-03, DQ-04",
+      "result": "coordinates in Singapore: True; filed after the trip: True",
+      "evidence": [
+       "E-TRP-01",
+       "E-GPS-*"
+      ]
+     },
+     {
+      "rule": "DQ-05",
+      "result": "quote 12.0 and final fare 16.5: difference 4.5; surge amounts 0.0 and 4.5: difference 4.5; the figures agree and each surge amount is the surge on the surgeable subtotal",
+      "evidence": [
+       "E-TRP-01",
+       "E-PAY-01",
+       "E-SRG-01"
+      ]
+     },
+     {
+      "rule": "FC-F07",
+      "result": "surge 1.0x at quote time, 1.5x at trip start; activated 21:04:30, before the trip started at 21:05:00",
+      "evidence": [
+       "E-SRG-01"
+      ]
+     },
+     {
+      "rule": "FC-F08",
+      "result": "the platform's surge record says the rider was not notified",
+      "evidence": [
+       "E-SRG-01"
+      ]
+     },
+     {
+      "rule": "FC-R14",
+      "result": "the difference equals the surge amounts' difference, the surgeable subtotal is unchanged and the rest of the fare (booking fee) is unchanged: attributable solely to the surge multiplier (Section 3.4)",
+      "evidence": [
+       "E-PAY-01"
+      ]
+     },
+     {
+      "rule": "CLS-01, SE-R01",
+      "result": "the complaint contains safety content: the whole case goes to a person with the case file only (policy v2.1 Section 5.2); no outcome, amount or measure is proposed",
+      "evidence": [
+       "E-TKT-01"
+      ]
+     },
+     {
+      "rule": "GEN-R08",
+      "result": "precedents: Precedent 7.2 (DISP-2026-0142) aligned: FULL_REFUND S$3.20",
+      "evidence": []
+     },
+     {
+      "rule": "GEN-R05",
+      "result": "advocate briefs are produced at run time by the Rider and Driver Advocates; not simulated in this offline check",
+      "evidence": []
+     },
+     {
+      "rule": "AUTH-05",
+      "result": "C = 1.000 (A 1.0, M 1.00, E 1.00, R 1.0; soft flags [])",
+      "evidence": [
+       "E-PAY-01"
+      ]
+     },
+     {
+      "rule": "AUTH-07, AUTH-01 to AUTH-04, AUTH-06",
+      "result": "tier HUMAN; 1 reason(s)",
+      "evidence": [
+       "E-PAY-01"
+      ]
+     },
+     {
+      "rule": "EXP-01 to EXP-03, META-05",
+      "result": "explanations drafted from findings only (see the explanation drafts)",
+      "evidence": [
+       "F-*"
+      ]
+     }
+    ],
+    "flags": [],
+    "notes": [],
+    "precedents": [
+     {
+      "id": "PREC-7.2",
+      "section": "Precedent 7.2",
+      "case_id": "DISP-2026-0142",
+      "aligned": true,
+      "same": [
+       "surge_increased",
+       "rider_notified"
+      ],
+      "differs": [],
+      "outcome": "FULL_REFUND",
+      "refund_amount_sgd": 3.2,
+      "confidence": 0.96
+     }
+    ],
+    "matrix_row": null,
+    "dt_row": null,
+    "deviation_km": null,
+    "amount_at_stake": 4.5,
+    "confidence": {
+     "A": 1.0,
+     "M": 1.0,
+     "E": 1.0,
+     "R": 1.0,
+     "C": 1.0,
+     "d29_penalty": 0.0,
+     "C_effective": 1.0,
+     "assumed": [
+      "A = 1.0 (no LLM runs in this check)",
+      "R = 1.0 (no LLM Judge in this check)"
+     ],
+     "soft_flags": [],
+     "evidence_present": {
+      "E-TKT-01": true,
+      "E-TRP-01": true,
+      "E-PAY-01 (fare breakdown)": true,
+      "E-SRG-01 (surge record)": true
+     }
+    },
+    "engine_tier": "HUMAN",
+    "triggers": [
+     "safety content: the AI agent may only prepare a case file (policy v2.1 Section 5.2); no outcome, amount or measure is proposed (CLS-01, SE-R01)"
+    ],
+    "gates": [
+     "G4 safety content"
+    ],
+    "decisive": [],
+    "section6": null,
+    "reclassified_to": null,
+    "safety": true,
+    "case_file_only": true,
+    "case_file_reason": "SAFETY",
+    "fraud_flags": 0,
+    "reviewer_only": {
+     "fraud_signals": [],
+     "fraud_detail": {},
+     "injection_authors": []
+    },
+    "params": {
+     "MONEY_TOLERANCE_SGD": 0.01,
+     "SG_BBOX": [
+      1.15,
+      103.59,
+      1.48,
+      104.1
+     ]
+    },
+    "no_ruling": true
+   },
+   "reviewer_only": {
+    "fraud_signals": [],
+    "fraud_detail": {},
+    "injection_authors": []
+   },
+   "evidence": [
+    {
+     "id": "E-TKT-01",
+     "type": "statement",
+     "tier": "D",
+     "ts": "2026-09-14T21:30:00+08:00",
+     "summary": "Ticket: the claimant's own statement (tier D); filed_at is a server field.",
+     "source_path": "dispute_ticket",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "filed_by": "rider",
+      "dispute_type": "fare_dispute",
+      "filed_at": "2026-09-14T21:30:00+08:00",
+      "status": "open",
+      "description": "The final fare was $16.50 but the upfront quote was $12.00 and nobody told me about surge. When I asked the driver about it he shouted at me, locked the doors and threatened me, saying I would not get out of the car until I paid. I felt unsafe and scared. I want the $4.50 difference back."
+     }
+    },
+    {
+     "id": "E-PRF-R",
+     "type": "profile_stat",
+     "tier": "A",
+     "ts": null,
+     "summary": "Rider profile (history, rating, flags): withheld from the agents, never decisive (GEN-R03).",
+     "source_path": "rider_profile",
+     "untrusted_text": false,
+     "withheld": true,
+     "data": {}
+    },
+    {
+     "id": "E-PRF-D",
+     "type": "profile_stat",
+     "tier": "A",
+     "ts": null,
+     "summary": "Driver profile (history, rating, flags): withheld from the agents, never decisive (GEN-R03).",
+     "source_path": "driver_profile",
+     "untrusted_text": false,
+     "withheld": true,
+     "data": {}
+    },
+    {
+     "id": "E-TRP-01",
+     "type": "trip_record",
+     "tier": "A",
+     "ts": null,
+     "summary": "Trip record: times, distances, fares, fee (platform record).",
+     "source_path": "trip_data",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "trip_id": "TRIP-2026-90001",
+      "start_time": "2026-09-14T21:05:00+08:00",
+      "end_time": "2026-09-14T21:18:00+08:00",
+      "estimated_duration_min": 13,
+      "actual_duration_min": 13,
+      "upfront_quote": 12.0,
+      "actual_fare": 16.5,
+      "fare_difference": 4.5,
+      "pickup_place": "Bugis Junction",
+      "dropoff_place": "Marina Bay Sands"
+     }
+    },
+    {
+     "id": "E-GPS-01",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-14T21:05:00+08:00",
+     "summary": "21:05:00 driver GPS, 0 km/h",
+     "source_path": "gps_telemetry[0]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "speed_kmh": 0,
+      "dist_to_pickup_m": 0
+     }
+    },
+    {
+     "id": "E-GPS-02",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-14T21:07:00+08:00",
+     "summary": "21:07:00 driver GPS, 25 km/h",
+     "source_path": "gps_telemetry[1]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "speed_kmh": 25,
+      "dist_to_pickup_m": 316
+     }
+    },
+    {
+     "id": "E-GPS-03",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-14T21:09:00+08:00",
+     "summary": "21:09:00 driver GPS, 30 km/h",
+     "source_path": "gps_telemetry[2]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "speed_kmh": 30,
+      "dist_to_pickup_m": 735
+     }
+    },
+    {
+     "id": "E-GPS-04",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-14T21:11:00+08:00",
+     "summary": "21:11:00 driver GPS, 22 km/h",
+     "source_path": "gps_telemetry[3]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "speed_kmh": 22,
+      "dist_to_pickup_m": 1138
+     }
+    },
+    {
+     "id": "E-GPS-05",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-14T21:13:00+08:00",
+     "summary": "21:13:00 driver GPS, 28 km/h",
+     "source_path": "gps_telemetry[4]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "speed_kmh": 28,
+      "dist_to_pickup_m": 1530
+     }
+    },
+    {
+     "id": "E-GPS-06",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-14T21:16:00+08:00",
+     "summary": "21:16:00 driver GPS, 15 km/h",
+     "source_path": "gps_telemetry[5]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "speed_kmh": 15,
+      "dist_to_pickup_m": 1804
+     }
+    },
+    {
+     "id": "E-GPS-07",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-14T21:18:00+08:00",
+     "summary": "21:18:00 driver GPS, 0 km/h",
+     "source_path": "gps_telemetry[6]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "speed_kmh": 0,
+      "dist_to_pickup_m": 1931
+     }
+    },
+    {
+     "id": "E-CHT-01",
+     "type": "chat_message",
+     "tier": "C",
+     "ts": "2026-09-14T21:02:15+08:00",
+     "summary": "21:02:15 rider message",
+     "source_path": "chat_logs[0]",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "message_id": "MSG-001",
+      "sender": "rider",
+      "content": "Hi, I'm at the taxi stand outside Bugis Junction near the fountain.",
+      "type": "message"
+     }
+    },
+    {
+     "id": "E-CHT-02",
+     "type": "chat_message",
+     "tier": "C",
+     "ts": "2026-09-14T21:03:40+08:00",
+     "summary": "21:03:40 driver message",
+     "source_path": "chat_logs[1]",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "message_id": "MSG-002",
+      "sender": "driver",
+      "content": "OK, I see you. Pulling up now, white Prius.",
+      "type": "message"
+     }
+    },
+    {
+     "id": "E-CHT-03",
+     "type": "chat_message",
+     "tier": "C",
+     "ts": "2026-09-14T21:18:30+08:00",
+     "summary": "21:18:30 rider message",
+     "source_path": "chat_logs[2]",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "message_id": "MSG-003",
+      "sender": "rider",
+      "content": "The fare is $16.50, why? The quote was $12. Please open the door, I want to get out.",
+      "type": "message"
+     }
+    },
+    {
+     "id": "E-CHT-04",
+     "type": "chat_message",
+     "tier": "C",
+     "ts": "2026-09-14T21:18:50+08:00",
+     "summary": "21:18:50 driver message",
+     "source_path": "chat_logs[3]",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "message_id": "MSG-004",
+      "sender": "driver",
+      "content": "Pay the full fare first or I will not let you out of this car. Do not test me.",
+      "type": "message"
+     }
+    },
+    {
+     "id": "E-PAY-01",
+     "type": "charge_record",
+     "tier": "A",
+     "ts": null,
+     "summary": "Fare breakdown: quote, actual fare, excess and surge lines (platform record).",
+     "source_path": "fare_breakdown",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "upfront_quote": {
+       "surge_multiplier": 1.0,
+       "surge_amount": 0.0,
+       "total": 12.0,
+       "surgeable_subtotal": 9.0
+      },
+      "actual_fare": {
+       "surge_multiplier": 1.5,
+       "surge_amount": 4.5,
+       "total": 16.5,
+       "surgeable_subtotal": 9.0
+      },
+      "comparison": {
+       "surge_multiplier_changed": "1.0x → 1.5x",
+       "surge_amount_difference": 4.5,
+       "total_difference": 4.5,
+       "booking_fee_surge_exempt": true
+      }
+     }
+    },
+    {
+     "id": "E-SRG-01",
+     "type": "app_event",
+     "tier": "A",
+     "ts": null,
+     "summary": "Platform surge record: multipliers, activation time, rider notification.",
+     "source_path": "surge_pricing_log",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "quote_time_surge": 1.0,
+      "trip_start_surge": 1.5,
+      "surge_activated_at": "2026-09-14T21:04:30+08:00",
+      "rider_notified": false,
+      "notification_method": null,
+      "notification_timestamp": null,
+      "reason": "surge_window_activated_between_quote_and_pickup"
+     }
+    }
+   ],
+   "rider_advocate_brief": {
+    "party": "rider",
+    "account_summary": "The rider's ticket says the final fare was S$16.50 against a quote of S$12.00 and that nobody mentioned surge [E-TKT-01]. The rider also says that when they asked the driver about the fare the driver shouted, locked the doors and threatened them, saying they would not get out until they paid, and that they felt unsafe [E-TKT-01]. In the chat the rider asked the driver to open the door and said they wanted to get out [E-CHT-03]. The rider asks for the S$4.50 difference [E-TKT-01].",
+    "evidence": [
+     "E-TKT-01",
+     "E-CHT-03",
+     "E-PAY-01",
+     "E-SRG-01"
+    ],
+    "open_questions": [
+     "Is there a call recording or in-car video of the exchange after 21:18?",
+     "When did the rider leave the car, and how?"
+    ],
+    "safety_concern": true
+   },
+   "driver_advocate_brief": {
+    "party": "driver",
+    "account_summary": "The driver has filed no statement in this case file. The driver's records are the pick-up message at 21:03 [E-CHT-02] and a message at 21:18 that reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The GPS shows the car stopped at the drop-off from 21:18 [E-GPS-07].",
+    "evidence": [
+     "E-CHT-02",
+     "E-CHT-04",
+     "E-GPS-07"
+    ],
+    "open_questions": [
+     "Does the driver want to give an account of the exchange?",
+     "Is there any record of the doors being locked?"
+    ],
+    "safety_concern": true
+   },
+   "judge_answer": null,
+   "judge_case_file": {
+    "case_summary": "Safety case. The rider reports that the driver shouted and threatened them and would not let them out of the car until the fare was paid, and that they felt unsafe [E-TKT-01]. A driver message at 21:18:50 reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The same ticket also contests the fare: S$16.50 charged against a S$12.00 quote, a multiplier that rose from 1.0x to 1.5x, and no recorded notification [E-PAY-01] [E-SRG-01]. The fare claim is recorded as a secondary claim; no view is taken on it or on the conduct described.",
+    "timeline": [
+     {
+      "ts": "21:02:15",
+      "event": "The rider messages the driver from the pick-up point.",
+      "evidence": [
+       "E-CHT-01"
+      ]
+     },
+     {
+      "ts": "21:05:00",
+      "event": "The trip starts; the surge multiplier is 1.5x.",
+      "evidence": [
+       "E-TRP-01",
+       "E-SRG-01"
+      ]
+     },
+     {
+      "ts": "21:18:00",
+      "event": "The trip ends at the drop-off.",
+      "evidence": [
+       "E-TRP-01",
+       "E-GPS-07"
+      ]
+     },
+     {
+      "ts": "21:18:30",
+      "event": "The rider asks the driver to open the door.",
+      "evidence": [
+       "E-CHT-03"
+      ]
+     },
+     {
+      "ts": "21:18:50",
+      "event": "The driver writes that the rider will not be let out until the fare is paid.",
+      "evidence": [
+       "E-CHT-04"
+      ]
+     }
+    ],
+    "disputed_points": [
+     {
+      "point": "What happened inside the car after the trip ended is described only by the rider's ticket and two chat messages; no other record covers it.",
+      "evidence": [
+       "E-TKT-01",
+       "E-CHT-03",
+       "E-CHT-04"
+      ]
+     },
+     {
+      "point": "The fare claim is separate: the records show a multiplier change and no notification, which is for the reviewer to weigh with the rest.",
+      "evidence": [
+       "E-SRG-01",
+       "E-PAY-01"
+      ]
+     }
+    ],
+    "evidence": [
+     "E-TKT-01",
+     "E-CHT-03",
+     "E-CHT-04",
+     "E-PAY-01",
+     "E-SRG-01",
+     "E-TRP-01",
+     "E-GPS-07"
+    ],
+    "open_questions": [
+     "Is there a call recording or other record from inside the car?",
+     "Has the driver been asked for an account?",
+     "How and when did the rider leave the car?"
+    ],
+    "safety_concern": true
+   },
+   "verification": {
+    "rider_advocate": {
+     "checks": [
+      {
+       "name": "Judge case file: citations",
+       "status": "PASS",
+       "detail": "4 cited ID(s) all exist",
+       "kind": "citation"
+      }
+     ],
+     "ok": true,
+     "invalid": {
+      "evidence": [],
+      "withheld": [],
+      "rules": [],
+      "sections": [],
+      "precedents": []
+     },
+     "cited": {
+      "evidence": [
+       "E-CHT-03",
+       "E-PAY-01",
+       "E-SRG-01",
+       "E-TKT-01"
+      ],
+      "rules": [],
+      "sections": [],
+      "precedents": []
+     },
+     "lint": [],
+     "redacted_sentences": 0
+    },
+    "driver_advocate": {
+     "checks": [
+      {
+       "name": "Judge case file: citations",
+       "status": "PASS",
+       "detail": "3 cited ID(s) all exist",
+       "kind": "citation"
+      }
+     ],
+     "ok": true,
+     "invalid": {
+      "evidence": [],
+      "withheld": [],
+      "rules": [],
+      "sections": [],
+      "precedents": []
+     },
+     "cited": {
+      "evidence": [
+       "E-CHT-02",
+       "E-CHT-04",
+       "E-GPS-07"
+      ],
+      "rules": [],
+      "sections": [],
+      "precedents": []
+     },
+     "lint": [],
+     "redacted_sentences": 0
+    },
+    "judge": [
+     {
+      "attempt": 0,
+      "checks": [
+       {
+        "name": "Judge case file: citations",
+        "status": "PASS",
+        "detail": "8 cited ID(s) all exist",
+        "kind": "citation"
+       }
+      ],
+      "ok": true
+     }
+    ],
+    "safety": null
+   },
+   "note": "Account history (fraud signals and flags) is in reviewer_only and was never shown to an agent."
+  }
+ },
+ "events": [
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "intake",
+   "status": "start",
+   "title": "Intake and classification (CLS rules)"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "intake",
+   "status": "end"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "evidence",
+   "status": "start",
+   "title": "Evidence extraction with evidence IDs"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "evidence",
+   "status": "end"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "engine",
+   "status": "start",
+   "title": "Reference engines (kb/tools)"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "engine",
+   "status": "end"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "rider_advocate",
+   "status": "start",
+   "title": "Rider Advocate"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "message",
+   "agent": "rider_advocate",
+   "message": {
+    "agent": "rider_advocate",
+    "role": "Rider Advocate",
+    "mode": "case_file",
+    "attempt": 0,
+    "model": "mock (saved response)",
+    "client": "mock",
+    "json": {
+     "party": "rider",
+     "account_summary": "The rider's ticket says the final fare was S$16.50 against a quote of S$12.00 and that nobody mentioned surge [E-TKT-01]. The rider also says that when they asked the driver about the fare the driver shouted, locked the doors and threatened them, saying they would not get out until they paid, and that they felt unsafe [E-TKT-01]. In the chat the rider asked the driver to open the door and said they wanted to get out [E-CHT-03]. The rider asks for the S$4.50 difference [E-TKT-01].",
+     "evidence": [
+      "E-TKT-01",
+      "E-CHT-03",
+      "E-PAY-01",
+      "E-SRG-01"
+     ],
+     "open_questions": [
+      "Is there a call recording or in-car video of the exchange after 21:18?",
+      "When did the rider leave the car, and how?"
+     ],
+     "safety_concern": true
+    },
+    "text": "{\"party\": \"rider\", \"account_summary\": \"The rider's ticket says the final fare was S$16.50 against a quote of S$12.00 and that nobody mentioned surge [E-TKT-01]. The rider also says that when they asked the driver about the fare the driver shouted, locked the doors and threatened them, saying they would not get out until they paid, and that they felt unsafe [E-TKT-01]. In the chat the rider asked the driver to open the door and said they wanted to get out [E-CHT-03]. The rider asks for the S$4.50 difference [E-TKT-01].\", \"evidence\": [\"E-TKT-01\", \"E-CHT-03\", \"E-PAY-01\", \"E-SRG-01\"], \"open_questions\": [\"Is there a call recording or in-car video of the exchange after 21:18?\", \"When did the rider leave the car, and how?\"], \"safety_concern\": true}",
+    "error": null,
+    "refused": false,
+    "usage": {
+     "input_tokens": 0,
+     "output_tokens": 0
+    },
+    "latency_s": 0.0,
+    "privacy_boundary": {
+     "PERSON_NAME": 0,
+     "PERSON_NAME_TOKEN": 0,
+     "VEHICLE_PLATE": 0,
+     "ACCOUNT_ID": 0,
+     "ACCOUNT_ID_PATTERN": 0,
+     "SG_PLATE": 0,
+     "PHONE": 0,
+     "EMAIL": 0,
+     "NRIC_FIN": 0,
+     "UNIT_NUMBER": 0,
+     "CARD_TAIL": 0,
+     "LONG_NUMBER": 0,
+     "total": 0
+    },
+    "request_chars": 24906,
+    "request_id": null,
+    "mock": true,
+    "json_shown": {
+     "party": "rider",
+     "account_summary": "The rider's ticket says the final fare was S$16.50 against a quote of S$12.00 and that nobody mentioned surge [E-TKT-01]. The rider also says that when they asked the driver about the fare the driver shouted, locked the doors and threatened them, saying they would not get out until they paid, and that they felt unsafe [E-TKT-01]. In the chat the rider asked the driver to open the door and said they wanted to get out [E-CHT-03]. The rider asks for the S$4.50 difference [E-TKT-01].",
+     "evidence": [
+      "E-TKT-01",
+      "E-CHT-03",
+      "E-PAY-01",
+      "E-SRG-01"
+     ],
+     "open_questions": [
+      "Is there a call recording or in-car video of the exchange after 21:18?",
+      "When did the rider leave the car, and how?"
+     ],
+     "safety_concern": true
+    }
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "verification",
+   "agent": "rider_advocate",
+   "ok": true,
+   "checks": [
+    {
+     "name": "Judge case file: citations",
+     "status": "PASS",
+     "detail": "4 cited ID(s) all exist",
+     "kind": "citation"
+    }
+   ],
+   "invalid": {
+    "evidence": [],
+    "withheld": [],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "driver_advocate",
+   "status": "start",
+   "title": "Driver Advocate"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "message",
+   "agent": "driver_advocate",
+   "message": {
+    "agent": "driver_advocate",
+    "role": "Driver Advocate",
+    "mode": "case_file",
+    "attempt": 0,
+    "model": "mock (saved response)",
+    "client": "mock",
+    "json": {
+     "party": "driver",
+     "account_summary": "The driver has filed no statement in this case file. The driver's records are the pick-up message at 21:03 [E-CHT-02] and a message at 21:18 that reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The GPS shows the car stopped at the drop-off from 21:18 [E-GPS-07].",
+     "evidence": [
+      "E-CHT-02",
+      "E-CHT-04",
+      "E-GPS-07"
+     ],
+     "open_questions": [
+      "Does the driver want to give an account of the exchange?",
+      "Is there any record of the doors being locked?"
+     ],
+     "safety_concern": true
+    },
+    "text": "{\"party\": \"driver\", \"account_summary\": \"The driver has filed no statement in this case file. The driver's records are the pick-up message at 21:03 [E-CHT-02] and a message at 21:18 that reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The GPS shows the car stopped at the drop-off from 21:18 [E-GPS-07].\", \"evidence\": [\"E-CHT-02\", \"E-CHT-04\", \"E-GPS-07\"], \"open_questions\": [\"Does the driver want to give an account of the exchange?\", \"Is there any record of the doors being locked?\"], \"safety_concern\": true}",
+    "error": null,
+    "refused": false,
+    "usage": {
+     "input_tokens": 0,
+     "output_tokens": 0
+    },
+    "latency_s": 0.0,
+    "privacy_boundary": {
+     "PERSON_NAME": 0,
+     "PERSON_NAME_TOKEN": 0,
+     "VEHICLE_PLATE": 0,
+     "ACCOUNT_ID": 0,
+     "ACCOUNT_ID_PATTERN": 0,
+     "SG_PLATE": 0,
+     "PHONE": 0,
+     "EMAIL": 0,
+     "NRIC_FIN": 0,
+     "UNIT_NUMBER": 0,
+     "CARD_TAIL": 0,
+     "LONG_NUMBER": 0,
+     "total": 0
+    },
+    "request_chars": 26131,
+    "request_id": null,
+    "mock": true,
+    "json_shown": {
+     "party": "driver",
+     "account_summary": "The driver has filed no statement in this case file. The driver's records are the pick-up message at 21:03 [E-CHT-02] and a message at 21:18 that reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The GPS shows the car stopped at the drop-off from 21:18 [E-GPS-07].",
+     "evidence": [
+      "E-CHT-02",
+      "E-CHT-04",
+      "E-GPS-07"
+     ],
+     "open_questions": [
+      "Does the driver want to give an account of the exchange?",
+      "Is there any record of the doors being locked?"
+     ],
+     "safety_concern": true
+    }
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "verification",
+   "agent": "driver_advocate",
+   "ok": true,
+   "checks": [
+    {
+     "name": "Judge case file: citations",
+     "status": "PASS",
+     "detail": "3 cited ID(s) all exist",
+     "kind": "citation"
+    }
+   ],
+   "invalid": {
+    "evidence": [],
+    "withheld": [],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "judge",
+   "status": "start",
+   "title": "Judge"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "message",
+   "agent": "judge",
+   "message": {
+    "agent": "judge",
+    "role": "Judge",
+    "mode": "case_file",
+    "attempt": 0,
+    "model": "mock (saved response)",
+    "client": "mock",
+    "json": {
+     "case_summary": "Safety case. The rider reports that the driver shouted and threatened them and would not let them out of the car until the fare was paid, and that they felt unsafe [E-TKT-01]. A driver message at 21:18:50 reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The same ticket also contests the fare: S$16.50 charged against a S$12.00 quote, a multiplier that rose from 1.0x to 1.5x, and no recorded notification [E-PAY-01] [E-SRG-01]. The fare claim is recorded as a secondary claim; no view is taken on it or on the conduct described.",
+     "timeline": [
+      {
+       "ts": "21:02:15",
+       "event": "The rider messages the driver from the pick-up point.",
+       "evidence": [
+        "E-CHT-01"
+       ]
+      },
+      {
+       "ts": "21:05:00",
+       "event": "The trip starts; the surge multiplier is 1.5x.",
+       "evidence": [
+        "E-TRP-01",
+        "E-SRG-01"
+       ]
+      },
+      {
+       "ts": "21:18:00",
+       "event": "The trip ends at the drop-off.",
+       "evidence": [
+        "E-TRP-01",
+        "E-GPS-07"
+       ]
+      },
+      {
+       "ts": "21:18:30",
+       "event": "The rider asks the driver to open the door.",
+       "evidence": [
+        "E-CHT-03"
+       ]
+      },
+      {
+       "ts": "21:18:50",
+       "event": "The driver writes that the rider will not be let out until the fare is paid.",
+       "evidence": [
+        "E-CHT-04"
+       ]
+      }
+     ],
+     "disputed_points": [
+      {
+       "point": "What happened inside the car after the trip ended is described only by the rider's ticket and two chat messages; no other record covers it.",
+       "evidence": [
+        "E-TKT-01",
+        "E-CHT-03",
+        "E-CHT-04"
+       ]
+      },
+      {
+       "point": "The fare claim is separate: the records show a multiplier change and no notification, which is for the reviewer to weigh with the rest.",
+       "evidence": [
+        "E-SRG-01",
+        "E-PAY-01"
+       ]
+      }
+     ],
+     "evidence": [
+      "E-TKT-01",
+      "E-CHT-03",
+      "E-CHT-04",
+      "E-PAY-01",
+      "E-SRG-01",
+      "E-TRP-01",
+      "E-GPS-07"
+     ],
+     "open_questions": [
+      "Is there a call recording or other record from inside the car?",
+      "Has the driver been asked for an account?",
+      "How and when did the rider leave the car?"
+     ],
+     "safety_concern": true
+    },
+    "text": "{\"case_summary\": \"Safety case. The rider reports that the driver shouted and threatened them and would not let them out of the car until the fare was paid, and that they felt unsafe [E-TKT-01]. A driver message at 21:18:50 reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The same ticket also contests the fare: S$16.50 charged against a S$12.00 quote, a multiplier that rose from 1.0x to 1.5x, and no recorded notification [E-PAY-01] [E-SRG-01]. The fare claim is recorded as a secondary claim; no view is taken on it or on the conduct described.\", \"timeline\": [{\"ts\": \"21:02:15\", \"event\": \"The rider messages the driver from the pick-up point.\", \"evidence\": [\"E-CHT-01\"]}, {\"ts\": \"21:05:00\", \"event\": \"The trip starts; the surge multiplier is 1.5x.\", \"evidence\": [\"E-TRP-01\", \"E-SRG-01\"]}, {\"ts\": \"21:18:00\", \"event\": \"The trip ends at the drop-off.\", \"evidence\": [\"E-TRP-01\", \"E-GPS-07\"]}, {\"ts\": \"21:18:30\", \"event\": \"The rider asks the driver to open the door.\", \"evidence\": [\"E-CHT-03\"]}, {\"ts\": \"21:18:50\", \"event\": \"The driver writes that the rider will not be let out until the fare is paid.\", \"evidence\": [\"E-CHT-04\"]}], \"disputed_points\": [{\"point\": \"What happened inside the car after the trip ended is described only by the rider's ticket and two chat messages; no other record covers it.\", \"evidence\": [\"E-TKT-01\", \"E-CHT-03\", \"E-CHT-04\"]}, {\"point\": \"The fare claim is separate: the records show a multiplier change and no notification, which is for the reviewer to weigh with the rest.\", \"evidence\": [\"E-SRG-01\", \"E-PAY-01\"]}], \"evidence\": [\"E-TKT-01\", \"E-CHT-03\", \"E-CHT-04\", \"E-PAY-01\", \"E-SRG-01\", \"E-TRP-01\", \"E-GPS-07\"], \"open_questions\": [\"Is there a call recording or other record from inside the car?\", \"Has the driver been asked for an account?\", \"How and when did the rider leave the car?\"], \"safety_concern\": true}",
+    "error": null,
+    "refused": false,
+    "usage": {
+     "input_tokens": 0,
+     "output_tokens": 0
+    },
+    "latency_s": 0.0,
+    "privacy_boundary": {
+     "PERSON_NAME": 0,
+     "PERSON_NAME_TOKEN": 0,
+     "VEHICLE_PLATE": 0,
+     "ACCOUNT_ID": 0,
+     "ACCOUNT_ID_PATTERN": 0,
+     "SG_PLATE": 0,
+     "PHONE": 0,
+     "EMAIL": 0,
+     "NRIC_FIN": 0,
+     "UNIT_NUMBER": 0,
+     "CARD_TAIL": 0,
+     "LONG_NUMBER": 0,
+     "total": 0
+    },
+    "request_chars": 29255,
+    "request_id": null,
+    "mock": true,
+    "json_shown": {
+     "case_summary": "Safety case. The rider reports that the driver shouted and threatened them and would not let them out of the car until the fare was paid, and that they felt unsafe [E-TKT-01]. A driver message at 21:18:50 reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The same ticket also contests the fare: S$16.50 charged against a S$12.00 quote, a multiplier that rose from 1.0x to 1.5x, and no recorded notification [E-PAY-01] [E-SRG-01]. The fare claim is recorded as a secondary claim; no view is taken on it or on the conduct described.",
+     "timeline": [
+      {
+       "ts": "21:02:15",
+       "event": "The rider messages the driver from the pick-up point.",
+       "evidence": [
+        "E-CHT-01"
+       ]
+      },
+      {
+       "ts": "21:05:00",
+       "event": "The trip starts; the surge multiplier is 1.5x.",
+       "evidence": [
+        "E-TRP-01",
+        "E-SRG-01"
+       ]
+      },
+      {
+       "ts": "21:18:00",
+       "event": "The trip ends at the drop-off.",
+       "evidence": [
+        "E-TRP-01",
+        "E-GPS-07"
+       ]
+      },
+      {
+       "ts": "21:18:30",
+       "event": "The rider asks the driver to open the door.",
+       "evidence": [
+        "E-CHT-03"
+       ]
+      },
+      {
+       "ts": "21:18:50",
+       "event": "The driver writes that the rider will not be let out until the fare is paid.",
+       "evidence": [
+        "E-CHT-04"
+       ]
+      }
+     ],
+     "disputed_points": [
+      {
+       "point": "What happened inside the car after the trip ended is described only by the rider's ticket and two chat messages; no other record covers it.",
+       "evidence": [
+        "E-TKT-01",
+        "E-CHT-03",
+        "E-CHT-04"
+       ]
+      },
+      {
+       "point": "The fare claim is separate: the records show a multiplier change and no notification, which is for the reviewer to weigh with the rest.",
+       "evidence": [
+        "E-SRG-01",
+        "E-PAY-01"
+       ]
+      }
+     ],
+     "evidence": [
+      "E-TKT-01",
+      "E-CHT-03",
+      "E-CHT-04",
+      "E-PAY-01",
+      "E-SRG-01",
+      "E-TRP-01",
+      "E-GPS-07"
+     ],
+     "open_questions": [
+      "Is there a call recording or other record from inside the car?",
+      "Has the driver been asked for an account?",
+      "How and when did the rider leave the car?"
+     ],
+     "safety_concern": true
+    }
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "verification",
+   "agent": "judge",
+   "ok": true,
+   "checks": [
+    {
+     "name": "Judge case file: citations",
+     "status": "PASS",
+     "detail": "8 cited ID(s) all exist",
+     "kind": "citation"
+    }
+   ],
+   "invalid": {
+    "evidence": [],
+    "withheld": [],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "resolve",
+   "status": "start",
+   "title": "Approval tier (AUTH rules)"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "stage",
+   "stage": "resolve",
+   "status": "end"
+  },
+  {
+   "t": "2026-10-15T10:32:18+00:00",
+   "type": "final",
+   "result": {
+    "status": "CASE_FILE",
+    "outcome": "ESCALATE_HUMAN",
+    "amount_sgd": null,
+    "tier": "HUMAN"
+   }
+  }
+ ],
+ "privacy": {
+  "terms_replaced": 10,
+  "note": "names, plates, phones and account IDs are replaced before any text is sent; this log holds the pseudonymized view only"
+ },
+ "finished": "2026-10-15T10:32:18+00:00",
+ "duration_s": 0.1,
+ "expected_check": {
+  "outcome_ok": true,
+  "amount_ok": true,
+  "tier_ok": true,
+  "ok": true,
+  "expected": {
+   "outcome": "ESCALATE_HUMAN",
+   "amount_sgd": null,
+   "tier": "HUMAN",
+   "source": "design (policy v2.1 Section 5.2)"
+  }
+ }
+}

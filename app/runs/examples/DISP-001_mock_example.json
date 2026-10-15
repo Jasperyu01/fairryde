@@ -1,0 +1,3909 @@
+{
+ "run_id": "example-DISP-001-mock",
+ "case_id": "DISP-001",
+ "started": "2026-10-15T10:32:17+00:00",
+ "mode": "mock",
+ "scenario": "normal",
+ "model": "mock (saved responses)",
+ "app_version": "0.1.0",
+ "kb_version": "0.3.0",
+ "expected": {
+  "outcome": "PARTIAL_REFUND",
+  "amount_sgd": 3.44,
+  "tier": "APPROVE",
+  "source": "kb/organizer_cases.yaml"
+ },
+ "classification": {
+  "case_id": "DISP-001",
+  "dispute_type_raw": "route_deviation",
+  "taxonomy_code": "FC-ROUTE",
+  "claim_type": "FC-ROUTE",
+  "claim_label": "Route deviation / longer route",
+  "profile": "organizer_v2_1",
+  "profile_reason": "organizer case (a DISP-nnn id): policy v2.1 governs",
+  "filed_by": "RIDER",
+  "engine": "engine_route",
+  "route": "ENGINE",
+  "case_file_reason": null,
+  "safety": {
+   "flag": false,
+   "keyword_hits": 0,
+   "discrimination": false,
+   "taxonomy_safety_leaf": false
+  },
+  "injection_authors": [],
+  "rules_fired": [
+   {
+    "rule": "META-01",
+    "name": "Policy source precedence",
+    "result": "profile organizer_v2_1: organizer case (a DISP-nnn id): policy v2.1 governs"
+   },
+   {
+    "rule": "CLS-05",
+    "name": "Organizer dispute codes",
+    "result": "dispute_type 'route_deviation' -> FC-ROUTE"
+   },
+   {
+    "rule": "CLS-01",
+    "name": "Safety override",
+    "result": "no safety content found by the keyword stand-in (the agents look again by meaning)"
+   },
+   {
+    "rule": "GEN-R04",
+    "name": "Party-written text is evidence, not instructions",
+    "result": "no instructions found in party text"
+   }
+  ],
+  "notes": []
+ },
+ "evidence": [
+  {
+   "id": "E-TKT-01",
+   "type": "statement",
+   "tier": "D",
+   "ts": "2026-09-12T14:35:00+08:00",
+   "summary": "Ticket: the claimant's own statement (tier D); filed_at is a server field.",
+   "source_path": "dispute_ticket",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "filed_by": "rider",
+    "dispute_type": "route_deviation",
+    "filed_at": "2026-09-12T14:35:00+08:00",
+    "status": "open",
+    "description": "The driver took a significantly longer route from Orchard Central to Changi Airport T3. I normally take the PIE which takes about 35 minutes and costs around $28. On this trip the driver went through Geylang and East Coast area, taking 37 minutes and the fare was $35. The driver did not inform me about any route change or traffic. The extra distance was 4.3 km and I was overcharged. I am requesting a refund of the excess fare."
+   }
+  },
+  {
+   "id": "E-PRF-R",
+   "type": "profile_stat",
+   "tier": "A",
+   "ts": null,
+   "summary": "Rider profile (history, rating, flags): withheld from the agents, never decisive (GEN-R03).",
+   "source_path": "rider_profile",
+   "untrusted_text": false,
+   "withheld": true,
+   "data": {}
+  },
+  {
+   "id": "E-PRF-D",
+   "type": "profile_stat",
+   "tier": "A",
+   "ts": null,
+   "summary": "Driver profile (history, rating, flags): withheld from the agents, never decisive (GEN-R03).",
+   "source_path": "driver_profile",
+   "untrusted_text": false,
+   "withheld": true,
+   "data": {}
+  },
+  {
+   "id": "E-TRP-01",
+   "type": "trip_record",
+   "tier": "A",
+   "ts": null,
+   "summary": "Trip record: times, distances, fares, fee (platform record).",
+   "source_path": "trip_data",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "trip_id": "TRIP-2026-09871",
+    "start_time": "2026-09-12T13:15:00+08:00",
+    "end_time": "2026-09-12T13:52:00+08:00",
+    "estimated_duration_min": 35,
+    "actual_duration_min": 37,
+    "estimated_distance_km": 20.5,
+    "actual_distance_km": 24.8,
+    "estimated_fare": 28.5,
+    "actual_fare": 35.0,
+    "excess_distance_km": 4.3,
+    "excess_fare": 6.5,
+    "trip_type": "standard",
+    "pickup_place": "Orchard Central",
+    "dropoff_place": "Changi Airport T3"
+   }
+  },
+  {
+   "id": "E-GPS-01",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:15:00+08:00",
+   "summary": "13:15:00 driver GPS, 0 km/h",
+   "source_path": "gps_telemetry[0]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 1,
+    "speed_kmh": 0,
+    "location_desc": "Orchard Central (pickup)",
+    "dist_to_pickup_m": 0
+   }
+  },
+  {
+   "id": "E-GPS-02",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:17:00+08:00",
+   "summary": "13:17:00 driver GPS, 35 km/h",
+   "source_path": "gps_telemetry[1]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 2,
+    "speed_kmh": 35,
+    "location_desc": "Orchard Rd towards Cairnhill",
+    "dist_to_pickup_m": 504
+   }
+  },
+  {
+   "id": "E-GPS-03",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:19:30+08:00",
+   "summary": "13:19:30 driver GPS, 40 km/h",
+   "source_path": "gps_telemetry[2]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 3,
+    "speed_kmh": 40,
+    "location_desc": "Stamford Rd / Fort Canning area",
+    "dist_to_pickup_m": 1392
+   }
+  },
+  {
+   "id": "E-GPS-04",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:22:00+08:00",
+   "summary": "13:22:00 driver GPS, 35 km/h",
+   "source_path": "gps_telemetry[3]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 4,
+    "speed_kmh": 35,
+    "location_desc": "Connaught Dr / Esplanade area",
+    "dist_to_pickup_m": 2493
+   }
+  },
+  {
+   "id": "E-GPS-05",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:24:30+08:00",
+   "summary": "13:24:30 driver GPS, 45 km/h",
+   "source_path": "gps_telemetry[4]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 5,
+    "speed_kmh": 45,
+    "location_desc": "Marina Blvd / Shenton Way",
+    "dist_to_pickup_m": 3585
+   }
+  },
+  {
+   "id": "E-GPS-06",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:27:00+08:00",
+   "summary": "13:27:00 driver GPS, 50 km/h",
+   "source_path": "gps_telemetry[5]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 6,
+    "speed_kmh": 50,
+    "location_desc": "Nicoll Hwy toward Beach Rd",
+    "dist_to_pickup_m": 4658
+   }
+  },
+  {
+   "id": "E-GPS-07",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:29:30+08:00",
+   "summary": "13:29:30 driver GPS, 38 km/h",
+   "source_path": "gps_telemetry[6]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 7,
+    "speed_kmh": 38,
+    "location_desc": "Mountbatten Rd (entering Geylang corridor)",
+    "dist_to_pickup_m": 5164
+   }
+  },
+  {
+   "id": "E-GPS-08",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:32:00+08:00",
+   "summary": "13:32:00 driver GPS, 42 km/h",
+   "source_path": "gps_telemetry[7]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 8,
+    "speed_kmh": 42,
+    "location_desc": "Geylang Rd / Old Airport Rd",
+    "dist_to_pickup_m": 5917
+   }
+  },
+  {
+   "id": "E-GPS-09",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:34:00+08:00",
+   "summary": "13:34:00 driver GPS, 40 km/h",
+   "source_path": "gps_telemetry[8]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 9,
+    "speed_kmh": 40,
+    "location_desc": "Dunman Rd / Tanjong Katong Rd",
+    "dist_to_pickup_m": 6551
+   }
+  },
+  {
+   "id": "E-GPS-10",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:36:00+08:00",
+   "summary": "13:36:00 driver GPS, 55 km/h",
+   "source_path": "gps_telemetry[9]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 10,
+    "speed_kmh": 55,
+    "location_desc": "Tanjong Katong Rd approaching ECP",
+    "dist_to_pickup_m": 7188
+   }
+  },
+  {
+   "id": "E-GPS-11",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:38:00+08:00",
+   "summary": "13:38:00 driver GPS, 70 km/h",
+   "source_path": "gps_telemetry[10]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 11,
+    "speed_kmh": 70,
+    "location_desc": "ECP (East Coast Parkway) eastbound",
+    "dist_to_pickup_m": 8232
+   }
+  },
+  {
+   "id": "E-GPS-12",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:41:00+08:00",
+   "summary": "13:41:00 driver GPS, 75 km/h",
+   "source_path": "gps_telemetry[11]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 12,
+    "speed_kmh": 75,
+    "location_desc": "ECP near Marine Parade",
+    "dist_to_pickup_m": 10000
+   }
+  },
+  {
+   "id": "E-GPS-13",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:44:00+08:00",
+   "summary": "13:44:00 driver GPS, 65 km/h",
+   "source_path": "gps_telemetry[12]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 13,
+    "speed_kmh": 65,
+    "location_desc": "ECP near Bedok / East Coast Park",
+    "dist_to_pickup_m": 13024
+   }
+  },
+  {
+   "id": "E-GPS-14",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:47:30+08:00",
+   "summary": "13:47:30 driver GPS, 60 km/h",
+   "source_path": "gps_telemetry[13]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 14,
+    "speed_kmh": 60,
+    "location_desc": "ECP approaching Changi",
+    "dist_to_pickup_m": 16164
+   }
+  },
+  {
+   "id": "E-GPS-15",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:50:00+08:00",
+   "summary": "13:50:00 driver GPS, 40 km/h",
+   "source_path": "gps_telemetry[14]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 15,
+    "speed_kmh": 40,
+    "location_desc": "Changi Village Rd / Airport Blvd",
+    "dist_to_pickup_m": 17819
+   }
+  },
+  {
+   "id": "E-GPS-16",
+   "type": "gps_ping",
+   "tier": "B",
+   "ts": "2026-09-12T13:52:00+08:00",
+   "summary": "13:52:00 driver GPS, 0 km/h",
+   "source_path": "gps_telemetry[15]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "point": 16,
+    "speed_kmh": 0,
+    "location_desc": "Changi Airport T3 (dropoff)",
+    "dist_to_pickup_m": 18950
+   }
+  },
+  {
+   "id": "E-CHT-01",
+   "type": "chat_message",
+   "tier": "C",
+   "ts": "2026-09-12T13:08:00+08:00",
+   "summary": "13:08:00 rider message",
+   "source_path": "chat_logs[0]",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "message_id": "MSG-001",
+    "sender": "rider",
+    "content": "Hi! I'm at the Orchard Central main entrance, wearing a blue dress. White Toyota Vios right?",
+    "type": "message"
+   }
+  },
+  {
+   "id": "E-CHT-02",
+   "type": "chat_message",
+   "tier": "C",
+   "ts": "2026-09-12T13:09:00+08:00",
+   "summary": "13:09:00 driver message",
+   "source_path": "chat_logs[1]",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "message_id": "MSG-002",
+    "sender": "driver",
+    "content": "Yes that's me! I can see you, coming now. 1 min.",
+    "type": "message"
+   }
+  },
+  {
+   "id": "E-CHT-03",
+   "type": "chat_message",
+   "tier": "C",
+   "ts": "2026-09-12T13:10:00+08:00",
+   "summary": "13:10:00 rider message",
+   "source_path": "chat_logs[2]",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "message_id": "MSG-003",
+    "sender": "rider",
+    "content": "Great thanks! Heading to Changi T3, my flight is at 3:30pm.",
+    "type": "message"
+   }
+  },
+  {
+   "id": "E-CHT-04",
+   "type": "chat_message",
+   "tier": "C",
+   "ts": "2026-09-12T13:10:30+08:00",
+   "summary": "13:10:30 driver message",
+   "source_path": "chat_logs[3]",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "message_id": "MSG-004",
+    "sender": "driver",
+    "content": "Sure, no problem. We will get there in time.",
+    "type": "message"
+   }
+  },
+  {
+   "id": "E-CHT-05",
+   "type": "chat_message",
+   "tier": "C",
+   "ts": "2026-09-12T13:24:00+08:00",
+   "summary": "13:24:00 rider message",
+   "source_path": "chat_logs[4]",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "message_id": "MSG-005",
+    "sender": "rider",
+    "content": "Hey, are we going the right way? This doesn't look like the usual route to the airport.",
+    "type": "message"
+   }
+  },
+  {
+   "id": "E-CHT-06",
+   "type": "chat_message",
+   "tier": "C",
+   "ts": "2026-09-12T13:25:00+08:00",
+   "summary": "13:25:00 driver message",
+   "source_path": "chat_logs[5]",
+   "untrusted_text": true,
+   "withheld": false,
+   "data": {
+    "message_id": "MSG-006",
+    "sender": "driver",
+    "content": "Don't worry, I know the way. We will reach on time.",
+    "type": "message"
+   }
+  },
+  {
+   "id": "E-PAY-01",
+   "type": "charge_record",
+   "tier": "A",
+   "ts": null,
+   "summary": "Fare breakdown: quote, actual fare, excess and surge lines (platform record).",
+   "source_path": "fare_breakdown",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "estimated": {
+     "total": 28.5
+    },
+    "actual": {
+     "total": 35.0
+    },
+    "delta": {
+     "total": 6.5
+    },
+    "excess_distance_fare": 3.44,
+    "excess_tolls": 2.22
+   }
+  },
+  {
+   "id": "E-RTE-01",
+   "type": "reference_lookup",
+   "tier": "A",
+   "ts": null,
+   "summary": "System-recommended route (waypoints, distance, duration).",
+   "source_path": "optimal_route",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "route_name": "PIE (Pan-Island Expressway) — direct route",
+    "estimated_distance_km": 20.5,
+    "estimated_duration_min": 35,
+    "waypoints": [
+     "Orchard Central (pickup)",
+     "Scotts Rd to PIE (Cairnhill) slip road",
+     "PIE entry (near Newton)",
+     "PIE eastbound near Balestier",
+     "PIE near Kallang / Paya Lebar",
+     "PIE near Eunos / Ubi",
+     "PIE near Bedok Reservoir",
+     "PIE near Bedok North",
+     "PIE near Upper Changi",
+     "Changi Airport T3 (dropoff via PIE Exit 2)"
+    ]
+   }
+  },
+  {
+   "id": "E-TRF-01",
+   "type": "reference_lookup",
+   "tier": "A",
+   "ts": "2026-09-12T13:05:00+08:00",
+   "summary": "TC-001 PIE (Pan-Island Expressway) vehicle_fire (high)",
+   "source_path": "traffic_conditions[0]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "incident_id": "TC-001",
+    "road": "PIE (Pan-Island Expressway)",
+    "direction": "eastbound",
+    "stretch": "PIE Exit 16 (Cactus / PAYA LEBAR) to Exit 11 (TAMPINES RD)",
+    "incident_type": "vehicle_fire",
+    "severity": "high",
+    "timestamp": "2026-09-12T13:05:00+08:00",
+    "clear_time": "2026-09-12T13:50:00+08:00",
+    "description": "Vehicle fire on PIE eastbound between Paya Lebar and Hougang. Lanes 1 and 2 blocked. Heavy congestion and long delays reported from 13:05."
+   }
+  },
+  {
+   "id": "E-TRF-02",
+   "type": "reference_lookup",
+   "tier": "A",
+   "ts": "2026-09-12T13:15:00+08:00",
+   "summary": "TC-002 PIE exit ramp — Changi Airport exit heavy_congestion (moderate)",
+   "source_path": "traffic_conditions[1]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "incident_id": "TC-002",
+    "road": "PIE exit ramp — Changi Airport exit",
+    "direction": "eastbound",
+    "stretch": "PIE Exit 2 to Changi Airport",
+    "incident_type": "heavy_congestion",
+    "severity": "moderate",
+    "timestamp": "2026-09-12T13:15:00+08:00",
+    "clear_time": "2026-09-12T13:40:00+08:00",
+    "description": "Heavy congestion on PIE near the airport exit, likely a secondary effect of the vehicle fire upstream."
+   }
+  },
+  {
+   "id": "E-TRF-03",
+   "type": "reference_lookup",
+   "tier": "A",
+   "ts": "2026-09-12T13:30:00+08:00",
+   "summary": "TC-003 ECP (East Coast Parkway) traffic_flow (low)",
+   "source_path": "traffic_conditions[2]",
+   "untrusted_text": false,
+   "withheld": false,
+   "data": {
+    "incident_id": "TC-003",
+    "road": "ECP (East Coast Parkway)",
+    "direction": "eastbound",
+    "stretch": "Marine Parade to Changi Airport",
+    "incident_type": "traffic_flow",
+    "severity": "low",
+    "timestamp": "2026-09-12T13:30:00+08:00",
+    "clear_time": null,
+    "description": "ECP eastbound flowing smoothly. No incidents. The driver's reroute through ECP was a reasonable alternative given PIE conditions."
+   }
+  }
+ ],
+ "engine": {
+  "engine": "engine_route",
+  "profile": "organizer_v2_1",
+  "claim_type": "FC-ROUTE",
+  "outcome": "PARTIAL_REFUND",
+  "reasons": [
+   "FC-R-DEVIATION-UNNOTIFIED"
+  ],
+  "amount_sgd": 3.44,
+  "payer": "PLATFORM",
+  "payee": "RIDER",
+  "form": "ORIGINAL_PAYMENT_METHOD",
+  "fee_stands_sgd": null,
+  "rules": [
+   "DQ-05",
+   "FC-F02",
+   "FC-F05",
+   "FC-F06",
+   "FC-F06B",
+   "FC-R13",
+   "FC-R08"
+  ],
+  "findings": {
+   "F-FARE-FIGURES": {
+    "value": {
+     "quoted": 28.5,
+     "actual": 35.0,
+     "difference": 6.5,
+     "excess_distance_fare": 3.44,
+     "excess_tolls": 2.22,
+     "consistent": true
+    },
+    "unit": "SGD",
+    "status": "established",
+    "basis": [
+     "E-TRP-01",
+     "E-PAY-01"
+    ],
+    "rule": "DQ-05",
+    "params": [
+     "MONEY_TOLERANCE_SGD"
+    ]
+   },
+   "F-DEVIATION-KM": {
+    "value": 4.3,
+    "unit": "km",
+    "status": "established",
+    "basis": [
+     "E-TRP-01",
+     "E-RTE-01"
+    ],
+    "rule": "FC-F02",
+    "params": [
+     "CORRIDOR_HALF_WIDTH_M",
+     "CORRIDOR_MIN_CONSEC_PINGS",
+     "ENDPOINT_EXCLUSION_M",
+     "DEVIATION_TOLERANCE_KM"
+    ]
+   },
+   "F-DEVIATION-CONFIRMED": {
+    "value": true,
+    "unit": "",
+    "status": "established",
+    "basis": [
+     "E-GPS-02",
+     "E-GPS-03",
+     "E-GPS-04",
+     "E-GPS-05",
+     "E-GPS-06",
+     "E-GPS-07",
+     "E-GPS-08",
+     "E-GPS-09",
+     "E-GPS-10",
+     "E-GPS-11",
+     "E-GPS-12",
+     "E-GPS-13",
+     "E-GPS-14",
+     "E-GPS-15"
+    ],
+    "rule": "FC-F02",
+    "params": [
+     "CORRIDOR_HALF_WIDTH_M",
+     "CORRIDOR_MIN_CONSEC_PINGS",
+     "ENDPOINT_EXCLUSION_M"
+    ]
+   },
+   "F-SPEED-CONSISTENCY": {
+    "value": {
+     "soft_segments": 0,
+     "hard_segments": 0,
+     "longest_gap_s": 210,
+     "window": "trip"
+    },
+    "unit": "",
+    "status": "established",
+    "basis": [
+     "E-GPS-*"
+    ],
+    "rule": "DQ-02",
+    "params": [
+     "SPEED_RATIO_SOFT",
+     "SPEED_MAX_KMH",
+     "PING_MAX_GAP_S"
+    ]
+   },
+   "F-NOTICE": {
+    "value": "NO",
+    "unit": "",
+    "status": "established",
+    "basis": [],
+    "rule": "FC-F05",
+    "params": []
+   },
+   "F-AGREED": {
+    "value": "NONE",
+    "unit": "",
+    "status": "not_applicable",
+    "basis": [],
+    "rule": "FC-F05",
+    "params": []
+   },
+   "F-JUSTIFIED": {
+    "value": true,
+    "unit": "",
+    "status": "established",
+    "basis": [
+     "E-TRF-01",
+     "E-TRF-02"
+    ],
+    "rule": "FC-F06B",
+    "params": []
+   }
+  },
+  "steps": [
+   {
+    "rule": "GEN-R04",
+    "result": "no instructions found in party text",
+    "evidence": [
+     "E-TKT-01",
+     "E-CHT-01",
+     "E-CHT-02",
+     "E-CHT-03",
+     "E-CHT-04",
+     "E-CHT-05",
+     "E-CHT-06"
+    ]
+   },
+   {
+    "rule": "CLS-01",
+    "result": "no safety content found (offline stand-in for the reading)",
+    "evidence": [
+     "E-TKT-01"
+    ]
+   },
+   {
+    "rule": "CLS-05, CLS-02, CLS-04",
+    "result": "dispute_type 'route_deviation' -> FC-ROUTE; one claim contesting the fare above the estimate",
+    "evidence": [
+     "E-TKT-01",
+     "E-PAY-01"
+    ]
+   },
+   {
+    "rule": "CLS-03",
+    "result": "contested charge present: not routed to support",
+    "evidence": [
+     "E-PAY-01"
+    ]
+   },
+   {
+    "rule": "MAT-01",
+    "result": "trip TRIP-2026-09871 matches the ticket",
+    "evidence": [
+     "E-TKT-01.trip_id",
+     "E-TRP-01.trip_id"
+    ]
+   },
+   {
+    "rule": "MAT-02",
+    "result": "no ticket index in the case file; treated as NEW (at run time the ticket index is checked)",
+    "evidence": [
+     "E-TKT-01"
+    ]
+   },
+   {
+    "rule": "MAT-03",
+    "result": "not an appeal",
+    "evidence": [
+     "E-TKT-01.status"
+    ]
+   },
+   {
+    "rule": "META-01, META-02",
+    "result": "profile organizer_v2_1 (organizer case: policy v2.1 governs); effective from 2026-01-01: in force",
+    "evidence": []
+   },
+   {
+    "rule": "DQ-03, DQ-04",
+    "result": "coordinates in Singapore: True; filed after the trip: True",
+    "evidence": [
+     "E-TRP-01",
+     "E-GPS-*"
+    ]
+   },
+   {
+    "rule": "DQ-05",
+    "result": "fare 35.0 against the estimate 28.5: difference 6.5; excess distance fare 3.44, excess tolls 2.22: consistent",
+    "evidence": [
+     "E-TRP-01",
+     "E-PAY-01"
+    ]
+   },
+   {
+    "rule": "FC-F02",
+    "result": "recorded distance 24.8 km minus recommended route 20.5 km = 4.3 km (the tolerance is 1.0 km); spatial confirmation: 14 consecutive GPS points beyond 100 m of the recommended route (needed 2), first beyond it at 13:17:00",
+    "evidence": [
+     "E-TRP-01",
+     "E-RTE-01",
+     "E-GPS-02",
+     "E-GPS-03",
+     "E-GPS-04",
+     "E-GPS-05",
+     "E-GPS-06",
+     "E-GPS-07",
+     "E-GPS-08",
+     "E-GPS-09",
+     "E-GPS-10",
+     "E-GPS-11",
+     "E-GPS-12",
+     "E-GPS-13",
+     "E-GPS-14",
+     "E-GPS-15"
+    ]
+   },
+   {
+    "rule": "DQ-02",
+    "result": "speed in the trip trace: 0 soft, 0 hard segments; longest gap between points 210 s (limit 300 s)",
+    "evidence": [
+     "E-GPS-*"
+    ]
+   },
+   {
+    "rule": "FC-F05",
+    "result": "no driver message or call before or at the point of deviation tells the rider of a route change",
+    "evidence": []
+   },
+   {
+    "rule": "FC-F06, FC-F06B",
+    "result": "traffic data on the route: TC-001 vehicle_fire (high) on PIE (Pan-Island Expressway) eastbound from 13:05 to 13:50; TC-002 heavy_congestion (moderate) on PIE exit ramp — Changi Airport exit eastbound from 13:15 to 13:40",
+    "evidence": [
+     "E-TRF-01",
+     "E-TRF-02"
+    ]
+   },
+   {
+    "rule": "FC-R13",
+    "result": "traffic reroute justified, the rider was not informed and the deviation is more than 1 km: partial refund of the excess distance fare; refund S$3.44, the excess distance fare, paid to the original payment method",
+    "evidence": [
+     "F-DEVIATION-KM",
+     "F-NOTICE",
+     "F-JUSTIFIED"
+    ]
+   },
+   {
+    "rule": "FC-R08, FC-R01",
+    "result": "tolls of S$2.22 for the longer route pass through at cost: nothing is refunded for them under this profile (DISP-001's recommended ruling says so; D47)",
+    "evidence": [
+     "E-PAY-01"
+    ]
+   },
+   {
+    "rule": "GEN-R08",
+    "result": "precedents: Precedent 7.1 (DISP-2026-0089) aligned: PARTIAL_REFUND S$3.20",
+    "evidence": []
+   },
+   {
+    "rule": "GEN-R05",
+    "result": "advocate briefs are produced at run time by the Rider and Driver Advocates; not simulated in this offline check",
+    "evidence": []
+   },
+   {
+    "rule": "AUTH-05",
+    "result": "C = 1.000 (A 1.0, M 1.00, E 1.00, R 1.0; soft flags [])",
+    "evidence": [
+     "F-DEVIATION-KM"
+    ]
+   },
+   {
+    "rule": "AUTH-07, AUTH-01 to AUTH-04, AUTH-06",
+    "result": "tier APPROVE; 1 reason(s)",
+    "evidence": [
+     "F-DEVIATION-KM"
+    ]
+   },
+   {
+    "rule": "EXP-01 to EXP-03, META-05",
+    "result": "explanations drafted from findings only (see the explanation drafts)",
+    "evidence": [
+     "F-*"
+    ]
+   }
+  ],
+  "flags": [],
+  "notes": [
+   "The organizer's recommended ruling also lists a driver education notice and a KPI log entry; FairRyde proposes neither (GEN-R06: no action against an account), a reviewer may add them."
+  ],
+  "precedents": [
+   {
+    "id": "PREC-7.1",
+    "section": "Precedent 7.1",
+    "case_id": "DISP-2026-0089",
+    "aligned": true,
+    "same": [
+     "rider_informed",
+     "traffic_justified"
+    ],
+    "differs": [],
+    "outcome": "PARTIAL_REFUND",
+    "refund_amount_sgd": 3.2,
+    "confidence": 0.91
+   }
+  ],
+  "matrix_row": "traffic reroute justified, the rider was not informed and the deviation is more than 1 km: partial refund of the excess distance fare",
+  "dt_row": null,
+  "deviation_km": 4.3,
+  "amount_at_stake": 6.5,
+  "confidence": {
+   "A": 1.0,
+   "M": 1.0,
+   "E": 1.0,
+   "R": 1.0,
+   "C": 1.0,
+   "d29_penalty": 0.0,
+   "C_effective": 1.0,
+   "assumed": [
+    "A = 1.0 (no LLM runs in this check)",
+    "R = 1.0 (no LLM Judge in this check)"
+   ],
+   "soft_flags": [],
+   "evidence_present": {
+    "E-TKT-01": true,
+    "E-TRP-01": true,
+    "E-RTE-01 (recommended route)": true,
+    "E-PAY-01 (fare breakdown)": true,
+    "E-GPS-* (trip trace)": true,
+    "E-CHT-* (chat logs)": true,
+    "E-TRF-* (traffic data)": true
+   }
+  },
+  "engine_tier": "APPROVE",
+  "triggers": [
+   "Section 6.2: the deviation of 4.3 km is above the 2.0 km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends"
+  ],
+  "gates": [],
+  "decisive": [],
+  "section6": {
+   "tier": "APPROVE",
+   "band": "FINAL",
+   "threshold": 0.8,
+   "reasons": [
+    "Section 6.2: the deviation of 4.3 km is above the 2.0 km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends"
+   ],
+   "value": 6.5,
+   "confidence": 1.0,
+   "fraud_flags": 0
+  },
+  "reclassified_to": null,
+  "safety": false,
+  "case_file_only": false,
+  "case_file_reason": null,
+  "fraud_flags": 0,
+  "reviewer_only": {
+   "fraud_signals": [],
+   "fraud_detail": {},
+   "injection_authors": []
+  },
+  "explanations": {
+   "rider": "Outcome: you are eligible for a refund of S$3.44, the fare charged for the extra distance, to your original payment method (Section 1.3). This is a recommended decision; a Ryde staff member reviews it before it takes effect. The recorded trip distance is 24.8 km and the recommended route is 20.5 km, a deviation of 4.3 km; Section 1.3 allows 1.0 km without a refund (E-TRP-01, E-RTE-01). The traffic data shows an incident on the road of the recommended route during the trip (E-TRF-01, E-TRF-02), so the reroute had a traffic reason (Section 1.4). No message or call from the driver before or at the point of deviation told the rider about the route change and the reason; Section 1.2 requires it. The tolls of S$2.22 for the longer route pass through at cost and are not refunded. Precedent 7.1 (DISP-2026-0089) ruled the same way on the same key facts, a refund of S$3.20. Why a person reviews it: Section 6.2: the deviation of 4.3 km is above the 2.0 km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends. Rules used: DQ-05 Fare arithmetic (Ryde policy, extended by FairRyde; credibility D); FC-F02 Detour measurement (FairRyde assumption; credibility D); FC-F05 The driver's notice of a route deviation, and the rider's agreement (policy v2.1) (FairRyde assumption; credibility D); FC-F06 Traffic justification of a deviation (policy v2.1) (the organizer's policy, extended by FairRyde; credibility D); FC-F06B FairRyde's match of a traffic incident to the recommended route (FairRyde assumption; credibility D); FC-R13 Route deviation refund matrix (policy v2.1 Section 1.3) (the organizer's policy; credibility A); FC-R08 ERP caused by an unjustified detour (FairRyde assumption; credibility D). Account history did not affect the outcome. If you disagree, you can ask for a human review through RydeHELP.",
+   "driver": "Outcome: S$3.44, the fare charged for the extra distance, is refunded to the rider (Section 1.3). The reroute was accepted as justified by traffic, so the tolls and the rest of the fare stand; the refund is for the missing notice to the rider. This is a recommended decision; a Ryde staff member reviews it before it takes effect. The recorded trip distance is 24.8 km and the recommended route is 20.5 km, a deviation of 4.3 km; Section 1.3 allows 1.0 km without a refund (E-TRP-01, E-RTE-01). The traffic data shows an incident on the road of the recommended route during the trip (E-TRF-01, E-TRF-02), so the reroute had a traffic reason (Section 1.4). No message or call from the driver before or at the point of deviation told the rider about the route change and the reason; Section 1.2 requires it. The tolls of S$2.22 for the longer route pass through at cost and are not refunded. Precedent 7.1 (DISP-2026-0089) ruled the same way on the same key facts, a refund of S$3.20. Why a person reviews it: Section 6.2: the deviation of 4.3 km is above the 2.0 km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends. Rules used: DQ-05 Fare arithmetic (Ryde policy, extended by FairRyde; credibility D); FC-F02 Detour measurement (FairRyde assumption; credibility D); FC-F05 The driver's notice of a route deviation, and the rider's agreement (policy v2.1) (FairRyde assumption; credibility D); FC-F06 Traffic justification of a deviation (policy v2.1) (the organizer's policy, extended by FairRyde; credibility D); FC-F06B FairRyde's match of a traffic incident to the recommended route (FairRyde assumption; credibility D); FC-R13 Route deviation refund matrix (policy v2.1 Section 1.3) (the organizer's policy; credibility A); FC-R08 ERP caused by an unjustified detour (FairRyde assumption; credibility D). Account history did not affect the outcome. If you disagree, you can ask for a human review through RydeHELP.",
+   "numbers_used": {
+    "actual_km": "24.8",
+    "rec_km": "20.5",
+    "dev_km": "4.3",
+    "tol_km": "1.0",
+    "tolls": "S$2.22",
+    "amount": "S$3.44",
+    "amount_d": "S$3.44",
+    "prec_amount": "S$3.20"
+   },
+   "tier": "APPROVE",
+   "exp03_unmatched": []
+  },
+  "params": {
+   "SG_BBOX": [
+    1.15,
+    103.59,
+    1.48,
+    104.1
+   ],
+   "DEVIATION_TOLERANCE_KM": 1.0,
+   "MONEY_TOLERANCE_SGD": 0.01,
+   "CORRIDOR_HALF_WIDTH_M": 100,
+   "CORRIDOR_MIN_CONSEC_PINGS": 2,
+   "ENDPOINT_EXCLUSION_M": 500,
+   "SPEED_MAX_KMH": 120,
+   "SPEED_RATIO_SOFT": 3.0,
+   "PING_MAX_GAP_S": 300,
+   "REMEDY_FORM": "ORIGINAL_PAYMENT_METHOD",
+   "TOLLS_TREATMENT": "PASS_THROUGH",
+   "ROUTE_BOUNDARY_BAND_KM": 0.2
+  },
+  "no_ruling": false
+ },
+ "messages": [
+  {
+   "agent": "rider_advocate",
+   "role": "Rider Advocate",
+   "mode": "ruling",
+   "attempt": 0,
+   "model": "mock (saved response)",
+   "client": "mock",
+   "json": {
+    "party": "rider",
+    "stance": "The rider is owed a refund of the excess distance fare: the driver went 4.3 km beyond the recommended route and never told the rider about a reroute or why.",
+    "requested_outcome": "partial refund of the excess distance fare",
+    "brief": "The recommended PIE route is 20.5 km and the car travelled 24.8 km, a deviation of 4.3 km, far above the 1 km tolerance [E-TRP-01] [E-RTE-01] [Section 1.3]. The GPS trace shows the car off the recommended route from the second ping at 13:17 and through Geylang and the East Coast area to Changi [E-GPS-02] [E-GPS-08] [E-GPS-11]. Section 1.2 requires the driver to tell the rider in the app chat, or aloud with a call recording, before or at the point of deviation. The only exchange about the route is the rider asking at 13:24 whether this was the right way [E-CHT-05], and the driver answering 'Don't worry, I know the way' without naming a reroute or a reason [E-CHT-06]. That is not the notice Section 1.2 asks for. The fare rose by S$6.50 and S$3.44 of it is the excess distance fare [E-PAY-01]. Section 1.3 refunds the excess distance fare when the rider was not informed of a deviation over 1 km, and Precedent 7.1 did exactly that [Precedent 7.1].",
+    "arguments": [
+     {
+      "point": "The deviation is 4.3 km against a recommended route of 20.5 km, over the 1 km tolerance.",
+      "evidence": [
+       "E-TRP-01",
+       "E-RTE-01",
+       "E-GPS-02",
+       "E-GPS-11"
+      ],
+      "rules": [
+       "FC-F02"
+      ],
+      "policy_sections": [
+       "Section 1.3",
+       "Section 1.4"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "No message or call told the rider about a reroute before or at the deviation; the driver's only reply came after the rider asked and gave no reason.",
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06"
+      ],
+      "rules": [
+       "FC-F05"
+      ],
+      "policy_sections": [
+       "Section 1.2"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "The remedy Section 1.3 gives for an unannounced deviation is the excess distance fare, S$3.44, as in Precedent 7.1.",
+      "evidence": [
+       "E-PAY-01"
+      ],
+      "rules": [
+       "FC-R13"
+      ],
+      "policy_sections": [
+       "Section 1.3"
+      ],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    ],
+    "weaknesses": [
+     {
+      "point": "The traffic record shows a vehicle fire on the PIE during the trip, so the driver will say the reroute was justified; that limits the remedy to the partial refund.",
+      "evidence": [
+       "E-TRF-01",
+       "E-TRF-02"
+      ]
+     }
+    ],
+    "safety_concern": false
+   },
+   "text": "{\"party\": \"rider\", \"stance\": \"The rider is owed a refund of the excess distance fare: the driver went 4.3 km beyond the recommended route and never told the rider about a reroute or why.\", \"requested_outcome\": \"partial refund of the excess distance fare\", \"brief\": \"The recommended PIE route is 20.5 km and the car travelled 24.8 km, a deviation of 4.3 km, far above the 1 km tolerance [E-TRP-01] [E-RTE-01] [Section 1.3]. The GPS trace shows the car off the recommended route from the second ping at 13:17 and through Geylang and the East Coast area to Changi [E-GPS-02] [E-GPS-08] [E-GPS-11]. Section 1.2 requires the driver to tell the rider in the app chat, or aloud with a call recording, before or at the point of deviation. The only exchange about the route is the rider asking at 13:24 whether this was the right way [E-CHT-05], and the driver answering 'Don't worry, I know the way' without naming a reroute or a reason [E-CHT-06]. That is not the notice Section 1.2 asks for. The fare rose by S$6.50 and S$3.44 of it is the excess distance fare [E-PAY-01]. Section 1.3 refunds the excess distance fare when the rider was not informed of a deviation over 1 km, and Precedent 7.1 did exactly that [Precedent 7.1].\", \"arguments\": [{\"point\": \"The deviation is 4.3 km against a recommended route of 20.5 km, over the 1 km tolerance.\", \"evidence\": [\"E-TRP-01\", \"E-RTE-01\", \"E-GPS-02\", \"E-GPS-11\"], \"rules\": [\"FC-F02\"], \"policy_sections\": [\"Section 1.3\", \"Section 1.4\"], \"precedents\": []}, {\"point\": \"No message or call told the rider about a reroute before or at the deviation; the driver's only reply came after the rider asked and gave no reason.\", \"evidence\": [\"E-CHT-05\", \"E-CHT-06\"], \"rules\": [\"FC-F05\"], \"policy_sections\": [\"Section 1.2\"], \"precedents\": []}, {\"point\": \"The remedy Section 1.3 gives for an unannounced deviation is the excess distance fare, S$3.44, as in Precedent 7.1.\", \"evidence\": [\"E-PAY-01\"], \"rules\": [\"FC-R13\"], \"policy_sections\": [\"Section 1.3\"], \"precedents\": [\"Precedent 7.1\"]}], \"weaknesses\": [{\"point\": \"The traffic record shows a vehicle fire on the PIE during the trip, so the driver will say the reroute was justified; that limits the remedy to the partial refund.\", \"evidence\": [\"E-TRF-01\", \"E-TRF-02\"]}], \"safety_concern\": false}",
+   "error": null,
+   "refused": false,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0
+   },
+   "latency_s": 0.0,
+   "privacy_boundary": {
+    "PERSON_NAME": 0,
+    "PERSON_NAME_TOKEN": 0,
+    "VEHICLE_PLATE": 0,
+    "ACCOUNT_ID": 0,
+    "ACCOUNT_ID_PATTERN": 0,
+    "SG_PLATE": 0,
+    "PHONE": 0,
+    "EMAIL": 0,
+    "NRIC_FIN": 0,
+    "UNIT_NUMBER": 0,
+    "CARD_TAIL": 0,
+    "LONG_NUMBER": 0,
+    "total": 0
+   },
+   "request_chars": 32199,
+   "request_id": null,
+   "mock": true,
+   "json_shown": {
+    "party": "rider",
+    "stance": "The rider is owed a refund of the excess distance fare: the driver went 4.3 km beyond the recommended route and never told the rider about a reroute or why.",
+    "requested_outcome": "partial refund of the excess distance fare",
+    "brief": "The recommended PIE route is 20.5 km and the car travelled 24.8 km, a deviation of 4.3 km, far above the 1 km tolerance [E-TRP-01] [E-RTE-01] [Section 1.3]. The GPS trace shows the car off the recommended route from the second ping at 13:17 and through Geylang and the East Coast area to Changi [E-GPS-02] [E-GPS-08] [E-GPS-11]. Section 1.2 requires the driver to tell the rider in the app chat, or aloud with a call recording, before or at the point of deviation. The only exchange about the route is the rider asking at 13:24 whether this was the right way [E-CHT-05], and the driver answering 'Don't worry, I know the way' without naming a reroute or a reason [E-CHT-06]. That is not the notice Section 1.2 asks for. The fare rose by S$6.50 and S$3.44 of it is the excess distance fare [E-PAY-01]. Section 1.3 refunds the excess distance fare when the rider was not informed of a deviation over 1 km, and Precedent 7.1 did exactly that [Precedent 7.1].",
+    "arguments": [
+     {
+      "point": "The deviation is 4.3 km against a recommended route of 20.5 km, over the 1 km tolerance.",
+      "evidence": [
+       "E-TRP-01",
+       "E-RTE-01",
+       "E-GPS-02",
+       "E-GPS-11"
+      ],
+      "rules": [
+       "FC-F02"
+      ],
+      "policy_sections": [
+       "Section 1.3",
+       "Section 1.4"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "No message or call told the rider about a reroute before or at the deviation; the driver's only reply came after the rider asked and gave no reason.",
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06"
+      ],
+      "rules": [
+       "FC-F05"
+      ],
+      "policy_sections": [
+       "Section 1.2"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "The remedy Section 1.3 gives for an unannounced deviation is the excess distance fare, S$3.44, as in Precedent 7.1.",
+      "evidence": [
+       "E-PAY-01"
+      ],
+      "rules": [
+       "FC-R13"
+      ],
+      "policy_sections": [
+       "Section 1.3"
+      ],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    ],
+    "weaknesses": [
+     {
+      "point": "The traffic record shows a vehicle fire on the PIE during the trip, so the driver will say the reroute was justified; that limits the remedy to the partial refund.",
+      "evidence": [
+       "E-TRF-01",
+       "E-TRF-02"
+      ]
+     }
+    ],
+    "safety_concern": false
+   }
+  },
+  {
+   "agent": "driver_advocate",
+   "role": "Driver Advocate",
+   "mode": "ruling",
+   "attempt": 0,
+   "model": "mock (saved response)",
+   "client": "mock",
+   "json": {
+    "party": "driver",
+    "stance": "The reroute was a response to a real incident on the PIE; only the missing notice is at issue, and the refund must stay limited to the excess distance fare.",
+    "requested_outcome": "no refund beyond the excess distance fare; tolls and the rest of the fare stand",
+    "brief": "Section 1.1 lets a driver leave the recommended path for real-time traffic. Historical traffic data, which Section 1.4 names as the test, shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 with two lanes blocked [E-TRF-01] and heavy congestion at the PIE airport exit from 13:15 to 13:40 [E-TRF-02]; the trip ran 13:15 to 13:52 [E-TRP-01]. The ECP was flowing freely [E-TRF-03]. So this is the 'rerouted for traffic' row of Section 1.3, and the rider arrived in 37 minutes against an estimate of 35 [E-TRP-01]. When the rider asked, the driver answered within a minute [E-CHT-05] [E-CHT-06]. The only remedy that row gives is a partial refund of the excess distance fare, S$3.44, not the whole S$6.50 difference, and the tolls of S$2.22 pass through at cost [E-PAY-01] [Precedent 7.1].",
+    "arguments": [
+     {
+      "point": "A vehicle fire and heavy congestion on the PIE overlapped the trip, so the reroute had a traffic justification.",
+      "evidence": [
+       "E-TRF-01",
+       "E-TRF-02",
+       "E-TRP-01"
+      ],
+      "rules": [
+       "FC-F06B"
+      ],
+      "policy_sections": [
+       "Section 1.1",
+       "Section 1.4"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "The ECP was flowing smoothly, a reasonable alternative to the blocked PIE.",
+      "evidence": [
+       "E-TRF-03"
+      ],
+      "rules": [
+       "FC-F06"
+      ],
+      "policy_sections": [
+       "Section 1.1"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "A justified but unannounced reroute earns the excess distance fare only: S$3.44 of the S$6.50 difference; the S$2.22 of tolls passes through at cost.",
+      "evidence": [
+       "E-PAY-01"
+      ],
+      "rules": [
+       "FC-R13",
+       "FC-R08"
+      ],
+      "policy_sections": [
+       "Section 1.3"
+      ],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    ],
+    "rebuttals": [
+     {
+      "to_rider_argument": 1,
+      "reply": "The deviation is not disputed, but Section 1.3 gives no refund for distance alone when the reroute is justified by traffic.",
+      "evidence": [
+       "E-TRF-01"
+      ],
+      "rules": [],
+      "policy_sections": [
+       "Section 1.3"
+      ]
+     },
+     {
+      "to_rider_argument": 2,
+      "reply": "The driver reassured the rider within a minute of the question; the reply did not name the reroute, but the rider was never refused an answer.",
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06"
+      ],
+      "rules": [],
+      "policy_sections": [
+       "Section 1.2"
+      ]
+     },
+     {
+      "to_rider_argument": 3,
+      "reply": "Agreed that Precedent 7.1 applies; it also shows the refund stops at the excess distance fare.",
+      "evidence": [],
+      "rules": [],
+      "policy_sections": [],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    ],
+    "concessions": [
+     {
+      "point": "No chat message or call before or at the deviation told the rider of the reroute and the reason.",
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06"
+      ]
+     },
+     {
+      "point": "The deviation of 4.3 km is over the 1 km tolerance.",
+      "evidence": [
+       "E-TRP-01",
+       "E-RTE-01"
+      ]
+     }
+    ],
+    "safety_concern": false
+   },
+   "text": "{\"party\": \"driver\", \"stance\": \"The reroute was a response to a real incident on the PIE; only the missing notice is at issue, and the refund must stay limited to the excess distance fare.\", \"requested_outcome\": \"no refund beyond the excess distance fare; tolls and the rest of the fare stand\", \"brief\": \"Section 1.1 lets a driver leave the recommended path for real-time traffic. Historical traffic data, which Section 1.4 names as the test, shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 with two lanes blocked [E-TRF-01] and heavy congestion at the PIE airport exit from 13:15 to 13:40 [E-TRF-02]; the trip ran 13:15 to 13:52 [E-TRP-01]. The ECP was flowing freely [E-TRF-03]. So this is the 'rerouted for traffic' row of Section 1.3, and the rider arrived in 37 minutes against an estimate of 35 [E-TRP-01]. When the rider asked, the driver answered within a minute [E-CHT-05] [E-CHT-06]. The only remedy that row gives is a partial refund of the excess distance fare, S$3.44, not the whole S$6.50 difference, and the tolls of S$2.22 pass through at cost [E-PAY-01] [Precedent 7.1].\", \"arguments\": [{\"point\": \"A vehicle fire and heavy congestion on the PIE overlapped the trip, so the reroute had a traffic justification.\", \"evidence\": [\"E-TRF-01\", \"E-TRF-02\", \"E-TRP-01\"], \"rules\": [\"FC-F06B\"], \"policy_sections\": [\"Section 1.1\", \"Section 1.4\"], \"precedents\": []}, {\"point\": \"The ECP was flowing smoothly, a reasonable alternative to the blocked PIE.\", \"evidence\": [\"E-TRF-03\"], \"rules\": [\"FC-F06\"], \"policy_sections\": [\"Section 1.1\"], \"precedents\": []}, {\"point\": \"A justified but unannounced reroute earns the excess distance fare only: S$3.44 of the S$6.50 difference; the S$2.22 of tolls passes through at cost.\", \"evidence\": [\"E-PAY-01\"], \"rules\": [\"FC-R13\", \"FC-R08\"], \"policy_sections\": [\"Section 1.3\"], \"precedents\": [\"Precedent 7.1\"]}], \"rebuttals\": [{\"to_rider_argument\": 1, \"reply\": \"The deviation is not disputed, but Section 1.3 gives no refund for distance alone when the reroute is justified by traffic.\", \"evidence\": [\"E-TRF-01\"], \"rules\": [], \"policy_sections\": [\"Section 1.3\"]}, {\"to_rider_argument\": 2, \"reply\": \"The driver reassured the rider within a minute of the question; the reply did not name the reroute, but the rider was never refused an answer.\", \"evidence\": [\"E-CHT-05\", \"E-CHT-06\"], \"rules\": [], \"policy_sections\": [\"Section 1.2\"]}, {\"to_rider_argument\": 3, \"reply\": \"Agreed that Precedent 7.1 applies; it also shows the refund stops at the excess distance fare.\", \"evidence\": [], \"rules\": [], \"policy_sections\": [], \"precedents\": [\"Precedent 7.1\"]}], \"concessions\": [{\"point\": \"No chat message or call before or at the deviation told the rider of the reroute and the reason.\", \"evidence\": [\"E-CHT-05\", \"E-CHT-06\"]}, {\"point\": \"The deviation of 4.3 km is over the 1 km tolerance.\", \"evidence\": [\"E-TRP-01\", \"E-RTE-01\"]}], \"safety_concern\": false}",
+   "error": null,
+   "refused": false,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0
+   },
+   "latency_s": 0.0,
+   "privacy_boundary": {
+    "PERSON_NAME": 0,
+    "PERSON_NAME_TOKEN": 0,
+    "VEHICLE_PLATE": 0,
+    "ACCOUNT_ID": 0,
+    "ACCOUNT_ID_PATTERN": 0,
+    "SG_PLATE": 0,
+    "PHONE": 0,
+    "EMAIL": 0,
+    "NRIC_FIN": 0,
+    "UNIT_NUMBER": 0,
+    "CARD_TAIL": 0,
+    "LONG_NUMBER": 0,
+    "total": 0
+   },
+   "request_chars": 35267,
+   "request_id": null,
+   "mock": true,
+   "json_shown": {
+    "party": "driver",
+    "stance": "The reroute was a response to a real incident on the PIE; only the missing notice is at issue, and the refund must stay limited to the excess distance fare.",
+    "requested_outcome": "no refund beyond the excess distance fare; tolls and the rest of the fare stand",
+    "brief": "Section 1.1 lets a driver leave the recommended path for real-time traffic. Historical traffic data, which Section 1.4 names as the test, shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 with two lanes blocked [E-TRF-01] and heavy congestion at the PIE airport exit from 13:15 to 13:40 [E-TRF-02]; the trip ran 13:15 to 13:52 [E-TRP-01]. The ECP was flowing freely [E-TRF-03]. So this is the 'rerouted for traffic' row of Section 1.3, and the rider arrived in 37 minutes against an estimate of 35 [E-TRP-01]. When the rider asked, the driver answered within a minute [E-CHT-05] [E-CHT-06]. The only remedy that row gives is a partial refund of the excess distance fare, S$3.44, not the whole S$6.50 difference, and the tolls of S$2.22 pass through at cost [E-PAY-01] [Precedent 7.1].",
+    "arguments": [
+     {
+      "point": "A vehicle fire and heavy congestion on the PIE overlapped the trip, so the reroute had a traffic justification.",
+      "evidence": [
+       "E-TRF-01",
+       "E-TRF-02",
+       "E-TRP-01"
+      ],
+      "rules": [
+       "FC-F06B"
+      ],
+      "policy_sections": [
+       "Section 1.1",
+       "Section 1.4"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "The ECP was flowing smoothly, a reasonable alternative to the blocked PIE.",
+      "evidence": [
+       "E-TRF-03"
+      ],
+      "rules": [
+       "FC-F06"
+      ],
+      "policy_sections": [
+       "Section 1.1"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "A justified but unannounced reroute earns the excess distance fare only: S$3.44 of the S$6.50 difference; the S$2.22 of tolls passes through at cost.",
+      "evidence": [
+       "E-PAY-01"
+      ],
+      "rules": [
+       "FC-R13",
+       "FC-R08"
+      ],
+      "policy_sections": [
+       "Section 1.3"
+      ],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    ],
+    "rebuttals": [
+     {
+      "to_rider_argument": 1,
+      "reply": "The deviation is not disputed, but Section 1.3 gives no refund for distance alone when the reroute is justified by traffic.",
+      "evidence": [
+       "E-TRF-01"
+      ],
+      "rules": [],
+      "policy_sections": [
+       "Section 1.3"
+      ]
+     },
+     {
+      "to_rider_argument": 2,
+      "reply": "The driver reassured the rider within a minute of the question; the reply did not name the reroute, but the rider was never refused an answer.",
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06"
+      ],
+      "rules": [],
+      "policy_sections": [
+       "Section 1.2"
+      ]
+     },
+     {
+      "to_rider_argument": 3,
+      "reply": "Agreed that Precedent 7.1 applies; it also shows the refund stops at the excess distance fare.",
+      "evidence": [],
+      "rules": [],
+      "policy_sections": [],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    ],
+    "concessions": [
+     {
+      "point": "No chat message or call before or at the deviation told the rider of the reroute and the reason.",
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06"
+      ]
+     },
+     {
+      "point": "The deviation of 4.3 km is over the 1 km tolerance.",
+      "evidence": [
+       "E-TRP-01",
+       "E-RTE-01"
+      ]
+     }
+    ],
+    "safety_concern": false
+   }
+  },
+  {
+   "agent": "judge",
+   "role": "Judge",
+   "mode": "ruling",
+   "attempt": 0,
+   "model": "mock (saved response)",
+   "client": "mock",
+   "json": {
+    "outcome": "PARTIAL_REFUND",
+    "amount_sgd": 3.44,
+    "payer": "PLATFORM",
+    "payee": "RIDER",
+    "confidence": 0.9,
+    "tier": "APPROVE",
+    "policy_sections": [
+     "Section 1.2",
+     "Section 1.3",
+     "Section 1.4",
+     "Section 6.2",
+     "Precedent 7.1"
+    ],
+    "rules": [
+     "FC-R13",
+     "FC-F02",
+     "FC-F05",
+     "FC-F06B",
+     "FC-R08"
+    ],
+    "evidence": [
+     "E-TRP-01",
+     "E-RTE-01",
+     "E-PAY-01",
+     "E-GPS-02",
+     "E-CHT-05",
+     "E-CHT-06",
+     "E-TRF-01",
+     "E-TRF-02"
+    ],
+    "precedents": [
+     "Precedent 7.1"
+    ],
+    "reasoning": "The recorded distance of 24.8 km against the recommended 20.5 km gives a deviation of 4.3 km, above the 1 km tolerance, and the GPS trace confirms the car left the recommended route at 13:17 [E-TRP-01] [E-RTE-01] [E-GPS-02]. The traffic data shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 and congestion at the airport exit, so the reroute was justified [E-TRF-01] [E-TRF-02] [Section 1.4]. Section 1.2 required notice before or at the point of deviation; the chat holds none, and the driver's reply to the rider's question names neither a reroute nor a reason [E-CHT-05] [E-CHT-06]. That is the 'traffic reroute, rider not informed, more than 1 km' row of Section 1.3 [FC-R13]: a partial refund of the excess distance fare, S$3.44. The Rider Advocate's argument for more than that has no support in the policy; the Driver Advocate's point that tolls pass through at cost stands [FC-R08]. Precedent 7.1 (1.8 km, justified, not informed) ruled the same way and is aligned. Because the deviation exceeds 2 km, Section 6.2 sends the ruling to human review with the remedy recommended. Confidence is 0.9: the facts are tier A and B, the one reading in play (matching an incident to the route by road, direction and time) is FairRyde's.",
+    "agreement_with_engine": true,
+    "disagreement_note": "",
+    "rider_explanation": "You are eligible for a refund of S$3.44, the fare charged for the extra distance, to your original payment method. The trip was 24.8 km against a recommended route of 20.5 km, a deviation of 4.3 km, which is more than the 1 km Section 1.3 allows [E-TRP-01] [E-RTE-01]. Traffic data shows a vehicle fire on the PIE during your trip, so the driver had a reason to reroute [E-TRF-01], but Section 1.2 required the driver to tell you before or at the point of deviation, and no message or call did [E-CHT-05] [E-CHT-06]. That is why Section 1.3 refunds the excess distance fare [FC-R13]; the tolls of S$2.22 pass through at cost and the rest of the fare stands. Because the deviation is more than 2 km, a Ryde staff member confirms this recommendation before it takes effect (Section 6.2).",
+    "driver_explanation": "The rider is refunded S$3.44, the fare charged for the extra distance, and the platform pays it. Your reroute was accepted as justified: the traffic data shows a vehicle fire on the PIE from 13:05 to 13:50 and congestion at the airport exit [E-TRF-01] [E-TRF-02], so the rest of the fare and the tolls of S$2.22 stand (Section 1.4). The refund is for the missing notice: Section 1.2 asks for a chat message or a spoken notice with a short reason before or at the deviation, and the record shows none [E-CHT-05] [E-CHT-06]. Precedent 7.1 ruled the same way. Because the deviation is more than 2 km, a Ryde staff member confirms the refund before it takes effect; you can also ask for a human review.",
+    "safety_concern": false
+   },
+   "text": "{\"outcome\": \"PARTIAL_REFUND\", \"amount_sgd\": 3.44, \"payer\": \"PLATFORM\", \"payee\": \"RIDER\", \"confidence\": 0.9, \"tier\": \"APPROVE\", \"policy_sections\": [\"Section 1.2\", \"Section 1.3\", \"Section 1.4\", \"Section 6.2\", \"Precedent 7.1\"], \"rules\": [\"FC-R13\", \"FC-F02\", \"FC-F05\", \"FC-F06B\", \"FC-R08\"], \"evidence\": [\"E-TRP-01\", \"E-RTE-01\", \"E-PAY-01\", \"E-GPS-02\", \"E-CHT-05\", \"E-CHT-06\", \"E-TRF-01\", \"E-TRF-02\"], \"precedents\": [\"Precedent 7.1\"], \"reasoning\": \"The recorded distance of 24.8 km against the recommended 20.5 km gives a deviation of 4.3 km, above the 1 km tolerance, and the GPS trace confirms the car left the recommended route at 13:17 [E-TRP-01] [E-RTE-01] [E-GPS-02]. The traffic data shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 and congestion at the airport exit, so the reroute was justified [E-TRF-01] [E-TRF-02] [Section 1.4]. Section 1.2 required notice before or at the point of deviation; the chat holds none, and the driver's reply to the rider's question names neither a reroute nor a reason [E-CHT-05] [E-CHT-06]. That is the 'traffic reroute, rider not informed, more than 1 km' row of Section 1.3 [FC-R13]: a partial refund of the excess distance fare, S$3.44. The Rider Advocate's argument for more than that has no support in the policy; the Driver Advocate's point that tolls pass through at cost stands [FC-R08]. Precedent 7.1 (1.8 km, justified, not informed) ruled the same way and is aligned. Because the deviation exceeds 2 km, Section 6.2 sends the ruling to human review with the remedy recommended. Confidence is 0.9: the facts are tier A and B, the one reading in play (matching an incident to the route by road, direction and time) is FairRyde's.\", \"agreement_with_engine\": true, \"disagreement_note\": \"\", \"rider_explanation\": \"You are eligible for a refund of S$3.44, the fare charged for the extra distance, to your original payment method. The trip was 24.8 km against a recommended route of 20.5 km, a deviation of 4.3 km, which is more than the 1 km Section 1.3 allows [E-TRP-01] [E-RTE-01]. Traffic data shows a vehicle fire on the PIE during your trip, so the driver had a reason to reroute [E-TRF-01], but Section 1.2 required the driver to tell you before or at the point of deviation, and no message or call did [E-CHT-05] [E-CHT-06]. That is why Section 1.3 refunds the excess distance fare [FC-R13]; the tolls of S$2.22 pass through at cost and the rest of the fare stands. Because the deviation is more than 2 km, a Ryde staff member confirms this recommendation before it takes effect (Section 6.2).\", \"driver_explanation\": \"The rider is refunded S$3.44, the fare charged for the extra distance, and the platform pays it. Your reroute was accepted as justified: the traffic data shows a vehicle fire on the PIE from 13:05 to 13:50 and congestion at the airport exit [E-TRF-01] [E-TRF-02], so the rest of the fare and the tolls of S$2.22 stand (Section 1.4). The refund is for the missing notice: Section 1.2 asks for a chat message or a spoken notice with a short reason before or at the deviation, and the record shows none [E-CHT-05] [E-CHT-06]. Precedent 7.1 ruled the same way. Because the deviation is more than 2 km, a Ryde staff member confirms the refund before it takes effect; you can also ask for a human review.\", \"safety_concern\": false}",
+   "error": null,
+   "refused": false,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0
+   },
+   "latency_s": 0.0,
+   "privacy_boundary": {
+    "PERSON_NAME": 0,
+    "PERSON_NAME_TOKEN": 0,
+    "VEHICLE_PLATE": 0,
+    "ACCOUNT_ID": 0,
+    "ACCOUNT_ID_PATTERN": 0,
+    "SG_PLATE": 0,
+    "PHONE": 0,
+    "EMAIL": 0,
+    "NRIC_FIN": 0,
+    "UNIT_NUMBER": 0,
+    "CARD_TAIL": 0,
+    "LONG_NUMBER": 0,
+    "total": 0
+   },
+   "request_chars": 46147,
+   "request_id": null,
+   "mock": true
+  }
+ ],
+ "briefs": {
+  "rider_advocate": {
+   "party": "rider",
+   "stance": "The rider is owed a refund of the excess distance fare: the driver went 4.3 km beyond the recommended route and never told the rider about a reroute or why.",
+   "requested_outcome": "partial refund of the excess distance fare",
+   "brief": "The recommended PIE route is 20.5 km and the car travelled 24.8 km, a deviation of 4.3 km, far above the 1 km tolerance [E-TRP-01] [E-RTE-01] [Section 1.3]. The GPS trace shows the car off the recommended route from the second ping at 13:17 and through Geylang and the East Coast area to Changi [E-GPS-02] [E-GPS-08] [E-GPS-11]. Section 1.2 requires the driver to tell the rider in the app chat, or aloud with a call recording, before or at the point of deviation. The only exchange about the route is the rider asking at 13:24 whether this was the right way [E-CHT-05], and the driver answering 'Don't worry, I know the way' without naming a reroute or a reason [E-CHT-06]. That is not the notice Section 1.2 asks for. The fare rose by S$6.50 and S$3.44 of it is the excess distance fare [E-PAY-01]. Section 1.3 refunds the excess distance fare when the rider was not informed of a deviation over 1 km, and Precedent 7.1 did exactly that [Precedent 7.1].",
+   "arguments": [
+    {
+     "point": "The deviation is 4.3 km against a recommended route of 20.5 km, over the 1 km tolerance.",
+     "evidence": [
+      "E-TRP-01",
+      "E-RTE-01",
+      "E-GPS-02",
+      "E-GPS-11"
+     ],
+     "rules": [
+      "FC-F02"
+     ],
+     "policy_sections": [
+      "Section 1.3",
+      "Section 1.4"
+     ],
+     "precedents": []
+    },
+    {
+     "point": "No message or call told the rider about a reroute before or at the deviation; the driver's only reply came after the rider asked and gave no reason.",
+     "evidence": [
+      "E-CHT-05",
+      "E-CHT-06"
+     ],
+     "rules": [
+      "FC-F05"
+     ],
+     "policy_sections": [
+      "Section 1.2"
+     ],
+     "precedents": []
+    },
+    {
+     "point": "The remedy Section 1.3 gives for an unannounced deviation is the excess distance fare, S$3.44, as in Precedent 7.1.",
+     "evidence": [
+      "E-PAY-01"
+     ],
+     "rules": [
+      "FC-R13"
+     ],
+     "policy_sections": [
+      "Section 1.3"
+     ],
+     "precedents": [
+      "Precedent 7.1"
+     ]
+    }
+   ],
+   "weaknesses": [
+    {
+     "point": "The traffic record shows a vehicle fire on the PIE during the trip, so the driver will say the reroute was justified; that limits the remedy to the partial refund.",
+     "evidence": [
+      "E-TRF-01",
+      "E-TRF-02"
+     ]
+    }
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate": {
+   "party": "driver",
+   "stance": "The reroute was a response to a real incident on the PIE; only the missing notice is at issue, and the refund must stay limited to the excess distance fare.",
+   "requested_outcome": "no refund beyond the excess distance fare; tolls and the rest of the fare stand",
+   "brief": "Section 1.1 lets a driver leave the recommended path for real-time traffic. Historical traffic data, which Section 1.4 names as the test, shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 with two lanes blocked [E-TRF-01] and heavy congestion at the PIE airport exit from 13:15 to 13:40 [E-TRF-02]; the trip ran 13:15 to 13:52 [E-TRP-01]. The ECP was flowing freely [E-TRF-03]. So this is the 'rerouted for traffic' row of Section 1.3, and the rider arrived in 37 minutes against an estimate of 35 [E-TRP-01]. When the rider asked, the driver answered within a minute [E-CHT-05] [E-CHT-06]. The only remedy that row gives is a partial refund of the excess distance fare, S$3.44, not the whole S$6.50 difference, and the tolls of S$2.22 pass through at cost [E-PAY-01] [Precedent 7.1].",
+   "arguments": [
+    {
+     "point": "A vehicle fire and heavy congestion on the PIE overlapped the trip, so the reroute had a traffic justification.",
+     "evidence": [
+      "E-TRF-01",
+      "E-TRF-02",
+      "E-TRP-01"
+     ],
+     "rules": [
+      "FC-F06B"
+     ],
+     "policy_sections": [
+      "Section 1.1",
+      "Section 1.4"
+     ],
+     "precedents": []
+    },
+    {
+     "point": "The ECP was flowing smoothly, a reasonable alternative to the blocked PIE.",
+     "evidence": [
+      "E-TRF-03"
+     ],
+     "rules": [
+      "FC-F06"
+     ],
+     "policy_sections": [
+      "Section 1.1"
+     ],
+     "precedents": []
+    },
+    {
+     "point": "A justified but unannounced reroute earns the excess distance fare only: S$3.44 of the S$6.50 difference; the S$2.22 of tolls passes through at cost.",
+     "evidence": [
+      "E-PAY-01"
+     ],
+     "rules": [
+      "FC-R13",
+      "FC-R08"
+     ],
+     "policy_sections": [
+      "Section 1.3"
+     ],
+     "precedents": [
+      "Precedent 7.1"
+     ]
+    }
+   ],
+   "rebuttals": [
+    {
+     "to_rider_argument": 1,
+     "reply": "The deviation is not disputed, but Section 1.3 gives no refund for distance alone when the reroute is justified by traffic.",
+     "evidence": [
+      "E-TRF-01"
+     ],
+     "rules": [],
+     "policy_sections": [
+      "Section 1.3"
+     ]
+    },
+    {
+     "to_rider_argument": 2,
+     "reply": "The driver reassured the rider within a minute of the question; the reply did not name the reroute, but the rider was never refused an answer.",
+     "evidence": [
+      "E-CHT-05",
+      "E-CHT-06"
+     ],
+     "rules": [],
+     "policy_sections": [
+      "Section 1.2"
+     ]
+    },
+    {
+     "to_rider_argument": 3,
+     "reply": "Agreed that Precedent 7.1 applies; it also shows the refund stops at the excess distance fare.",
+     "evidence": [],
+     "rules": [],
+     "policy_sections": [],
+     "precedents": [
+      "Precedent 7.1"
+     ]
+    }
+   ],
+   "concessions": [
+    {
+     "point": "No chat message or call before or at the deviation told the rider of the reroute and the reason.",
+     "evidence": [
+      "E-CHT-05",
+      "E-CHT-06"
+     ]
+    },
+    {
+     "point": "The deviation of 4.3 km is over the 1 km tolerance.",
+     "evidence": [
+      "E-TRP-01",
+      "E-RTE-01"
+     ]
+    }
+   ],
+   "safety_concern": false
+  }
+ },
+ "verification": {
+  "rider_advocate": {
+   "checks": [
+    {
+     "name": "rider advocate: citations",
+     "status": "PASS",
+     "detail": "17 cited ID(s) all exist",
+     "kind": "citation"
+    }
+   ],
+   "invalid": {
+    "evidence": [],
+    "withheld": [],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   },
+   "ok": true,
+   "cited": {
+    "evidence": [
+     "E-CHT-05",
+     "E-CHT-06",
+     "E-GPS-02",
+     "E-GPS-08",
+     "E-GPS-11",
+     "E-PAY-01",
+     "E-RTE-01",
+     "E-TRF-01",
+     "E-TRF-02",
+     "E-TRP-01"
+    ],
+    "rules": [
+     "FC-F02",
+     "FC-F05",
+     "FC-R13"
+    ],
+    "sections": [
+     "Section 1.2",
+     "Section 1.3",
+     "Section 1.4"
+    ],
+    "precedents": [
+     "Precedent 7.1"
+    ]
+   }
+  },
+  "driver_advocate": {
+   "checks": [
+    {
+     "name": "driver advocate: citations",
+     "status": "PASS",
+     "detail": "17 cited ID(s) all exist",
+     "kind": "citation"
+    }
+   ],
+   "invalid": {
+    "evidence": [],
+    "withheld": [],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   },
+   "ok": true,
+   "cited": {
+    "evidence": [
+     "E-CHT-05",
+     "E-CHT-06",
+     "E-PAY-01",
+     "E-RTE-01",
+     "E-TRF-01",
+     "E-TRF-02",
+     "E-TRF-03",
+     "E-TRP-01"
+    ],
+    "rules": [
+     "FC-F06",
+     "FC-F06B",
+     "FC-R08",
+     "FC-R13"
+    ],
+    "sections": [
+     "Section 1.1",
+     "Section 1.2",
+     "Section 1.3",
+     "Section 1.4"
+    ],
+    "precedents": [
+     "Precedent 7.1"
+    ]
+   }
+  },
+  "judge": [
+   {
+    "attempt": 0,
+    "checks": [
+     {
+      "name": "schema",
+      "status": "PASS",
+      "detail": "all required fields are present and well formed",
+      "kind": "schema"
+     },
+     {
+      "name": "Judge: citations",
+      "status": "PASS",
+      "detail": "19 cited ID(s) all exist",
+      "kind": "citation"
+     },
+     {
+      "name": "numbers",
+      "status": "PASS",
+      "detail": "every number in both explanations is a value of the case, the engine or the policy (EXP-03)",
+      "kind": "number"
+     },
+     {
+      "name": "engine",
+      "status": "PASS",
+      "detail": "outcome, amount, payer and payee equal the engine's",
+      "kind": "engine"
+     }
+    ],
+    "ok": true,
+    "retryable_failure": false,
+    "disagrees": false,
+    "engine_diffs": []
+   }
+  ],
+  "safety": null
+ },
+ "result": {
+  "status": "RECOMMENDED",
+  "outcome": "PARTIAL_REFUND",
+  "amount_sgd": 3.44,
+  "payer": "PLATFORM",
+  "payee": "RIDER",
+  "form": "ORIGINAL_PAYMENT_METHOD",
+  "fee_stands_sgd": null,
+  "tier": "APPROVE",
+  "tier_reasons": [
+   "Section 6.2: the deviation of 4.3 km is above the 2.0 km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends"
+  ],
+  "confidence": {
+   "judge": 0.9,
+   "engine": 1.0,
+   "final": 0.9,
+   "rule": "the lower of the Judge's confidence and the engine's C (the Judge never raises it)",
+   "threshold": 0.8,
+   "below_threshold": false
+  },
+  "policy_sections": [
+   "Section 1.2",
+   "Section 1.3",
+   "Section 1.4",
+   "Section 6.2",
+   "Precedent 7.1"
+  ],
+  "rules": [
+   "FC-R13",
+   "FC-F02",
+   "FC-F05",
+   "FC-F06B",
+   "FC-R08"
+  ],
+  "evidence": [
+   "E-TRP-01",
+   "E-RTE-01",
+   "E-PAY-01",
+   "E-GPS-02",
+   "E-CHT-05",
+   "E-CHT-06",
+   "E-TRF-01",
+   "E-TRF-02"
+  ],
+  "precedents": [
+   "Precedent 7.1"
+  ],
+  "reasoning": "The recorded distance of 24.8 km against the recommended 20.5 km gives a deviation of 4.3 km, above the 1 km tolerance, and the GPS trace confirms the car left the recommended route at 13:17 [E-TRP-01] [E-RTE-01] [E-GPS-02]. The traffic data shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 and congestion at the airport exit, so the reroute was justified [E-TRF-01] [E-TRF-02] [Section 1.4]. Section 1.2 required notice before or at the point of deviation; the chat holds none, and the driver's reply to the rider's question names neither a reroute nor a reason [E-CHT-05] [E-CHT-06]. That is the 'traffic reroute, rider not informed, more than 1 km' row of Section 1.3 [FC-R13]: a partial refund of the excess distance fare, S$3.44. The Rider Advocate's argument for more than that has no support in the policy; the Driver Advocate's point that tolls pass through at cost stands [FC-R08]. Precedent 7.1 (1.8 km, justified, not informed) ruled the same way and is aligned. Because the deviation exceeds 2 km, Section 6.2 sends the ruling to human review with the remedy recommended. Confidence is 0.9: the facts are tier A and B, the one reading in play (matching an incident to the route by road, direction and time) is FairRyde's.",
+  "rider_explanation": "You are eligible for a refund of S$3.44, the fare charged for the extra distance, to your original payment method. The trip was 24.8 km against a recommended route of 20.5 km, a deviation of 4.3 km, which is more than the 1 km Section 1.3 allows [E-TRP-01] [E-RTE-01]. Traffic data shows a vehicle fire on the PIE during your trip, so the driver had a reason to reroute [E-TRF-01], but Section 1.2 required the driver to tell you before or at the point of deviation, and no message or call did [E-CHT-05] [E-CHT-06]. That is why Section 1.3 refunds the excess distance fare [FC-R13]; the tolls of S$2.22 pass through at cost and the rest of the fare stands. Because the deviation is more than 2 km, a Ryde staff member confirms this recommendation before it takes effect (Section 6.2).",
+  "driver_explanation": "The rider is refunded S$3.44, the fare charged for the extra distance, and the platform pays it. Your reroute was accepted as justified: the traffic data shows a vehicle fire on the PIE from 13:05 to 13:50 and congestion at the airport exit [E-TRF-01] [E-TRF-02], so the rest of the fare and the tolls of S$2.22 stand (Section 1.4). The refund is for the missing notice: Section 1.2 asks for a chat message or a spoken notice with a short reason before or at the deviation, and the record shows none [E-CHT-05] [E-CHT-06]. Precedent 7.1 ruled the same way. Because the deviation is more than 2 km, a Ryde staff member confirms the refund before it takes effect; you can also ask for a human review.",
+  "explanation_source": "judge",
+  "gate": null,
+  "escalation": {
+   "required": true,
+   "gate": "AUTH-07",
+   "reasons": [
+    "Section 6.2: the deviation of 4.3 km is above the 2.0 km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends"
+   ]
+  },
+  "agrees_with_engine": true,
+  "engine_ruling": {
+   "outcome": "PARTIAL_REFUND",
+   "amount_sgd": 3.44,
+   "payer": "PLATFORM",
+   "payee": "RIDER",
+   "form": "ORIGINAL_PAYMENT_METHOD",
+   "reasons": [
+    "FC-R-DEVIATION-UNNOTIFIED"
+   ],
+   "engine_tier": "APPROVE"
+  },
+  "judge_ruling": {
+   "outcome": "PARTIAL_REFUND",
+   "amount_sgd": 3.44,
+   "payer": "PLATFORM",
+   "payee": "RIDER",
+   "confidence": 0.9,
+   "tier": "APPROVE",
+   "agreement_with_engine": true,
+   "disagreement_note": ""
+  },
+  "case_file_only": false,
+  "reasons": [
+   "FC-R-DEVIATION-UNNOTIFIED"
+  ],
+  "section6": {
+   "tier": "APPROVE",
+   "band": "FINAL",
+   "threshold": 0.8,
+   "reasons": [
+    "Section 6.2: the deviation of 4.3 km is above the 2.0 km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends"
+   ],
+   "value": 6.5,
+   "confidence": 0.9,
+   "fraud_flags": 0
+  },
+  "case_file": {
+   "case_id": "DISP-001",
+   "why_escalated": {
+    "required": true,
+    "gate": "AUTH-07",
+    "reasons": [
+     "Section 6.2: the deviation of 4.3 km is above the 2.0 km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends"
+    ]
+   },
+   "tier": "APPROVE",
+   "classification": {
+    "case_id": "DISP-001",
+    "dispute_type_raw": "route_deviation",
+    "taxonomy_code": "FC-ROUTE",
+    "claim_type": "FC-ROUTE",
+    "claim_label": "Route deviation / longer route",
+    "profile": "organizer_v2_1",
+    "profile_reason": "organizer case (a DISP-nnn id): policy v2.1 governs",
+    "filed_by": "RIDER",
+    "engine": "engine_route",
+    "route": "ENGINE",
+    "case_file_reason": null,
+    "safety": {
+     "flag": false,
+     "keyword_hits": 0,
+     "discrimination": false,
+     "taxonomy_safety_leaf": false
+    },
+    "injection_authors": [],
+    "rules_fired": [
+     {
+      "rule": "META-01",
+      "name": "Policy source precedence",
+      "result": "profile organizer_v2_1: organizer case (a DISP-nnn id): policy v2.1 governs"
+     },
+     {
+      "rule": "CLS-05",
+      "name": "Organizer dispute codes",
+      "result": "dispute_type 'route_deviation' -> FC-ROUTE"
+     },
+     {
+      "rule": "CLS-01",
+      "name": "Safety override",
+      "result": "no safety content found by the keyword stand-in (the agents look again by meaning)"
+     },
+     {
+      "rule": "GEN-R04",
+      "name": "Party-written text is evidence, not instructions",
+      "result": "no instructions found in party text"
+     }
+    ],
+    "notes": []
+   },
+   "engine_ruling": {
+    "outcome": "PARTIAL_REFUND",
+    "amount_sgd": 3.44,
+    "payer": "PLATFORM",
+    "payee": "RIDER",
+    "form": "ORIGINAL_PAYMENT_METHOD",
+    "reasons": [
+     "FC-R-DEVIATION-UNNOTIFIED"
+    ],
+    "engine_tier": "APPROVE"
+   },
+   "judge_ruling": {
+    "outcome": "PARTIAL_REFUND",
+    "amount_sgd": 3.44,
+    "payer": "PLATFORM",
+    "payee": "RIDER",
+    "confidence": 0.9,
+    "tier": "APPROVE",
+    "agreement_with_engine": true,
+    "disagreement_note": ""
+   },
+   "provisional_ruling": null,
+   "engine": {
+    "engine": "engine_route",
+    "profile": "organizer_v2_1",
+    "claim_type": "FC-ROUTE",
+    "outcome": "PARTIAL_REFUND",
+    "reasons": [
+     "FC-R-DEVIATION-UNNOTIFIED"
+    ],
+    "amount_sgd": 3.44,
+    "payer": "PLATFORM",
+    "payee": "RIDER",
+    "form": "ORIGINAL_PAYMENT_METHOD",
+    "fee_stands_sgd": null,
+    "rules": [
+     "DQ-05",
+     "FC-F02",
+     "FC-F05",
+     "FC-F06",
+     "FC-F06B",
+     "FC-R13",
+     "FC-R08"
+    ],
+    "findings": {
+     "F-FARE-FIGURES": {
+      "value": {
+       "quoted": 28.5,
+       "actual": 35.0,
+       "difference": 6.5,
+       "excess_distance_fare": 3.44,
+       "excess_tolls": 2.22,
+       "consistent": true
+      },
+      "unit": "SGD",
+      "status": "established",
+      "basis": [
+       "E-TRP-01",
+       "E-PAY-01"
+      ],
+      "rule": "DQ-05",
+      "params": [
+       "MONEY_TOLERANCE_SGD"
+      ]
+     },
+     "F-DEVIATION-KM": {
+      "value": 4.3,
+      "unit": "km",
+      "status": "established",
+      "basis": [
+       "E-TRP-01",
+       "E-RTE-01"
+      ],
+      "rule": "FC-F02",
+      "params": [
+       "CORRIDOR_HALF_WIDTH_M",
+       "CORRIDOR_MIN_CONSEC_PINGS",
+       "ENDPOINT_EXCLUSION_M",
+       "DEVIATION_TOLERANCE_KM"
+      ]
+     },
+     "F-DEVIATION-CONFIRMED": {
+      "value": true,
+      "unit": "",
+      "status": "established",
+      "basis": [
+       "E-GPS-02",
+       "E-GPS-03",
+       "E-GPS-04",
+       "E-GPS-05",
+       "E-GPS-06",
+       "E-GPS-07",
+       "E-GPS-08",
+       "E-GPS-09",
+       "E-GPS-10",
+       "E-GPS-11",
+       "E-GPS-12",
+       "E-GPS-13",
+       "E-GPS-14",
+       "E-GPS-15"
+      ],
+      "rule": "FC-F02",
+      "params": [
+       "CORRIDOR_HALF_WIDTH_M",
+       "CORRIDOR_MIN_CONSEC_PINGS",
+       "ENDPOINT_EXCLUSION_M"
+      ]
+     },
+     "F-SPEED-CONSISTENCY": {
+      "value": {
+       "soft_segments": 0,
+       "hard_segments": 0,
+       "longest_gap_s": 210,
+       "window": "trip"
+      },
+      "unit": "",
+      "status": "established",
+      "basis": [
+       "E-GPS-*"
+      ],
+      "rule": "DQ-02",
+      "params": [
+       "SPEED_RATIO_SOFT",
+       "SPEED_MAX_KMH",
+       "PING_MAX_GAP_S"
+      ]
+     },
+     "F-NOTICE": {
+      "value": "NO",
+      "unit": "",
+      "status": "established",
+      "basis": [],
+      "rule": "FC-F05",
+      "params": []
+     },
+     "F-AGREED": {
+      "value": "NONE",
+      "unit": "",
+      "status": "not_applicable",
+      "basis": [],
+      "rule": "FC-F05",
+      "params": []
+     },
+     "F-JUSTIFIED": {
+      "value": true,
+      "unit": "",
+      "status": "established",
+      "basis": [
+       "E-TRF-01",
+       "E-TRF-02"
+      ],
+      "rule": "FC-F06B",
+      "params": []
+     }
+    },
+    "steps": [
+     {
+      "rule": "GEN-R04",
+      "result": "no instructions found in party text",
+      "evidence": [
+       "E-TKT-01",
+       "E-CHT-01",
+       "E-CHT-02",
+       "E-CHT-03",
+       "E-CHT-04",
+       "E-CHT-05",
+       "E-CHT-06"
+      ]
+     },
+     {
+      "rule": "CLS-01",
+      "result": "no safety content found (offline stand-in for the reading)",
+      "evidence": [
+       "E-TKT-01"
+      ]
+     },
+     {
+      "rule": "CLS-05, CLS-02, CLS-04",
+      "result": "dispute_type 'route_deviation' -> FC-ROUTE; one claim contesting the fare above the estimate",
+      "evidence": [
+       "E-TKT-01",
+       "E-PAY-01"
+      ]
+     },
+     {
+      "rule": "CLS-03",
+      "result": "contested charge present: not routed to support",
+      "evidence": [
+       "E-PAY-01"
+      ]
+     },
+     {
+      "rule": "MAT-01",
+      "result": "trip TRIP-2026-09871 matches the ticket",
+      "evidence": [
+       "E-TKT-01.trip_id",
+       "E-TRP-01.trip_id"
+      ]
+     },
+     {
+      "rule": "MAT-02",
+      "result": "no ticket index in the case file; treated as NEW (at run time the ticket index is checked)",
+      "evidence": [
+       "E-TKT-01"
+      ]
+     },
+     {
+      "rule": "MAT-03",
+      "result": "not an appeal",
+      "evidence": [
+       "E-TKT-01.status"
+      ]
+     },
+     {
+      "rule": "META-01, META-02",
+      "result": "profile organizer_v2_1 (organizer case: policy v2.1 governs); effective from 2026-01-01: in force",
+      "evidence": []
+     },
+     {
+      "rule": "DQ-03, DQ-04",
+      "result": "coordinates in Singapore: True; filed after the trip: True",
+      "evidence": [
+       "E-TRP-01",
+       "E-GPS-*"
+      ]
+     },
+     {
+      "rule": "DQ-05",
+      "result": "fare 35.0 against the estimate 28.5: difference 6.5; excess distance fare 3.44, excess tolls 2.22: consistent",
+      "evidence": [
+       "E-TRP-01",
+       "E-PAY-01"
+      ]
+     },
+     {
+      "rule": "FC-F02",
+      "result": "recorded distance 24.8 km minus recommended route 20.5 km = 4.3 km (the tolerance is 1.0 km); spatial confirmation: 14 consecutive GPS points beyond 100 m of the recommended route (needed 2), first beyond it at 13:17:00",
+      "evidence": [
+       "E-TRP-01",
+       "E-RTE-01",
+       "E-GPS-02",
+       "E-GPS-03",
+       "E-GPS-04",
+       "E-GPS-05",
+       "E-GPS-06",
+       "E-GPS-07",
+       "E-GPS-08",
+       "E-GPS-09",
+       "E-GPS-10",
+       "E-GPS-11",
+       "E-GPS-12",
+       "E-GPS-13",
+       "E-GPS-14",
+       "E-GPS-15"
+      ]
+     },
+     {
+      "rule": "DQ-02",
+      "result": "speed in the trip trace: 0 soft, 0 hard segments; longest gap between points 210 s (limit 300 s)",
+      "evidence": [
+       "E-GPS-*"
+      ]
+     },
+     {
+      "rule": "FC-F05",
+      "result": "no driver message or call before or at the point of deviation tells the rider of a route change",
+      "evidence": []
+     },
+     {
+      "rule": "FC-F06, FC-F06B",
+      "result": "traffic data on the route: TC-001 vehicle_fire (high) on PIE (Pan-Island Expressway) eastbound from 13:05 to 13:50; TC-002 heavy_congestion (moderate) on PIE exit ramp — Changi Airport exit eastbound from 13:15 to 13:40",
+      "evidence": [
+       "E-TRF-01",
+       "E-TRF-02"
+      ]
+     },
+     {
+      "rule": "FC-R13",
+      "result": "traffic reroute justified, the rider was not informed and the deviation is more than 1 km: partial refund of the excess distance fare; refund S$3.44, the excess distance fare, paid to the original payment method",
+      "evidence": [
+       "F-DEVIATION-KM",
+       "F-NOTICE",
+       "F-JUSTIFIED"
+      ]
+     },
+     {
+      "rule": "FC-R08, FC-R01",
+      "result": "tolls of S$2.22 for the longer route pass through at cost: nothing is refunded for them under this profile (DISP-001's recommended ruling says so; D47)",
+      "evidence": [
+       "E-PAY-01"
+      ]
+     },
+     {
+      "rule": "GEN-R08",
+      "result": "precedents: Precedent 7.1 (DISP-2026-0089) aligned: PARTIAL_REFUND S$3.20",
+      "evidence": []
+     },
+     {
+      "rule": "GEN-R05",
+      "result": "advocate briefs are produced at run time by the Rider and Driver Advocates; not simulated in this offline check",
+      "evidence": []
+     },
+     {
+      "rule": "AUTH-05",
+      "result": "C = 1.000 (A 1.0, M 1.00, E 1.00, R 1.0; soft flags [])",
+      "evidence": [
+       "F-DEVIATION-KM"
+      ]
+     },
+     {
+      "rule": "AUTH-07, AUTH-01 to AUTH-04, AUTH-06",
+      "result": "tier APPROVE; 1 reason(s)",
+      "evidence": [
+       "F-DEVIATION-KM"
+      ]
+     },
+     {
+      "rule": "EXP-01 to EXP-03, META-05",
+      "result": "explanations drafted from findings only (see the explanation drafts)",
+      "evidence": [
+       "F-*"
+      ]
+     }
+    ],
+    "flags": [],
+    "notes": [
+     "The organizer's recommended ruling also lists a driver education notice and a KPI log entry; FairRyde proposes neither (GEN-R06: no action against an account), a reviewer may add them."
+    ],
+    "precedents": [
+     {
+      "id": "PREC-7.1",
+      "section": "Precedent 7.1",
+      "case_id": "DISP-2026-0089",
+      "aligned": true,
+      "same": [
+       "rider_informed",
+       "traffic_justified"
+      ],
+      "differs": [],
+      "outcome": "PARTIAL_REFUND",
+      "refund_amount_sgd": 3.2,
+      "confidence": 0.91
+     }
+    ],
+    "matrix_row": "traffic reroute justified, the rider was not informed and the deviation is more than 1 km: partial refund of the excess distance fare",
+    "dt_row": null,
+    "deviation_km": 4.3,
+    "amount_at_stake": 6.5,
+    "confidence": {
+     "A": 1.0,
+     "M": 1.0,
+     "E": 1.0,
+     "R": 1.0,
+     "C": 1.0,
+     "d29_penalty": 0.0,
+     "C_effective": 1.0,
+     "assumed": [
+      "A = 1.0 (no LLM runs in this check)",
+      "R = 1.0 (no LLM Judge in this check)"
+     ],
+     "soft_flags": [],
+     "evidence_present": {
+      "E-TKT-01": true,
+      "E-TRP-01": true,
+      "E-RTE-01 (recommended route)": true,
+      "E-PAY-01 (fare breakdown)": true,
+      "E-GPS-* (trip trace)": true,
+      "E-CHT-* (chat logs)": true,
+      "E-TRF-* (traffic data)": true
+     }
+    },
+    "engine_tier": "APPROVE",
+    "triggers": [
+     "Section 6.2: the deviation of 4.3 km is above the 2.0 km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends"
+    ],
+    "gates": [],
+    "decisive": [],
+    "section6": {
+     "tier": "APPROVE",
+     "band": "FINAL",
+     "threshold": 0.8,
+     "reasons": [
+      "Section 6.2: the deviation of 4.3 km is above the 2.0 km an AI ruling may decide, so the ruling goes to human review with the remedy FairRyde recommends"
+     ],
+     "value": 6.5,
+     "confidence": 1.0,
+     "fraud_flags": 0
+    },
+    "reclassified_to": null,
+    "safety": false,
+    "case_file_only": false,
+    "case_file_reason": null,
+    "fraud_flags": 0,
+    "reviewer_only": {
+     "fraud_signals": [],
+     "fraud_detail": {},
+     "injection_authors": []
+    },
+    "params": {
+     "SG_BBOX": [
+      1.15,
+      103.59,
+      1.48,
+      104.1
+     ],
+     "DEVIATION_TOLERANCE_KM": 1.0,
+     "MONEY_TOLERANCE_SGD": 0.01,
+     "CORRIDOR_HALF_WIDTH_M": 100,
+     "CORRIDOR_MIN_CONSEC_PINGS": 2,
+     "ENDPOINT_EXCLUSION_M": 500,
+     "SPEED_MAX_KMH": 120,
+     "SPEED_RATIO_SOFT": 3.0,
+     "PING_MAX_GAP_S": 300,
+     "REMEDY_FORM": "ORIGINAL_PAYMENT_METHOD",
+     "TOLLS_TREATMENT": "PASS_THROUGH",
+     "ROUTE_BOUNDARY_BAND_KM": 0.2
+    },
+    "no_ruling": false
+   },
+   "reviewer_only": {
+    "fraud_signals": [],
+    "fraud_detail": {},
+    "injection_authors": []
+   },
+   "evidence": [
+    {
+     "id": "E-TKT-01",
+     "type": "statement",
+     "tier": "D",
+     "ts": "2026-09-12T14:35:00+08:00",
+     "summary": "Ticket: the claimant's own statement (tier D); filed_at is a server field.",
+     "source_path": "dispute_ticket",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "filed_by": "rider",
+      "dispute_type": "route_deviation",
+      "filed_at": "2026-09-12T14:35:00+08:00",
+      "status": "open",
+      "description": "The driver took a significantly longer route from Orchard Central to Changi Airport T3. I normally take the PIE which takes about 35 minutes and costs around $28. On this trip the driver went through Geylang and East Coast area, taking 37 minutes and the fare was $35. The driver did not inform me about any route change or traffic. The extra distance was 4.3 km and I was overcharged. I am requesting a refund of the excess fare."
+     }
+    },
+    {
+     "id": "E-PRF-R",
+     "type": "profile_stat",
+     "tier": "A",
+     "ts": null,
+     "summary": "Rider profile (history, rating, flags): withheld from the agents, never decisive (GEN-R03).",
+     "source_path": "rider_profile",
+     "untrusted_text": false,
+     "withheld": true,
+     "data": {}
+    },
+    {
+     "id": "E-PRF-D",
+     "type": "profile_stat",
+     "tier": "A",
+     "ts": null,
+     "summary": "Driver profile (history, rating, flags): withheld from the agents, never decisive (GEN-R03).",
+     "source_path": "driver_profile",
+     "untrusted_text": false,
+     "withheld": true,
+     "data": {}
+    },
+    {
+     "id": "E-TRP-01",
+     "type": "trip_record",
+     "tier": "A",
+     "ts": null,
+     "summary": "Trip record: times, distances, fares, fee (platform record).",
+     "source_path": "trip_data",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "trip_id": "TRIP-2026-09871",
+      "start_time": "2026-09-12T13:15:00+08:00",
+      "end_time": "2026-09-12T13:52:00+08:00",
+      "estimated_duration_min": 35,
+      "actual_duration_min": 37,
+      "estimated_distance_km": 20.5,
+      "actual_distance_km": 24.8,
+      "estimated_fare": 28.5,
+      "actual_fare": 35.0,
+      "excess_distance_km": 4.3,
+      "excess_fare": 6.5,
+      "trip_type": "standard",
+      "pickup_place": "Orchard Central",
+      "dropoff_place": "Changi Airport T3"
+     }
+    },
+    {
+     "id": "E-GPS-01",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:15:00+08:00",
+     "summary": "13:15:00 driver GPS, 0 km/h",
+     "source_path": "gps_telemetry[0]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 1,
+      "speed_kmh": 0,
+      "location_desc": "Orchard Central (pickup)",
+      "dist_to_pickup_m": 0
+     }
+    },
+    {
+     "id": "E-GPS-02",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:17:00+08:00",
+     "summary": "13:17:00 driver GPS, 35 km/h",
+     "source_path": "gps_telemetry[1]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 2,
+      "speed_kmh": 35,
+      "location_desc": "Orchard Rd towards Cairnhill",
+      "dist_to_pickup_m": 504
+     }
+    },
+    {
+     "id": "E-GPS-03",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:19:30+08:00",
+     "summary": "13:19:30 driver GPS, 40 km/h",
+     "source_path": "gps_telemetry[2]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 3,
+      "speed_kmh": 40,
+      "location_desc": "Stamford Rd / Fort Canning area",
+      "dist_to_pickup_m": 1392
+     }
+    },
+    {
+     "id": "E-GPS-04",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:22:00+08:00",
+     "summary": "13:22:00 driver GPS, 35 km/h",
+     "source_path": "gps_telemetry[3]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 4,
+      "speed_kmh": 35,
+      "location_desc": "Connaught Dr / Esplanade area",
+      "dist_to_pickup_m": 2493
+     }
+    },
+    {
+     "id": "E-GPS-05",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:24:30+08:00",
+     "summary": "13:24:30 driver GPS, 45 km/h",
+     "source_path": "gps_telemetry[4]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 5,
+      "speed_kmh": 45,
+      "location_desc": "Marina Blvd / Shenton Way",
+      "dist_to_pickup_m": 3585
+     }
+    },
+    {
+     "id": "E-GPS-06",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:27:00+08:00",
+     "summary": "13:27:00 driver GPS, 50 km/h",
+     "source_path": "gps_telemetry[5]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 6,
+      "speed_kmh": 50,
+      "location_desc": "Nicoll Hwy toward Beach Rd",
+      "dist_to_pickup_m": 4658
+     }
+    },
+    {
+     "id": "E-GPS-07",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:29:30+08:00",
+     "summary": "13:29:30 driver GPS, 38 km/h",
+     "source_path": "gps_telemetry[6]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 7,
+      "speed_kmh": 38,
+      "location_desc": "Mountbatten Rd (entering Geylang corridor)",
+      "dist_to_pickup_m": 5164
+     }
+    },
+    {
+     "id": "E-GPS-08",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:32:00+08:00",
+     "summary": "13:32:00 driver GPS, 42 km/h",
+     "source_path": "gps_telemetry[7]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 8,
+      "speed_kmh": 42,
+      "location_desc": "Geylang Rd / Old Airport Rd",
+      "dist_to_pickup_m": 5917
+     }
+    },
+    {
+     "id": "E-GPS-09",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:34:00+08:00",
+     "summary": "13:34:00 driver GPS, 40 km/h",
+     "source_path": "gps_telemetry[8]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 9,
+      "speed_kmh": 40,
+      "location_desc": "Dunman Rd / Tanjong Katong Rd",
+      "dist_to_pickup_m": 6551
+     }
+    },
+    {
+     "id": "E-GPS-10",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:36:00+08:00",
+     "summary": "13:36:00 driver GPS, 55 km/h",
+     "source_path": "gps_telemetry[9]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 10,
+      "speed_kmh": 55,
+      "location_desc": "Tanjong Katong Rd approaching ECP",
+      "dist_to_pickup_m": 7188
+     }
+    },
+    {
+     "id": "E-GPS-11",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:38:00+08:00",
+     "summary": "13:38:00 driver GPS, 70 km/h",
+     "source_path": "gps_telemetry[10]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 11,
+      "speed_kmh": 70,
+      "location_desc": "ECP (East Coast Parkway) eastbound",
+      "dist_to_pickup_m": 8232
+     }
+    },
+    {
+     "id": "E-GPS-12",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:41:00+08:00",
+     "summary": "13:41:00 driver GPS, 75 km/h",
+     "source_path": "gps_telemetry[11]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 12,
+      "speed_kmh": 75,
+      "location_desc": "ECP near Marine Parade",
+      "dist_to_pickup_m": 10000
+     }
+    },
+    {
+     "id": "E-GPS-13",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:44:00+08:00",
+     "summary": "13:44:00 driver GPS, 65 km/h",
+     "source_path": "gps_telemetry[12]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 13,
+      "speed_kmh": 65,
+      "location_desc": "ECP near Bedok / East Coast Park",
+      "dist_to_pickup_m": 13024
+     }
+    },
+    {
+     "id": "E-GPS-14",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:47:30+08:00",
+     "summary": "13:47:30 driver GPS, 60 km/h",
+     "source_path": "gps_telemetry[13]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 14,
+      "speed_kmh": 60,
+      "location_desc": "ECP approaching Changi",
+      "dist_to_pickup_m": 16164
+     }
+    },
+    {
+     "id": "E-GPS-15",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:50:00+08:00",
+     "summary": "13:50:00 driver GPS, 40 km/h",
+     "source_path": "gps_telemetry[14]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 15,
+      "speed_kmh": 40,
+      "location_desc": "Changi Village Rd / Airport Blvd",
+      "dist_to_pickup_m": 17819
+     }
+    },
+    {
+     "id": "E-GPS-16",
+     "type": "gps_ping",
+     "tier": "B",
+     "ts": "2026-09-12T13:52:00+08:00",
+     "summary": "13:52:00 driver GPS, 0 km/h",
+     "source_path": "gps_telemetry[15]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "point": 16,
+      "speed_kmh": 0,
+      "location_desc": "Changi Airport T3 (dropoff)",
+      "dist_to_pickup_m": 18950
+     }
+    },
+    {
+     "id": "E-CHT-01",
+     "type": "chat_message",
+     "tier": "C",
+     "ts": "2026-09-12T13:08:00+08:00",
+     "summary": "13:08:00 rider message",
+     "source_path": "chat_logs[0]",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "message_id": "MSG-001",
+      "sender": "rider",
+      "content": "Hi! I'm at the Orchard Central main entrance, wearing a blue dress. White Toyota Vios right?",
+      "type": "message"
+     }
+    },
+    {
+     "id": "E-CHT-02",
+     "type": "chat_message",
+     "tier": "C",
+     "ts": "2026-09-12T13:09:00+08:00",
+     "summary": "13:09:00 driver message",
+     "source_path": "chat_logs[1]",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "message_id": "MSG-002",
+      "sender": "driver",
+      "content": "Yes that's me! I can see you, coming now. 1 min.",
+      "type": "message"
+     }
+    },
+    {
+     "id": "E-CHT-03",
+     "type": "chat_message",
+     "tier": "C",
+     "ts": "2026-09-12T13:10:00+08:00",
+     "summary": "13:10:00 rider message",
+     "source_path": "chat_logs[2]",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "message_id": "MSG-003",
+      "sender": "rider",
+      "content": "Great thanks! Heading to Changi T3, my flight is at 3:30pm.",
+      "type": "message"
+     }
+    },
+    {
+     "id": "E-CHT-04",
+     "type": "chat_message",
+     "tier": "C",
+     "ts": "2026-09-12T13:10:30+08:00",
+     "summary": "13:10:30 driver message",
+     "source_path": "chat_logs[3]",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "message_id": "MSG-004",
+      "sender": "driver",
+      "content": "Sure, no problem. We will get there in time.",
+      "type": "message"
+     }
+    },
+    {
+     "id": "E-CHT-05",
+     "type": "chat_message",
+     "tier": "C",
+     "ts": "2026-09-12T13:24:00+08:00",
+     "summary": "13:24:00 rider message",
+     "source_path": "chat_logs[4]",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "message_id": "MSG-005",
+      "sender": "rider",
+      "content": "Hey, are we going the right way? This doesn't look like the usual route to the airport.",
+      "type": "message"
+     }
+    },
+    {
+     "id": "E-CHT-06",
+     "type": "chat_message",
+     "tier": "C",
+     "ts": "2026-09-12T13:25:00+08:00",
+     "summary": "13:25:00 driver message",
+     "source_path": "chat_logs[5]",
+     "untrusted_text": true,
+     "withheld": false,
+     "data": {
+      "message_id": "MSG-006",
+      "sender": "driver",
+      "content": "Don't worry, I know the way. We will reach on time.",
+      "type": "message"
+     }
+    },
+    {
+     "id": "E-PAY-01",
+     "type": "charge_record",
+     "tier": "A",
+     "ts": null,
+     "summary": "Fare breakdown: quote, actual fare, excess and surge lines (platform record).",
+     "source_path": "fare_breakdown",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "estimated": {
+       "total": 28.5
+      },
+      "actual": {
+       "total": 35.0
+      },
+      "delta": {
+       "total": 6.5
+      },
+      "excess_distance_fare": 3.44,
+      "excess_tolls": 2.22
+     }
+    },
+    {
+     "id": "E-RTE-01",
+     "type": "reference_lookup",
+     "tier": "A",
+     "ts": null,
+     "summary": "System-recommended route (waypoints, distance, duration).",
+     "source_path": "optimal_route",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "route_name": "PIE (Pan-Island Expressway) — direct route",
+      "estimated_distance_km": 20.5,
+      "estimated_duration_min": 35,
+      "waypoints": [
+       "Orchard Central (pickup)",
+       "Scotts Rd to PIE (Cairnhill) slip road",
+       "PIE entry (near Newton)",
+       "PIE eastbound near Balestier",
+       "PIE near Kallang / Paya Lebar",
+       "PIE near Eunos / Ubi",
+       "PIE near Bedok Reservoir",
+       "PIE near Bedok North",
+       "PIE near Upper Changi",
+       "Changi Airport T3 (dropoff via PIE Exit 2)"
+      ]
+     }
+    },
+    {
+     "id": "E-TRF-01",
+     "type": "reference_lookup",
+     "tier": "A",
+     "ts": "2026-09-12T13:05:00+08:00",
+     "summary": "TC-001 PIE (Pan-Island Expressway) vehicle_fire (high)",
+     "source_path": "traffic_conditions[0]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "incident_id": "TC-001",
+      "road": "PIE (Pan-Island Expressway)",
+      "direction": "eastbound",
+      "stretch": "PIE Exit 16 (Cactus / PAYA LEBAR) to Exit 11 (TAMPINES RD)",
+      "incident_type": "vehicle_fire",
+      "severity": "high",
+      "timestamp": "2026-09-12T13:05:00+08:00",
+      "clear_time": "2026-09-12T13:50:00+08:00",
+      "description": "Vehicle fire on PIE eastbound between Paya Lebar and Hougang. Lanes 1 and 2 blocked. Heavy congestion and long delays reported from 13:05."
+     }
+    },
+    {
+     "id": "E-TRF-02",
+     "type": "reference_lookup",
+     "tier": "A",
+     "ts": "2026-09-12T13:15:00+08:00",
+     "summary": "TC-002 PIE exit ramp — Changi Airport exit heavy_congestion (moderate)",
+     "source_path": "traffic_conditions[1]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "incident_id": "TC-002",
+      "road": "PIE exit ramp — Changi Airport exit",
+      "direction": "eastbound",
+      "stretch": "PIE Exit 2 to Changi Airport",
+      "incident_type": "heavy_congestion",
+      "severity": "moderate",
+      "timestamp": "2026-09-12T13:15:00+08:00",
+      "clear_time": "2026-09-12T13:40:00+08:00",
+      "description": "Heavy congestion on PIE near the airport exit, likely a secondary effect of the vehicle fire upstream."
+     }
+    },
+    {
+     "id": "E-TRF-03",
+     "type": "reference_lookup",
+     "tier": "A",
+     "ts": "2026-09-12T13:30:00+08:00",
+     "summary": "TC-003 ECP (East Coast Parkway) traffic_flow (low)",
+     "source_path": "traffic_conditions[2]",
+     "untrusted_text": false,
+     "withheld": false,
+     "data": {
+      "incident_id": "TC-003",
+      "road": "ECP (East Coast Parkway)",
+      "direction": "eastbound",
+      "stretch": "Marine Parade to Changi Airport",
+      "incident_type": "traffic_flow",
+      "severity": "low",
+      "timestamp": "2026-09-12T13:30:00+08:00",
+      "clear_time": null,
+      "description": "ECP eastbound flowing smoothly. No incidents. The driver's reroute through ECP was a reasonable alternative given PIE conditions."
+     }
+    }
+   ],
+   "rider_advocate_brief": {
+    "party": "rider",
+    "stance": "The rider is owed a refund of the excess distance fare: the driver went 4.3 km beyond the recommended route and never told the rider about a reroute or why.",
+    "requested_outcome": "partial refund of the excess distance fare",
+    "brief": "The recommended PIE route is 20.5 km and the car travelled 24.8 km, a deviation of 4.3 km, far above the 1 km tolerance [E-TRP-01] [E-RTE-01] [Section 1.3]. The GPS trace shows the car off the recommended route from the second ping at 13:17 and through Geylang and the East Coast area to Changi [E-GPS-02] [E-GPS-08] [E-GPS-11]. Section 1.2 requires the driver to tell the rider in the app chat, or aloud with a call recording, before or at the point of deviation. The only exchange about the route is the rider asking at 13:24 whether this was the right way [E-CHT-05], and the driver answering 'Don't worry, I know the way' without naming a reroute or a reason [E-CHT-06]. That is not the notice Section 1.2 asks for. The fare rose by S$6.50 and S$3.44 of it is the excess distance fare [E-PAY-01]. Section 1.3 refunds the excess distance fare when the rider was not informed of a deviation over 1 km, and Precedent 7.1 did exactly that [Precedent 7.1].",
+    "arguments": [
+     {
+      "point": "The deviation is 4.3 km against a recommended route of 20.5 km, over the 1 km tolerance.",
+      "evidence": [
+       "E-TRP-01",
+       "E-RTE-01",
+       "E-GPS-02",
+       "E-GPS-11"
+      ],
+      "rules": [
+       "FC-F02"
+      ],
+      "policy_sections": [
+       "Section 1.3",
+       "Section 1.4"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "No message or call told the rider about a reroute before or at the deviation; the driver's only reply came after the rider asked and gave no reason.",
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06"
+      ],
+      "rules": [
+       "FC-F05"
+      ],
+      "policy_sections": [
+       "Section 1.2"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "The remedy Section 1.3 gives for an unannounced deviation is the excess distance fare, S$3.44, as in Precedent 7.1.",
+      "evidence": [
+       "E-PAY-01"
+      ],
+      "rules": [
+       "FC-R13"
+      ],
+      "policy_sections": [
+       "Section 1.3"
+      ],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    ],
+    "weaknesses": [
+     {
+      "point": "The traffic record shows a vehicle fire on the PIE during the trip, so the driver will say the reroute was justified; that limits the remedy to the partial refund.",
+      "evidence": [
+       "E-TRF-01",
+       "E-TRF-02"
+      ]
+     }
+    ],
+    "safety_concern": false
+   },
+   "driver_advocate_brief": {
+    "party": "driver",
+    "stance": "The reroute was a response to a real incident on the PIE; only the missing notice is at issue, and the refund must stay limited to the excess distance fare.",
+    "requested_outcome": "no refund beyond the excess distance fare; tolls and the rest of the fare stand",
+    "brief": "Section 1.1 lets a driver leave the recommended path for real-time traffic. Historical traffic data, which Section 1.4 names as the test, shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 with two lanes blocked [E-TRF-01] and heavy congestion at the PIE airport exit from 13:15 to 13:40 [E-TRF-02]; the trip ran 13:15 to 13:52 [E-TRP-01]. The ECP was flowing freely [E-TRF-03]. So this is the 'rerouted for traffic' row of Section 1.3, and the rider arrived in 37 minutes against an estimate of 35 [E-TRP-01]. When the rider asked, the driver answered within a minute [E-CHT-05] [E-CHT-06]. The only remedy that row gives is a partial refund of the excess distance fare, S$3.44, not the whole S$6.50 difference, and the tolls of S$2.22 pass through at cost [E-PAY-01] [Precedent 7.1].",
+    "arguments": [
+     {
+      "point": "A vehicle fire and heavy congestion on the PIE overlapped the trip, so the reroute had a traffic justification.",
+      "evidence": [
+       "E-TRF-01",
+       "E-TRF-02",
+       "E-TRP-01"
+      ],
+      "rules": [
+       "FC-F06B"
+      ],
+      "policy_sections": [
+       "Section 1.1",
+       "Section 1.4"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "The ECP was flowing smoothly, a reasonable alternative to the blocked PIE.",
+      "evidence": [
+       "E-TRF-03"
+      ],
+      "rules": [
+       "FC-F06"
+      ],
+      "policy_sections": [
+       "Section 1.1"
+      ],
+      "precedents": []
+     },
+     {
+      "point": "A justified but unannounced reroute earns the excess distance fare only: S$3.44 of the S$6.50 difference; the S$2.22 of tolls passes through at cost.",
+      "evidence": [
+       "E-PAY-01"
+      ],
+      "rules": [
+       "FC-R13",
+       "FC-R08"
+      ],
+      "policy_sections": [
+       "Section 1.3"
+      ],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    ],
+    "rebuttals": [
+     {
+      "to_rider_argument": 1,
+      "reply": "The deviation is not disputed, but Section 1.3 gives no refund for distance alone when the reroute is justified by traffic.",
+      "evidence": [
+       "E-TRF-01"
+      ],
+      "rules": [],
+      "policy_sections": [
+       "Section 1.3"
+      ]
+     },
+     {
+      "to_rider_argument": 2,
+      "reply": "The driver reassured the rider within a minute of the question; the reply did not name the reroute, but the rider was never refused an answer.",
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06"
+      ],
+      "rules": [],
+      "policy_sections": [
+       "Section 1.2"
+      ]
+     },
+     {
+      "to_rider_argument": 3,
+      "reply": "Agreed that Precedent 7.1 applies; it also shows the refund stops at the excess distance fare.",
+      "evidence": [],
+      "rules": [],
+      "policy_sections": [],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    ],
+    "concessions": [
+     {
+      "point": "No chat message or call before or at the deviation told the rider of the reroute and the reason.",
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06"
+      ]
+     },
+     {
+      "point": "The deviation of 4.3 km is over the 1 km tolerance.",
+      "evidence": [
+       "E-TRP-01",
+       "E-RTE-01"
+      ]
+     }
+    ],
+    "safety_concern": false
+   },
+   "judge_answer": {
+    "outcome": "PARTIAL_REFUND",
+    "amount_sgd": 3.44,
+    "payer": "PLATFORM",
+    "payee": "RIDER",
+    "confidence": 0.9,
+    "tier": "APPROVE",
+    "policy_sections": [
+     "Section 1.2",
+     "Section 1.3",
+     "Section 1.4",
+     "Section 6.2",
+     "Precedent 7.1"
+    ],
+    "rules": [
+     "FC-R13",
+     "FC-F02",
+     "FC-F05",
+     "FC-F06B",
+     "FC-R08"
+    ],
+    "evidence": [
+     "E-TRP-01",
+     "E-RTE-01",
+     "E-PAY-01",
+     "E-GPS-02",
+     "E-CHT-05",
+     "E-CHT-06",
+     "E-TRF-01",
+     "E-TRF-02"
+    ],
+    "precedents": [
+     "Precedent 7.1"
+    ],
+    "reasoning": "The recorded distance of 24.8 km against the recommended 20.5 km gives a deviation of 4.3 km, above the 1 km tolerance, and the GPS trace confirms the car left the recommended route at 13:17 [E-TRP-01] [E-RTE-01] [E-GPS-02]. The traffic data shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 and congestion at the airport exit, so the reroute was justified [E-TRF-01] [E-TRF-02] [Section 1.4]. Section 1.2 required notice before or at the point of deviation; the chat holds none, and the driver's reply to the rider's question names neither a reroute nor a reason [E-CHT-05] [E-CHT-06]. That is the 'traffic reroute, rider not informed, more than 1 km' row of Section 1.3 [FC-R13]: a partial refund of the excess distance fare, S$3.44. The Rider Advocate's argument for more than that has no support in the policy; the Driver Advocate's point that tolls pass through at cost stands [FC-R08]. Precedent 7.1 (1.8 km, justified, not informed) ruled the same way and is aligned. Because the deviation exceeds 2 km, Section 6.2 sends the ruling to human review with the remedy recommended. Confidence is 0.9: the facts are tier A and B, the one reading in play (matching an incident to the route by road, direction and time) is FairRyde's.",
+    "agreement_with_engine": true,
+    "disagreement_note": "",
+    "rider_explanation": "You are eligible for a refund of S$3.44, the fare charged for the extra distance, to your original payment method. The trip was 24.8 km against a recommended route of 20.5 km, a deviation of 4.3 km, which is more than the 1 km Section 1.3 allows [E-TRP-01] [E-RTE-01]. Traffic data shows a vehicle fire on the PIE during your trip, so the driver had a reason to reroute [E-TRF-01], but Section 1.2 required the driver to tell you before or at the point of deviation, and no message or call did [E-CHT-05] [E-CHT-06]. That is why Section 1.3 refunds the excess distance fare [FC-R13]; the tolls of S$2.22 pass through at cost and the rest of the fare stands. Because the deviation is more than 2 km, a Ryde staff member confirms this recommendation before it takes effect (Section 6.2).",
+    "driver_explanation": "The rider is refunded S$3.44, the fare charged for the extra distance, and the platform pays it. Your reroute was accepted as justified: the traffic data shows a vehicle fire on the PIE from 13:05 to 13:50 and congestion at the airport exit [E-TRF-01] [E-TRF-02], so the rest of the fare and the tolls of S$2.22 stand (Section 1.4). The refund is for the missing notice: Section 1.2 asks for a chat message or a spoken notice with a short reason before or at the deviation, and the record shows none [E-CHT-05] [E-CHT-06]. Precedent 7.1 ruled the same way. Because the deviation is more than 2 km, a Ryde staff member confirms the refund before it takes effect; you can also ask for a human review.",
+    "safety_concern": false
+   },
+   "judge_case_file": null,
+   "verification": {
+    "rider_advocate": {
+     "checks": [
+      {
+       "name": "rider advocate: citations",
+       "status": "PASS",
+       "detail": "17 cited ID(s) all exist",
+       "kind": "citation"
+      }
+     ],
+     "invalid": {
+      "evidence": [],
+      "withheld": [],
+      "rules": [],
+      "sections": [],
+      "precedents": []
+     },
+     "ok": true,
+     "cited": {
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06",
+       "E-GPS-02",
+       "E-GPS-08",
+       "E-GPS-11",
+       "E-PAY-01",
+       "E-RTE-01",
+       "E-TRF-01",
+       "E-TRF-02",
+       "E-TRP-01"
+      ],
+      "rules": [
+       "FC-F02",
+       "FC-F05",
+       "FC-R13"
+      ],
+      "sections": [
+       "Section 1.2",
+       "Section 1.3",
+       "Section 1.4"
+      ],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    },
+    "driver_advocate": {
+     "checks": [
+      {
+       "name": "driver advocate: citations",
+       "status": "PASS",
+       "detail": "17 cited ID(s) all exist",
+       "kind": "citation"
+      }
+     ],
+     "invalid": {
+      "evidence": [],
+      "withheld": [],
+      "rules": [],
+      "sections": [],
+      "precedents": []
+     },
+     "ok": true,
+     "cited": {
+      "evidence": [
+       "E-CHT-05",
+       "E-CHT-06",
+       "E-PAY-01",
+       "E-RTE-01",
+       "E-TRF-01",
+       "E-TRF-02",
+       "E-TRF-03",
+       "E-TRP-01"
+      ],
+      "rules": [
+       "FC-F06",
+       "FC-F06B",
+       "FC-R08",
+       "FC-R13"
+      ],
+      "sections": [
+       "Section 1.1",
+       "Section 1.2",
+       "Section 1.3",
+       "Section 1.4"
+      ],
+      "precedents": [
+       "Precedent 7.1"
+      ]
+     }
+    },
+    "judge": [
+     {
+      "attempt": 0,
+      "checks": [
+       {
+        "name": "schema",
+        "status": "PASS",
+        "detail": "all required fields are present and well formed",
+        "kind": "schema"
+       },
+       {
+        "name": "Judge: citations",
+        "status": "PASS",
+        "detail": "19 cited ID(s) all exist",
+        "kind": "citation"
+       },
+       {
+        "name": "numbers",
+        "status": "PASS",
+        "detail": "every number in both explanations is a value of the case, the engine or the policy (EXP-03)",
+        "kind": "number"
+       },
+       {
+        "name": "engine",
+        "status": "PASS",
+        "detail": "outcome, amount, payer and payee equal the engine's",
+        "kind": "engine"
+       }
+      ],
+      "ok": true,
+      "retryable_failure": false,
+      "disagrees": false,
+      "engine_diffs": []
+     }
+    ],
+    "safety": null
+   },
+   "note": "Account history (fraud signals and flags) is in reviewer_only and was never shown to an agent."
+  }
+ },
+ "events": [
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "intake",
+   "status": "start",
+   "title": "Intake and classification (CLS rules)"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "intake",
+   "status": "end"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "evidence",
+   "status": "start",
+   "title": "Evidence extraction with evidence IDs"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "evidence",
+   "status": "end"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "engine",
+   "status": "start",
+   "title": "Reference engines (kb/tools)"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "engine",
+   "status": "end"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "rider_advocate",
+   "status": "start",
+   "title": "Rider Advocate"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "message",
+   "agent": "rider_advocate",
+   "message": {
+    "agent": "rider_advocate",
+    "role": "Rider Advocate",
+    "mode": "ruling",
+    "attempt": 0,
+    "model": "mock (saved response)",
+    "client": "mock",
+    "json": {
+     "party": "rider",
+     "stance": "The rider is owed a refund of the excess distance fare: the driver went 4.3 km beyond the recommended route and never told the rider about a reroute or why.",
+     "requested_outcome": "partial refund of the excess distance fare",
+     "brief": "The recommended PIE route is 20.5 km and the car travelled 24.8 km, a deviation of 4.3 km, far above the 1 km tolerance [E-TRP-01] [E-RTE-01] [Section 1.3]. The GPS trace shows the car off the recommended route from the second ping at 13:17 and through Geylang and the East Coast area to Changi [E-GPS-02] [E-GPS-08] [E-GPS-11]. Section 1.2 requires the driver to tell the rider in the app chat, or aloud with a call recording, before or at the point of deviation. The only exchange about the route is the rider asking at 13:24 whether this was the right way [E-CHT-05], and the driver answering 'Don't worry, I know the way' without naming a reroute or a reason [E-CHT-06]. That is not the notice Section 1.2 asks for. The fare rose by S$6.50 and S$3.44 of it is the excess distance fare [E-PAY-01]. Section 1.3 refunds the excess distance fare when the rider was not informed of a deviation over 1 km, and Precedent 7.1 did exactly that [Precedent 7.1].",
+     "arguments": [
+      {
+       "point": "The deviation is 4.3 km against a recommended route of 20.5 km, over the 1 km tolerance.",
+       "evidence": [
+        "E-TRP-01",
+        "E-RTE-01",
+        "E-GPS-02",
+        "E-GPS-11"
+       ],
+       "rules": [
+        "FC-F02"
+       ],
+       "policy_sections": [
+        "Section 1.3",
+        "Section 1.4"
+       ],
+       "precedents": []
+      },
+      {
+       "point": "No message or call told the rider about a reroute before or at the deviation; the driver's only reply came after the rider asked and gave no reason.",
+       "evidence": [
+        "E-CHT-05",
+        "E-CHT-06"
+       ],
+       "rules": [
+        "FC-F05"
+       ],
+       "policy_sections": [
+        "Section 1.2"
+       ],
+       "precedents": []
+      },
+      {
+       "point": "The remedy Section 1.3 gives for an unannounced deviation is the excess distance fare, S$3.44, as in Precedent 7.1.",
+       "evidence": [
+        "E-PAY-01"
+       ],
+       "rules": [
+        "FC-R13"
+       ],
+       "policy_sections": [
+        "Section 1.3"
+       ],
+       "precedents": [
+        "Precedent 7.1"
+       ]
+      }
+     ],
+     "weaknesses": [
+      {
+       "point": "The traffic record shows a vehicle fire on the PIE during the trip, so the driver will say the reroute was justified; that limits the remedy to the partial refund.",
+       "evidence": [
+        "E-TRF-01",
+        "E-TRF-02"
+       ]
+      }
+     ],
+     "safety_concern": false
+    },
+    "text": "{\"party\": \"rider\", \"stance\": \"The rider is owed a refund of the excess distance fare: the driver went 4.3 km beyond the recommended route and never told the rider about a reroute or why.\", \"requested_outcome\": \"partial refund of the excess distance fare\", \"brief\": \"The recommended PIE route is 20.5 km and the car travelled 24.8 km, a deviation of 4.3 km, far above the 1 km tolerance [E-TRP-01] [E-RTE-01] [Section 1.3]. The GPS trace shows the car off the recommended route from the second ping at 13:17 and through Geylang and the East Coast area to Changi [E-GPS-02] [E-GPS-08] [E-GPS-11]. Section 1.2 requires the driver to tell the rider in the app chat, or aloud with a call recording, before or at the point of deviation. The only exchange about the route is the rider asking at 13:24 whether this was the right way [E-CHT-05], and the driver answering 'Don't worry, I know the way' without naming a reroute or a reason [E-CHT-06]. That is not the notice Section 1.2 asks for. The fare rose by S$6.50 and S$3.44 of it is the excess distance fare [E-PAY-01]. Section 1.3 refunds the excess distance fare when the rider was not informed of a deviation over 1 km, and Precedent 7.1 did exactly that [Precedent 7.1].\", \"arguments\": [{\"point\": \"The deviation is 4.3 km against a recommended route of 20.5 km, over the 1 km tolerance.\", \"evidence\": [\"E-TRP-01\", \"E-RTE-01\", \"E-GPS-02\", \"E-GPS-11\"], \"rules\": [\"FC-F02\"], \"policy_sections\": [\"Section 1.3\", \"Section 1.4\"], \"precedents\": []}, {\"point\": \"No message or call told the rider about a reroute before or at the deviation; the driver's only reply came after the rider asked and gave no reason.\", \"evidence\": [\"E-CHT-05\", \"E-CHT-06\"], \"rules\": [\"FC-F05\"], \"policy_sections\": [\"Section 1.2\"], \"precedents\": []}, {\"point\": \"The remedy Section 1.3 gives for an unannounced deviation is the excess distance fare, S$3.44, as in Precedent 7.1.\", \"evidence\": [\"E-PAY-01\"], \"rules\": [\"FC-R13\"], \"policy_sections\": [\"Section 1.3\"], \"precedents\": [\"Precedent 7.1\"]}], \"weaknesses\": [{\"point\": \"The traffic record shows a vehicle fire on the PIE during the trip, so the driver will say the reroute was justified; that limits the remedy to the partial refund.\", \"evidence\": [\"E-TRF-01\", \"E-TRF-02\"]}], \"safety_concern\": false}",
+    "error": null,
+    "refused": false,
+    "usage": {
+     "input_tokens": 0,
+     "output_tokens": 0
+    },
+    "latency_s": 0.0,
+    "privacy_boundary": {
+     "PERSON_NAME": 0,
+     "PERSON_NAME_TOKEN": 0,
+     "VEHICLE_PLATE": 0,
+     "ACCOUNT_ID": 0,
+     "ACCOUNT_ID_PATTERN": 0,
+     "SG_PLATE": 0,
+     "PHONE": 0,
+     "EMAIL": 0,
+     "NRIC_FIN": 0,
+     "UNIT_NUMBER": 0,
+     "CARD_TAIL": 0,
+     "LONG_NUMBER": 0,
+     "total": 0
+    },
+    "request_chars": 32199,
+    "request_id": null,
+    "mock": true,
+    "json_shown": {
+     "party": "rider",
+     "stance": "The rider is owed a refund of the excess distance fare: the driver went 4.3 km beyond the recommended route and never told the rider about a reroute or why.",
+     "requested_outcome": "partial refund of the excess distance fare",
+     "brief": "The recommended PIE route is 20.5 km and the car travelled 24.8 km, a deviation of 4.3 km, far above the 1 km tolerance [E-TRP-01] [E-RTE-01] [Section 1.3]. The GPS trace shows the car off the recommended route from the second ping at 13:17 and through Geylang and the East Coast area to Changi [E-GPS-02] [E-GPS-08] [E-GPS-11]. Section 1.2 requires the driver to tell the rider in the app chat, or aloud with a call recording, before or at the point of deviation. The only exchange about the route is the rider asking at 13:24 whether this was the right way [E-CHT-05], and the driver answering 'Don't worry, I know the way' without naming a reroute or a reason [E-CHT-06]. That is not the notice Section 1.2 asks for. The fare rose by S$6.50 and S$3.44 of it is the excess distance fare [E-PAY-01]. Section 1.3 refunds the excess distance fare when the rider was not informed of a deviation over 1 km, and Precedent 7.1 did exactly that [Precedent 7.1].",
+     "arguments": [
+      {
+       "point": "The deviation is 4.3 km against a recommended route of 20.5 km, over the 1 km tolerance.",
+       "evidence": [
+        "E-TRP-01",
+        "E-RTE-01",
+        "E-GPS-02",
+        "E-GPS-11"
+       ],
+       "rules": [
+        "FC-F02"
+       ],
+       "policy_sections": [
+        "Section 1.3",
+        "Section 1.4"
+       ],
+       "precedents": []
+      },
+      {
+       "point": "No message or call told the rider about a reroute before or at the deviation; the driver's only reply came after the rider asked and gave no reason.",
+       "evidence": [
+        "E-CHT-05",
+        "E-CHT-06"
+       ],
+       "rules": [
+        "FC-F05"
+       ],
+       "policy_sections": [
+        "Section 1.2"
+       ],
+       "precedents": []
+      },
+      {
+       "point": "The remedy Section 1.3 gives for an unannounced deviation is the excess distance fare, S$3.44, as in Precedent 7.1.",
+       "evidence": [
+        "E-PAY-01"
+       ],
+       "rules": [
+        "FC-R13"
+       ],
+       "policy_sections": [
+        "Section 1.3"
+       ],
+       "precedents": [
+        "Precedent 7.1"
+       ]
+      }
+     ],
+     "weaknesses": [
+      {
+       "point": "The traffic record shows a vehicle fire on the PIE during the trip, so the driver will say the reroute was justified; that limits the remedy to the partial refund.",
+       "evidence": [
+        "E-TRF-01",
+        "E-TRF-02"
+       ]
+      }
+     ],
+     "safety_concern": false
+    }
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "verification",
+   "agent": "rider_advocate",
+   "ok": true,
+   "checks": [
+    {
+     "name": "rider advocate: citations",
+     "status": "PASS",
+     "detail": "17 cited ID(s) all exist",
+     "kind": "citation"
+    }
+   ],
+   "invalid": {
+    "evidence": [],
+    "withheld": [],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "driver_advocate",
+   "status": "start",
+   "title": "Driver Advocate"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "message",
+   "agent": "driver_advocate",
+   "message": {
+    "agent": "driver_advocate",
+    "role": "Driver Advocate",
+    "mode": "ruling",
+    "attempt": 0,
+    "model": "mock (saved response)",
+    "client": "mock",
+    "json": {
+     "party": "driver",
+     "stance": "The reroute was a response to a real incident on the PIE; only the missing notice is at issue, and the refund must stay limited to the excess distance fare.",
+     "requested_outcome": "no refund beyond the excess distance fare; tolls and the rest of the fare stand",
+     "brief": "Section 1.1 lets a driver leave the recommended path for real-time traffic. Historical traffic data, which Section 1.4 names as the test, shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 with two lanes blocked [E-TRF-01] and heavy congestion at the PIE airport exit from 13:15 to 13:40 [E-TRF-02]; the trip ran 13:15 to 13:52 [E-TRP-01]. The ECP was flowing freely [E-TRF-03]. So this is the 'rerouted for traffic' row of Section 1.3, and the rider arrived in 37 minutes against an estimate of 35 [E-TRP-01]. When the rider asked, the driver answered within a minute [E-CHT-05] [E-CHT-06]. The only remedy that row gives is a partial refund of the excess distance fare, S$3.44, not the whole S$6.50 difference, and the tolls of S$2.22 pass through at cost [E-PAY-01] [Precedent 7.1].",
+     "arguments": [
+      {
+       "point": "A vehicle fire and heavy congestion on the PIE overlapped the trip, so the reroute had a traffic justification.",
+       "evidence": [
+        "E-TRF-01",
+        "E-TRF-02",
+        "E-TRP-01"
+       ],
+       "rules": [
+        "FC-F06B"
+       ],
+       "policy_sections": [
+        "Section 1.1",
+        "Section 1.4"
+       ],
+       "precedents": []
+      },
+      {
+       "point": "The ECP was flowing smoothly, a reasonable alternative to the blocked PIE.",
+       "evidence": [
+        "E-TRF-03"
+       ],
+       "rules": [
+        "FC-F06"
+       ],
+       "policy_sections": [
+        "Section 1.1"
+       ],
+       "precedents": []
+      },
+      {
+       "point": "A justified but unannounced reroute earns the excess distance fare only: S$3.44 of the S$6.50 difference; the S$2.22 of tolls passes through at cost.",
+       "evidence": [
+        "E-PAY-01"
+       ],
+       "rules": [
+        "FC-R13",
+        "FC-R08"
+       ],
+       "policy_sections": [
+        "Section 1.3"
+       ],
+       "precedents": [
+        "Precedent 7.1"
+       ]
+      }
+     ],
+     "rebuttals": [
+      {
+       "to_rider_argument": 1,
+       "reply": "The deviation is not disputed, but Section 1.3 gives no refund for distance alone when the reroute is justified by traffic.",
+       "evidence": [
+        "E-TRF-01"
+       ],
+       "rules": [],
+       "policy_sections": [
+        "Section 1.3"
+       ]
+      },
+      {
+       "to_rider_argument": 2,
+       "reply": "The driver reassured the rider within a minute of the question; the reply did not name the reroute, but the rider was never refused an answer.",
+       "evidence": [
+        "E-CHT-05",
+        "E-CHT-06"
+       ],
+       "rules": [],
+       "policy_sections": [
+        "Section 1.2"
+       ]
+      },
+      {
+       "to_rider_argument": 3,
+       "reply": "Agreed that Precedent 7.1 applies; it also shows the refund stops at the excess distance fare.",
+       "evidence": [],
+       "rules": [],
+       "policy_sections": [],
+       "precedents": [
+        "Precedent 7.1"
+       ]
+      }
+     ],
+     "concessions": [
+      {
+       "point": "No chat message or call before or at the deviation told the rider of the reroute and the reason.",
+       "evidence": [
+        "E-CHT-05",
+        "E-CHT-06"
+       ]
+      },
+      {
+       "point": "The deviation of 4.3 km is over the 1 km tolerance.",
+       "evidence": [
+        "E-TRP-01",
+        "E-RTE-01"
+       ]
+      }
+     ],
+     "safety_concern": false
+    },
+    "text": "{\"party\": \"driver\", \"stance\": \"The reroute was a response to a real incident on the PIE; only the missing notice is at issue, and the refund must stay limited to the excess distance fare.\", \"requested_outcome\": \"no refund beyond the excess distance fare; tolls and the rest of the fare stand\", \"brief\": \"Section 1.1 lets a driver leave the recommended path for real-time traffic. Historical traffic data, which Section 1.4 names as the test, shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 with two lanes blocked [E-TRF-01] and heavy congestion at the PIE airport exit from 13:15 to 13:40 [E-TRF-02]; the trip ran 13:15 to 13:52 [E-TRP-01]. The ECP was flowing freely [E-TRF-03]. So this is the 'rerouted for traffic' row of Section 1.3, and the rider arrived in 37 minutes against an estimate of 35 [E-TRP-01]. When the rider asked, the driver answered within a minute [E-CHT-05] [E-CHT-06]. The only remedy that row gives is a partial refund of the excess distance fare, S$3.44, not the whole S$6.50 difference, and the tolls of S$2.22 pass through at cost [E-PAY-01] [Precedent 7.1].\", \"arguments\": [{\"point\": \"A vehicle fire and heavy congestion on the PIE overlapped the trip, so the reroute had a traffic justification.\", \"evidence\": [\"E-TRF-01\", \"E-TRF-02\", \"E-TRP-01\"], \"rules\": [\"FC-F06B\"], \"policy_sections\": [\"Section 1.1\", \"Section 1.4\"], \"precedents\": []}, {\"point\": \"The ECP was flowing smoothly, a reasonable alternative to the blocked PIE.\", \"evidence\": [\"E-TRF-03\"], \"rules\": [\"FC-F06\"], \"policy_sections\": [\"Section 1.1\"], \"precedents\": []}, {\"point\": \"A justified but unannounced reroute earns the excess distance fare only: S$3.44 of the S$6.50 difference; the S$2.22 of tolls passes through at cost.\", \"evidence\": [\"E-PAY-01\"], \"rules\": [\"FC-R13\", \"FC-R08\"], \"policy_sections\": [\"Section 1.3\"], \"precedents\": [\"Precedent 7.1\"]}], \"rebuttals\": [{\"to_rider_argument\": 1, \"reply\": \"The deviation is not disputed, but Section 1.3 gives no refund for distance alone when the reroute is justified by traffic.\", \"evidence\": [\"E-TRF-01\"], \"rules\": [], \"policy_sections\": [\"Section 1.3\"]}, {\"to_rider_argument\": 2, \"reply\": \"The driver reassured the rider within a minute of the question; the reply did not name the reroute, but the rider was never refused an answer.\", \"evidence\": [\"E-CHT-05\", \"E-CHT-06\"], \"rules\": [], \"policy_sections\": [\"Section 1.2\"]}, {\"to_rider_argument\": 3, \"reply\": \"Agreed that Precedent 7.1 applies; it also shows the refund stops at the excess distance fare.\", \"evidence\": [], \"rules\": [], \"policy_sections\": [], \"precedents\": [\"Precedent 7.1\"]}], \"concessions\": [{\"point\": \"No chat message or call before or at the deviation told the rider of the reroute and the reason.\", \"evidence\": [\"E-CHT-05\", \"E-CHT-06\"]}, {\"point\": \"The deviation of 4.3 km is over the 1 km tolerance.\", \"evidence\": [\"E-TRP-01\", \"E-RTE-01\"]}], \"safety_concern\": false}",
+    "error": null,
+    "refused": false,
+    "usage": {
+     "input_tokens": 0,
+     "output_tokens": 0
+    },
+    "latency_s": 0.0,
+    "privacy_boundary": {
+     "PERSON_NAME": 0,
+     "PERSON_NAME_TOKEN": 0,
+     "VEHICLE_PLATE": 0,
+     "ACCOUNT_ID": 0,
+     "ACCOUNT_ID_PATTERN": 0,
+     "SG_PLATE": 0,
+     "PHONE": 0,
+     "EMAIL": 0,
+     "NRIC_FIN": 0,
+     "UNIT_NUMBER": 0,
+     "CARD_TAIL": 0,
+     "LONG_NUMBER": 0,
+     "total": 0
+    },
+    "request_chars": 35267,
+    "request_id": null,
+    "mock": true,
+    "json_shown": {
+     "party": "driver",
+     "stance": "The reroute was a response to a real incident on the PIE; only the missing notice is at issue, and the refund must stay limited to the excess distance fare.",
+     "requested_outcome": "no refund beyond the excess distance fare; tolls and the rest of the fare stand",
+     "brief": "Section 1.1 lets a driver leave the recommended path for real-time traffic. Historical traffic data, which Section 1.4 names as the test, shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 with two lanes blocked [E-TRF-01] and heavy congestion at the PIE airport exit from 13:15 to 13:40 [E-TRF-02]; the trip ran 13:15 to 13:52 [E-TRP-01]. The ECP was flowing freely [E-TRF-03]. So this is the 'rerouted for traffic' row of Section 1.3, and the rider arrived in 37 minutes against an estimate of 35 [E-TRP-01]. When the rider asked, the driver answered within a minute [E-CHT-05] [E-CHT-06]. The only remedy that row gives is a partial refund of the excess distance fare, S$3.44, not the whole S$6.50 difference, and the tolls of S$2.22 pass through at cost [E-PAY-01] [Precedent 7.1].",
+     "arguments": [
+      {
+       "point": "A vehicle fire and heavy congestion on the PIE overlapped the trip, so the reroute had a traffic justification.",
+       "evidence": [
+        "E-TRF-01",
+        "E-TRF-02",
+        "E-TRP-01"
+       ],
+       "rules": [
+        "FC-F06B"
+       ],
+       "policy_sections": [
+        "Section 1.1",
+        "Section 1.4"
+       ],
+       "precedents": []
+      },
+      {
+       "point": "The ECP was flowing smoothly, a reasonable alternative to the blocked PIE.",
+       "evidence": [
+        "E-TRF-03"
+       ],
+       "rules": [
+        "FC-F06"
+       ],
+       "policy_sections": [
+        "Section 1.1"
+       ],
+       "precedents": []
+      },
+      {
+       "point": "A justified but unannounced reroute earns the excess distance fare only: S$3.44 of the S$6.50 difference; the S$2.22 of tolls passes through at cost.",
+       "evidence": [
+        "E-PAY-01"
+       ],
+       "rules": [
+        "FC-R13",
+        "FC-R08"
+       ],
+       "policy_sections": [
+        "Section 1.3"
+       ],
+       "precedents": [
+        "Precedent 7.1"
+       ]
+      }
+     ],
+     "rebuttals": [
+      {
+       "to_rider_argument": 1,
+       "reply": "The deviation is not disputed, but Section 1.3 gives no refund for distance alone when the reroute is justified by traffic.",
+       "evidence": [
+        "E-TRF-01"
+       ],
+       "rules": [],
+       "policy_sections": [
+        "Section 1.3"
+       ]
+      },
+      {
+       "to_rider_argument": 2,
+       "reply": "The driver reassured the rider within a minute of the question; the reply did not name the reroute, but the rider was never refused an answer.",
+       "evidence": [
+        "E-CHT-05",
+        "E-CHT-06"
+       ],
+       "rules": [],
+       "policy_sections": [
+        "Section 1.2"
+       ]
+      },
+      {
+       "to_rider_argument": 3,
+       "reply": "Agreed that Precedent 7.1 applies; it also shows the refund stops at the excess distance fare.",
+       "evidence": [],
+       "rules": [],
+       "policy_sections": [],
+       "precedents": [
+        "Precedent 7.1"
+       ]
+      }
+     ],
+     "concessions": [
+      {
+       "point": "No chat message or call before or at the deviation told the rider of the reroute and the reason.",
+       "evidence": [
+        "E-CHT-05",
+        "E-CHT-06"
+       ]
+      },
+      {
+       "point": "The deviation of 4.3 km is over the 1 km tolerance.",
+       "evidence": [
+        "E-TRP-01",
+        "E-RTE-01"
+       ]
+      }
+     ],
+     "safety_concern": false
+    }
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "verification",
+   "agent": "driver_advocate",
+   "ok": true,
+   "checks": [
+    {
+     "name": "driver advocate: citations",
+     "status": "PASS",
+     "detail": "17 cited ID(s) all exist",
+     "kind": "citation"
+    }
+   ],
+   "invalid": {
+    "evidence": [],
+    "withheld": [],
+    "rules": [],
+    "sections": [],
+    "precedents": []
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "judge",
+   "status": "start",
+   "title": "Judge"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "message",
+   "agent": "judge",
+   "message": {
+    "agent": "judge",
+    "role": "Judge",
+    "mode": "ruling",
+    "attempt": 0,
+    "model": "mock (saved response)",
+    "client": "mock",
+    "json": {
+     "outcome": "PARTIAL_REFUND",
+     "amount_sgd": 3.44,
+     "payer": "PLATFORM",
+     "payee": "RIDER",
+     "confidence": 0.9,
+     "tier": "APPROVE",
+     "policy_sections": [
+      "Section 1.2",
+      "Section 1.3",
+      "Section 1.4",
+      "Section 6.2",
+      "Precedent 7.1"
+     ],
+     "rules": [
+      "FC-R13",
+      "FC-F02",
+      "FC-F05",
+      "FC-F06B",
+      "FC-R08"
+     ],
+     "evidence": [
+      "E-TRP-01",
+      "E-RTE-01",
+      "E-PAY-01",
+      "E-GPS-02",
+      "E-CHT-05",
+      "E-CHT-06",
+      "E-TRF-01",
+      "E-TRF-02"
+     ],
+     "precedents": [
+      "Precedent 7.1"
+     ],
+     "reasoning": "The recorded distance of 24.8 km against the recommended 20.5 km gives a deviation of 4.3 km, above the 1 km tolerance, and the GPS trace confirms the car left the recommended route at 13:17 [E-TRP-01] [E-RTE-01] [E-GPS-02]. The traffic data shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 and congestion at the airport exit, so the reroute was justified [E-TRF-01] [E-TRF-02] [Section 1.4]. Section 1.2 required notice before or at the point of deviation; the chat holds none, and the driver's reply to the rider's question names neither a reroute nor a reason [E-CHT-05] [E-CHT-06]. That is the 'traffic reroute, rider not informed, more than 1 km' row of Section 1.3 [FC-R13]: a partial refund of the excess distance fare, S$3.44. The Rider Advocate's argument for more than that has no support in the policy; the Driver Advocate's point that tolls pass through at cost stands [FC-R08]. Precedent 7.1 (1.8 km, justified, not informed) ruled the same way and is aligned. Because the deviation exceeds 2 km, Section 6.2 sends the ruling to human review with the remedy recommended. Confidence is 0.9: the facts are tier A and B, the one reading in play (matching an incident to the route by road, direction and time) is FairRyde's.",
+     "agreement_with_engine": true,
+     "disagreement_note": "",
+     "rider_explanation": "You are eligible for a refund of S$3.44, the fare charged for the extra distance, to your original payment method. The trip was 24.8 km against a recommended route of 20.5 km, a deviation of 4.3 km, which is more than the 1 km Section 1.3 allows [E-TRP-01] [E-RTE-01]. Traffic data shows a vehicle fire on the PIE during your trip, so the driver had a reason to reroute [E-TRF-01], but Section 1.2 required the driver to tell you before or at the point of deviation, and no message or call did [E-CHT-05] [E-CHT-06]. That is why Section 1.3 refunds the excess distance fare [FC-R13]; the tolls of S$2.22 pass through at cost and the rest of the fare stands. Because the deviation is more than 2 km, a Ryde staff member confirms this recommendation before it takes effect (Section 6.2).",
+     "driver_explanation": "The rider is refunded S$3.44, the fare charged for the extra distance, and the platform pays it. Your reroute was accepted as justified: the traffic data shows a vehicle fire on the PIE from 13:05 to 13:50 and congestion at the airport exit [E-TRF-01] [E-TRF-02], so the rest of the fare and the tolls of S$2.22 stand (Section 1.4). The refund is for the missing notice: Section 1.2 asks for a chat message or a spoken notice with a short reason before or at the deviation, and the record shows none [E-CHT-05] [E-CHT-06]. Precedent 7.1 ruled the same way. Because the deviation is more than 2 km, a Ryde staff member confirms the refund before it takes effect; you can also ask for a human review.",
+     "safety_concern": false
+    },
+    "text": "{\"outcome\": \"PARTIAL_REFUND\", \"amount_sgd\": 3.44, \"payer\": \"PLATFORM\", \"payee\": \"RIDER\", \"confidence\": 0.9, \"tier\": \"APPROVE\", \"policy_sections\": [\"Section 1.2\", \"Section 1.3\", \"Section 1.4\", \"Section 6.2\", \"Precedent 7.1\"], \"rules\": [\"FC-R13\", \"FC-F02\", \"FC-F05\", \"FC-F06B\", \"FC-R08\"], \"evidence\": [\"E-TRP-01\", \"E-RTE-01\", \"E-PAY-01\", \"E-GPS-02\", \"E-CHT-05\", \"E-CHT-06\", \"E-TRF-01\", \"E-TRF-02\"], \"precedents\": [\"Precedent 7.1\"], \"reasoning\": \"The recorded distance of 24.8 km against the recommended 20.5 km gives a deviation of 4.3 km, above the 1 km tolerance, and the GPS trace confirms the car left the recommended route at 13:17 [E-TRP-01] [E-RTE-01] [E-GPS-02]. The traffic data shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 and congestion at the airport exit, so the reroute was justified [E-TRF-01] [E-TRF-02] [Section 1.4]. Section 1.2 required notice before or at the point of deviation; the chat holds none, and the driver's reply to the rider's question names neither a reroute nor a reason [E-CHT-05] [E-CHT-06]. That is the 'traffic reroute, rider not informed, more than 1 km' row of Section 1.3 [FC-R13]: a partial refund of the excess distance fare, S$3.44. The Rider Advocate's argument for more than that has no support in the policy; the Driver Advocate's point that tolls pass through at cost stands [FC-R08]. Precedent 7.1 (1.8 km, justified, not informed) ruled the same way and is aligned. Because the deviation exceeds 2 km, Section 6.2 sends the ruling to human review with the remedy recommended. Confidence is 0.9: the facts are tier A and B, the one reading in play (matching an incident to the route by road, direction and time) is FairRyde's.\", \"agreement_with_engine\": true, \"disagreement_note\": \"\", \"rider_explanation\": \"You are eligible for a refund of S$3.44, the fare charged for the extra distance, to your original payment method. The trip was 24.8 km against a recommended route of 20.5 km, a deviation of 4.3 km, which is more than the 1 km Section 1.3 allows [E-TRP-01] [E-RTE-01]. Traffic data shows a vehicle fire on the PIE during your trip, so the driver had a reason to reroute [E-TRF-01], but Section 1.2 required the driver to tell you before or at the point of deviation, and no message or call did [E-CHT-05] [E-CHT-06]. That is why Section 1.3 refunds the excess distance fare [FC-R13]; the tolls of S$2.22 pass through at cost and the rest of the fare stands. Because the deviation is more than 2 km, a Ryde staff member confirms this recommendation before it takes effect (Section 6.2).\", \"driver_explanation\": \"The rider is refunded S$3.44, the fare charged for the extra distance, and the platform pays it. Your reroute was accepted as justified: the traffic data shows a vehicle fire on the PIE from 13:05 to 13:50 and congestion at the airport exit [E-TRF-01] [E-TRF-02], so the rest of the fare and the tolls of S$2.22 stand (Section 1.4). The refund is for the missing notice: Section 1.2 asks for a chat message or a spoken notice with a short reason before or at the deviation, and the record shows none [E-CHT-05] [E-CHT-06]. Precedent 7.1 ruled the same way. Because the deviation is more than 2 km, a Ryde staff member confirms the refund before it takes effect; you can also ask for a human review.\", \"safety_concern\": false}",
+    "error": null,
+    "refused": false,
+    "usage": {
+     "input_tokens": 0,
+     "output_tokens": 0
+    },
+    "latency_s": 0.0,
+    "privacy_boundary": {
+     "PERSON_NAME": 0,
+     "PERSON_NAME_TOKEN": 0,
+     "VEHICLE_PLATE": 0,
+     "ACCOUNT_ID": 0,
+     "ACCOUNT_ID_PATTERN": 0,
+     "SG_PLATE": 0,
+     "PHONE": 0,
+     "EMAIL": 0,
+     "NRIC_FIN": 0,
+     "UNIT_NUMBER": 0,
+     "CARD_TAIL": 0,
+     "LONG_NUMBER": 0,
+     "total": 0
+    },
+    "request_chars": 46147,
+    "request_id": null,
+    "mock": true
+   }
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "verification",
+   "agent": "judge",
+   "attempt": 0,
+   "ok": true,
+   "checks": [
+    {
+     "name": "schema",
+     "status": "PASS",
+     "detail": "all required fields are present and well formed",
+     "kind": "schema"
+    },
+    {
+     "name": "Judge: citations",
+     "status": "PASS",
+     "detail": "19 cited ID(s) all exist",
+     "kind": "citation"
+    },
+    {
+     "name": "numbers",
+     "status": "PASS",
+     "detail": "every number in both explanations is a value of the case, the engine or the policy (EXP-03)",
+     "kind": "number"
+    },
+    {
+     "name": "engine",
+     "status": "PASS",
+     "detail": "outcome, amount, payer and payee equal the engine's",
+     "kind": "engine"
+    }
+   ],
+   "disagrees": false,
+   "engine_diffs": []
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "resolve",
+   "status": "start",
+   "title": "Approval tier (AUTH rules)"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "stage",
+   "stage": "resolve",
+   "status": "end"
+  },
+  {
+   "t": "2026-10-15T10:32:17+00:00",
+   "type": "final",
+   "result": {
+    "status": "RECOMMENDED",
+    "outcome": "PARTIAL_REFUND",
+    "amount_sgd": 3.44,
+    "tier": "APPROVE"
+   }
+  }
+ ],
+ "privacy": {
+  "terms_replaced": 9,
+  "note": "names, plates, phones and account IDs are replaced before any text is sent; this log holds the pseudonymized view only"
+ },
+ "finished": "2026-10-15T10:32:17+00:00",
+ "duration_s": 1.07,
+ "expected_check": {
+  "outcome_ok": true,
+  "amount_ok": true,
+  "tier_ok": true,
+  "ok": true,
+  "expected": {
+   "outcome": "PARTIAL_REFUND",
+   "amount_sgd": 3.44,
+   "tier": "APPROVE",
+   "source": "kb/organizer_cases.yaml"
+  }
+ }
+}

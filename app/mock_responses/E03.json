@@ -1,0 +1,270 @@
+{
+ "case_id": "E03",
+ "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
+ "source": "composed from the deterministic stages",
+ "responses": {
+  "rider_advocate": {
+   "party": "rider",
+   "stance": "The charge should not stand: the rider's account is not fully answered by the records.",
+   "requested_outcome": "reverse the charge",
+   "brief": "The rider says the charge is wrong [E-TKT-01]; the rider's strongest point is the margin and the lack of a rider-side record. [E-TRP-01] [E-CHT-04] [E-TKT-01]",
+   "arguments": [
+    {
+     "point": "The ticket is the claimant's own statement and is tier D evidence; the decisive facts come from the platform and GPS records.",
+     "evidence": [
+      "E-TKT-01"
+     ],
+     "rules": [],
+     "policy_sections": [],
+     "precedents": []
+    }
+   ],
+   "weaknesses": [
+    {
+     "point": "the driver canceled with reason rider_no_show (cancellation_reason rider_no_show: DRIVER; system message: DRIVER)",
+     "evidence": [
+      "E-TRP-01",
+      "E-CHT-04"
+     ]
+    },
+    {
+     "point": "filed 0.02 days after the trip (window 30 days: inside)",
+     "evidence": [
+      "E-TKT-01",
+      "E-TRP-01"
+     ]
+    }
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate": {
+   "party": "driver",
+   "stance": "The charge stands: the platform and GPS records establish the conditions of the rule.",
+   "requested_outcome": "the charge stands",
+   "brief": "The records establish the conditions of the rule: the driver canceled with reason rider_no_show (cancellation_reason rider_no_show: DRIVER; system message: DRIVER) filed 0.02 days after the trip (window 30 days: inside) [E-TRP-01] [E-CHT-04] [E-TKT-01]",
+   "arguments": [
+    {
+     "point": "the driver canceled with reason rider_no_show (cancellation_reason rider_no_show: DRIVER; system message: DRIVER)",
+     "evidence": [
+      "E-TRP-01",
+      "E-CHT-04"
+     ],
+     "rules": [
+      "CLS-06",
+      "CW-R03"
+     ],
+     "policy_sections": [],
+     "precedents": []
+    },
+    {
+     "point": "filed 0.02 days after the trip (window 30 days: inside)",
+     "evidence": [
+      "E-TKT-01",
+      "E-TRP-01"
+     ],
+     "rules": [
+      "MAT-04"
+     ],
+     "policy_sections": [],
+     "precedents": []
+    },
+    {
+     "point": "service type not recorded; treated as in scope (the policy covers every service except RydeTAXI)",
+     "evidence": [
+      "E-TRP-01"
+     ],
+     "rules": [
+      "CW-R00"
+     ],
+     "policy_sections": [],
+     "precedents": []
+    }
+   ],
+   "rebuttals": [
+    {
+     "to_rider_argument": 1,
+     "reply": "The platform and GPS records answer this point.",
+     "evidence": [
+      "E-TRP-01",
+      "E-CHT-04"
+     ],
+     "rules": [],
+     "policy_sections": []
+    }
+   ],
+   "concessions": [
+    {
+     "point": "The rider's statement disputes the charge.",
+     "evidence": [
+      "E-TKT-01"
+     ]
+    }
+   ],
+   "safety_concern": false
+  },
+  "judge": {
+   "outcome": "UPHOLD",
+   "amount_sgd": null,
+   "payer": null,
+   "payee": null,
+   "confidence": 0.86,
+   "tier": "APPROVE",
+   "policy_sections": [
+    "RYDE-18229758389017",
+    "RYDE-27085468660505",
+    "RYDE-4407761313305"
+   ],
+   "rules": [
+    "MAT-04",
+    "CW-R00",
+    "CW-F02",
+    "CW-F01",
+    "CW-R06",
+    "CW-F03",
+    "CW-F04",
+    "CW-F04B"
+   ],
+   "evidence": [
+    "E-TRP-01",
+    "E-CHT-04",
+    "E-TKT-01",
+    "E-APP-01",
+    "E-APP-02",
+    "E-APP-04",
+    "E-GPS-05",
+    "E-GPS-06",
+    "E-GPS-07",
+    "E-APP-06"
+   ],
+   "precedents": [],
+   "reasoning": "The rules engine's findings match the evidence: the driver canceled with reason rider_no_show (cancellation_reason rider_no_show: DRIVER; system message: DRIVER) filed 0.02 days after the trip (window 30 days: inside) service type not recorded; treated as in scope (the policy covers every service except RydeTAXI) The ruling is UPHOLD; confidence 0.86 reflects the engine tier APPROVE.",
+   "agreement_with_engine": true,
+   "disagreement_note": "",
+   "rider_explanation": "Outcome: the S$6.61 cancellation fee stands. It goes to the driver, as compensation for the wait (CW-R09). This is a provisional decision; a Ryde staff member checks it before it takes effect. GPS confirms the driver's arrival at the pick-up pin (E-APP-04, E-GPS-05). Every driver GPS point from 19:02:10 to 19:05:10 is at the pick-up pin, and the longest stretch without a point at the pin is 80 seconds (E-GPS-05 to E-GPS-07). The wait lasted 195 seconds, from 19:02:10 to 19:05:25; the policy for this trip requires more than 180 seconds (E-TRP-01). The wait met the limit with 15 seconds to spare. The driver called 1 time and sent 1 message during the wait (E-CHT-01, E-CHT-02). Rules that decided the outcome: CW-R03 No-show cancellation fee is valid (Ryde policy; credibility A); CW-R06 Arrival counts only if GPS shows the driver at the pick-up point (Ryde policy; credibility B); CW-F04 Driver presence at the pick-up point (Ryde policy; credibility B). Also used: MAT-04 Rider waiver filing window (Ryde policy; credibility A); CW-R00 Cancellation policy scope (Ryde policy; credibility B); CW-F02 Wait anchor (organizer cases and on-demand trips) (Ryde policy; credibility A); CW-F01 Booking type (the policy attached to this trip, extended by FairRyde; credibility D); CW-F03 Elapsed wait and margin (Ryde policy; credibility A); CW-F04B FairRyde's GPS presence logic (FairRyde assumption; credibility D; decisive for the approval step); CW-F06 Rider counter-evidence strength (FairRyde assumption; credibility D). There is no GPS trace from your phone in the trip record. Your message during the wait (E-CHT-03) said you were running late or still on your way, so it does not show you at the pick-up point. Account history was used only to decide whether a person reviews this case; it did not affect the outcome. Part of this decision rests on assumptions FairRyde made where Ryde has published nothing: the longest allowed gap between driver GPS points (300 seconds), used by CW-F04B. If you disagree, you can ask for a human review through RydeHELP.",
+   "driver_explanation": "Outcome: the S$6.61 cancellation fee stands. It goes to the driver, as compensation for the wait (CW-R09). This is a provisional decision; a Ryde staff member checks it before it takes effect. GPS confirms the driver's arrival at the pick-up pin (E-APP-04, E-GPS-05). Every driver GPS point from 19:02:10 to 19:05:10 is at the pick-up pin, and the longest stretch without a point at the pin is 80 seconds (E-GPS-05 to E-GPS-07). The wait lasted 195 seconds, from 19:02:10 to 19:05:25; the policy for this trip requires more than 180 seconds (E-TRP-01). The wait met the limit with 15 seconds to spare. The driver called 1 time and sent 1 message during the wait (E-CHT-01, E-CHT-02). Rules that decided the outcome: CW-R03 No-show cancellation fee is valid (Ryde policy; credibility A); CW-R06 Arrival counts only if GPS shows the driver at the pick-up point (Ryde policy; credibility B); CW-F04 Driver presence at the pick-up point (Ryde policy; credibility B). Also used: MAT-04 Rider waiver filing window (Ryde policy; credibility A); CW-R00 Cancellation policy scope (Ryde policy; credibility B); CW-F02 Wait anchor (organizer cases and on-demand trips) (Ryde policy; credibility A); CW-F01 Booking type (the policy attached to this trip, extended by FairRyde; credibility D); CW-F03 Elapsed wait and margin (Ryde policy; credibility A); CW-F04B FairRyde's GPS presence logic (FairRyde assumption; credibility D; decisive for the approval step); CW-F06 Rider counter-evidence strength (FairRyde assumption; credibility D). Account history was used only to decide whether a person reviews this case; it did not affect the outcome. Part of this decision rests on assumptions FairRyde made where Ryde has published nothing: the longest allowed gap between driver GPS points (300 seconds), used by CW-F04B. If you disagree, you can ask for a human review through RydeHELP.",
+   "safety_concern": false
+  },
+  "rider_advocate:case_file": {
+   "party": "rider",
+   "account_summary": "The rider's ticket says: \"I messaged the driver that I was 1 minute away and he cancelled about 30 seconds later, right when I was walking up to the taxi stand. I literally saw his Prius drive off.\" [E-TKT-01]. The rider also wrote 1 message(s) in the chat [E-CHT-03].",
+   "evidence": [
+    "E-TKT-01",
+    "E-CHT-03"
+   ],
+   "open_questions": [
+    "What further records exist on the rider's side?"
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate:case_file": {
+   "party": "driver",
+   "account_summary": "The driver has filed no statement in this case file. The driver wrote 1 message(s) in the chat [E-CHT-01].",
+   "evidence": [
+    "E-CHT-01",
+    "E-TRP-01"
+   ],
+   "open_questions": [
+    "Does the driver wish to give an account?"
+   ],
+   "safety_concern": false
+  },
+  "judge:case_file": {
+   "case_summary": "This case goes to a person because of no written rule in code for this claim type (GEN-R07). The ticket is a claim of type No-show cancellation fee filed by the RIDER [E-TKT-01]. The agents gathered the evidence and summarized the accounts; they propose no outcome, amount or measure.",
+   "timeline": [
+    {
+     "ts": "18:53:00",
+     "event": "18:53:00 booking_confirmed",
+     "evidence": [
+      "E-APP-01"
+     ]
+    },
+    {
+     "ts": "18:53:15",
+     "event": "18:53:15 driver_assigned",
+     "evidence": [
+      "E-APP-02"
+     ]
+    },
+    {
+     "ts": "18:53:20",
+     "event": "18:53:20 driver_en_route",
+     "evidence": [
+      "E-APP-03"
+     ]
+    },
+    {
+     "ts": "19:02:10",
+     "event": "19:02:10 driver_arrived",
+     "evidence": [
+      "E-APP-04"
+     ]
+    },
+    {
+     "ts": "19:02:10",
+     "event": "19:02:10 wait_timer_started",
+     "evidence": [
+      "E-APP-05"
+     ]
+    },
+    {
+     "ts": "19:02:15",
+     "event": "19:02:15 rider_notified",
+     "evidence": [
+      "E-APP-06"
+     ]
+    },
+    {
+     "ts": "19:02:30",
+     "event": "19:02:30 driver message",
+     "evidence": [
+      "E-CHT-01"
+     ]
+    },
+    {
+     "ts": "19:03:40",
+     "event": "19:03:40 driver call",
+     "evidence": [
+      "E-CHT-02"
+     ]
+    }
+   ],
+   "disputed_points": [
+    {
+     "point": "F-FILING-WINDOW: 0.024",
+     "evidence": [
+      "E-TKT-01",
+      "E-TRP-01"
+     ]
+    },
+    {
+     "point": "F-BOOKING-TYPE: \"ON_DEMAND\"",
+     "evidence": [
+      "E-APP-01",
+      "E-APP-02",
+      "E-TRP-01"
+     ]
+    },
+    {
+     "point": "F-WAIT-ANCHOR: \"2026-09-19T19:02:10+08:00\"",
+     "evidence": [
+      "E-APP-04"
+     ]
+    }
+   ],
+   "evidence": [
+    "E-TKT-01",
+    "E-TRP-01",
+    "E-CHT-01",
+    "E-CHT-02",
+    "E-CHT-03",
+    "E-CHT-04",
+    "E-APP-01",
+    "E-APP-02"
+   ],
+   "open_questions": [
+    "Which written rule, if any, applies to this claim?"
+   ],
+   "safety_concern": false
+  }
+ }
+}

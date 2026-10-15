@@ -1,0 +1,121 @@
+{
+ "case_id": "E10",
+ "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
+ "source": "composed from the deterministic stages",
+ "responses": {
+  "rider_advocate:case_file": {
+   "party": "rider",
+   "account_summary": "The rider's ticket says: \"Booked a RydeTAXI from Paya Lebar Quarter to Holland Village. Instead of the PIE the driver went down the ECP into town and out on the AYE.\" [E-TKT-01]. The rider also wrote 1 message(s) in the chat [E-CHT-02].",
+   "evidence": [
+    "E-TKT-01",
+    "E-CHT-02"
+   ],
+   "open_questions": [
+    "What further records exist on the rider's side?"
+   ],
+   "safety_concern": false
+  },
+  "driver_advocate:case_file": {
+   "party": "driver",
+   "account_summary": "The driver has filed no statement in this case file. The driver wrote 1 message(s) in the chat [E-CHT-01].",
+   "evidence": [
+    "E-CHT-01",
+    "E-TRP-01"
+   ],
+   "open_questions": [
+    "Does the driver wish to give an account?"
+   ],
+   "safety_concern": false
+  },
+  "judge:case_file": {
+   "case_summary": "This case goes to a person because of no written rule in code for this claim type (GEN-R07). The ticket is a claim of type Route deviation / longer route filed by the RIDER [E-TKT-01]. The agents gathered the evidence and summarized the accounts; they propose no outcome, amount or measure.",
+   "timeline": [
+    {
+     "ts": "21:31:00",
+     "event": "21:31:00 booking_confirmed",
+     "evidence": [
+      "E-APP-01"
+     ]
+    },
+    {
+     "ts": "21:31:30",
+     "event": "21:31:30 driver_assigned",
+     "evidence": [
+      "E-APP-02"
+     ]
+    },
+    {
+     "ts": "21:31:35",
+     "event": "21:31:35 driver_en_route",
+     "evidence": [
+      "E-APP-03"
+     ]
+    },
+    {
+     "ts": "21:35:40",
+     "event": "21:35:40 driver_arrived",
+     "evidence": [
+      "E-APP-04"
+     ]
+    },
+    {
+     "ts": "21:35:50",
+     "event": "21:35:50 driver message",
+     "evidence": [
+      "E-CHT-01"
+     ]
+    },
+    {
+     "ts": "21:36:05",
+     "event": "21:36:05 rider message",
+     "evidence": [
+      "E-CHT-02"
+     ]
+    },
+    {
+     "ts": "21:36:30",
+     "event": "21:36:30 rider_picked_up",
+     "evidence": [
+      "E-APP-05"
+     ]
+    },
+    {
+     "ts": "21:36:35",
+     "event": "21:36:35 trip_started",
+     "evidence": [
+      "E-APP-06"
+     ]
+    }
+   ],
+   "disputed_points": [
+    {
+     "point": "F-METERED-FARE: true",
+     "evidence": [
+      "E-TRP-01",
+      "E-PAY-01"
+     ]
+    },
+    {
+     "point": "F-DETOUR-INFO: {\"extra_distance_km\": 7.6, \"extra_meter_fare_sgd\": 9.6, \"route_agreed_in_advance\": false, \"traffic_feed\": \"none reported on PIE westbound between 21:30 and 22:0",
+     "evidence": [
+      "E-RTE-01"
+     ]
+    }
+   ],
+   "evidence": [
+    "E-TKT-01",
+    "E-TRP-01",
+    "E-CHT-01",
+    "E-CHT-02",
+    "E-APP-01",
+    "E-APP-02",
+    "E-APP-03",
+    "E-APP-04"
+   ],
+   "open_questions": [
+    "Which written rule, if any, applies to this claim?"
+   ],
+   "safety_concern": false
+  }
+ }
+}
