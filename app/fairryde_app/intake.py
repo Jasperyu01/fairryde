@@ -72,6 +72,8 @@ def classify(kb, raw_case: dict, case_id: str, profile_override: str | None = No
     reason = ("organizer case (a DISP-nnn id): policy v2.1 governs" if profile == ORGANIZER_PROFILE else
               "the case embeds its own policy object (legacy profile organizer_case)" if profile == "organizer_case" else
               "regression and synthetic cases run on Ryde's published policy (profile ryde_2026)")
+    if profile_override and profile_override != kbload.default_profile(canon):
+        reason = "set by the app for this case (an uploaded case or the synthetic demo runs under policy v2.1)"
     fire("META-01", f"profile {profile}: {reason}")
 
     raw = tk["dispute_type"]
