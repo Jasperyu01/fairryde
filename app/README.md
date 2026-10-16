@@ -15,9 +15,11 @@ python app/tests/report.py                     # the table of required cases, wr
 
 **Live or mock.** With `ANTHROPIC_API_KEY` set, the agents call the Claude API (`claude-sonnet-5-5`, override with `FAIRRYDE_MODEL`). Without a key the app replays saved responses from `app/mock_responses/`, so the demo always works offline. The sidebar can force either mode. Mock mode also has scenarios that change the saved Judge answer on purpose, to show the verifier at work: `judge_disagrees`, `bad_citation_fixed`, `bad_citation`, `low_confidence`, `late_safety_flag`.
 
-**What the saved responses are.** They are authored, not recorded: no API key was available when they were written. DISP-001 to DISP-003 and the safety demo are written by hand in the exact JSON the agents are asked for; the other cases are composed from the deterministic stages, so every citation in them is real, and every set passes the same verifier a live answer does. To replace them with what the model really says: `python -m fairryde_app.cli DISP-001 --live --record`. **The live path has been exercised only against a fake client** (`tests/test_live_client.py`), not against the real API: the request shape follows the current SDK and model rules (no sampling parameters, no forced tool use, JSON asked for in the prompt, server-side refusal fallback requested and dropped if the API rejects it), but a first run with a key is the real test.
+**What the saved responses are.** DISP-001 to DISP-003 and the safety demo (DEMO-SAFETY-01) were recorded live with `claude-sonnet-5-5` on 16 Oct 2026 (`python -m fairryde_app.cli CASE --live --record`): they are the model's real answers, pseudonymized. In DISP-001 to DISP-003 only the three ruling entries are recorded; the three case file entries are still authored, because the live runs were in ruling mode, and they are replayed only when a mock run of the case switches to case file mode (`late_safety_flag`). Each of these files marks its provenance per entry (`provenance`). The other cases (E01 to E15) are authored: composed from the deterministic stages, so every citation in them is real. Every set passes the same verifier a live answer does. To record a case again: `python -m fairryde_app.cli DISP-001 --live --record`.
 
-Every run is saved as a JSON log in `app/runs/` (the log holds the pseudonymized view only; `app/runs/examples/` has three committed samples, other logs are git-ignored).
+**The live path is tested.** The first live run (16 Oct 2026, the four cases above) gave the expected outcome, amount and tier in every case; on DISP-001 to DISP-003 the Judge agreed with the engine and passed the verifier on its first attempt, and the server-side refusal fallback was accepted. A case took 24 to 48 seconds for its three calls. `tests/test_live_client.py` also covers the live path offline with a fake client: the request shape (no sampling parameters, no forced tool use, JSON asked for in the prompt, server-side refusal fallback requested and dropped if the API rejects it), reply parsing, a refusal and an API outage.
+
+Every run is saved as a JSON log in `app/runs/` (the log holds the pseudonymized view only; other logs are git-ignored). `app/runs/examples/` has the four live run logs of 16 Oct 2026 (`*_live_example.json`, one per case above) and the earlier mock-mode samples of the same four cases, made with the authored answers (`*_mock_example.json`).
 
 ## Architecture
 
@@ -162,7 +164,8 @@ app/
 
 ## Known limits
 
-- Live mode is untested against the real API (see above). Saved responses are authored.
+- Live mode has been run against the real API on four cases only (see above). The saved responses of E01 to E15 and the case file entries of DISP-001 to DISP-003 are authored.
+- The Section 5.2 lint is a keyword filter and removes more than it should: on the live DEMO-SAFETY-01 run it removed two sentences that propose no ruling (the rider advocate's paraphrase of the driver's threat in the chat, and the Judge's sentence saying it makes no recommendation).
 - Engines exist for no-show (any profile), route and surge (organizer_v2_1) and ERP (ryde_2026). Everything else is a case file.
 - The engines' CLS-01 safety check and the FC-F05 / CW-F06 readings are the KB's offline stand-ins; the agents add a second look by meaning for safety. The rider-message reading is frozen (D34) and the app does not extend it.
 - `engine_toll` does not state payer and payee; for E11 they are the Judge's reading and are shown as such.

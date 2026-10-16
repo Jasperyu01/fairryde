@@ -21,7 +21,8 @@ def test_safety_case_is_a_case_file_with_no_ruling(case_id):
 def test_safety_agents_write_no_ruling_or_recommendation():
     run = run_mock("DEMO-SAFETY-01")
     for m in run["messages"]:
-        assert safety.lint(json.dumps(m.get("json_shown") or m["json"])) == [], m["agent"]
+        shown = json.dumps(m.get("json_shown") or m["json"]).replace(safety.REDACTED, "")     # the marker is the pipeline's text, not the agent's
+        assert safety.lint(shown) == [], m["agent"]
     assert "recommend" not in (run["result"]["rider_explanation"] + run["result"]["driver_explanation"]).lower()
 
 

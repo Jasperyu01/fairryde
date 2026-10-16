@@ -1,58 +1,102 @@
 {
  "case_id": "DEMO-SAFETY-01",
- "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
- "source": "hand-written",
+ "note": "Recorded model answers (pseudonymized).",
+ "source": "recorded from a live run",
  "responses": {
   "rider_advocate:case_file": {
    "party": "rider",
-   "account_summary": "The rider's ticket says the final fare was S$16.50 against a quote of S$12.00 and that nobody mentioned surge [E-TKT-01]. The rider also says that when they asked the driver about the fare the driver shouted, locked the doors and threatened them, saying they would not get out until they paid, and that they felt unsafe [E-TKT-01]. In the chat the rider asked the driver to open the door and said they wanted to get out [E-CHT-03]. The rider asks for the S$4.50 difference [E-TKT-01].",
+   "account_summary": "The rider says the final fare was $16.50 against an upfront quote of $12.00, that nobody told the rider about surge, and that the difference of $4.50 is in dispute [E-TKT-01]. The record shows a quote of $12.00, an actual fare of $16.50, and a surge change from 1.0x to 1.5x, with the platform surge record showing no rider notification [E-TRP-01] [E-PAY-01] [E-SRG-01]. The rider says that when the rider asked the driver about the fare, the driver shouted, locked the doors and threatened that the rider would not get out until the fare was paid, and that the rider felt unsafe and scared [E-TKT-01]. The chat record shows a rider message at 21:18:30 asking about the fare and asking for the door to be opened, followed by a driver message at 21:18:50 saying the rider must pay the full fare first or the driver will not let the rider out, and \"Do not test me\" [E-CHT-03] [E-CHT-04]. The chat does not record any shouting or door locking, and GPS shows the vehicle stopped at 21:18:00 [E-GPS-07]. Under Section 5.2 this summary only presents the rider's account and the records, and the matter is for a human reviewer.",
    "evidence": [
     "E-TKT-01",
-    "E-CHT-03",
+    "E-TRP-01",
     "E-PAY-01",
-    "E-SRG-01"
+    "E-SRG-01",
+    "E-CHT-03",
+    "E-CHT-04",
+    "E-GPS-07"
    ],
    "open_questions": [
-    "Is there a call recording or in-car video of the exchange after 21:18?",
-    "When did the rider leave the car, and how?"
+    "Is there any call recording, in-app audio or vehicle telemetry that records the alleged shouting or the door locking?",
+    "How long did the rider remain in the vehicle after 21:18, and when and how did the rider exit?",
+    "Was the fare paid before the rider exited, and was it paid under the circumstances the rider describes?",
+    "Does the driver have an account of the exchange at the end of the trip, and what does it say?",
+    "Are there any messages or events between 21:18:50 and the rider leaving the vehicle that are not in the case file?",
+    "Did the rider contact support, emergency services or anyone else during or after the incident?"
    ],
    "safety_concern": true
   },
   "driver_advocate:case_file": {
    "party": "driver",
-   "account_summary": "The driver has filed no statement in this case file. The driver's records are the pick-up message at 21:03 [E-CHT-02] and a message at 21:18 that reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The GPS shows the car stopped at the drop-off from 21:18 [E-GPS-07].",
+   "account_summary": "The driver has given no account in the case file, so there is no driver statement on the surge change or on the exchange at the end of the trip. The driver-side records that exist are the GPS pings, the chat messages and the surge record. The record shows the driver's chat message at 21:03:40 saying the driver was pulling up in a white Prius [E-CHT-02]. It shows driver GPS pings from 21:05:00 to 21:18:00, ending with the vehicle at 0 km/h at 21:18:00 [E-GPS-01] [E-GPS-07]. The record shows the rider asked at 21:18:30 about the fare and asked for the door to be opened, and a driver message at 21:18:50 reads: \"Pay the full fare first or I will not let you out of this car. Do not test me.\" [E-CHT-03] [E-CHT-04]. The platform surge record shows the surge activated at 21:04:30 and no rider notification recorded [E-SRG-01]. Under Section 5.2 this summary only presents the records and does not assess them; the matter is for a human reviewer [Section 5.2].",
    "evidence": [
+    "E-TKT-01",
+    "E-TRP-01",
+    "E-GPS-01",
+    "E-GPS-07",
     "E-CHT-02",
+    "E-CHT-03",
     "E-CHT-04",
-    "E-GPS-07"
+    "E-SRG-01"
    ],
    "open_questions": [
-    "Does the driver want to give an account of the exchange?",
-    "Is there any record of the doors being locked?"
+    "Does the driver have an account of the end-of-trip exchange, the door locks and the fare, and what does it say?",
+    "Is there any call recording, in-app audio or vehicle telemetry that shows whether the doors were locked or what was said?",
+    "Did the driver see or receive any notice of the surge activation at 21:04:30, and what did the driver tell the rider about the fare?",
+    "How long did the rider stay in the vehicle after 21:18:50, and how and when did the rider exit?",
+    "Was the fare paid before the rider left the vehicle, and under what circumstances?",
+    "Are there any messages, calls or app events after 21:18:50 that are not in the case file?"
    ],
    "safety_concern": true
   },
   "judge:case_file": {
-   "case_summary": "Safety case. The rider reports that the driver shouted and threatened them and would not let them out of the car until the fare was paid, and that they felt unsafe [E-TKT-01]. A driver message at 21:18:50 reads 'Pay the full fare first or I will not let you out of this car. Do not test me.' [E-CHT-04]. The same ticket also contests the fare: S$16.50 charged against a S$12.00 quote, a multiplier that rose from 1.0x to 1.5x, and no recorded notification [E-PAY-01] [E-SRG-01]. The fare claim is recorded as a secondary claim; no view is taken on it or on the conduct described.",
+   "case_summary": "The rider filed a fare dispute over a $4.50 difference between an upfront quote of $12.00 and a final fare of $16.50, and also describes being shouted at, locked in the car and threatened, and feeling unsafe [E-TKT-01]. The platform records show a surge change from 1.0x to 1.5x activated at 21:04:30, with no rider notification recorded [E-SRG-01] [E-PAY-01] [E-TRP-01]. The trip ran from 21:05:00 to 21:18:00 from Bugis Junction to Marina Bay Sands [E-TRP-01]. After arrival, the rider's chat message asked about the fare and asked for the door to be opened [E-CHT-03]. A driver chat message followed reading \"Pay the full fare first or I will not let you out of this car. Do not test me.\" [E-CHT-04]. The shouting and door locking are described only in the rider's statement, and no driver account is in the file [E-TKT-01]. Because the file contains safety indicators, Section 5.2 applies and this file is prepared for a human reviewer, with no ruling, fault finding or recommendation. The contested $4.50 surge charge is recorded as a secondary claim, with no view on it.",
    "timeline": [
     {
      "ts": "21:02:15",
-     "event": "The rider messages the driver from the pick-up point.",
+     "event": "Rider chat message says the rider is at the taxi stand outside Bugis Junction.",
      "evidence": [
       "E-CHT-01"
      ]
     },
     {
-     "ts": "21:05:00",
-     "event": "The trip starts; the surge multiplier is 1.5x.",
+     "ts": "21:03:40",
+     "event": "Driver chat message says the driver is pulling up in a white Prius.",
      "evidence": [
-      "E-TRP-01",
+      "E-CHT-02"
+     ]
+    },
+    {
+     "ts": "21:04:30",
+     "event": "Platform records surge activation at 1.5x, with no rider notification recorded.",
+     "evidence": [
       "E-SRG-01"
      ]
     },
     {
+     "ts": "21:05:00",
+     "event": "Trip start; driver GPS at 0 km/h.",
+     "evidence": [
+      "E-TRP-01",
+      "E-GPS-01"
+     ]
+    },
+    {
+     "ts": "21:07:00",
+     "event": "Driver GPS ping at 25 km/h.",
+     "evidence": [
+      "E-GPS-02"
+     ]
+    },
+    {
+     "ts": "21:16:00",
+     "event": "Driver GPS ping at 15 km/h.",
+     "evidence": [
+      "E-GPS-06"
+     ]
+    },
+    {
      "ts": "21:18:00",
-     "event": "The trip ends at the drop-off.",
+     "event": "Trip end; driver GPS at 0 km/h.",
      "evidence": [
       "E-TRP-01",
       "E-GPS-07"
@@ -60,51 +104,82 @@
     },
     {
      "ts": "21:18:30",
-     "event": "The rider asks the driver to open the door.",
+     "event": "Rider chat message asks why the fare is $16.50 against a $12 quote and asks for the door to be opened.",
      "evidence": [
       "E-CHT-03"
      ]
     },
     {
      "ts": "21:18:50",
-     "event": "The driver writes that the rider will not be let out until the fare is paid.",
+     "event": "Driver chat message: \"Pay the full fare first or I will not let you out of this car. Do not test me.\"",
      "evidence": [
       "E-CHT-04"
+     ]
+    },
+    {
+     "ts": "21:30:00",
+     "event": "Rider files the dispute, describing shouting, locked doors, a threat and feeling unsafe.",
+     "evidence": [
+      "E-TKT-01"
      ]
     }
    ],
    "disputed_points": [
     {
-     "point": "What happened inside the car after the trip ended is described only by the rider's ticket and two chat messages; no other record covers it.",
+     "point": "The rider says the driver shouted, locked the doors and threatened the rider. The chat records only the 21:18:50 driver message, and the file has no audio or vehicle data on shouting or door locking.",
      "evidence": [
       "E-TKT-01",
-      "E-CHT-03",
       "E-CHT-04"
      ]
     },
     {
-     "point": "The fare claim is separate: the records show a multiplier change and no notification, which is for the reviewer to weigh with the rest.",
+     "point": "No driver account of the end-of-trip exchange or of the fare is in the file.",
      "evidence": [
-      "E-SRG-01",
-      "E-PAY-01"
+      "E-CHT-04"
+     ]
+    },
+    {
+     "point": "The record is silent on how and when the rider left the vehicle, and on whether and when the fare was paid.",
+     "evidence": [
+      "E-GPS-07",
+      "E-CHT-04"
+     ]
+    },
+    {
+     "point": "Secondary claim: the rider contests the $4.50 difference between the $12.00 quote and the $16.50 fare. The platform record shows a 1.0x to 1.5x surge change and no recorded notification.",
+     "evidence": [
+      "E-TRP-01",
+      "E-PAY-01",
+      "E-SRG-01"
      ]
     }
    ],
    "evidence": [
     "E-TKT-01",
+    "E-TRP-01",
+    "E-GPS-01",
+    "E-GPS-02",
+    "E-GPS-06",
+    "E-GPS-07",
+    "E-CHT-01",
+    "E-CHT-02",
     "E-CHT-03",
     "E-CHT-04",
     "E-PAY-01",
-    "E-SRG-01",
-    "E-TRP-01",
-    "E-GPS-07"
+    "E-SRG-01"
    ],
    "open_questions": [
-    "Is there a call recording or other record from inside the car?",
-    "Has the driver been asked for an account?",
-    "How and when did the rider leave the car?"
+    "Is there any call recording, in-app audio or vehicle telemetry showing what was said or whether the doors were locked?",
+    "What account does the driver give of the end-of-trip exchange and of the fare?",
+    "How long did the rider stay in the vehicle after 21:18:50, and how and when did the rider exit?",
+    "Was the fare paid before the rider left the vehicle, and under what circumstances?",
+    "Are there messages, calls or app events after 21:18:50 that are not in the case file?",
+    "Did the rider contact support or anyone else during or after the incident?",
+    "Did the driver see any notice of the surge activation at 21:04:30, and what was the rider told about the fare?"
    ],
    "safety_concern": true
   }
- }
+ },
+ "model": "claude-sonnet-5-5",
+ "recorded": "2026-10-16T10:32:59+00:00"
 }
