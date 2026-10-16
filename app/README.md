@@ -9,7 +9,7 @@ pip install -r app/requirements.txt
 
 streamlit run app/app.py                       # the UI: pick a case, press Run, watch the agents
 python -m fairryde_app.cli DISP-001            # the same run in a terminal (run from the app/ folder, or set PYTHONPATH=app)
-python -m pytest app/tests                     # 177 tests, offline
+python -m pytest app/tests                     # 202 tests, offline
 python app/tests/report.py                     # the table of required cases, written to app/tests/RESULTS.md
 ```
 
@@ -19,7 +19,28 @@ python app/tests/report.py                     # the table of required cases, wr
 
 **The live path is tested.** The first live run (16 Oct 2026, the four cases above) gave the expected outcome, amount and tier in every case; on DISP-001 to DISP-003 the Judge agreed with the engine and passed the verifier on its first attempt, and the server-side refusal fallback was accepted. A case took 24 to 48 seconds for its three calls. `tests/test_live_client.py` also covers the live path offline with a fake client: the request shape (no sampling parameters, no forced tool use, JSON asked for in the prompt, server-side refusal fallback requested and dropped if the API rejects it), reply parsing, a refusal and an API outage.
 
-Every run is saved as a JSON log in `app/runs/` (the log holds the pseudonymized view only; other logs are git-ignored). `app/runs/examples/` has the four live run logs of 16 Oct 2026 (`*_live_example.json`, one per case above) and the earlier mock-mode samples of the same four cases, made with the authored answers (`*_mock_example.json`).
+Every run of a listed case is saved as a JSON log in `app/runs/` (the log holds the pseudonymized view only; other logs are git-ignored). Runs of edited and uploaded cases are not saved on the server; the visitor can download the run log. `app/runs/examples/` has the four live run logs of 16 Oct 2026 (`*_live_example.json`, one per case above) and the earlier mock-mode samples of the same four cases, made with the authored answers (`*_mock_example.json`).
+
+## Try it
+
+1. **Pick a listed case** (DISP-001 to DISP-003, E01 to E15, the safety demo) and press **Run**. Without live mode the agents replay their saved answers, and the result is compared with the expected one.
+2. **Edit the complaint.** The text box under the case picker holds the case's complaint (`dispute_ticket.description`, in the pseudonymized view). Change it and press Run: the run uses a copy of the case with the new text, keeps the case's policy profile (an edited DISP case still runs under `organizer_v2_1`), and is labeled "edited case, no reference ruling" instead of being compared with the expected result.
+3. **Upload a case.** Choose "Upload a case", download the example (a synthetic surge-fare dispute built from our own demo case in `app/sample_cases`, not from the organizer's files), change it, and upload it. The file must be one JSON object in the organizer's sample format, at most 1 MB; the app checks the format and runs the case adapter, the intake and the rules engine on it before it accepts it, and says what is wrong with a file that does not fit. An uploaded case runs under `organizer_v2_1`, is labeled "uploaded case, no reference ruling", and goes through the same pseudonymization and leak check before any model call.
+
+**Live mode and the access code.** Edited and uploaded cases have no saved answers, so the three agents need live mode. The app reads `ANTHROPIC_API_KEY` and `LIVE_ACCESS_CODE` from Streamlit secrets, falling back to environment variables, and never shows or logs them. When `LIVE_ACCESS_CODE` is set, live mode runs only after the visitor enters that code in the sidebar; Auto mode never goes live without it. Without the code, a listed case replays its saved answers, and an edited or uploaded case runs the deterministic stages only (intake, evidence, rules engine) with a note that the three agents need the access code. A browser session gets at most 10 live runs; the sidebar shows how many are left (a page reload starts a new session).
+
+### Deploy on Streamlit Community Cloud
+
+- Repository `Jasperyu01/fairryde`, branch `main`, main file path `app/app.py`. Community Cloud runs the app from the repository root and installs `app/requirements.txt` (the requirements file next to the main file). Python 3.12 is what the deployment check used (Advanced settings).
+- Secrets (Advanced settings, TOML):
+
+  ```toml
+  ANTHROPIC_API_KEY = "sk-ant-..."
+  LIVE_ACCESS_CODE = "a code you hand out to the judges"
+  ```
+
+- `.streamlit/config.toml` at the repository root sets the upload limit to 1 MB.
+- The repository is private: connect Community Cloud to a GitHub account that can read it, and after deploying check the app's sharing setting (who can view it). On a public app, the access code is what keeps the API key from being spent by strangers.
 
 ## Architecture
 
@@ -155,16 +176,17 @@ app/
     safety.py                Section 5.2 lint and redaction
     pipeline.py              orchestration, events, run log, --record
     mockgen.py cli.py        saved responses (authored) and the terminal runner
+    userinput.py             edited and uploaded cases, the example upload, live mode access and the run cap
   prompts/                   one prompt file per agent (ruling mode and case file mode)
   mock_responses/            saved responses, one file per case
   sample_cases/              DEMO-SAFETY-01 (synthetic)
   runs/                      run logs (examples/ committed)
-  tests/                     177 tests, report.py, RESULTS.md
+  tests/                     202 tests, report.py, RESULTS.md
 ```
 
 ## Known limits
 
-- Live mode has been run against the real API on four cases only (see above). The saved responses of E01 to E15 and the case file entries of DISP-001 to DISP-003 are authored.
+- Live mode has been run against the real API on four listed cases only (see above); the live path for edited and uploaded cases is tested with a fake client. The saved responses of E01 to E15 and the case file entries of DISP-001 to DISP-003 are authored.
 - The Section 5.2 lint is a keyword filter and removes more than it should: on the live DEMO-SAFETY-01 run it removed two sentences that propose no ruling (the rider advocate's paraphrase of the driver's threat in the chat, and the Judge's sentence saying it makes no recommendation).
 - Engines exist for no-show (any profile), route and surge (organizer_v2_1) and ERP (ryde_2026). Everything else is a case file.
 - The engines' CLS-01 safety check and the FC-F05 / CW-F06 readings are the KB's offline stand-ins; the agents add a second look by meaning for safety. The rider-message reading is frozen (D34) and the app does not extend it.

@@ -1,0 +1,3 @@
+[server]
+# uploads are cases in JSON; the app refuses anything above 1 MB (fairryde_app/userinput.py), and so does the server
+maxUploadSize = 1

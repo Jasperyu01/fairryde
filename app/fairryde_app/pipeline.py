@@ -41,7 +41,10 @@ class Recorder:
 
 
 def run_case(case_id: str, *, mode: str | None = None, scenario: str = "normal", emit=None, save: bool = True, runs_dir: Path | None = None,
-             raw_case: dict | None = None, delay_s: float = 0.0, client=None, record: bool = False) -> dict:
+             raw_case: dict | None = None, delay_s: float = 0.0, client=None, record: bool = False, profile: str | None = None,
+             input_label: str | None = None) -> dict:
+    """Run one case. With raw_case (an edited or uploaded case) there is no reference ruling: expected_check is None and input_label says why.
+    profile overrides META-01 (an edited case keeps the profile of its original, an uploaded one runs under organizer_v2_1)."""
     t_start = time.time()
     kb = get_kb()
     info = cases.get_info(case_id) if raw_case is None else None
@@ -53,11 +56,11 @@ def run_case(case_id: str, *, mode: str | None = None, scenario: str = "normal",
     rec = Recorder(terms, emit)
     run = {"run_id": f"{dt.datetime.now():%Y%m%dT%H%M%S}-{case_id}-{client.name}-{uuid.uuid4().hex[:6]}", "case_id": case_id, "started": _now(), "mode": client.name,
            "scenario": scenario if client.name == "mock" else None, "model": config.MODEL if client.name == "live" else "mock (saved responses)",
-           "app_version": "0.1.0", "kb_version": kb.version, "expected": (info.expected if info else None)}
+           "app_version": "0.1.0", "kb_version": kb.version, "expected": (info.expected if info else None), "input_label": input_label}
 
     # ---------------------------------------------------------------- 1 intake
     rec("stage", stage="intake", status="start", title="Intake and classification (CLS rules)")
-    cls = intake.classify(kb, raw, case_id, info.profile_override if info else None)
+    cls = intake.classify(kb, raw, case_id, profile or (info.profile_override if info else None))
     rec("stage", stage="intake", status="end", data=cls.to_dict())
 
     # ---------------------------------------------------------------- 2 evidence
@@ -200,6 +203,28 @@ def run_case(case_id: str, *, mode: str | None = None, scenario: str = "normal",
     if save:
         run["log_file"] = str(save_run(run, runs_dir))
     return run
+
+
+def run_stages(case_id: str, raw_case: dict, *, profile: str | None = None, emit=None, input_label: str | None = None) -> dict:
+    """Only the deterministic stages (intake, evidence, reference engine): no model call. For an edited or uploaded case when live mode is
+    not available, since such a case has no saved answers to replay. The record is the pseudonymized view, as in run_case."""
+    kb = get_kb()
+    canon, _reference = case_adapter.prepare(raw_case)
+    terms = privacy.build_terms(canon)
+    rec = Recorder(terms, emit)
+    rec("stage", stage="intake", status="start", title="Intake and classification (CLS rules)")
+    cls = intake.classify(kb, raw_case, case_id, profile)
+    rec("stage", stage="intake", status="end", data=cls.to_dict())
+    rec("stage", stage="evidence", status="start", title="Evidence extraction with evidence IDs")
+    items = ev.extract(kb, canon)
+    rec("stage", stage="evidence", status="end", data={"items": items, "count": len(items), "withheld": [i["id"] for i in items if i["withheld"]]})
+    rec("stage", stage="engine", status="start", title="Reference engines (kb/tools)")
+    out = engine_stage.run_engine(kb, raw_case, cls, canon)
+    rec("stage", stage="engine", status="end", data=out)
+    run = {"run_id": f"{dt.datetime.now():%Y%m%dT%H%M%S}-{case_id}-stages-{uuid.uuid4().hex[:6]}", "case_id": case_id, "started": _now(), "mode": "stages",
+           "kb_version": kb.version, "input_label": input_label, "classification": cls.to_dict(), "evidence": items, "engine": out, "messages": [], "result": None,
+           "expected_check": None}
+    return privacy.pseudonymize(run, terms)
 
 
 def _build_case_file(run_ctx, cls, items, out, briefs, case_file_json, judge_json, verification, result) -> dict:

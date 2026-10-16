@@ -4,12 +4,15 @@
 
 Pick a case, press Run, and watch the pipeline: the deterministic stages, then the Rider Advocate, the Driver Advocate and the Judge as a chat
 timeline, then the verifier and the ruling with its confidence, tier, citations and the two explanations. With no ANTHROPIC_API_KEY the app
-replays saved responses, so the demo works offline. Every run is saved as a JSON log in app/runs/.
+replays saved responses, so the demo works offline. Every run of a listed case is saved as a JSON log in app/runs/.
+
+New input: the complaint of a listed case can be edited, and a case can be uploaded as JSON (fairryde_app/userinput.py). Neither has saved
+answers, so the agents need live mode. ANTHROPIC_API_KEY and LIVE_ACCESS_CODE come from st.secrets or the environment and are never shown;
+with LIVE_ACCESS_CODE set, live mode needs that code, and a browser session gets at most 10 live runs.
 """
 from __future__ import annotations
 
 import json
-import os
 import re
 import sys
 import time
@@ -21,10 +24,13 @@ if str(HERE) not in sys.path:
 
 import streamlit as st                                    # noqa: E402
 
-from fairryde_app import cases, config, llm, pipeline     # noqa: E402
-from fairryde_app.kbaccess import get_kb                  # noqa: E402
+from fairryde_app import cases, config, llm, pipeline, privacy, userinput     # noqa: E402
+from fairryde_app.kbaccess import ORGANIZER_PROFILE, case_adapter, get_kb      # noqa: E402
 
 st.set_page_config(page_title="FairRyde", page_icon="⚖️", layout="wide")
+
+API_KEY = userinput.secret("ANTHROPIC_API_KEY", st.secrets)          # never displayed or logged
+ACCESS_CODE = userinput.secret("LIVE_ACCESS_CODE", st.secrets)
 
 AVATAR = {"rider_advocate": "🧑", "driver_advocate": "🚗", "judge": "⚖️", "engine": "⚙️", "intake": "🗂️", "evidence": "🔎", "verifier": "🛡️"}
 TIER_STYLE = {"AUTO": ("success", "AUTO: the AI ruling is final (both parties can still ask for a human review)"),
@@ -68,6 +74,12 @@ def say(text: str, animate: bool, delay: float = 0.012):
         st.markdown(esc(text))
 
 
+def shown_complaint(raw: dict) -> str:
+    """The complaint as the agents would see it (pseudonymized)."""
+    canon, _ = case_adapter.prepare(raw)
+    return privacy.pseudonymize(userinput.complaint_of(raw), privacy.build_terms(canon))
+
+
 def rule_label(rid: str) -> str:
     r = kb().rules.get(rid)
     return f"{rid} {r['name']}" if r else rid
@@ -88,7 +100,9 @@ def render_case(run, container):
         col1, col2 = st.columns([3, 2])
         tk = next(i for i in run["evidence"] if i["id"] == "E-TKT-01")
         with col1:
-            st.markdown(f"**{run['case_id']}** · {c['claim_label'] or c['dispute_type_raw']} · filed by the {c['filed_by'].lower()}")
+            st.markdown(f"**{run['case_id']}** · {c['claim_label'] or c['dispute_type_raw']} · filed by the {c['filed_by'].lower()} · profile `{c['profile']}`")
+            if run.get("input_label"):
+                st.caption(f"🧪 {run['input_label'].capitalize()}.")
             st.info(esc(tk["data"].get("description") or ""))
         with col2:
             st.markdown("**Classification (CLS rules)**")
@@ -240,7 +254,9 @@ def render_result(run, container):
             st.info(esc(r["driver_explanation"]))
         st.caption(f"Explanations: {'written by the Judge and checked (EXP-03)' if r['explanation_source'] == 'judge' else 'drafted by the rules engine from its findings' if r['explanation_source'] == 'engine_draft' else 'standard notice'}.")
         ec = run.get("expected_check")
-        if ec:
+        if run.get("input_label"):
+            st.info(f"{run['input_label'].capitalize()}: the result is not compared with an expected result.", icon="🧪")
+        elif ec:
             x = ec["expected"]
             msg = f"Expected (from {x['source']}): {x['outcome']}, {money(x['amount_sgd'])}, tier {x['tier']}."
             (st.success if ec["ok"] else st.warning)(esc(("Matches. " if ec["ok"] else "Differs. ") + msg), icon="🎯")
@@ -263,6 +279,13 @@ def render_result(run, container):
             st.caption(f"Saved: {Path(run['log_file']).relative_to(config.ROOT) if str(config.ROOT) in run['log_file'] else run['log_file']}")
 
 
+def render_stages_note(container):
+    with container:
+        st.subheader("3. Ruling")
+        st.info("Deterministic stages only: intake, evidence and the rules engine ran, and their result is shown above. The three agents (Rider Advocate, "
+                "Driver Advocate, Judge) need live mode (the sidebar says why it is off), so there is no ruling, verifier check or approval tier for this run.", icon="🔒")
+
+
 def render_progress(done: set, current: str | None, container):
     cols = container.columns(len(STAGES))
     for col, (key, label) in zip(cols, STAGES):
@@ -277,26 +300,66 @@ st.caption("Multi-agent resolution of ride-hailing disputes · Tencent Cloud × 
 
 with st.sidebar:
     st.header("Case")
-    catalog = cases.list_cases()
-    groups = {"organizer": "Organizer samples", "validation": "Validation cases (E01 to E15)", "demo": "Demo"}
-    options = [i.case_id for k in ("organizer", "validation", "demo") for i in catalog if i.kind == k]
-    case_id = st.selectbox("Pick a case", options, format_func=lambda c: f"{c}  ·  {cases.get_info(c).dispute_type}", key="case")
-    info = cases.get_info(case_id)
-    st.caption(f"{groups[info.kind]}. " + ("Profile organizer_v2_1 (policy v2.1)." if info.kind == "organizer" or info.profile_override else "Regression case: Ryde's published policy."))
+    source = st.radio("Input", ["Listed case", "Upload a case"], horizontal=True, key="source")
+    custom_case, profile, input_label, info = None, None, None, None      # custom_case: an edited or uploaded case (no saved answers, no reference ruling)
+    if source == "Listed case":
+        catalog = cases.list_cases()
+        groups = {"organizer": "Organizer samples", "validation": "Validation cases (E01 to E15)", "demo": "Demo"}
+        options = [i.case_id for k in ("organizer", "validation", "demo") for i in catalog if i.kind == k]
+        case_id = st.selectbox("Pick a case", options, format_func=lambda c: f"{c}  ·  {cases.get_info(c).dispute_type}", key="case")
+        info = cases.get_info(case_id)
+        st.caption(f"{groups[info.kind]}. " + ("Profile organizer_v2_1 (policy v2.1)." if info.kind == "organizer" or info.profile_override else "Regression case: Ryde's published policy."))
+        original = shown_complaint(cases.load_case(case_id))
+        text = st.text_area("Complaint (edit it to try your own wording)", value=original, key=f"complaint-{case_id}", height=180)
+        if text.strip() and text.strip() != original.strip():
+            case_id, custom_case, profile = userinput.edited_case(case_id, text)
+            input_label = userinput.EDITED_LABEL
+            st.caption(f"Edited: the run uses a copy of the case with this text, under profile `{profile}`, and has no reference ruling.")
+    else:
+        case_id = None
+        st.download_button("Download an example case (JSON)", json.dumps(userinput.example_upload(), indent=1, ensure_ascii=False), file_name="fairryde_example_case.json",
+                           mime="application/json", help="A synthetic surge-fare dispute in the organizer's sample format, built from our own demo data.")
+        up = st.file_uploader("Case file in the organizer's sample format (JSON, max 1 MB)", type=["json"], key="upload")
+        if up is not None:
+            try:
+                case_id, custom_case = userinput.parse_upload(up.getvalue())
+                profile, input_label = ORGANIZER_PROFILE, userinput.UPLOADED_LABEL
+                st.success(f"{case_id}: a valid case ({custom_case['dispute_ticket']['dispute_type']}). It runs under organizer_v2_1 and has no reference ruling.")
+            except userinput.InvalidCase as exc:
+                st.error(f"This file cannot be used. {exc}")
     st.header("Agents")
-    has_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
-    choice = st.radio("LLM mode", ["Auto", "Mock (saved responses)", "Live (Claude API)"], help="Auto uses the Claude API when ANTHROPIC_API_KEY is set, else replays saved responses.")
-    mode = "live" if (choice.startswith("Live") or (choice == "Auto" and has_key)) else "mock"
-    if mode == "live" and not has_key:
-        st.warning("ANTHROPIC_API_KEY is not set: using saved responses instead.")
-        mode = "mock"
-    st.markdown(f"Running in **{mode}** mode" + (f" with `{config.MODEL}`." if mode == "live" else " (offline replay)."))
+    has_key, code_required = bool(API_KEY), bool(ACCESS_CODE)
+    unlocked = False
+    if has_key and code_required:
+        entered = st.text_input("Access code for live mode", type="password", key="access_code")
+        unlocked = userinput.code_ok(entered, ACCESS_CODE)
+        if entered and not unlocked:
+            st.error("That access code is not right.")
+    used = st.session_state.get("live_runs", 0)
+    choice = st.radio("LLM mode", ["Auto", "Mock (saved responses)", "Live (Claude API)"],
+                      help="Auto uses the Claude API when it is available here (an API key, the access code if one is set, live runs left), else replays saved responses.")
+    custom = custom_case is not None
+    mode, why_not_live = userinput.decide_mode(choice.split()[0], has_key=has_key, code_required=code_required, unlocked=unlocked, live_runs_used=used, custom=custom)
+    if custom and mode == "stages":
+        if choice.startswith("Mock") and why_not_live is None:
+            st.info("An edited or uploaded case has no saved responses: choose Auto or Live to run the three agents. Mock shows the deterministic stages only.")
+        elif why_not_live == "live mode needs the access code":
+            st.info("The three agents (Rider Advocate, Driver Advocate, Judge) need the access code. Without it, this run shows the deterministic stages only: intake, evidence and the rules engine.")
+        else:
+            st.info(f"The three agents need live mode, and {why_not_live}. This run shows the deterministic stages only: intake, evidence and the rules engine.")
+    elif choice.startswith("Live") and mode != "live":
+        st.warning(f"Live mode is off: {why_not_live}. Replaying saved responses instead.")
+    st.markdown("Running the **deterministic stages only** (no agents)." if mode == "stages" else f"Running in **{mode}** mode" + (f" with `{config.MODEL}`." if mode == "live" else " (offline replay)."))
     scenario = "normal"
     if mode == "mock":
         scenario = st.selectbox("Mock scenario", list(llm.MOCK_SCENARIOS), format_func=lambda s: s, help="Change the saved Judge answer on purpose to see the verifier at work.")
         st.caption(llm.MOCK_SCENARIOS[scenario])
     typing = st.checkbox("Typing effect and pacing", value=True)
-    run_clicked = st.button("▶ Run the pipeline", type="primary")
+    run_clicked = st.button("▶ Run the pipeline", type="primary", disabled=case_id is None)
+    if run_clicked and mode == "live":
+        used = st.session_state["live_runs"] = used + 1                 # counted when the run starts, so a failed run counts too
+    if has_key:
+        st.caption(f"Live runs left in this browser session: {max(0, userinput.LIVE_RUN_CAP - used)} of {userinput.LIVE_RUN_CAP}.")
     saved = sorted(config.RUNS_DIR.glob("*.json"), reverse=True)[:8] if config.RUNS_DIR.exists() else []
     if saved:
         with st.expander("Open a saved run"):
@@ -314,7 +377,7 @@ if run_clicked:
     done: set = set()
     progress_slot = c_progress.empty()
     status = c_progress.status(f"Running {case_id} in {mode} mode", expanded=False)
-    live_run = {"events": []}
+    live_run = {"events": [], "input_label": input_label}
 
     def draw_progress(current):
         with progress_slot.container():
@@ -367,34 +430,54 @@ if run_clicked:
 
     # the pipeline's events are drawn as they arrive; the case section is drawn from the stage events once the evidence is known
     try:
-        run = pipeline.run_case(case_id, mode=mode, scenario=scenario, emit=on_event)
+        if mode == "stages":
+            run = pipeline.run_stages(case_id, custom_case, profile=profile, emit=on_event, input_label=input_label)
+        else:
+            client = llm.AnthropicClient(api_key=API_KEY) if mode == "live" else None
+            run = pipeline.run_case(case_id, mode=mode, scenario=scenario, emit=on_event, client=client, raw_case=custom_case, profile=profile,
+                                    input_label=input_label, save=not custom)          # edited and uploaded runs are not kept on the server
     except Exception as exc:                                    # a privacy block or a programming error must be visible, never silent
         status.update(label="The run stopped", state="error")
         st.exception(exc)
         st.stop()
-    status.update(label=f"Done: {run['result']['outcome']} · tier {run['result']['tier']}", state="complete")
-    done.update(k for k, _ in STAGES)
-    draw_progress(None)
-    render_result(run, c_result)
+    if mode == "stages":
+        status.update(label=f"Done: deterministic stages only · engine {run['engine']['outcome']}", state="complete")
+        draw_progress(None)
+        render_stages_note(c_result)
+    else:
+        status.update(label=f"Done: {run['result']['outcome']} · tier {run['result']['tier']}", state="complete")
+        done.update(k for k, _ in STAGES)
+        draw_progress(None)
+        render_result(run, c_result)
     st.session_state["run"] = run
 elif st.session_state.get("run"):
     run = st.session_state["run"]
+    stages_only = run["mode"] == "stages"
     with c_progress:
-        render_progress({k for k, _ in STAGES}, None, st)
+        render_progress({"intake", "evidence", "engine"} if stages_only else {k for k, _ in STAGES}, None, st)
     render_case(run, c_case)
-    render_timeline_from(run, c_time, animate=False)
-    render_result(run, c_result)
+    if stages_only:
+        with c_time:
+            st.subheader("2. The agents argue")
+            render_engine(run)
+        render_stages_note(c_result)
+    else:
+        render_timeline_from(run, c_time, animate=False)
+        render_result(run, c_result)
 else:
     with c_case:
-        raw = cases.load_case(case_id)
         st.subheader("Pick a case, then press Run")
         st.markdown("The pipeline: **intake and classification** (CLS rules) → **evidence extraction** with evidence IDs → **reference engines** (no-show, route, toll, surge) → "
                     "**Rider Advocate** → **Driver Advocate** → **Judge** → **verifier** → **approval tier** (AUTH rules, policy v2.1 Section 6).")
-        st.markdown(f"**{case_id}** · `{raw['dispute_ticket']['dispute_type']}` · filed by the {raw['dispute_ticket'].get('filed_by', 'rider')}")
-        from fairryde_app import privacy
-        from fairryde_app.kbaccess import case_adapter
-        canon, _ = case_adapter.prepare(raw)
-        st.info(esc(privacy.pseudonymize(raw["dispute_ticket"].get("description", ""), privacy.build_terms(canon))))
-        x = info.expected
-        with st.expander("Expected result (used to score the run, never an input)"):
-            st.markdown(esc(f"Outcome **{x.get('outcome')}** · amount **{money(x.get('amount_sgd'))}** · tier **{x.get('tier')}**  \nSource: {x.get('source')}"))
+        raw = custom_case if custom_case is not None else cases.load_case(case_id) if case_id else None
+        if raw is None:
+            st.info("Upload a case file (JSON, max 1 MB) in the sidebar, or download the example file to see the format.")
+        else:
+            st.markdown(esc(f"**{case_id}** · `{raw['dispute_ticket']['dispute_type']}` · filed by the {raw['dispute_ticket'].get('filed_by', 'rider')}"))
+            st.info(esc(shown_complaint(raw)))
+            if input_label:
+                st.caption(f"🧪 {input_label.capitalize()}: the result will not be compared with an expected result.")
+            else:
+                x = info.expected
+                with st.expander("Expected result (used to score the run, never an input)"):
+                    st.markdown(esc(f"Outcome **{x.get('outcome')}** · amount **{money(x.get('amount_sgd'))}** · tier **{x.get('tier')}**  \nSource: {x.get('source')}"))
