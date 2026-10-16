@@ -1,23 +1,23 @@
 {
  "case_id": "DISP-002",
- "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
- "source": "hand-written",
+ "note": "Recorded model answers (pseudonymized).",
+ "source": "recorded from a live run",
  "responses": {
   "rider_advocate": {
    "party": "rider",
-   "stance": "The no-show fee should be reversed: the rider says they were at the pick-up lobby, and the driver's pin was 1,259 m from the named venue.",
-   "requested_outcome": "reverse the S$5.00 cancellation fee",
-   "brief": "The rider says they were at the Tiong Bahru Plaza lobby on time and never saw the car [E-TKT-01]. The record gives a reason: the pick-up pin where the driver was waiting is 1,259 m from Tiong Bahru Plaza itself [E-TRP-01] [E-GEO-01], so a rider waiting at the plaza and a driver waiting at the pin were not in the same place. Section 2.1 asks the driver to wait 'at the pickup location'; the driver's GPS shows the car stationary at the pin from 08:43 [E-GPS-05] [E-GPS-06], not at the venue the rider named. The free wait ended at 08:50 (five minutes from the 08:45 scheduled time) and the driver cancelled at 08:51, one minute later [E-TRP-01]. A one-minute margin leaves little room for a rider who was a few hundred metres away [Section 2.1] [Section 2.2].",
+   "stance": "The rider asks for the $5.00 no-show fee to be reversed, because the trip's own 8-minute no-show threshold was not reached and the pickup pin may not match the venue where the rider waited.",
+   "requested_outcome": "reversal of the $5.00 no-show cancellation fee",
+   "brief": "The rider says they waited at the Tiong Bahru Plaza lobby and could not find the car [E-TKT-01]. The trip's own terms set a no-show threshold of 8 minutes [E-POL-01]. The scheduled pickup was 08:45 and the driver cancelled at 08:51, so only 6 minutes had elapsed from the scheduled time [E-TRP-01]. The app logged the threshold as reached only by counting from the 08:43 arrival [E-APP-09, E-APP-06], which is not the scheduled-time anchor in Section 2.1 [Section 2.1]. The platform's pickup pin is about 1,259 m from the Tiong Bahru Plaza reference location [E-TRP-01, E-GEO-01]. That gap could explain why a rider at the venue lobby and a driver at the pin never met, even though the driver's messages say the lobby area [E-CHT-01, E-CHT-02]. The fee is a charge on the rider, and the rider should not bear it where the platform's own threshold and pickup location are in doubt [Section 2.2]. If the Judge finds the fee valid, the rider accepts that only the fixed $5.00 applies [E-POL-01].",
    "arguments": [
     {
-     "point": "The driver waited at a pin 1,259 m from the venue the rider named, so the rider may have been at the venue while the car was at the pin.",
+     "point": "By the trip's own 8-minute no-show threshold, measured from the scheduled pickup time, the cancellation at 6 minutes came too early.",
      "evidence": [
+      "E-POL-01",
       "E-TRP-01",
-      "E-GEO-01",
-      "E-GPS-05"
+      "E-APP-09"
      ],
      "rules": [
-      "CW-R11"
+      "CW-F03"
      ],
      "policy_sections": [
       "Section 2.1"
@@ -25,34 +25,83 @@
      "precedents": []
     },
     {
-     "point": "The cancellation came only one minute after the free wait ended (08:50 to 08:51), a thin margin.",
+     "point": "The pickup pin sits far from the venue the rider named, so the rider and driver may have waited at different places.",
      "evidence": [
       "E-TRP-01",
-      "E-APP-08"
+      "E-GEO-01",
+      "E-CHT-01",
+      "E-CHT-02"
      ],
      "rules": [
-      "CW-F03"
+      "CW-F06"
      ],
      "policy_sections": [
-      "Section 2.1",
       "Section 2.2"
      ],
      "precedents": []
+    },
+    {
+     "point": "The app's timer started at 08:43 arrival, which conflicts with the Section 2.1 free wait running from the scheduled time and shows the platform record is inconsistent.",
+     "evidence": [
+      "E-APP-06",
+      "E-APP-08",
+      "E-TRP-01"
+     ],
+     "rules": [
+      "CW-F02C"
+     ],
+     "policy_sections": [
+      "Section 2.1"
+     ],
+     "precedents": []
+    },
+    {
+     "point": "The fee follows a no-show finding that rests on the driver's side of the record, with no rider-side location data, so the benefit of the doubt on the contested presence should go to the rider.",
+     "evidence": [
+      "E-GPS-06",
+      "E-GPS-07",
+      "E-TKT-01"
+     ],
+     "rules": [
+      "CW-R06"
+     ],
+     "policy_sections": [
+      "Section 2.3"
+     ],
+     "precedents": [
+      "Precedent 7.3"
+     ]
     }
    ],
    "weaknesses": [
     {
-     "point": "The rider offers no record of their own position (no rider GPS or call), only the ticket, which is the rider's own statement.",
+     "point": "The driver's GPS shows arrival at the pin at 08:43 and waiting there until cancellation, and the rider was notified of the arrival [E-GPS-05, E-GPS-06, E-GPS-07, E-APP-05].",
      "evidence": [
-      "E-TKT-01"
+      "E-GPS-05",
+      "E-APP-05"
      ]
     },
     {
-     "point": "The driver sent messages and made a call before cancelling, so Precedent 7.3 (no contact at all) is distinguished.",
+     "point": "Section 2.1 allows cancellation after 5 minutes from the scheduled time, and 6 minutes had elapsed [E-TRP-01, E-APP-08].",
      "evidence": [
-      "E-CHT-01",
+      "E-TRP-01",
+      "E-APP-08"
+     ]
+    },
+    {
+     "point": "The driver met the contact duty with chat messages and an unanswered 22-second call, so Section 2.3 voiding does not apply, unlike Precedent 7.3 [E-CHT-02, E-CHT-03, E-CHT-04, E-CHT-05].",
+     "evidence": [
+      "E-CHT-02",
       "E-CHT-03",
-      "E-APP-07"
+      "E-CHT-04",
+      "E-CHT-05"
+     ]
+    },
+    {
+     "point": "The rider's account is a tier D self-statement with no supporting location or message evidence [E-TKT-01]. The fee equals the policy amount [E-POL-01].",
+     "evidence": [
+      "E-TKT-01",
+      "E-POL-01"
      ]
     }
    ],
@@ -60,22 +109,22 @@
   },
   "driver_advocate": {
    "party": "driver",
-   "stance": "The fee stands: the driver arrived on time, stayed at the pin, contacted the rider by message and call, and cancelled only after the free wait.",
-   "requested_outcome": "the S$5.00 fee stands",
-   "brief": "The driver's GPS shows the car at the pick-up pin from 08:43, stationary until the cancellation at 08:51 [E-GPS-05] [E-GPS-06] [E-GPS-07] [E-GPS-08], and the app confirmed arrival within 10 m and notified the rider [E-APP-04] [E-APP-05]. Section 2.3 requires one message and one call before cancelling. The driver sent four messages and made a call that rang 22 seconds [E-CHT-01] [E-CHT-02] [E-CHT-04] [E-CHT-05] [E-CHT-03] [E-APP-07], so Precedent 7.3, where the driver made no contact at all, is distinguished [Precedent 7.3]. The free wait of Section 2.1 ran to 08:50 and the driver cancelled at 08:51 [E-TRP-01]; Section 2.2 fixes the fee at S$5.00 and Section 6.2 makes a no-show ruling final. The rider's account is a statement with no supporting record of the rider's position [E-TKT-01].",
+   "stance": "The driver asks that the $5.00 no-show fee stand, because the driver arrived early, waited past the free wait period, and made the required chat and call contact before cancelling.",
+   "requested_outcome": "no refund, the $5.00 fee stands",
+   "brief": "The driver's GPS shows arrival at the pickup point at 08:43, two minutes before the 08:45 scheduled time [E-GPS-05, E-APP-04, E-TRP-01]. The rider was sent an arrival notification at 08:43:05 [E-APP-05]. The driver remained at 0 km/h until cancelling at 08:51 [E-GPS-06, E-GPS-07, E-GPS-08]. Section 2.1 gives 5 free minutes from the scheduled time, which ended at 08:50, so the 08:51 cancellation came after the free wait [Section 2.1, E-TRP-01]. Section 2.3 requires at least one chat message and one call. The driver sent four messages and placed a 22-second call that went unanswered, and warned of cancellation before acting [E-CHT-01, E-CHT-02, E-CHT-03, E-CHT-04, E-CHT-05, E-APP-07, Section 2.3]. The engine rates contact adequate and the charge equal to the policy amount [E-POL-01, E-TRP-01]. The rider's account is an unsupported tier D statement, with no message, call or location record from the rider side [E-TKT-01]. The fee should stand under Section 2.2.",
    "arguments": [
     {
-     "point": "The driver was at the pin from 08:43 to 08:51 and the app confirmed arrival within 10 m.",
+     "point": "The driver arrived on time and stayed at the pickup point through the whole wait, so the no-show premise holds.",
      "evidence": [
       "E-GPS-05",
       "E-GPS-06",
       "E-GPS-07",
-      "E-GPS-08",
-      "E-APP-04"
+      "E-APP-04",
+      "E-APP-05"
      ],
      "rules": [
-      "CW-F04",
-      "CW-R06"
+      "CW-R06",
+      "CW-F04B"
      ],
      "policy_sections": [
       "Section 2.1"
@@ -83,18 +132,32 @@
      "precedents": []
     },
     {
-     "point": "Section 2.3 was met: messages and a call were sent before the cancellation.",
+     "point": "The free wait of 5 minutes from the scheduled 08:45 time ended at 08:50, and the driver cancelled at 08:51, after it.",
      "evidence": [
-      "E-CHT-01",
+      "E-TRP-01",
+      "E-APP-08",
+      "E-GPS-08"
+     ],
+     "rules": [
+      "CW-F03",
+      "CW-F02C"
+     ],
+     "policy_sections": [
+      "Section 2.1",
+      "Section 2.2"
+     ],
+     "precedents": []
+    },
+    {
+     "point": "The driver met both contact duties of Section 2.3 and gave a warning before cancelling, so the fee is not voided, unlike Precedent 7.3.",
+     "evidence": [
       "E-CHT-02",
       "E-CHT-03",
       "E-CHT-04",
       "E-CHT-05",
       "E-APP-07"
      ],
-     "rules": [
-      "CW-R03"
-     ],
+     "rules": [],
      "policy_sections": [
       "Section 2.3"
      ],
@@ -103,18 +166,17 @@
      ]
     },
     {
-     "point": "The cancellation followed the free wait and the fee is the fixed S$5.00.",
+     "point": "The rider offers no evidence that they were at the pickup point, while the platform records point the other way. The fee equals the fixed policy amount.",
      "evidence": [
-      "E-TRP-01",
+      "E-TKT-01",
+      "E-APP-05",
       "E-POL-01"
      ],
      "rules": [
-      "CW-F03"
+      "CW-F06"
      ],
      "policy_sections": [
-      "Section 2.1",
-      "Section 2.2",
-      "Section 6.2"
+      "Section 2.2"
      ],
      "precedents": []
     }
@@ -122,34 +184,85 @@
    "rebuttals": [
     {
      "to_rider_argument": 1,
-     "reply": "The pin is the designated pick-up location the rider booked; the app told the rider the driver had arrived. The rider's claim to be at the venue is not backed by any record.",
+     "reply": "Section 2.1 sets the controlling rule: 5 free minutes from the scheduled time, which had passed by 08:50. The app also logged the trip's 8-minute threshold as reached at 08:51, counting from the 08:43 arrival. The rider was told of the arrival at 08:43:05, so the rider had notice for the full period.",
      "evidence": [
+      "E-TRP-01",
+      "E-APP-09",
       "E-APP-05",
-      "E-TKT-01"
+      "E-APP-08"
      ],
      "rules": [
-      "CW-R11"
+      "CW-F03"
      ],
-     "policy_sections": []
+     "policy_sections": [
+      "Section 2.1"
+     ]
     },
     {
      "to_rider_argument": 2,
-     "reply": "The margin is positive: 360 seconds against a 300 second free wait.",
+     "reply": "The trip record and booking both name Tiong Bahru Plaza as the pickup place, and the driver's messages told the rider where the car was, by area and by car description. The rider never answered a message or the call, and no rider-side location evidence exists. The distance gap is a flag, not proof that the driver was in the wrong place.",
      "evidence": [
-      "E-TRP-01"
+      "E-TRP-01",
+      "E-APP-01",
+      "E-CHT-01",
+      "E-CHT-02",
+      "E-CHT-03",
+      "E-TKT-01"
      ],
-     "rules": [],
+     "rules": [
+      "CW-F06"
+     ],
+     "policy_sections": [
+      "Section 2.2"
+     ]
+    },
+    {
+     "to_rider_argument": 3,
+     "reply": "A timer that starts at arrival is not a conflict with the policy. The wait period still ended at 08:48 on the app's clock and at 08:50 on the scheduled-time anchor, and the cancellation came at 08:51, after both. The timestamps across the records are consistent.",
+     "evidence": [
+      "E-APP-06",
+      "E-APP-08",
+      "E-TRP-01",
+      "E-GPS-08"
+     ],
+     "rules": [
+      "CW-F02C"
+     ],
      "policy_sections": [
       "Section 2.1"
+     ]
+    },
+    {
+     "to_rider_argument": 4,
+     "reply": "The presence finding rests on platform GPS pings, which are consistent through the wait, and on A-tier app events, not on the driver's word alone. Precedent 7.3 involved zero messages and zero calls, whereas here the contact duty was met.",
+     "evidence": [
+      "E-GPS-06",
+      "E-GPS-07",
+      "E-APP-04",
+      "E-CHT-03",
+      "E-APP-07"
+     ],
+     "rules": [
+      "CW-R06"
+     ],
+     "policy_sections": [
+      "Section 2.3"
      ]
     }
    ],
    "concessions": [
     {
-     "point": "The pin is 1,259 m from the named venue, which can explain a rider waiting elsewhere.",
+     "point": "Counted from the 08:45 scheduled time, only 6 minutes had elapsed at cancellation, so the app's 8-minute threshold was reached only by counting from the 08:43 arrival.",
      "evidence": [
       "E-TRP-01",
-      "E-GEO-01"
+      "E-APP-09"
+     ]
+    },
+    {
+     "point": "The platform's pickup pin is about 1,259 m from the Tiong Bahru Plaza reference location, a mismatch the engine flagged.",
+     "evidence": [
+      "E-GEO-01",
+      "E-TRP-01"
      ]
     }
    ],
@@ -168,37 +281,39 @@
     "Section 2.3",
     "Section 6.2",
     "Section 6.3",
-    "Precedent 7.3"
+    "Section 7"
    ],
    "rules": [
-    "CW-R03",
     "CW-R06",
-    "CW-F04",
+    "CW-F03",
     "CW-F04B",
+    "CW-F06",
     "CW-R11"
    ],
    "evidence": [
     "E-TRP-01",
+    "E-APP-04",
+    "E-APP-05",
+    "E-APP-08",
     "E-GPS-05",
     "E-GPS-06",
     "E-GPS-07",
-    "E-APP-04",
-    "E-APP-06",
-    "E-APP-08",
-    "E-CHT-01",
+    "E-CHT-02",
     "E-CHT-03",
-    "E-APP-07",
+    "E-CHT-04",
+    "E-CHT-05",
+    "E-TKT-01",
     "E-GEO-01",
     "E-POL-01"
    ],
    "precedents": [
     "Precedent 7.3"
    ],
-   "reasoning": "The driver was at the pin from 08:43, stationary, and the app confirmed arrival within 10 m [E-GPS-05] [E-GPS-06] [E-APP-04]. The cancellation at 08:51 came 360 seconds after the scheduled pick-up time, so the five-minute free wait of Section 2.1 had ended [E-TRP-01]. Section 2.3 is met: the driver sent four messages and made a call that rang 22 seconds [E-CHT-01] [E-CHT-03] [E-APP-07], so Precedent 7.3, where the driver made no contact, is distinguished. The fee equals the S$5.00 of Section 2.2 [E-POL-01]. The rider's strongest point, that the pin is 1,259 m from the named venue [E-GEO-01], is real, but the pin is the designated pick-up location and the rider offers no record of their own position [E-TKT-01]. The upheld fee rests on FairRyde's own GPS presence logic, so the engine applies the D29 confidence penalty. Confidence is 0.82; Section 6.3 raises the threshold to 95%, so the ruling goes to human review with the fee upheld as the recommended remedy.",
+   "reasoning": "The trip record shows a 08:45 scheduled pickup and a driver cancellation at 08:51 [E-TRP-01]. Section 2.1 counts the 5 free minutes from the scheduled time, so the wait ended at 08:50 and the cancellation came after it (6 minutes elapsed). The rider advocate's point that the app's 8-minute threshold was counted from arrival does not change this, because Section 2.1 controls and the policy object is only a cross-check [E-POL-01, E-APP-09]. Platform GPS shows arrival at 08:43 and the driver staying at 0 km/h until cancellation, and the rider was notified of the arrival [E-GPS-05, E-GPS-06, E-GPS-07, E-APP-04, E-APP-05]. Section 2.3 contact duty was met: one unanswered 22-second call and several chat messages, including a warning before cancelling [E-CHT-03, E-CHT-04, E-CHT-05]. Precedent 7.3 is distinguished because there the driver made no contact at all. The rider's statement is a tier D self-report with no rider-side location or message record [E-TKT-01]. The pickup pin is about 1,259 m from the venue reference [E-GEO-01], which is a real doubt about whether the two parties waited in the same place, but nothing shows the pin was wrong. The fee equals the fixed $5.00 [E-POL-01]. I agree with the engine. Confidence is limited by the pin mismatch, the reliance on GPS logic for presence, and the raised Section 6.3 threshold, so a person should confirm.",
    "agreement_with_engine": true,
    "disagreement_note": "",
-   "rider_explanation": "The S$5.00 cancellation fee stands and nothing is refunded. The driver's GPS shows the car at the pick-up pin from 08:43 until the cancellation at 08:51 [E-GPS-05] [E-GPS-08], and the free wait of five minutes from the 08:45 scheduled time ended at 08:50 (Section 2.1, Section 2.2). Before cancelling the driver sent messages and made a call, as Section 2.3 requires [E-CHT-01] [E-APP-07]; Precedent 7.3 voided a fee where the driver had made no contact at all, which is not the case here. We noted that the pin is 1,259 m from Tiong Bahru Plaza [E-GEO-01]; the pin is the pick-up location shown in the booking. A Ryde staff member reviews this recommendation before it takes effect, and you can ask for a human review.",
-   "driver_explanation": "The S$5.00 cancellation fee stands and is paid to you as compensation for your time (Section 2.2). Your GPS places you at the pin from 08:43 until you cancelled at 08:51, and you messaged and called the rider before cancelling, as Section 2.3 requires [E-GPS-05] [E-CHT-01] [E-APP-07]. The cancellation came after the free wait ended at 08:50 (Section 2.1). The pin is 1,259 m from the venue the rider named [E-GEO-01], which is why a Ryde staff member reviews this recommendation before it takes effect.",
+   "rider_explanation": "The $5.00 no-show fee stands. The free wait is 5 minutes from the scheduled 08:45 pickup, and the driver cancelled at 08:51 [E-TRP-01, Section 2.1]. The driver's GPS shows arrival at the pickup point at 08:43 and waiting there, and you were notified of the arrival [E-GPS-05, E-GPS-06, E-APP-05]. The driver also called once and sent several messages before cancelling, which meets Section 2.3 [E-CHT-03, E-CHT-04]. We noted that the pickup pin sits far from the Tiong Bahru Plaza address, but you did not provide records showing where you waited [E-GEO-01, E-TKT-01]. A person will confirm this recommended ruling, and you can send us any location or message record from that morning for that review.",
+   "driver_explanation": "The $5.00 no-show fee stands in your favor. You arrived at 08:43 and stayed at the pickup point, and you cancelled at 08:51, after the 5-minute free wait from the 08:45 scheduled time ended [E-GPS-05, E-GPS-07, E-TRP-01, Section 2.1]. You also called and messaged the rider before cancelling, as Section 2.3 requires [E-CHT-03, E-CHT-05]. The pickup pin is far from the venue address, so a person will confirm this recommended ruling before it is final [E-GEO-01]. You do not need to do anything now.",
    "safety_concern": false
   },
   "rider_advocate:case_file": {
@@ -323,5 +438,7 @@
    ],
    "safety_concern": false
   }
- }
+ },
+ "model": "claude-sonnet-5-5",
+ "recorded": "2026-10-16T10:32:06+00:00"
 }

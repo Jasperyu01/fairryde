@@ -1,20 +1,21 @@
 {
  "case_id": "DISP-001",
- "note": "Authored fixture (not a recorded model answer). Replace with real answers by running the case live with --record.",
- "source": "hand-written",
+ "note": "Recorded model answers (pseudonymized).",
+ "source": "recorded from a live run",
  "responses": {
   "rider_advocate": {
    "party": "rider",
-   "stance": "The rider is owed a refund of the excess distance fare: the driver went 4.3 km beyond the recommended route and never told the rider about a reroute or why.",
+   "stance": "The rider asks for a partial refund of the excess distance fare because the driver deviated 4.3 km from the recommended route without notifying the rider.",
    "requested_outcome": "partial refund of the excess distance fare",
-   "brief": "The recommended PIE route is 20.5 km and the car travelled 24.8 km, a deviation of 4.3 km, far above the 1 km tolerance [E-TRP-01] [E-RTE-01] [Section 1.3]. The GPS trace shows the car off the recommended route from the second ping at 13:17 and through Geylang and the East Coast area to Changi [E-GPS-02] [E-GPS-08] [E-GPS-11]. Section 1.2 requires the driver to tell the rider in the app chat, or aloud with a call recording, before or at the point of deviation. The only exchange about the route is the rider asking at 13:24 whether this was the right way [E-CHT-05], and the driver answering 'Don't worry, I know the way' without naming a reroute or a reason [E-CHT-06]. That is not the notice Section 1.2 asks for. The fare rose by S$6.50 and S$3.44 of it is the excess distance fare [E-PAY-01]. Section 1.3 refunds the excess distance fare when the rider was not informed of a deviation over 1 km, and Precedent 7.1 did exactly that [Precedent 7.1].",
+   "brief": "The platform record shows the trip ran 24.8 km against a recommended 20.5 km, a deviation of 4.3 km [E-TRP-01] [E-RTE-01]. GPS pings confirm the car left the PIE corridor and traveled through Geylang and onto the ECP [E-GPS-07] [E-GPS-08] [E-GPS-11]. This is well above the 1 km tolerance in [Section 1.3]. Under [Section 1.2] the driver must inform the rider of a deviation before or at the point of deviation, and the engine found no notice [FC-F05]. The chat has no route-change message from the driver. When the rider asked at 13:24 whether the route was right, the driver replied only \"Don't worry, I know the way\" and gave no reason [E-CHT-05] [E-CHT-06]. That reply is not a notice of a deviation and does not show the rider agreed [Section 1.4]. The matrix row for a traffic reroute with no notice and more than 1 km gives a partial refund of the excess distance fare [Section 1.3], consistent with [Precedent 7.1]. The excess distance fare is $3.44 [E-PAY-01]. The rider asks for that amount and leaves it to the Judge whether the $2.22 in excess tolls also belongs in the refund [E-PAY-01].",
    "arguments": [
     {
-     "point": "The deviation is 4.3 km against a recommended route of 20.5 km, over the 1 km tolerance.",
+     "point": "The deviation was 4.3 km, far above the 1 km tolerance, and GPS confirms the route departed from the recommended PIE path.",
      "evidence": [
       "E-TRP-01",
       "E-RTE-01",
-      "E-GPS-02",
+      "E-GPS-07",
+      "E-GPS-08",
       "E-GPS-11"
      ],
      "rules": [
@@ -27,7 +28,7 @@
      "precedents": []
     },
     {
-     "point": "No message or call told the rider about a reroute before or at the deviation; the driver's only reply came after the rider asked and gave no reason.",
+     "point": "The driver gave no notice of the reroute. The only reply to the rider's question about the route offered no reason and no mention of a change, so there was no notice and no agreement.",
      "evidence": [
       "E-CHT-05",
       "E-CHT-06"
@@ -36,17 +37,19 @@
       "FC-F05"
      ],
      "policy_sections": [
-      "Section 1.2"
+      "Section 1.2",
+      "Section 1.4"
      ],
      "precedents": []
     },
     {
-     "point": "The remedy Section 1.3 gives for an unannounced deviation is the excess distance fare, S$3.44, as in Precedent 7.1.",
+     "point": "The matrix row for an unnotified reroute over 1 km gives a partial refund of the excess distance fare, and Precedent 7.1 applied the same remedy where traffic justified the reroute but the rider was not told.",
      "evidence": [
-      "E-PAY-01"
+      "E-PAY-01",
+      "E-TRP-01"
      ],
      "rules": [
-      "FC-R13"
+      "FC-F06B"
      ],
      "policy_sections": [
       "Section 1.3"
@@ -54,14 +57,40 @@
      "precedents": [
       "Precedent 7.1"
      ]
+    },
+    {
+     "point": "The rider raised the concern mid-trip and was brushed off, which shows the lack of notice was not the rider's oversight.",
+     "evidence": [
+      "E-CHT-05",
+      "E-CHT-06"
+     ],
+     "rules": [],
+     "policy_sections": [
+      "Section 1.2"
+     ],
+     "precedents": []
     }
    ],
    "weaknesses": [
     {
-     "point": "The traffic record shows a vehicle fire on the PIE during the trip, so the driver will say the reroute was justified; that limits the remedy to the partial refund.",
+     "point": "The driver will say the reroute was justified: a PIE vehicle fire and airport exit congestion were recorded, and the ECP was flowing smoothly. The engine found the traffic justification established, so the rider is not entitled to a full refund, only a partial one.",
      "evidence": [
       "E-TRF-01",
-      "E-TRF-02"
+      "E-TRF-02",
+      "E-TRF-03"
+     ]
+    },
+    {
+     "point": "The rider's ticket says the trip took 37 minutes against 35 estimated and that the usual fare is about $28. The trip was only 2 minutes longer, and the ticket is the rider's own statement.",
+     "evidence": [
+      "E-TKT-01",
+      "E-TRP-01"
+     ]
+    },
+    {
+     "point": "The refund is limited to the excess distance fare of $3.44, less than the $6.50 total difference the rider claims. The $2.22 in excess tolls is separate from the distance fare and may not be refundable under the matrix.",
+     "evidence": [
+      "E-PAY-01"
      ]
     }
    ],
@@ -69,104 +98,141 @@
   },
   "driver_advocate": {
    "party": "driver",
-   "stance": "The reroute was a response to a real incident on the PIE; only the missing notice is at issue, and the refund must stay limited to the excess distance fare.",
-   "requested_outcome": "no refund beyond the excess distance fare; tolls and the rest of the fare stand",
-   "brief": "Section 1.1 lets a driver leave the recommended path for real-time traffic. Historical traffic data, which Section 1.4 names as the test, shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 with two lanes blocked [E-TRF-01] and heavy congestion at the PIE airport exit from 13:15 to 13:40 [E-TRF-02]; the trip ran 13:15 to 13:52 [E-TRP-01]. The ECP was flowing freely [E-TRF-03]. So this is the 'rerouted for traffic' row of Section 1.3, and the rider arrived in 37 minutes against an estimate of 35 [E-TRP-01]. When the rider asked, the driver answered within a minute [E-CHT-05] [E-CHT-06]. The only remedy that row gives is a partial refund of the excess distance fare, S$3.44, not the whole S$6.50 difference, and the tolls of S$2.22 pass through at cost [E-PAY-01] [Precedent 7.1].",
+   "stance": "The driver asks that any refund be limited to the excess distance fare of $3.44, with no refund of the $2.22 in tolls, because the reroute was justified by verified traffic conditions and only the notice requirement was missed.",
+   "requested_outcome": "refund capped at the excess distance fare of $3.44; no refund of tolls",
+   "brief": "The engine established that the reroute was justified by traffic [E-TRF-01] [E-TRF-02]. A vehicle fire blocked lanes 1 and 2 on the PIE eastbound from 13:05 until 13:50, with secondary congestion at the airport exit from 13:15 to 13:40 [E-TRF-01] [E-TRF-02]. The ECP was flowing smoothly, and the record describes the driver's ECP reroute as a reasonable alternative [E-TRF-03]. The GPS shows steady progress, with speeds of 70 to 75 km/h on the ECP and no speed anomalies [E-GPS-11] [E-GPS-12]. The trip took 37 minutes against 35 estimated, so the rider lost almost no time [E-TRP-01]. That is the outcome Section 1.1 permits, because drivers may reroute for congestion [Section 1.1]. Because the reroute was justified, the full-refund row for an unjustified reroute does not apply [Section 1.3]. The correct row is the partial refund of the excess distance fare, as in [Precedent 7.1]. That precedent's refund was limited to the excess distance fare, not the whole trip [Precedent 7.1]. Here that fare is $3.44 [E-PAY-01]. The $2.22 in tolls is a separate line, and the matrix refers only to the excess distance fare [E-PAY-01] [Section 1.3].",
    "arguments": [
     {
-     "point": "A vehicle fire and heavy congestion on the PIE overlapped the trip, so the reroute had a traffic justification.",
+     "point": "The reroute was justified by verified traffic: a PIE vehicle fire and airport-exit congestion were recorded while the ECP was clear. The full-refund row therefore does not apply.",
      "evidence": [
       "E-TRF-01",
       "E-TRF-02",
-      "E-TRP-01"
+      "E-TRF-03"
      ],
      "rules": [
       "FC-F06B"
      ],
      "policy_sections": [
       "Section 1.1",
+      "Section 1.3",
       "Section 1.4"
      ],
      "precedents": []
     },
     {
-     "point": "The ECP was flowing smoothly, a reasonable alternative to the blocked PIE.",
+     "point": "The remedy under the matrix and Precedent 7.1 is limited to the excess distance fare of $3.44. Tolls are not part of that remedy, and the rider's $6.50 claim overstates it.",
      "evidence": [
-      "E-TRF-03"
+      "E-PAY-01",
+      "E-TRP-01"
      ],
      "rules": [
-      "FC-F06"
+      "FC-F06B"
      ],
+     "policy_sections": [
+      "Section 1.3"
+     ],
+     "precedents": [
+      "Precedent 7.1"
+     ]
+    },
+    {
+     "point": "The rider suffered no real time loss. The trip ran 37 minutes against 35 estimated, and the ECP was moving at speed, which supports the reasonableness of the reroute.",
+     "evidence": [
+      "E-TRP-01",
+      "E-GPS-11",
+      "E-GPS-12",
+      "E-TRF-03"
+     ],
+     "rules": [],
      "policy_sections": [
       "Section 1.1"
      ],
      "precedents": []
     },
     {
-     "point": "A justified but unannounced reroute earns the excess distance fare only: S$3.44 of the S$6.50 difference; the S$2.22 of tolls passes through at cost.",
+     "point": "The driver did respond when the rider asked about the route, and reassured the rider that the trip would arrive on time. The trip did arrive within the estimated time, which shows the reassurance was borne out.",
      "evidence": [
-      "E-PAY-01"
+      "E-CHT-05",
+      "E-CHT-06",
+      "E-TRP-01"
      ],
-     "rules": [
-      "FC-R13",
-      "FC-R08"
-     ],
+     "rules": [],
      "policy_sections": [
-      "Section 1.3"
+      "Section 1.2"
      ],
-     "precedents": [
-      "Precedent 7.1"
-     ]
+     "precedents": []
     }
    ],
    "rebuttals": [
     {
      "to_rider_argument": 1,
-     "reply": "The deviation is not disputed, but Section 1.3 gives no refund for distance alone when the reroute is justified by traffic.",
+     "reply": "The deviation is not disputed, but a deviation above 1 km only triggers the matrix. It does not show wrongdoing, because the reroute was justified by traffic.",
      "evidence": [
-      "E-TRF-01"
+      "E-TRP-01",
+      "E-TRF-01",
+      "E-TRF-03"
      ],
-     "rules": [],
+     "rules": [
+      "FC-F06B"
+     ],
      "policy_sections": [
       "Section 1.3"
      ]
     },
     {
+     "point": "",
      "to_rider_argument": 2,
-     "reply": "The driver reassured the rider within a minute of the question; the reply did not name the reroute, but the rider was never refused an answer.",
+     "reply": "The driver gave no express notice, which the driver concedes. That fact only moves the case to the partial-refund row. It does not support a larger remedy.",
      "evidence": [
-      "E-CHT-05",
       "E-CHT-06"
      ],
-     "rules": [],
+     "rules": [
+      "FC-F05"
+     ],
      "policy_sections": [
-      "Section 1.2"
+      "Section 1.3"
      ]
     },
     {
      "to_rider_argument": 3,
-     "reply": "Agreed that Precedent 7.1 applies; it also shows the refund stops at the excess distance fare.",
-     "evidence": [],
+     "reply": "The driver agrees the partial-refund row applies. Both the matrix and Precedent 7.1 limit the refund to the excess distance fare of $3.44, and neither mentions tolls, so the $2.22 in tolls should not be added.",
+     "evidence": [
+      "E-PAY-01"
+     ],
+     "rules": [
+      "FC-F06B"
+     ],
+     "policy_sections": [
+      "Section 1.3"
+     ]
+    },
+    {
+     "to_rider_argument": 4,
+     "reply": "The chat shows the rider asked about the route and got a brief reply. That is a courtesy point and does not change the matrix outcome. The rider also did not ask to change course, and the trip arrived on schedule.",
+     "evidence": [
+      "E-CHT-05",
+      "E-CHT-06",
+      "E-TRP-01"
+     ],
      "rules": [],
-     "policy_sections": [],
-     "precedents": [
-      "Precedent 7.1"
+     "policy_sections": [
+      "Section 1.3"
      ]
     }
    ],
    "concessions": [
     {
-     "point": "No chat message or call before or at the deviation told the rider of the reroute and the reason.",
-     "evidence": [
-      "E-CHT-05",
-      "E-CHT-06"
-     ]
-    },
-    {
-     "point": "The deviation of 4.3 km is over the 1 km tolerance.",
+     "point": "The route was 4.3 km longer than recommended, which is well above the 1 km tolerance.",
      "evidence": [
       "E-TRP-01",
       "E-RTE-01"
+     ]
+    },
+    {
+     "point": "The driver did not inform the rider of the reroute. The only reply to the rider's route question gave no reason and no mention of a change, and no agreement is shown.",
+     "evidence": [
+      "E-CHT-05",
+      "E-CHT-06"
      ]
     }
    ],
@@ -180,37 +246,41 @@
    "confidence": 0.9,
    "tier": "APPROVE",
    "policy_sections": [
+    "Section 1.1",
     "Section 1.2",
     "Section 1.3",
     "Section 1.4",
     "Section 6.2",
-    "Precedent 7.1"
+    "Section 7"
    ],
    "rules": [
     "FC-R13",
-    "FC-F02",
     "FC-F05",
     "FC-F06B",
+    "FC-F02",
+    "DQ-05",
     "FC-R08"
    ],
    "evidence": [
     "E-TRP-01",
     "E-RTE-01",
     "E-PAY-01",
-    "E-GPS-02",
+    "E-TRF-01",
+    "E-TRF-02",
+    "E-TRF-03",
     "E-CHT-05",
     "E-CHT-06",
-    "E-TRF-01",
-    "E-TRF-02"
+    "E-GPS-07",
+    "E-GPS-11"
    ],
    "precedents": [
     "Precedent 7.1"
    ],
-   "reasoning": "The recorded distance of 24.8 km against the recommended 20.5 km gives a deviation of 4.3 km, above the 1 km tolerance, and the GPS trace confirms the car left the recommended route at 13:17 [E-TRP-01] [E-RTE-01] [E-GPS-02]. The traffic data shows a vehicle fire on the PIE eastbound from 13:05 to 13:50 and congestion at the airport exit, so the reroute was justified [E-TRF-01] [E-TRF-02] [Section 1.4]. Section 1.2 required notice before or at the point of deviation; the chat holds none, and the driver's reply to the rider's question names neither a reroute nor a reason [E-CHT-05] [E-CHT-06]. That is the 'traffic reroute, rider not informed, more than 1 km' row of Section 1.3 [FC-R13]: a partial refund of the excess distance fare, S$3.44. The Rider Advocate's argument for more than that has no support in the policy; the Driver Advocate's point that tolls pass through at cost stands [FC-R08]. Precedent 7.1 (1.8 km, justified, not informed) ruled the same way and is aligned. Because the deviation exceeds 2 km, Section 6.2 sends the ruling to human review with the remedy recommended. Confidence is 0.9: the facts are tier A and B, the one reading in play (matching an incident to the route by road, direction and time) is FairRyde's.",
+   "reasoning": "The trip record shows 24.8 km driven against 20.5 km recommended, a deviation of 4.3 km, well above the 1 km tolerance [E-TRP-01] [E-RTE-01]. The GPS trace confirms the car left the PIE corridor and used Geylang and the ECP [E-GPS-07] [E-GPS-11]. Traffic records show a PIE vehicle fire from 13:05 to 13:50, airport exit congestion, and a smoothly flowing ECP, so the reroute was justified [E-TRF-01] [E-TRF-02] [E-TRF-03]. The chat has no notice of a route change; the driver's reply to the rider's question gave no reason and no mention of a change, and no agreement is shown [E-CHT-05] [E-CHT-06] (Section 1.2, Section 1.4). The Section 1.3 row for a justified reroute, rider not informed, over 1 km, gives a partial refund of the excess distance fare, which is $3.44 [E-PAY-01] (FC-R13). Precedent 7.1 is ALIGNED (justified by traffic, rider not informed) and gave the same type of remedy. The rider advocate's point on tolls fails: the matrix covers only the excess distance fare, so the $2.22 in tolls passes through at cost, which agrees with the driver advocate. The driver advocate's point that the trip was only 2 minutes longer does not remove the notice duty. I agree with the engine. Because the deviation exceeds 2 km, Section 6.2 sends the ruling to human review with this recommendation. Confidence is limited only by that review path.",
    "agreement_with_engine": true,
    "disagreement_note": "",
-   "rider_explanation": "You are eligible for a refund of S$3.44, the fare charged for the extra distance, to your original payment method. The trip was 24.8 km against a recommended route of 20.5 km, a deviation of 4.3 km, which is more than the 1 km Section 1.3 allows [E-TRP-01] [E-RTE-01]. Traffic data shows a vehicle fire on the PIE during your trip, so the driver had a reason to reroute [E-TRF-01], but Section 1.2 required the driver to tell you before or at the point of deviation, and no message or call did [E-CHT-05] [E-CHT-06]. That is why Section 1.3 refunds the excess distance fare [FC-R13]; the tolls of S$2.22 pass through at cost and the rest of the fare stands. Because the deviation is more than 2 km, a Ryde staff member confirms this recommendation before it takes effect (Section 6.2).",
-   "driver_explanation": "The rider is refunded S$3.44, the fare charged for the extra distance, and the platform pays it. Your reroute was accepted as justified: the traffic data shows a vehicle fire on the PIE from 13:05 to 13:50 and congestion at the airport exit [E-TRF-01] [E-TRF-02], so the rest of the fare and the tolls of S$2.22 stand (Section 1.4). The refund is for the missing notice: Section 1.2 asks for a chat message or a spoken notice with a short reason before or at the deviation, and the record shows none [E-CHT-05] [E-CHT-06]. Precedent 7.1 ruled the same way. Because the deviation is more than 2 km, a Ryde staff member confirms the refund before it takes effect; you can also ask for a human review.",
+   "rider_explanation": "We recommend a partial refund of $3.44, the excess distance fare, to your original payment method. Your trip ran 4.3 km longer than the recommended route [E-TRP-01] [E-RTE-01], and the driver did not tell you about the change [E-CHT-05] [E-CHT-06], which Section 1.2 requires. However, a vehicle fire and congestion on the PIE justified the reroute [E-TRF-01] [E-TRF-02], so under Section 1.3 the refund covers only the excess distance fare and not the $2.22 in tolls [E-PAY-01]. Because the deviation is above 2 km, a human reviewer will confirm this recommendation under Section 6.2.",
+   "driver_explanation": "We recommend a partial refund of $3.44 to the rider, the excess distance fare. Your reroute was justified by the PIE vehicle fire and congestion, and the ECP was flowing smoothly [E-TRF-01] [E-TRF-02] [E-TRF-03], so no full refund applies. However, the route was 4.3 km longer than recommended [E-TRP-01] and the chat shows no notice of the change [E-CHT-05] [E-CHT-06], which Section 1.2 requires. The $2.22 in tolls is not refunded [E-PAY-01]. Because the deviation is above 2 km, a human reviewer will confirm this under Section 6.2.",
    "safety_concern": false
   },
   "rider_advocate:case_file": {
@@ -337,5 +407,7 @@
    ],
    "safety_concern": false
   }
- }
+ },
+ "model": "claude-sonnet-5-5",
+ "recorded": "2026-10-16T10:31:13+00:00"
 }
