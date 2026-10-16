@@ -1,6 +1,14 @@
 {
  "case_id": "DISP-003",
- "note": "Recorded model answers (pseudonymized).",
+ "note": "Mixed provenance, marked per entry in provenance. The three ruling entries (rider_advocate, driver_advocate, judge) are model answers recorded from a live run with claude-sonnet-5-5 on 16 Oct 2026 (pseudonymized). The three case_file entries (rider_advocate:case_file, driver_advocate:case_file, judge:case_file) are still authored (hand-written), not recorded; they are replayed only when a mock run of this case switches to case file mode (the late_safety_flag scenario).",
+ "provenance": {
+  "rider_advocate": "recorded from a live run",
+  "driver_advocate": "recorded from a live run",
+  "judge": "recorded from a live run",
+  "rider_advocate:case_file": "hand-written",
+  "driver_advocate:case_file": "hand-written",
+  "judge:case_file": "hand-written"
+ },
  "source": "recorded from a live run",
  "responses": {
   "rider_advocate": {
