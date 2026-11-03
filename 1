@@ -1,4 +1,69 @@
 let
-    Source = Sql.Database("SCGREPORTING", "DUN02_HESDATAMART01", [Query="WITH ud AS (#(lf)    SELECT INSPC_LOT_NO, USAGE_DECISION_CD, CD_VAL_FG, CRT_DT,#(lf)           ROW_NUMBER() OVER (PARTITION BY INSPC_LOT_NO ORDER BY CRT_DT DESC, CRT_TM DESC) AS rn#(lf)    FROM DUN02_HESDATAMART01.dbo.QM_LOT_USAGE_DECISION#(lf)),#(lf)vn AS (#(lf)    SELECT x.Vendor, MAX(x.VendorName) AS VendorName#(lf)    FROM (SELECT SUBSTRING(LTRIM(RTRIM(VNDR_NBR)), PATINDEX('%[^0]%', LTRIM(RTRIM(VNDR_NBR)) + 'Z'), 10) AS Vendor,#(lf)                 LTRIM(RTRIM(VNDR_NM)) AS VendorName#(lf)          FROM DUN02_HESDATAMART01.dbo.V_VENDOR) AS x#(lf)    GROUP BY x.Vendor#(lf)),#(lf)lt AS (#(lf)    SELECT SUBSTRING(LTRIM(RTRIM(MTRL_NBR)), PATINDEX('%[^0]%', LTRIM(RTRIM(MTRL_NBR)) + 'Z'), 18) AS PN,#(lf)           SUBSTRING(LTRIM(RTRIM(LIFNR_VEND_ACCT_NO)), PATINDEX('%[^0]%', LTRIM(RTRIM(LIFNR_VEND_ACCT_NO)) + 'Z'), 10) AS Vendor,#(lf)           INSPC_LOT_NO, INSPC_OBJ_SHT_TXT, USAGE_DECISION_MADE_FG, INSPC_STRT_DT, INSPC_END_DT, LOT_CRT_DT,#(lf)           PLNT_NO, STG_LOC_NO, INSPC_LOT_STG_LOC_N, INSPC_LOT_QTY, BASE_UOM_NO, INSPC_LOG_ORIG_NO, PURCH_DOC_NO#(lf)    FROM DUN02_HESDATAMART01.dbo.QM_LT_DETAIL#(lf)    WHERE LOT_CRT_DT >= '20150101'#(lf)      AND COALESCE(LIFNR_VEND_ACCT_NO, '') <> ''#(lf)      AND LTRIM(RTRIM(PLNT_NO)) IN ('2750', '2020', '2022', '2088', '2130')#(lf))#(lf)SELECT#(lf)    lt.PN AS [PN],#(lf)    LTRIM(RTRIM(lt.INSPC_OBJ_SHT_TXT)) AS [PN Description],#(lf)    lt.Vendor AS [Vendor],#(lf)    COALESCE(vn.VendorName, '') AS [Vendor Name],#(lf)    TRY_CONVERT(bigint, lt.INSPC_LOT_NO) AS [Insp Lot],#(lf)    CASE WHEN ud.CD_VAL_FG IN ('A', 'R') THEN ud.CD_VAL_FG#(lf)         WHEN ud.INSPC_LOT_NO IS NULL AND lt.USAGE_DECISION_MADE_FG = 'X' THEN 'UD missing'#(lf)         WHEN ud.INSPC_LOT_NO IS NULL THEN 'Open'#(lf)         ELSE 'Other' END AS [Status],#(lf)    NULLIF(LTRIM(RTRIM(ud.USAGE_DECISION_CD)), '') AS [UD Code],#(lf)    TRY_CONVERT(date, ud.CRT_DT, 112) AS [UD Date],#(lf)    TRY_CONVERT(date, lt.INSPC_STRT_DT, 112) AS [Start Date],#(lf)    TRY_CONVERT(date, lt.INSPC_END_DT, 112) AS [End Date],#(lf)    TRY_CONVERT(date, lt.LOT_CRT_DT, 112) AS [Created On],#(lf)    lt.PLNT_NO AS [Plant],#(lf)    COALESCE(NULLIF(LTRIM(RTRIM(lt.STG_LOC_NO)), ''), NULLIF(LTRIM(RTRIM(lt.INSPC_LOT_STG_LOC_N)), '')) AS [SLoc],#(lf)    lt.INSPC_LOT_QTY AS [Qty],#(lf)    NULLIF(LTRIM(RTRIM(lt.BASE_UOM_NO)), '') AS [UoM],#(lf)    lt.INSPC_LOG_ORIG_NO AS [Origin],#(lf)    TRY_CONVERT(bigint, NULLIF(LTRIM(RTRIM(lt.PURCH_DOC_NO)), '')) AS [PO]#(lf)FROM lt#(lf)LEFT JOIN ud ON ud.INSPC_LOT_NO = lt.INSPC_LOT_NO AND ud.rn = 1#(lf)LEFT JOIN vn ON vn.Vendor = lt.Vendor;"])
+    Source = Sql.Database("SCGREPORTING", "DUN02_HESDATAMART01", [Query="
+WITH lt AS (
+    SELECT SUBSTRING(LTRIM(RTRIM(MTRL_NBR)), PATINDEX('%[^0]%', LTRIM(RTRIM(MTRL_NBR)) + 'Z'), 18) AS PN,
+           SUBSTRING(LTRIM(RTRIM(LIFNR_VEND_ACCT_NO)), PATINDEX('%[^0]%', LTRIM(RTRIM(LIFNR_VEND_ACCT_NO)) + 'Z'), 10) AS Vendor,
+           INSPC_LOT_NO,
+           LTRIM(RTRIM(INSPC_OBJ_SHT_TXT)) AS PNDesc,
+           USAGE_DECISION_MADE_FG,
+           LOT_CRT_DT,
+           LTRIM(RTRIM(PLNT_NO)) AS Plant,
+           TRY_CONVERT(decimal(18, 3), INSPC_LOT_QTY) AS Qty,
+           NULLIF(LTRIM(RTRIM(BASE_UOM_NO)), '') AS UoM,
+           INSPC_LOG_ORIG_NO AS Origin
+    FROM DUN02_HESDATAMART01.dbo.QM_LT_DETAIL
+    WHERE LOT_CRT_DT >= '20150101'
+      AND COALESCE(LIFNR_VEND_ACCT_NO, '') <> ''
+      AND LTRIM(RTRIM(PLNT_NO)) IN ('2750', '2020', '2022', '2088', '2130')
+),
+ud AS (
+    SELECT INSPC_LOT_NO, USAGE_DECISION_CD, CD_VAL_FG,
+           ROW_NUMBER() OVER (PARTITION BY INSPC_LOT_NO ORDER BY CRT_DT DESC, CRT_TM DESC) AS rn
+    FROM DUN02_HESDATAMART01.dbo.QM_LOT_USAGE_DECISION
+    WHERE INSPC_LOT_NO IN (SELECT INSPC_LOT_NO FROM lt)
+),
+lot AS (
+    SELECT lt.PN, lt.Vendor, lt.INSPC_LOT_NO, lt.PNDesc, lt.Plant, lt.Qty, lt.UoM, lt.Origin,
+           CASE WHEN ud.CD_VAL_FG IN ('A', 'R') THEN ud.CD_VAL_FG
+                WHEN ud.INSPC_LOT_NO IS NULL AND lt.USAGE_DECISION_MADE_FG = 'X' THEN 'UD missing'
+                WHEN ud.INSPC_LOT_NO IS NULL THEN 'Open'
+                ELSE 'Other' END AS Status,
+           NULLIF(LTRIM(RTRIM(ud.USAGE_DECISION_CD)), '') AS UDCode,
+           ROW_NUMBER() OVER (PARTITION BY lt.PN, lt.Vendor
+                              ORDER BY lt.LOT_CRT_DT DESC, TRY_CONVERT(bigint, lt.INSPC_LOT_NO) DESC) AS rn
+    FROM lt
+    LEFT JOIN ud ON ud.INSPC_LOT_NO = lt.INSPC_LOT_NO AND ud.rn = 1
+),
+vn AS (
+    SELECT x.Vendor, MAX(x.VendorName) AS VendorName
+    FROM (SELECT SUBSTRING(LTRIM(RTRIM(VNDR_NBR)), PATINDEX('%[^0]%', LTRIM(RTRIM(VNDR_NBR)) + 'Z'), 10) AS Vendor,
+                 LTRIM(RTRIM(VNDR_NM)) AS VendorName
+          FROM DUN02_HESDATAMART01.dbo.V_VENDOR) AS x
+    GROUP BY x.Vendor
+)
+SELECT
+    l.PN AS [PN],
+    MAX(CASE WHEN l.rn = 1 THEN l.PNDesc END) AS [PN Description],
+    l.Vendor AS [Vendor],
+    COALESCE(MAX(vn.VendorName), '') AS [Vendor Name],
+    STUFF(
+        CASE WHEN MAX(CASE WHEN l.Plant = '2020' THEN 1 ELSE 0 END) = 1 THEN ', 2020' ELSE '' END +
+        CASE WHEN MAX(CASE WHEN l.Plant = '2022' THEN 1 ELSE 0 END) = 1 THEN ', 2022' ELSE '' END +
+        CASE WHEN MAX(CASE WHEN l.Plant = '2088' THEN 1 ELSE 0 END) = 1 THEN ', 2088' ELSE '' END +
+        CASE WHEN MAX(CASE WHEN l.Plant = '2130' THEN 1 ELSE 0 END) = 1 THEN ', 2130' ELSE '' END +
+        CASE WHEN MAX(CASE WHEN l.Plant = '2750' THEN 1 ELSE 0 END) = 1 THEN ', 2750' ELSE '' END,
+        1, 2, '') AS [Plant],
+    MAX(CASE WHEN l.rn = 1 THEN l.Status END) AS [Latest Status],
+    MAX(CASE WHEN l.rn = 1 THEN l.UDCode END) AS [Latest UD Code],
+    MAX(CASE WHEN l.rn = 1 THEN l.Origin END) AS [Latest Origin],
+    COUNT(DISTINCT l.INSPC_LOT_NO) AS [Total Lots],
+    COUNT(DISTINCT CASE WHEN l.Status = 'A' THEN l.INSPC_LOT_NO END) AS [A Lots],
+    COUNT(DISTINCT CASE WHEN l.Status = 'R' THEN l.INSPC_LOT_NO END) AS [R Lots],
+    SUM(l.Qty) AS [Total Qty],
+    MAX(CASE WHEN l.rn = 1 THEN l.UoM END) AS [UoM]
+FROM lot AS l
+LEFT JOIN vn ON vn.Vendor = l.Vendor
+GROUP BY l.PN, l.Vendor;
+"])
 in
     Source
