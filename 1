@@ -53,7 +53,8 @@ SELECT
         CASE WHEN MAX(CASE WHEN l.Plant = '2130' THEN 1 ELSE 0 END) = 1 THEN ', 2130' ELSE '' END +
         CASE WHEN MAX(CASE WHEN l.Plant = '2750' THEN 1 ELSE 0 END) = 1 THEN ', 2750' ELSE '' END,
         1, 2, '') AS [Plant],
-    MAX(CASE WHEN l.rn = 1 THEN l.Status END) AS [Latest Status],
+    CASE WHEN COUNT(DISTINCT CASE WHEN l.Status = 'A' THEN l.INSPC_LOT_NO END) > 0 THEN 'A'
+         ELSE MAX(CASE WHEN l.rn = 1 THEN l.Status END) END AS [Status],
     MAX(CASE WHEN l.rn = 1 THEN l.UDCode END) AS [Latest UD Code],
     MAX(CASE WHEN l.rn = 1 THEN l.Origin END) AS [Latest Origin],
     COUNT(DISTINCT l.INSPC_LOT_NO) AS [Total Lots],
