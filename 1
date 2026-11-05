@@ -1,290 +1,437 @@
 // ============================================================
-// PCR Mass Upload - Parse Data (Button7_1) OnSelect
-// (2026-11) Changes vs previous version:
-//   1. Step 1 rebuilds Excel rows before splitting cells. Excel copies a cell that contains a
-//      line break (Alt+Enter, or a trailing line break pasted in from SAP / email) as "...<LF>...",
-//      so one Excel row used to arrive as two rows (e.g. PN = " and Vendor Code = requestor name).
-//      Lines are glued back by counting tabs: every row copied from PN to Email Link has 24 tabs.
-//      Char(1) marks where the line break was.
-//   2. Pre-clean: a cell that had a line break loses the "..." wrapper Excel added (inner "" back
-//      to "), and the line break becomes a space.
-//   3. _tariffPct no longer divides inside the If condition. With _fxRate = 0 that division raised
-//      "Invalid operation: division by zero".
-//   4. New checks, both also set varDisableWrite:
-//        colBadColumns  : rows that still do not have the template column count
-//        colBadCurrency : Currency not found in FX_PRate (USD prices and annual impact would be 0)
-//   5. Error messages list the affected PNs.
+// PCR Mass Upload - Submit button (Button8_1) OnSelect
+// (2026-11) Write -> run approval flow -> keep or roll back, row by row:
+//   - Each row is written to 'Price Change' and its approval flow is run right after it.
+//   - If the write or the flow call fails, that row is rolled back: a new record is removed,
+//     an existing record gets its previous values back. A record only stays in SharePoint
+//     (and therefore in Power BI) when its approval flow accepted the request.
+//   - Once the four flows send "Respond to a PowerApp or flow" right after "Create an approval",
+//     "accepted" means the approval really exists in the approver's Approvals / Teams.
+//   - The notification lists the PNs that were not submitted. Submitted rows are taken out of
+//     colTempData, so pressing Submit again only retries the failed rows (no duplicate approvals).
+// Earlier changes:
+//   1. StrategicVar / CMGroupKeyVar are cleaned (Trim + Char(160) -> space)
+//      before being used in the GroupKeyLookup Filter, and the cleaned value
+//      is what gets written to SharePoint.
+//   2. Concat separator changed from ", " to "; " (assignedTo needs semicolons).
+//   3. STEP 0: resolve emails first and block submission with a clear
+//      message if any row cannot be matched, instead of silently sending "".
+//   4. rCMGroupKey / rIsTigerOrBlank now use the cleaned CM key.
+//   5. (2026-10) STEP 0 blocks rows whose PN + Vendor Code is already Pending Manager Approval.
+//   6. (2026-10) Annual quantity is written to the AnnualQuantity column; ApprovalEmailNoTariffNoCM reads it from there.
+//   7. (2026-10) All four approval flows get the USD prices in the FirstOld/FirstNew slots (13-14) and the stated
+//      prices in the Old/New slots (19-20, or 16-17 without tariff), the same order as Single Entry.
+//   8. (2026-10) STEP 0 blocks rows whose Annual Quantity is blank or 0.
 // ============================================================
-
-// Step 1: Rebuild Excel rows from the pasted text
-With(
-    { _lines: Split(Substitute(TextInput.Text, Char(13), ""), Char(10)) },
-    With(
-        {
-            _ln: ForAll(
-                Sequence(CountRows(_lines)) As i,
-                With(
-                    { _t: Last(FirstN(_lines, i.Value)).Value },
-                    {
-                        idx: i.Value,
-                        txt: _t,
-                        tabs: Len(_t) - Len(Substitute(_t, Char(9), ""))
-                    }
-                )
-            )
-        },
-        With(
-            // tabs per Excel row: 24 for PN .. Email Link (more if extra columns were copied)
-            { _T: Max(24, Max(_ln, tabs)) },
-            Set(varTabsPerRow, _T);
-            With(
-                {
-                    _grp: ForAll(
-                        _ln As L,
-                        With(
-                            { _before: Coalesce(Sum(Filter(_ln, idx < L.idx), tabs), 0) },
-                            {
-                                txt: L.txt,
-                                // A line without tabs that starts exactly on a row boundary is the end of the
-                                // previous row's last cell, unless it opens a quoted first cell (starts with ").
-                                rowNo: RoundDown(
-                                    (
-                                        _before - If(
-                                            L.tabs = 0 && _before > 0 && Mod(_before, _T) = 0 &&
-                                            !(Left(L.txt, 1) = """" && Right(L.txt, 1) <> """"),
-                                            1,
-                                            0
-                                        )
-                                    ) / _T,
-                                    0
-                                )
-                            }
-                        )
-                    )
-                },
-                ClearCollect(
-                    colRawRows,
-                    Filter(
-                        ForAll(
-                            Sequence(Max(_grp, rowNo) + 1, 0) As g,
-                            { Value: Concat(Filter(_grp, rowNo = g.Value), txt, Char(1)) }
-                        ),
-                        !IsBlank(Trim(Substitute(Substitute(Value, Char(1), ""), Char(9), "")))
-                    )
-                )
-            )
-        )
-    )
-);
-
-// Step 2: Convert each row into structured records (TAB-separated)
-ClearCollect(
-    colTempData,
-    ForAll(
-        colRawRows,
-        With(
-            {
-                // ===== PRE-CLEAN: NBSP -> space, strip CR, Trim =====
-                // 空格单元格在这里变成真正的空字符串，IsBlank 才会生效
-                // A cell that had a line break contains Char(1) and is wrapped in "..." by Excel
-                // (inner quotes doubled): remove the wrapper, the line break becomes a space.
-                cells: ForAll(
-                    Split(ThisRecord.Value, Char(9)) As c,
-                    With(
-                        { _v: Substitute(Substitute(c.Value, Char(160), " "), Char(13), "") },
-                        With(
-                            { _w: Trim(Substitute(_v, Char(1), " ")) },
-                            {
-                                Value: If(
-                                    Char(1) in _v && Len(_w) >= 2 && Left(_w, 1) = """" && Right(_w, 1) = """",
-                                    Trim(Substitute(Mid(_w, 2, Len(_w) - 2), """""", """")),
-                                    _w
-                                )
-                            }
-                        )
-                    )
-                )
-            },
-
-            With(
-                {
-                    _currency: If(CountRows(cells) >= 19, Last(FirstN(cells, 19)).Value, ""),
-
-                    _fxRate: Coalesce(
-                        LookUp(
-                            'FX_PRate',
-                            'Currency' = If(CountRows(cells) >= 19, Last(FirstN(cells, 19)).Value, "")
-                        ).'Current Year Currency',
-                        0
-                    ),
-
-                    _minScaleQty: If(
-                        CountRows(cells) >= 20 && !IsBlank(Last(FirstN(cells, 20)).Value),
-                        IfError(Value(Substitute(Last(FirstN(cells, 20)).Value, ",", "")), 0),
-                        0
-                    ),
-
-                    _oldStated: If(
-                        CountRows(cells) >= 21 && !IsBlank(Last(FirstN(cells, 21)).Value),
-                        IfError(Value(Substitute(Substitute(Last(FirstN(cells, 21)).Value, ",", ""), "$", "")), 0),
-                        0
-                    ),
-
-                    _newStated: If(
-                        CountRows(cells) >= 22 && !IsBlank(Last(FirstN(cells, 22)).Value),
-                        IfError(Value(Substitute(Substitute(Last(FirstN(cells, 22)).Value, ",", ""), "$", "")), 0),
-                        0
-                    ),
-
-                    _annualQty: If(
-                        CountRows(cells) >= 23 && !IsBlank(Last(FirstN(cells, 23)).Value),
-                        IfError(Value(Substitute(Last(FirstN(cells, 23)).Value, ",", "")), 0),
-                        0
-                    ),
-
-                    _tariffStated: If(
-                        CountRows(cells) >= 24 && !IsBlank(Last(FirstN(cells, 24)).Value),
-                        IfError(Value(Substitute(Substitute(Last(FirstN(cells, 24)).Value, ",", ""), "$", "")), 0),
-                        0
-                    )
-                },
-
-                With(
-                    {
-                        _oldUSD: If(_fxRate <> 0, _oldStated / _fxRate, 0),
-                        _newUSD: If(_fxRate <> 0, _newStated / _fxRate, 0),
-                        _tariffUSD: If(_fxRate <> 0, _tariffStated / _fxRate, 0),
-
-                        _deltaStated: _newStated - _oldStated,
-                        _deltaUSD: If(_fxRate <> 0, (_newStated - _oldStated) / _fxRate, 0),
-
-                        // (tariff / fx) / ((new - old) / fx) = tariff / (new - old); no division in the condition
-                        _tariffPct: If(
-                            _fxRate <> 0 && _newStated <> _oldStated,
-                            _tariffStated / (_newStated - _oldStated) * 100,
-                            0
-                        ),
-
-                        _annualDeltaImpactUSD: If(_fxRate <> 0, (_newStated - _oldStated) * _annualQty / _fxRate, 0),
-                        _annualTariffImpactUSD: If(_fxRate <> 0, _tariffStated * _annualQty / _fxRate, 0)
-                    },
-
-                    {
-                        PNVar           : If(CountRows(cells) >= 1, Last(FirstN(cells, 1)).Value, ""),
-                        DescriptionVar  : If(CountRows(cells) >= 2, Last(FirstN(cells, 2)).Value, ""),
-                        VendorCodeVar   : If(CountRows(cells) >= 3, Last(FirstN(cells, 3)).Value, ""),
-                        VendorNameVar   : If(CountRows(cells) >= 4, Last(FirstN(cells, 4)).Value, ""),
-                        PONumberVar     : If(CountRows(cells) >= 5, Last(FirstN(cells, 5)).Value, ""),
-                        StatusVar       : If(CountRows(cells) >= 6, Last(FirstN(cells, 6)).Value, ""),
-                        RequestorVar      : If(CountRows(cells) >= 7, Last(FirstN(cells, 7)).Value, ""),
-                        RequestorEmailVar : If(CountRows(cells) >= 8, Last(FirstN(cells, 8)).Value, ""),
-                        CMGroupKeyVar   : If(CountRows(cells) >= 9,  Last(FirstN(cells, 9)).Value, ""),
-                        StrategicVar    : If(CountRows(cells) >= 10, Last(FirstN(cells,10)).Value, ""),
-
-                        ReasonTariff:
-                            If(CountRows(cells) >= 11 && ("Y" in Upper(Last(FirstN(cells, 11)).Value)), "Yes", "No"),
-                        ReasonLabour:
-                            If(CountRows(cells) >= 12 && ("Y" in Upper(Last(FirstN(cells, 12)).Value)), "Yes", "No"),
-                        ReasonRawMaterial:
-                            If(CountRows(cells) >= 13 && ("Y" in Upper(Last(FirstN(cells, 13)).Value)), "Yes", "No"),
-                        ReasonECTS:
-                            If(CountRows(cells) >= 14 && ("Y" in Upper(Last(FirstN(cells, 14)).Value)), "Yes", "No"),
-                        ReasonPriceDecrease:
-                            If(CountRows(cells) >= 15 && ("Y" in Upper(Last(FirstN(cells, 15)).Value)), "Yes", "No"),
-                        ReasonAddQty:
-                            If(CountRows(cells) >= 16 && ("Y" in Upper(Last(FirstN(cells, 16)).Value)), "Yes", "No"),
-                        ReasonOthers:
-                            If(CountRows(cells) >= 17 && ("Y" in Upper(Last(FirstN(cells, 17)).Value)), "Yes", "No"),
-
-                        RemarksVar: If(CountRows(cells) >= 18, Last(FirstN(cells, 18)).Value, ""),
-                        CurrencyVar: _currency,
-                        FxRateVar  : _fxRate,
-                        ScaleQuantityVar: _minScaleQty,
-                        OldPriceVar          : _oldStated,
-                        NewPriceVar          : _newStated,
-                        AnnualQuantityVar    : _annualQty,
-                        TariffValueStatedVar : _tariffStated,
-                        OldPriceUSDVar                 : Round(_oldUSD, 2),
-                        NewPriceUSDVar                 : Round(_newUSD, 2),
-                        TariffValueUSDVar              : Round(_tariffUSD, 2),
-                        EstimatedAnnualTariffImpactVar : Round(_annualTariffImpactUSD, 2),
-                        PriceDeltaVar              : Text(Round(_deltaStated, 2), "[$-en-US]#,##0.00"),
-                        TariffPercentageVar        : Text(Round(_tariffPct, 2), "[$-en-US]#,##0.00"),
-                        AnnualPriceDeltaImpactVar  : Text(Round(_annualDeltaImpactUSD, 2), "[$-en-US]#,##0.00"),
-                        EmailLinkVar: If(CountRows(cells) >= 25, Last(FirstN(cells, 25)).Value, ""),
-                        ColCount: CountRows(cells)
-                    }
-                )
-            )
-        )
-    )
-);
-
-// Step 3: Validate
-// Rows that still do not line up with the template columns
-ClearCollect(
-    colBadColumns,
-    Filter(colTempData, ColCount <> varTabsPerRow + 1)
-);
-
-// Currency not found in FX_PRate: USD prices and annual impact would come out as 0
-ClearCollect(
-    colBadCurrency,
-    Filter(colTempData, ColCount = varTabsPerRow + 1 && FxRateVar = 0)
-);
-
-// Rows with a CM Group Key but no Email Link
-ClearCollect(
-    colInvalidEmailLinks,
-    Filter(
-        colTempData,
-        ColCount = varTabsPerRow + 1 && !IsBlank(CMGroupKeyVar) && IsBlank(EmailLinkVar)
-    )
-);
-
-Set(
-    varDisableWrite,
-    CountRows(colBadColumns) + CountRows(colBadCurrency) + CountRows(colInvalidEmailLinks) > 0
-);
 
 If(
-    CountRows(colBadColumns) > 0,
+    varDisableWrite,
     Notify(
-        "Error: " & Text(CountRows(colBadColumns)) & " row(s) do not match the template columns (" &
-        Concat(FirstN(colBadColumns, 5), PNVar, ", ") &
-        "). Copy exactly from PN to Email Link, check those rows for a tab or line break inside a cell, then paste again.",
+        "Cannot submit: fix the rows reported by Parse Data, then press Parse Data again.",
         NotificationType.Error
     ),
-    CountRows(colBadCurrency) > 0,
-    Notify(
-        "Error: currency not found in FX_PRate -> " &
-        Concat(FirstN(colBadCurrency, 5), PNVar & " [" & CurrencyVar & "]", ", ") &
-        ". Please correct the Currency column.",
-        NotificationType.Error
-    ),
-    CountRows(colInvalidEmailLinks) > 0,
-    Notify(
-        "Error: " & Text(CountRows(colInvalidEmailLinks)) &
-        " row(s) have a CM Group Key but missing Email Link / justification (" &
-        Concat(FirstN(colInvalidEmailLinks, 5), PNVar, ", ") &
-        "). Please fill it in before submitting.",
-        NotificationType.Error
-    ),
-    Notify(
-        "Parsed " & Text(CountRows(colTempData)) & " row(s).",
-        NotificationType.Success
+    If(
+        CountRows(colTempData) = 0,
+        Notify(
+            "No parsed rows found. Paste + Parse first.",
+            NotificationType.Error
+        );
+        false,
+        If(
+            CountRows(colTempData) > 100,
+            Notify(
+                "Please upload max 100 rows per cycle.",
+                NotificationType.Error
+            );
+            false,
+
+            // ===== STEP 0: CLEAN + RESOLVE EMAILS, THEN VALIDATE (unchanged) =====
+            ClearCollect(
+                colLookupCheck,
+                ForAll(
+                    colTempData As r,
+                    With(
+                        {
+                            sName: Trim(Substitute(r.StrategicVar, Char(160), " ")),
+                            cName: Trim(Substitute(r.CMGroupKeyVar, Char(160), " "))
+                        },
+                        {
+                            RowPN: r.PNVar,
+                            StratName: sName,
+                            CMName: cName,
+                            StratEmails: Concat(
+                                Filter(GroupKeyLookup, Title = sName),
+                                Email, "; "
+                            ),
+                            CMEmails: Concat(
+                                Filter(GroupKeyLookup, Title = cName),
+                                Email, "; "
+                            ),
+                            IsTigerOrBlank: (cName = "" || IsBlank(cName) || Upper(cName) = "TIGER"),
+                            PendingMgr: !IsBlank(
+                                LookUp(
+                                    'Price Change',
+                                    PN = r.PNVar && 'Vendor Code' = r.VendorCodeVar &&
+                                    'Request Status' = "Pending Manager Approval"
+                                )
+                            ),
+                            NoQty: Coalesce(r.AnnualQuantityVar, 0) <= 0
+                        }
+                    )
+                )
+            );
+
+            If(
+                CountRows(
+                    Filter(
+                        colLookupCheck,
+                        PendingMgr || NoQty || IsBlank(StratEmails) || (!IsTigerOrBlank && IsBlank(CMEmails))
+                    )
+                ) > 0,
+                Notify(
+                    "Cannot submit -> " &
+                    Concat(
+                        FirstN(
+                            Filter(
+                                colLookupCheck,
+                                PendingMgr || NoQty || IsBlank(StratEmails) || (!IsTigerOrBlank && IsBlank(CMEmails))
+                            ),
+                            5
+                        ),
+                        RowPN & " [" & If(PendingMgr, "Pending Manager Approval", NoQty, "Annual Quantity is blank or 0", IsBlank(StratEmails), "no GroupKeyLookup email: " & StratName, "no GroupKeyLookup email: " & CMName) & "]",
+                        "  |  "
+                    ),
+                    NotificationType.Error
+                );
+                false,
+
+                // ===== STEP 1: PER ROW: WRITE -> RUN APPROVAL FLOW -> KEEP OR ROLL BACK =====
+                ClearCollect(
+                    colSubmitResults,
+                    ForAll(
+                        colTempData,
+                        With(
+                            {
+                                existingPNVendor: Filter(
+                                    'Price Change',
+                                    PN = PNVar && 'Vendor Code' = VendorCodeVar && ('Request Status' in ["Pending Approval / Feedback"] || IsBlank('Request Status'))
+                                ),
+                                StrategicClean: Trim(Substitute(StrategicVar, Char(160), " ")),
+                                CMKeyClean: Trim(Substitute(CMGroupKeyVar, Char(160), " "))
+                            },
+                            With(
+                                {
+                                    // snapshot of the existing record BEFORE it is overwritten (used for the rollback)
+                                    existingSP: LookUp(existingPNVendor, true),
+                                    CMEmail: Concat(
+                                        Filter(GroupKeyLookup, Title = CMKeyClean),
+                                        Email, "; "
+                                    ),
+                                    StratTeamEmail: Concat(
+                                        Filter(GroupKeyLookup, Title = StrategicClean),
+                                        Email, "; "
+                                    ),
+                                    TariffSelectedRow: ("Y" in Upper(Trim(ReasonTariff))),
+                                    IsTigerRow: (CMKeyClean = "" || IsBlank(CMKeyClean) || Upper(CMKeyClean) = "TIGER"),
+                                    ReasonValueRow: Concat(
+                                        Filter(
+                                            Table(
+                                                { k: "Tariff", v: ReasonTariff },
+                                                { k: "Labour Cost Inflation", v: ReasonLabour },
+                                                { k: "Raw Material Inflation", v: ReasonRawMaterial },
+                                                { k: "ECTS", v: ReasonECTS },
+                                                { k: "Price Decrease", v: ReasonPriceDecrease },
+                                                { k: "Add More Scale Qty", v: ReasonAddQty },
+                                                { k: "Others", v: ReasonOthers }
+                                            ),
+                                            ("Y" in Upper(Trim(v)))
+                                        ),
+                                        k, ", "
+                                    )
+                                },
+                                With(
+                                    {
+                                        // write 1: request fields (Blank when SharePoint refused the write)
+                                        patched: IfError(
+                                            If(
+                                                !IsBlank(existingSP),
+                                                Patch(
+                                                    'Price Change',
+                                                    existingSP,
+                                                    {
+                                                        Date: Today(),
+                                                        PN: PNVar,
+                                                        Description: DescriptionVar,
+                                                        'Vendor Code': VendorCodeVar,
+                                                        'Vendor Name': VendorNameVar,
+                                                        'PO Number': PONumberVar,
+                                                        'Requestor Name': RequestorVar,
+                                                        Remarks: RemarksVar,
+                                                        Currency: CurrencyVar,
+                                                        'Request Status': StatusVar,
+                                                        'Strategic Sourcing Personnel': StrategicClean,
+                                                        Approver: CMKeyClean,
+                                                        'Price Change Reason - Tariff': ReasonTariff,
+                                                        'Price Change Reason - Labour Cost Inflation': ReasonLabour,
+                                                        'Price Change Reason - Raw Material Inflation': ReasonRawMaterial,
+                                                        'Price Change Reason - ECTS': ReasonECTS,
+                                                        'Price Change Reason - Price Decrease': ReasonPriceDecrease,
+                                                        'Price Change Reason - Add More Scale Qty': ReasonAddQty,
+                                                        'Price Change Reason - Others': ReasonOthers
+                                                    }
+                                                ),
+                                                Patch(
+                                                    'Price Change',
+                                                    Defaults('Price Change'),
+                                                    {
+                                                        Title: "PC-" & Text(
+                                                            Coalesce(
+                                                                Max(
+                                                                    'Price Change',
+                                                                    Value(Mid(Title, 4, Len(Title) - 3))
+                                                                ),
+                                                                0
+                                                            ) + 1,
+                                                            "0000000"
+                                                        ),
+                                                        Date: Today(),
+                                                        PN: PNVar,
+                                                        Description: DescriptionVar,
+                                                        'Vendor Code': VendorCodeVar,
+                                                        'Vendor Name': VendorNameVar,
+                                                        'PO Number': PONumberVar,
+                                                        'Requestor Name': RequestorVar,
+                                                        Remarks: RemarksVar,
+                                                        Currency: CurrencyVar,
+                                                        'Request Status': StatusVar,
+                                                        'Strategic Sourcing Personnel': StrategicClean,
+                                                        Approver: CMKeyClean,
+                                                        'Price Change Reason - Tariff': ReasonTariff,
+                                                        'Price Change Reason - Labour Cost Inflation': ReasonLabour,
+                                                        'Price Change Reason - Raw Material Inflation': ReasonRawMaterial,
+                                                        'Price Change Reason - ECTS': ReasonECTS,
+                                                        'Price Change Reason - Price Decrease': ReasonPriceDecrease,
+                                                        'Price Change Reason - Add More Scale Qty': ReasonAddQty,
+                                                        'Price Change Reason - Others': ReasonOthers
+                                                    }
+                                                )
+                                            ),
+                                            Blank()
+                                        )
+                                    },
+                                    With(
+                                        {
+                                            // write 2: prices (Blank when write 1 or this write failed)
+                                            patched2: If(
+                                                IsBlank(patched),
+                                                Blank(),
+                                                IfError(
+                                                    Patch(
+                                                        'Price Change',
+                                                        patched,
+                                                        {
+                                                            'Old Price in Stated Currency': OldPriceVar,
+                                                            'Old Price in USD': OldPriceUSDVar,
+                                                            'New Price in Stated Currency': NewPriceVar,
+                                                            'New Price in USD': NewPriceUSDVar,
+                                                            'Price Delta': PriceDeltaVar,
+                                                            'Scale Quantity': ScaleQuantityVar,
+                                                            'Tariff Percentage': TariffPercentageVar,
+                                                            'Tariff Value (USD)': TariffValueUSDVar,
+                                                            'Estimated Tariff Annual Impact (USD)': EstimatedAnnualTariffImpactVar,
+                                                            'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactVar,
+                                                            AnnualQuantity: Coalesce(If(AnnualQuantityVar = Int(AnnualQuantityVar), Text(AnnualQuantityVar, "[$-en-US]#,##0"), Text(AnnualQuantityVar, "[$-en-US]#,##0.##")), "N/A"),
+                                                            'Email Link': EmailLinkVar
+                                                        }
+                                                    ),
+                                                    Blank()
+                                                )
+                                            )
+                                        },
+                                        With(
+                                            {
+                                                // run the approval flow right after the write; true = the flow accepted the request
+                                                // (IfError with a DefaultResult always returns true / false, whatever the flow returns)
+                                                flowOK: If(
+                                                    IsBlank(patched2),
+                                                    false,
+                                                    StatusVar = "Negotiation Successful",
+                                                    true,   // no approval flow for these rows, same as before
+                                                    TariffSelectedRow && IsTigerRow,
+                                                    IfError(
+                                                        ApprovalEmailTariffNoCM.Run(
+                                                            patched2.Title, PNVar, VendorCodeVar, VendorNameVar,
+                                                            PONumberVar, RequestorVar, RemarksVar,
+                                                            patched2.ID, CMKeyClean, DescriptionVar,
+                                                            RequestorEmailVar, CurrencyVar,
+                                                            OldPriceUSDVar, NewPriceUSDVar,      // 13-14: USD
+                                                            TariffPercentageVar, EstimatedAnnualTariffImpactVar,
+                                                            ScaleQuantityVar, TariffValueUSDVar,
+                                                            OldPriceVar, NewPriceVar,            // 19-20: stated currency
+                                                            StratTeamEmail, EmailLinkVar, CMEmail,
+                                                            ReasonValueRow, AnnualPriceDeltaImpactVar
+                                                        ),
+                                                        false,
+                                                        true
+                                                    ),
+                                                    TariffSelectedRow,
+                                                    IfError(
+                                                        ApprovalEmail.Run(
+                                                            patched2.Title, PNVar, VendorCodeVar, VendorNameVar,
+                                                            PONumberVar, RequestorVar, RemarksVar,
+                                                            patched2.ID, CMKeyClean, DescriptionVar,
+                                                            RequestorEmailVar, CurrencyVar,
+                                                            OldPriceUSDVar, NewPriceUSDVar,      // 13-14: USD
+                                                            TariffPercentageVar, EstimatedAnnualTariffImpactVar,
+                                                            ScaleQuantityVar, TariffValueUSDVar,
+                                                            OldPriceVar, NewPriceVar,            // 19-20: stated currency
+                                                            StratTeamEmail, EmailLinkVar, CMEmail,
+                                                            ReasonValueRow, AnnualPriceDeltaImpactVar
+                                                        ),
+                                                        false,
+                                                        true
+                                                    ),
+                                                    IsTigerRow,
+                                                    IfError(
+                                                        ApprovalEmailNoTariffNoCM.Run(
+                                                            patched2.Title, PNVar, VendorCodeVar, VendorNameVar,
+                                                            PONumberVar, RequestorVar, RemarksVar,
+                                                            patched2.ID, CMKeyClean, DescriptionVar,
+                                                            RequestorEmailVar, CurrencyVar,
+                                                            OldPriceUSDVar, NewPriceUSDVar,      // 13-14: USD
+                                                            ScaleQuantityVar,
+                                                            OldPriceVar, NewPriceVar,            // 16-17: stated currency
+                                                            StratTeamEmail, EmailLinkVar, CMEmail,
+                                                            ReasonValueRow, AnnualPriceDeltaImpactVar
+                                                        ),
+                                                        false,
+                                                        true
+                                                    ),
+                                                    IfError(
+                                                        ApprovalEmailNoTariff.Run(
+                                                            patched2.Title, PNVar, VendorCodeVar, VendorNameVar,
+                                                            PONumberVar, RequestorVar, RemarksVar,
+                                                            patched2.ID, CMKeyClean, DescriptionVar,
+                                                            RequestorEmailVar, CurrencyVar,
+                                                            OldPriceUSDVar, NewPriceUSDVar,      // 13-14: USD
+                                                            ScaleQuantityVar,
+                                                            OldPriceVar, NewPriceVar,            // 16-17: stated currency
+                                                            StratTeamEmail, EmailLinkVar, CMEmail,
+                                                            ReasonValueRow, AnnualPriceDeltaImpactVar
+                                                        ),
+                                                        false,
+                                                        true
+                                                    )
+                                                )
+                                            },
+                                            With(
+                                                {
+                                                    // roll back when the write or the flow failed:
+                                                    //   new record      -> Remove it
+                                                    //   existing record -> put its previous values back
+                                                    cleanedUp: If(
+                                                        flowOK || IsBlank(patched),
+                                                        true,
+                                                        IsBlank(existingSP),
+                                                        IfError(
+                                                            Remove('Price Change', If(IsBlank(patched2), patched, patched2)),
+                                                            false,
+                                                            true
+                                                        ),
+                                                        IfError(
+                                                            Patch(
+                                                                'Price Change',
+                                                                If(IsBlank(patched2), patched, patched2),
+                                                                {
+                                                                    Date: existingSP.Date,
+                                                                    PN: existingSP.PN,
+                                                                    Description: existingSP.Description,
+                                                                    'Vendor Code': existingSP.'Vendor Code',
+                                                                    'Vendor Name': existingSP.'Vendor Name',
+                                                                    'PO Number': existingSP.'PO Number',
+                                                                    'Requestor Name': existingSP.'Requestor Name',
+                                                                    Remarks: existingSP.Remarks,
+                                                                    Currency: existingSP.Currency,
+                                                                    'Request Status': existingSP.'Request Status',
+                                                                    'Strategic Sourcing Personnel': existingSP.'Strategic Sourcing Personnel',
+                                                                    Approver: existingSP.Approver,
+                                                                    'Price Change Reason - Tariff': existingSP.'Price Change Reason - Tariff',
+                                                                    'Price Change Reason - Labour Cost Inflation': existingSP.'Price Change Reason - Labour Cost Inflation',
+                                                                    'Price Change Reason - Raw Material Inflation': existingSP.'Price Change Reason - Raw Material Inflation',
+                                                                    'Price Change Reason - ECTS': existingSP.'Price Change Reason - ECTS',
+                                                                    'Price Change Reason - Price Decrease': existingSP.'Price Change Reason - Price Decrease',
+                                                                    'Price Change Reason - Add More Scale Qty': existingSP.'Price Change Reason - Add More Scale Qty',
+                                                                    'Price Change Reason - Others': existingSP.'Price Change Reason - Others',
+                                                                    'Old Price in Stated Currency': existingSP.'Old Price in Stated Currency',
+                                                                    'Old Price in USD': existingSP.'Old Price in USD',
+                                                                    'New Price in Stated Currency': existingSP.'New Price in Stated Currency',
+                                                                    'New Price in USD': existingSP.'New Price in USD',
+                                                                    'Price Delta': existingSP.'Price Delta',
+                                                                    'Scale Quantity': existingSP.'Scale Quantity',
+                                                                    'Tariff Percentage': existingSP.'Tariff Percentage',
+                                                                    'Tariff Value (USD)': existingSP.'Tariff Value (USD)',
+                                                                    'Estimated Tariff Annual Impact (USD)': existingSP.'Estimated Tariff Annual Impact (USD)',
+                                                                    'Estimated Delta Annual Impact (USD)': existingSP.'Estimated Delta Annual Impact (USD)',
+                                                                    AnnualQuantity: existingSP.AnnualQuantity,
+                                                                    'Email Link': existingSP.'Email Link'
+                                                                }
+                                                            ),
+                                                            false,
+                                                            true
+                                                        )
+                                                    )
+                                                },
+                                                {
+                                                    rPN: PNVar,
+                                                    rVendorCode: VendorCodeVar,
+                                                    rStatus: StatusVar,
+                                                    rTPCID: If(flowOK, patched2.Title, ""),
+                                                    rOK: flowOK,
+                                                    rFailedAt: If(flowOK, "", IsBlank(patched2), "SharePoint write", "approval flow"),
+                                                    rCleanedUp: cleanedUp
+                                                }
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                );
+
+                // ===== STEP 2: REPORT, KEEP ONLY THE FAILED ROWS FOR A RETRY =====
+                With(
+                    {
+                        okRows: Filter(colSubmitResults, rOK),
+                        badRows: Filter(colSubmitResults, !rOK)
+                    },
+                    If(
+                        CountRows(badRows) = 0,
+                        Notify(
+                            "Submitted " & Text(CountRows(okRows)) & " row(s).",
+                            NotificationType.Success
+                        ),
+                        Notify(
+                            "Submitted " & Text(CountRows(okRows)) & " of " & Text(CountRows(colSubmitResults)) &
+                            " row(s). Not submitted, press Submit again to retry: " &
+                            Concat(
+                                FirstN(badRows, 10),
+                                rPN & " [" & rFailedAt & " failed" & If(rCleanedUp, "", "; record still in SharePoint, tell the PCR admin") & "]",
+                                "  |  "
+                            ),
+                            NotificationType.Error
+                        )
+                    )
+                );
+
+                // submitted rows leave the list, so a second Submit cannot send them twice
+                RemoveIf(
+                    colTempData,
+                    !IsBlank(LookUp(colSubmitResults, rOK && rPN = PNVar && rVendorCode = VendorCodeVar))
+                );
+
+                Refresh('Price Change')
+            )
+        )
     )
-);
-
-
-// ============================================================
-// Submit (Button8_1) OnSelect: change only the first message, because varDisableWrite
-// now also covers column and currency errors.
-// ============================================================
-//  If(
-//      varDisableWrite,
-//      Notify(
-//          "Cannot submit: fix the rows reported by Parse Data, then press Parse Data again.",
-//          NotificationType.Error
-//      ),
-//      ... (rest unchanged)
+)
