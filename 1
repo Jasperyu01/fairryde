@@ -1,8 +1,12 @@
--- 1. 表还在不在，或者是否改了名
-SELECT name, create_date, modify_date
+-- STAGING 库里还有哪些条件价格相关的表
+SELECT name, modify_date
 FROM STAGING.sys.tables
-WHERE name LIKE '%A017%';
+WHERE name LIKE 'A0%' OR name LIKE '%KONP%'
+   OR name LIKE '%KONM%' OR name LIKE '%COND%'
+ORDER BY name;
 
--- 2. 视图定义里实际引用了什么
-USE PowerBI;
-EXEC sp_helptext 'STAGING.V_ZCLS_PRICE_SCALES_REPORTING';
+-- PowerBI 库里还有哪些价格或阶梯相关的视图
+SELECT TABLE_SCHEMA, TABLE_NAME
+FROM PowerBI.INFORMATION_SCHEMA.VIEWS
+WHERE TABLE_NAME LIKE '%SCALE%' OR TABLE_NAME LIKE '%PRICE%'
+ORDER BY TABLE_NAME;
