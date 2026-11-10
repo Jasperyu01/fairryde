@@ -1,65 +1,68 @@
 let
-    Source = Sql.Database("SCGREPORTING", "DUN02_HESDATAMART01", [Query="SELECT po.PO_NBR, po.VNDR_NBR, po.PO_DT, po.CRNCY_CD, po.EXCHNG_RT, po.PO_CATG_CD, po.PRCH_GRP_CD, po.CREAT_BY_NM, po.PAY_TRM_CD, po.DEL_FLG, poi.PO_ITM_NBR, poi.MTRL_NBR, poi.PLNT_CD, poi.STRG_LOCN_CD, poi.PO_UOM_CD, poi.BASE_UOM_CD, poi.PRC_UNIT, poi.PO_QTY, poi.PO_NET_UNT_PRC, poi.PO_VAL, poi.PR_NBR, poi.PR_ITM_NBR, poi.PRCH_INFO_RCRD_NBR, poi.PRFT_CNTR_CD#(lf)FROM dbo.PRCH_ORDR AS po with (nolock)#(lf)INNER JOIN dbo.PRCH_ORDR_ITM AS poi with (nolock) ON po.OID = poi.PO_OID#(lf)WHERE po.CO_CD = '8093'#(lf)AND poi.STRG_LOCN_CD IN ('S2FA','SGP2')#(lf)AND po.PO_DT >= '2025-10-01' AND po.PO_DT < '2026-10-01'#(lf)ORDER BY poi.MTRL_NBR, po.PO_DT ASC"]),
-    TrimZeros = Table.TransformColumns(Source, {
-        {"VNDR_NBR", each Text.TrimStart(_, "0"), type text},
-        {"MTRL_NBR", each Text.TrimStart(_, "0"), type text}
+    Source = Sql.Database("SCGREPORTING", "PowerBI", [Query="
+        SELECT 
+            [SUPPLIER] AS VENDOR_CODE, 
+            [VENDOR_NAME], 
+            CAST(CAST([MATERIAL] AS BIGINT) AS NVARCHAR(20)) AS PART_NUMBER,
+            [PRICING_UNIT], 
+            [SCALE_QTY], 
+            [UOM], 
+            CASE 
+                WHEN [COND_RATE] <> 0 THEN [COND_RATE]
+                ELSE [AMOUNT]
+            END AS PRICE_PER_PRICING_UNIT, 
+            CASE 
+                WHEN [COND_RATE] <> 0 THEN [COND_RATE] / [PRICING_UNIT]
+                ELSE [AMOUNT] / [PRICING_UNIT]
+            END AS PRICE_PER_UNIT, 
+            CASE
+                WHEN [COND_CURRENCY] = 'USD' AND [COND_RATE] <> 0 THEN [COND_RATE]
+                WHEN [COND_CURRENCY] = 'USD' AND [COND_RATE] = 0 THEN [AMOUNT]
+                WHEN [COND_CURRENCY] <> 'USD' AND [COND_RATE] <> 0 THEN [COND_RATE] * [EXCHNG_RT]
+                ELSE [AMOUNT] * [EXCHNG_RT]
+            END AS PRICE_PER_PRICING_UNIT_USD, 
+            CASE
+                WHEN [COND_CURRENCY] = 'USD' AND [COND_RATE] <> 0 THEN [COND_RATE] / [PRICING_UNIT]
+                WHEN [COND_CURRENCY] = 'USD' AND [COND_RATE] = 0 THEN [AMOUNT] / [PRICING_UNIT]
+                WHEN [COND_CURRENCY] <> 'USD' AND [COND_RATE] <> 0 THEN ([COND_RATE] / [PRICING_UNIT]) * [EXCHNG_RT]
+                ELSE ([AMOUNT] / [PRICING_UNIT]) * [EXCHNG_RT]
+            END AS PRICE_PER_UNIT_USD, 
+            [COND_CURRENCY], 
+            [EXCHNG_RT], 
+            [VALID_TO] 
+        FROM [PowerBI].[STAGING].[V_ZCLS_PRICE_SCALES_REPORTING] WITH (NOLOCK) 
+        WHERE 
+            [PLNT] = '2750' 
+            AND [VALID_TO] >= GETDATE() 
+            AND [PRICING_UNIT] <> 0 
+            AND TRY_CAST([SUPPLIER] AS BIGINT) IS NOT NULL 
+            AND [SUPPLIER] NOT LIKE 'P%%' 
+        ORDER BY 
+            [SUPPLIER], 
+            [MATERIAL], 
+            [SCALE_QTY] ASC
+    "]),
+    Typed = Table.TransformColumnTypes(Source, {
+        {"VENDOR_CODE",                 type text},
+        {"VENDOR_NAME",                 type text},
+        {"PART_NUMBER",                 type text},
+        {"PRICING_UNIT",                type number},
+        {"SCALE_QTY",                   type number},
+        {"UOM",                         type text},
+        {"PRICE_PER_PRICING_UNIT",      type number},
+        {"PRICE_PER_UNIT",              type number},
+        {"PRICE_PER_PRICING_UNIT_USD",  type number},
+        {"PRICE_PER_UNIT_USD",          type number},
+        {"COND_CURRENCY",               type text},
+        {"EXCHNG_RT",                   type number},
+        {"VALID_TO",                    type datetime}
     }),
-    ChangedType = Table.TransformColumnTypes(TrimZeros, {
-        {"PO_NET_UNT_PRC", type number}, {"PRC_UNIT", type number},
-        {"PO_QTY", type number}, {"PO_VAL", type number},
-        {"EXCHNG_RT", type number}, {"PO_DT", type date}
-    }),
-    AddUnitPrice = Table.AddColumn(ChangedType, "Unit_Price",
-        each if [PRC_UNIT] = null or [PRC_UNIT] = 0 then [PO_NET_UNT_PRC]
-             else [PO_NET_UNT_PRC] / [PRC_UNIT], type number),
-    AddQuarter = Table.AddColumn(AddUnitPrice, "Quarter",
-        each Text.From(Date.Year([PO_DT])) & "Q" & Text.From(Date.QuarterOfYear([PO_DT])), type text),
-    AddKey = Table.AddColumn(AddQuarter, "PO Number/Item",
-        each Text.From([PO_NBR]) & "-" & Text.From(Number.From([PO_ITM_NBR])), type text),
-    Deduped = Table.Distinct(AddKey, {"PO Number/Item"}),
-    USDRates = Table.Group(
-        Table.SelectRows(Deduped, each [CRNCY_CD] = "USD"),
-        {"Quarter"}, {{"USD_to_SGD", each List.Median([EXCHNG_RT]), type number}}),
-    MergeRates = Table.NestedJoin(Deduped, {"Quarter"}, USDRates, {"Quarter"}, "RT", JoinKind.LeftOuter),
-    ExpandRates = Table.ExpandTableColumn(MergeRates, "RT", {"USD_to_SGD"}, {"USD_to_SGD"}),
-    AddUnitPriceUSD = Table.AddColumn(ExpandRates, "Unit_Price_USD",
-        each if [CRNCY_CD] = "USD" then [Unit_Price]
-             else [Unit_Price] * [EXCHNG_RT] / [USD_to_SGD], type number),
-    AddPOValUSD = Table.AddColumn(AddUnitPriceUSD, "PO_VAL_USD",
-        each if [CRNCY_CD] = "USD" then [PO_VAL]
-             else [PO_VAL] * [EXCHNG_RT] / [USD_to_SGD], type number),
-    MM = Table.Buffer(Table.Distinct(
-        Table.SelectColumns(
-            Table.TransformColumns(#"SQL_Material Master", {{"MTRL_NBR", each Text.TrimStart(Text.From(_), "0"), type text}}),
-            {"MTRL_NBR", "MTRL_DSC"}),
-        {"MTRL_NBR"})),
-    WithDesc = Table.ExpandTableColumn(
-        Table.NestedJoin(AddPOValUSD, {"MTRL_NBR"}, MM, {"MTRL_NBR"}, "mm", JoinKind.LeftOuter),
-        "mm", {"MTRL_DSC"}, {"MTRL_DSC"}),
-    VEND = Table.Buffer(Table.Distinct(
-        Table.SelectColumns(
-            Table.TransformColumns(#"Excel_Buyer-Vendor Allocation", {{"Vendor Code", each Text.TrimStart(Text.From(_), "0"), type text}}),
-            {"Vendor Code", "Vendor Name"}),
-        {"Vendor Code"})),
-    CAT = Table.Buffer(Table.Distinct(
-        Table.SelectColumns(
-            Table.TransformColumns(#"Excel_Vendor Category", {{"Vendor#", each Text.TrimStart(Text.From(_), "0"), type text}}),
-            {"Vendor#", "Category by vendor"}),
-        {"Vendor#"})),
-    WithVendor = Table.ExpandTableColumn(
-        Table.NestedJoin(WithDesc, {"VNDR_NBR"}, VEND, {"Vendor Code"}, "vend", JoinKind.LeftOuter),
-        "vend", {"Vendor Name"}, {"VNDR_NM"}),
-    WithCat = Table.ExpandTableColumn(
-        Table.NestedJoin(WithVendor, {"VNDR_NBR"}, CAT, {"Vendor#"}, "cat", JoinKind.LeftOuter),
-        "cat", {"Category by vendor"}, {"Vendor Category Raw"}),
-    AddCatGroup = Table.AddColumn(WithCat, "Material Category", each
-        let c = [Vendor Category Raw] in
-            if c = null then "Uncategorized"
-            else if c = "Machining - Carbides" then "Machining"
-            else if Text.StartsWith(c, "MRO") then "MRO"
-            else if c = "PCB" then "PCB & Electronics"
-            else if Text.StartsWith(c, "EMA") then "EMA"
-            else if List.Contains({"Collar", "Machining", "Interco", "Sensor", "Service"}, c) then c
-            else "Uncategorized", type text)
+    #"Trimmed Vendor" = Table.TransformColumns(Typed, {
+        {"VENDOR_CODE", each Text.TrimStart(_, "0"), type text}
+    })
 in
-    AddCatGroup
+    #"Trimmed Vendor"
+
+
+Scale_Price
+Microsoft SQL: Invalid object name 'STAGING.dbo.A017_CONDITIONS_PLNT_SPECIFIC'. Could not use view or function 'PowerBI.STAGING.V_ZCLS_PRICE_SCALES_REPORTING' because of binding errors.
