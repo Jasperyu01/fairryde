@@ -1,1 +1,74 @@
-"C:\Users\H329097\OneDrive - Halliburton\Desktop\Scale Price.xlsx"
+整段粘贴就行，路径已经写进去了，不用再改任何地方：
+
+```powerquery
+let
+    // Snapshot of Scale_Price kept in its own Excel workbook (copied from the Power BI table on 10 Nov 2026).
+    // The SQL view behind it (PowerBI.STAGING.V_ZCLS_PRICE_SCALES_REPORTING) no longer runs.
+    Book = Excel.Workbook(File.Contents("C:\Users\H329097\OneDrive - Halliburton\Desktop\Scale Price.xlsx"), null, true),
+    Cols = {"VENDOR_CODE", "VENDOR_NAME", "PART_NUMBER", "PRICING_UNIT", "SCALE_QTY", "UOM", "PRICE_PER_PRICING_UNIT",
+        "PRICE_PER_UNIT", "PRICE_PER_PRICING_UNIT_USD", "PRICE_PER_UNIT_USD", "COND_CURRENCY", "EXCHNG_RT", "VALID_TO"},
+    // takes the sheet (or table) that holds the header PART_NUMBER, whatever the sheet is called
+    HasHeader = (t as table) as logical =>
+        List.Contains(Table.ColumnNames(t), "PART_NUMBER")
+        or List.AnyTrue(List.Transform(Table.ToRecords(Table.FirstN(t, 20)),
+            (r) => List.Contains(Record.ToList(r), "PART_NUMBER"))),
+    Found = Table.SelectRows(Book, each ([Kind] = "Table" or [Kind] = "Sheet") and HasHeader([Data])),
+    Raw = if Table.RowCount(Found) > 0 then Table.Sort(Found, {{"Kind", Order.Descending}}){0}[Data]
+        else error "Scale_Price: no sheet with the header PART_NUMBER was found in Scale Price.xlsx",
+    // the header row is the first row that holds PART_NUMBER
+    WithHeaders = if List.Contains(Table.ColumnNames(Raw), "PART_NUMBER") then Raw
+        else Table.PromoteHeaders(
+            Table.Skip(Raw, each not List.Contains(Record.ToList(_), "PART_NUMBER")),
+            [PromoteAllScalars = true]),
+    Kept = Table.SelectColumns(WithHeaders, Cols),
+    NoEmptyText = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Cols),
+    NoBlankRows = Table.SelectRows(NoEmptyText, each [PART_NUMBER] <> null),
+    Typed = Table.TransformColumnTypes(NoBlankRows, {
+        {"VENDOR_CODE",                 type text},
+        {"VENDOR_NAME",                 type text},
+        {"PART_NUMBER",                 type text},
+        {"PRICING_UNIT",                type number},
+        {"SCALE_QTY",                   type number},
+        {"UOM",                         type text},
+        {"PRICE_PER_PRICING_UNIT",      type number},
+        {"PRICE_PER_UNIT",              type number},
+        {"PRICE_PER_PRICING_UNIT_USD",  type number},
+        {"PRICE_PER_UNIT_USD",          type number},
+        {"COND_CURRENCY",               type text},
+        {"EXCHNG_RT",                   type number},
+        {"VALID_TO",                    type datetime}
+    }),
+    #"Trimmed Vendor" = Table.TransformColumns(Typed, {
+        {"VENDOR_CODE", each Text.TrimStart(_, "0"), type text}
+    })
+in
+    #"Trimmed Vendor"
+```
+
+1. 先把 `Scale Price.xlsx` 保存并关掉（开着的时候 Power BI 有时读不了）。
+2. Transform data，左边点 **Scale_Price**，Home > Advanced Editor，全删，粘贴，Done。预览应该出 13 列。如果弹出隐私级别的提示，按第 0 部分把 Privacy 设成 Ignore。
+3. Close & Apply。
+4. 对数用上一条那段 DAX，应该是的数也不变（Rows 205,205，Valid to in 9999 是 205,168，ZMMRP lines with a scale price 1,942 等）。
+
+和上一条的版本比只改了两处：`Book` 直接读这个文件；不再按 sheet 的名字找，而是取带 PART_NUMBER 表头的那张 sheet，所以 sheet 叫 Sheet1 还是别的名字都可以。这个文件以后不要改名、不要挪位置，不然刷新会报找不到文件。
+
+这一版也只通过了语法检查，没有在 Power BI 里跑过，对数要做。
+
+上一条就是最终版，路径已经写进查询里，整段粘贴即可。发出去的代码我回读核对过，和通过语法检查的文件一致；它没在 Power BI 里跑过，Apply 之后请跑一下对数。
+
+对数有哪个对不上，或者 Apply 报错，把结果或报错原文发我。
+
+
+EVALUATE
+    ROW (
+        "Rows", COUNTROWS ( Scale_Price ),
+        "PNs", DISTINCTCOUNT ( Scale_Price[PART_NUMBER] ),
+        "Vendors", DISTINCTCOUNT ( Scale_Price[VENDOR_CODE] ),
+        "Sum price per unit USD", SUM ( Scale_Price[PRICE_PER_UNIT_USD] ),
+        "Blank exchange rate", COUNTROWS ( FILTER ( Scale_Price, ISBLANK ( Scale_Price[EXCHNG_RT] ) ) ),
+        "Blank valid to", COUNTROWS ( FILTER ( Scale_Price, ISBLANK ( Scale_Price[VALID_TO] ) ) ) + 0,
+        "Earliest valid to", MIN ( Scale_Price[VALID_TO] ),
+        "Valid to in 9999", COUNTROWS ( FILTER ( Scale_Price, YEAR ( Scale_Price[VALID_TO] ) = 9999 ) ),
+        "Valid to 1 Apr 2028", COUNTROWS ( FILTER ( Scale_Price, Scale_Price[VALID_TO] = DATE ( 2028, 4, 1 ) ) ),
+        "ZMMRP lines with a scale price", COUNTROWS ( FILTER ( ZMMRP, NOT ISBLANK ( ZMMRP[Scale Price USD] ) ) )
+    )
