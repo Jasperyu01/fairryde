@@ -1,74 +1,229 @@
-整段粘贴就行，路径已经写进去了，不用再改任何地方：
+这是我那段查询写法的问题，不是你的电脑或 SQL 的问题，不用再等了。
+
+**原因**：第一版里判断"这个 vendor 对这个 PN 有没有 open FA"，用的是先合并查询、再逐行数子表的写法。这种写法下 Power Query 会为 PO_Items 的每一行（7,000 多行）把 Open_PO 那条链重新算一遍，包括重新读 SQL 和 Excel，所以跑不完。新版把 Open PO 只读一次、放进内存，open FA 的判断改成查一张一百多项的清单。只改了取数的方式，价格规则没有动。
+
+**现在这样做**
+
+1. 左边点 **PO_Price**，Home > Advanced Editor，全删，粘贴下面这段，Done。正在跑的那次会被新的取代；如果界面点不动，先点 Home > Refresh Preview 下拉里的 **Cancel Refresh**。
+2. 预览出来的时间应该和 1.4（PO_Items）、1.5（Open_PO）加起来差不多。出来以后第一列是 Part PN，后面 17 列。
+3. 1.7 的 Part_Price 不用改，照原来那段贴。
+4. 1.8 的 BOM_Line、1.9 的 PIC_Map 用下面这两段，代替之前发的。逻辑没变，只是把 Part_Price 先算一次放进内存再合并，避免同样的问题。
+5. 1.10 以后的步骤和检查数都不变。
+
+**1.6 `PO_Price`（新）**
 
 ```powerquery
 let
-    // Snapshot of Scale_Price kept in its own Excel workbook (copied from the Power BI table on 10 Nov 2026).
-    // The SQL view behind it (PowerBI.STAGING.V_ZCLS_PRICE_SCALES_REPORTING) no longer runs.
-    Book = Excel.Workbook(File.Contents("C:\Users\H329097\OneDrive - Halliburton\Desktop\Scale Price.xlsx"), null, true),
-    Cols = {"VENDOR_CODE", "VENDOR_NAME", "PART_NUMBER", "PRICING_UNIT", "SCALE_QTY", "UOM", "PRICE_PER_PRICING_UNIT",
-        "PRICE_PER_UNIT", "PRICE_PER_PRICING_UNIT_USD", "PRICE_PER_UNIT_USD", "COND_CURRENCY", "EXCHNG_RT", "VALID_TO"},
-    // takes the sheet (or table) that holds the header PART_NUMBER, whatever the sheet is called
-    HasHeader = (t as table) as logical =>
-        List.Contains(Table.ColumnNames(t), "PART_NUMBER")
-        or List.AnyTrue(List.Transform(Table.ToRecords(Table.FirstN(t, 20)),
-            (r) => List.Contains(Record.ToList(r), "PART_NUMBER"))),
-    Found = Table.SelectRows(Book, each ([Kind] = "Table" or [Kind] = "Sheet") and HasHeader([Data])),
-    Raw = if Table.RowCount(Found) > 0 then Table.Sort(Found, {{"Kind", Order.Descending}}){0}[Data]
-        else error "Scale_Price: no sheet with the header PART_NUMBER was found in Scale Price.xlsx",
-    // the header row is the first row that holds PART_NUMBER
-    WithHeaders = if List.Contains(Table.ColumnNames(Raw), "PART_NUMBER") then Raw
-        else Table.PromoteHeaders(
-            Table.Skip(Raw, each not List.Contains(Record.ToList(_), "PART_NUMBER")),
-            [PromoteAllScalars = true]),
-    Kept = Table.SelectColumns(WithHeaders, Cols),
-    NoEmptyText = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, Cols),
-    NoBlankRows = Table.SelectRows(NoEmptyText, each [PART_NUMBER] <> null),
-    Typed = Table.TransformColumnTypes(NoBlankRows, {
-        {"VENDOR_CODE",                 type text},
-        {"VENDOR_NAME",                 type text},
-        {"PART_NUMBER",                 type text},
-        {"PRICING_UNIT",                type number},
-        {"SCALE_QTY",                   type number},
-        {"UOM",                         type text},
-        {"PRICE_PER_PRICING_UNIT",      type number},
-        {"PRICE_PER_UNIT",              type number},
-        {"PRICE_PER_PRICING_UNIT_USD",  type number},
-        {"PRICE_PER_UNIT_USD",          type number},
-        {"COND_CURRENCY",               type text},
-        {"EXCHNG_RT",                   type number},
-        {"VALID_TO",                    type datetime}
-    }),
-    #"Trimmed Vendor" = Table.TransformColumns(Typed, {
-        {"VENDOR_CODE", each Text.TrimStart(_, "0"), type text}
-    })
+    SRaw = Src{[Item = "tbl_Settings", Kind = "Table"]}[Data],
+    Get = (name as text, default as any) as any =>
+        let
+            r = Table.SelectRows(SRaw, each [Setting] = name)
+        in
+            if Table.RowCount(r) = 0 or r{0}[Value] = null or r{0}[Value] = "" then default else r{0}[Value],
+    CountIC = Text.From(Get("Last 3 PO: count intercompany POs", "N")),
+    CountFA = Settings{0}[#"Count FA POs"],
+    From2027 = Settings{0}[#"PO Price From"],
+    Sum0 = (l as list) as number => let s = List.Sum(l) in if s = null then 0 else s,
+    // the open POs are read once and held in memory (PO_Items is already held in memory by its own query)
+    OpenPO = Table.Buffer(Open_PO),
+    Key = (pn as any, v as any) as text =>
+        (if pn = null then "" else Text.From(pn)) & "|" & (if v = null then "" else Text.From(v)),
+
+    // ---- open FA: S2FA items still open (one row per PO item)
+    OpenItems = Table.Distinct(
+        Table.SelectColumns(OpenPO, {"PO Number", "PO Item", "Part PN", "Vendor Number", "Storage Location"}),
+        {"PO Number", "PO Item"}),
+    FAItems = Table.Buffer(Table.SelectRows(OpenItems, each [#"Storage Location"] = "S2FA")),
+    // PN and vendor pairs with an open FA item, as a short list of text keys
+    FAKeys = List.Buffer(List.Distinct(List.Transform(Table.ToRecords(FAItems),
+        (r) => Key(r[#"Part PN"], r[#"Vendor Number"])))),
+    FACount = Table.Buffer(Table.Group(FAItems, {"Part PN"}, {{"Open FA Items", each Table.RowCount(_), Int64.Type}})),
+
+    // ---- last 3 PO: every PO of a vendor with an open FA item for the PN is left out
+    Flagged = Table.AddColumn(PO_Items, "Open FA Vendor",
+        each if List.Contains(FAKeys, Key([#"Part PN"], [#"Vendor Number"])) then 1 else 0, Int64.Type),
+    Items = Table.Buffer(Flagged),
+    LeftOut = Table.Buffer(Table.Group(Table.SelectRows(Items, each [#"Open FA Vendor"] = 1), {"Part PN"},
+        {{"PO Items Left Out (Open FA)", each Table.RowCount(_), Int64.Type}})),
+    Valid = Table.SelectRows(Items, each
+        [#"Open FA Vendor"] = 0
+        and [PO_UOM_CD] = [BASE_UOM_CD]
+        and [#"USD Unit Price"] <> null and [#"USD Unit Price"] > 0
+        and [PO_QTY] <> null and [PO_QTY] > 0
+        and (CountIC <> "N" or not Text.StartsWith(if [#"Vendor Number"] = null then "" else [#"Vendor Number"], "P"))),
+    AddValue = Table.AddColumn(Valid, "Value USD", each [#"USD Unit Price"] * [PO_QTY], type number),
+    POs = Table.Buffer(Table.Group(AddValue, {"Part PN", "PO_NBR"}, {
+            {"PO Date", each List.Max([PO_DT]), type date},
+            {"Qty", each List.Sum([PO_QTY]), type number},
+            {"Value", each List.Sum([#"Value USD"]), type number},
+            {"Vendor", each List.First([#"Vendor Label"]), type text}
+        })),
+    // newest PO date first; same date: higher PO number first
+    ByPN = Table.Group(POs, {"Part PN"}, {
+            {"Top", (t) => Table.FirstN(Table.Sort(t, {{"PO Date", Order.Descending}, {"PO_NBR", Order.Descending}}), 3), type table}
+        }),
+    L3 = Table.AddColumn(ByPN, "r", each
+        let
+            t = [Top],
+            n = Table.RowCount(t),
+            q = Sum0(t[Qty]),
+            v = Sum0(t[Value])
+        in
+            [
+                #"Last 3 PO Count" = n,
+                #"Last 3 PO Qty" = q,
+                #"Last 3 PO Wtd Price USD" = if q > 0 then v / q else null,
+                #"Last 3 PO Avg Price USD" = List.Average(List.Transform(Table.ToRecords(t), (x) => x[Value] / x[Qty])),
+                #"Last 3 PO Newest Date" = t[#"PO Date"]{0},
+                #"Last 3 PO Oldest Date" = t[#"PO Date"]{n - 1},
+                #"Last 3 PO Numbers" = Text.Combine(List.Transform(t[PO_NBR], each Text.From(_)), ", "),
+                #"Last 3 PO Vendors" = Text.Combine(List.Transform(t[Vendor], each if _ = null then "" else _), ", ")
+            ]),
+    L3Out = Table.Buffer(Table.ExpandRecordColumn(Table.RemoveColumns(L3, {"Top"}), "r", {"Last 3 PO Count", "Last 3 PO Qty", "Last 3 PO Wtd Price USD", "Last 3 PO Avg Price USD", "Last 3 PO Newest Date", "Last 3 PO Oldest Date", "Last 3 PO Numbers", "Last 3 PO Vendors"})),
+
+    // ---- open PO figures per PN (reference columns; used when Current price basis = PO or Drusilla)
+    FARows = Table.SelectRows(FA_Tracker, each [#"Confirmed FA"] <> "N" and [#"FA PO Number"] <> null),
+    FAList = List.Buffer(List.Transform(Table.ToRecords(FARows),
+        (x) => x[#"FA PO Number"] & "|" & (if x[#"FA PO Item"] = null then "" else x[#"FA PO Item"]))),
+    OL = Table.AddColumn(OpenPO, "FA Cand",
+        each if List.Contains(FAList, Text.From([#"PO Number"]) & "|" & Text.From([#"PO Item"])) then 1 else 0, Int64.Type),
+    OpenAgg = Table.Group(OL, {"Part PN"}, {{"o", (t) =>
+        let
+            val = (x as table) as number =>
+                Sum0(List.Transform(Table.ToRecords(x),
+                    (y) => (if y[#"USD Unit Price"] = null then 0 else y[#"USD Unit Price"]) * y[#"Open Qty"])),
+            priced = Table.SelectRows(t, each [#"Priced Line"] = "Y"),
+            pq = Sum0(priced[#"Open Qty"]),
+            fq = Sum0(Table.SelectRows(priced, each [#"FA Cand"] = 1)[#"Open Qty"]),
+            counted = if CountFA = "N" then Table.SelectRows(priced, each [#"FA Cand"] = 0) else priced,
+            c27 = Table.SelectRows(counted, each [#"Delivery Date"] <> null and [#"Delivery Date"] >= From2027),
+            q27 = Sum0(c27[#"Open Qty"]),
+            qa = Sum0(counted[#"Open Qty"]),
+            p27 = if q27 > 0 then val(c27) / q27 else if qa > 0 then val(counted) / qa else null,
+            latest = List.Max(t[#"PO Created"]),
+            cl = Table.SelectRows(counted, each [#"PO Created"] = latest),
+            ql = Sum0(cl[#"Open Qty"])
+        in
+            [
+                #"SQL Open PO Lines" = Table.RowCount(t),
+                #"SQL Open PO Qty" = Sum0(t[#"Open Qty"]),
+                #"FA Share of Open PO Qty" = if pq = 0 then 0 else fq / pq,
+                #"PO Price 2027 USD" = p27,
+                #"PO Price Basis" = if p27 = null then null else if q27 > 0 then "2027 deliveries" else "All open lines",
+                #"Latest PO Date" = latest,
+                #"Latest PO Price USD" = if ql > 0 then val(cl) / ql else null
+            ], type record}}),
+    OpenOut = Table.Buffer(Table.ExpandRecordColumn(OpenAgg, "o", {"SQL Open PO Lines", "SQL Open PO Qty", "FA Share of Open PO Qty", "PO Price 2027 USD", "PO Price Basis", "Latest PO Date", "Latest PO Price USD"})),
+
+    // ---- one row per PN
+    J1 = Table.NestedJoin(PN_List, {"Part PN"}, L3Out, {"Part PN"}, "a", JoinKind.LeftOuter),
+    E1 = Table.ExpandTableColumn(J1, "a", {"Last 3 PO Count", "Last 3 PO Qty", "Last 3 PO Wtd Price USD", "Last 3 PO Avg Price USD", "Last 3 PO Newest Date", "Last 3 PO Oldest Date", "Last 3 PO Numbers", "Last 3 PO Vendors"}),
+    J2 = Table.NestedJoin(E1, {"Part PN"}, OpenOut, {"Part PN"}, "b", JoinKind.LeftOuter),
+    E2 = Table.ExpandTableColumn(J2, "b", {"SQL Open PO Lines", "SQL Open PO Qty", "FA Share of Open PO Qty", "PO Price 2027 USD", "PO Price Basis", "Latest PO Date", "Latest PO Price USD"}),
+    J3 = Table.NestedJoin(E2, {"Part PN"}, FACount, {"Part PN"}, "c", JoinKind.LeftOuter),
+    E3 = Table.ExpandTableColumn(J3, "c", {"Open FA Items"}),
+    J4 = Table.NestedJoin(E3, {"Part PN"}, LeftOut, {"Part PN"}, "d", JoinKind.LeftOuter),
+    E4 = Table.ExpandTableColumn(J4, "d", {"PO Items Left Out (Open FA)"}),
+    Zeros = Table.ReplaceValue(E4, null, 0, Replacer.ReplaceValue,
+        {"Last 3 PO Count", "Last 3 PO Qty", "SQL Open PO Lines", "SQL Open PO Qty", "FA Share of Open PO Qty", "Open FA Items", "PO Items Left Out (Open FA)"}),
+    Typed = Table.TransformColumnTypes(Zeros, {
+            {"Last 3 PO Count", Int64.Type}, {"Last 3 PO Qty", type number},
+            {"Last 3 PO Wtd Price USD", type number}, {"Last 3 PO Avg Price USD", type number},
+            {"Last 3 PO Newest Date", type date}, {"Last 3 PO Oldest Date", type date},
+            {"Last 3 PO Numbers", type text}, {"Last 3 PO Vendors", type text},
+            {"SQL Open PO Lines", Int64.Type}, {"SQL Open PO Qty", type number},
+            {"FA Share of Open PO Qty", type number}, {"PO Price 2027 USD", type number},
+            {"PO Price Basis", type text}, {"Latest PO Date", type date}, {"Latest PO Price USD", type number},
+            {"Open FA Items", Int64.Type}, {"PO Items Left Out (Open FA)", Int64.Type}
+        }),
+    Out = Table.Buffer(Typed)
 in
-    #"Trimmed Vendor"
+    Out
 ```
 
-1. 先把 `Scale Price.xlsx` 保存并关掉（开着的时候 Power BI 有时读不了）。
-2. Transform data，左边点 **Scale_Price**，Home > Advanced Editor，全删，粘贴，Done。预览应该出 13 列。如果弹出隐私级别的提示，按第 0 部分把 Privacy 设成 Ignore。
-3. Close & Apply。
-4. 对数用上一条那段 DAX，应该是的数也不变（Rows 205,205，Valid to in 9999 是 205,168，ZMMRP lines with a scale price 1,942 等）。
+**1.8 `BOM_Line`（新）**
 
-和上一条的版本比只改了两处：`Book` 直接读这个文件；不再按 sheet 的名字找，而是取带 PART_NUMBER 表头的那张 sheet，所以 sheet 叫 Sheet1 还是别的名字都可以。这个文件以后不要改名、不要挪位置，不然刷新会报找不到文件。
+```powerquery
+let
+    Raw = Src{[Item = "tbl_BOM_Line", Kind = "Table"]}[Data],
+    NoEmptyText = Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+    // price columns are no longer read from Excel: they follow Part_Price (SQL prices)
+    FromPrice = {
+            "Current Price USD", "Projected Price USD", "Has New Price", "Ext Current Price USD",
+            "Ext Projected USD", "Saving Current USD", "Saving Projected USD", "Ext PPX Priced USD",
+            "Ann Saving Current 2027 USD", "Ann Saving Projected 2027 USD"
+        },
+    Base = Table.RemoveColumns(NoEmptyText, FromPrice, MissingField.Ignore),
+    Typed = Table.TransformColumnTypes(Base, {
+            {"Line ID", type text}, {"BOM PN", Int64.Type}, {"Level", Int64.Type},
+            {"Part PN", Int64.Type}, {"Part Description", type text}, {"Parent PN", Int64.Type},
+            {"Module PN", Int64.Type}, {"Module Description", type text}, {"Focus Flag", type text},
+            {"Top 80%", type text}, {"Item", type text}, {"Qty per Parent", type number},
+            {"Qty per Tool", type number}, {"UoM", type text}, {"Special Proc Type", type text},
+            {"Material Status", type text}, {"MRP Controller", type text}, {"Purch Group", type text},
+            {"Planned Deliv Days", Int64.Type}, {"Source Sheet", type text}, {"Source Row", Int64.Type},
+            {"Part Row", Int64.Type}, {"Std Cost USD", type number}, {"PPX USD", type number},
+            {"Builds 2027 InScope", Int64.Type}, {"Ext Std Price USD", type number}, {"Ext PPX USD", type number},
+            {"Ann Qty 2027", type number}, {"Ann PPX 2027 USD", type number}
+        }),
+    // Part_Price is worked out once and held in memory for the join
+    PP = Table.Buffer(Table.SelectColumns(Part_Price, {"Part PN", "Current Price USD", "Projected Price USD", "Has New Price"})),
+    WithPrice = Table.NestedJoin(Typed, {"Part PN"}, PP, {"Part PN"}, "pp", JoinKind.LeftOuter),
+    AddPrice = Table.ExpandTableColumn(WithPrice, "pp", {"Current Price USD", "Projected Price USD", "Has New Price"}),
+    C1 = Table.AddColumn(AddPrice, "Ext Current Price USD", each [#"Qty per Tool"] * [#"Current Price USD"], type number),
+    C2 = Table.AddColumn(C1, "Ext Projected USD", each [#"Qty per Tool"] * [#"Projected Price USD"], type number),
+    C3 = Table.AddColumn(C2, "Saving Current USD", each [#"Ext PPX USD"] - [#"Ext Current Price USD"], type number),
+    C4 = Table.AddColumn(C3, "Saving Projected USD", each [#"Ext PPX USD"] - [#"Ext Projected USD"], type number),
+    C5 = Table.AddColumn(C4, "Ext PPX Priced USD", each [#"Ext PPX USD"] * [#"Has New Price"], type number),
+    C6 = Table.AddColumn(C5, "Ann Saving Current 2027 USD", each [#"Saving Current USD"] * [#"Builds 2027 InScope"], type number),
+    C7 = Table.AddColumn(C6, "Ann Saving Projected 2027 USD", each [#"Saving Projected USD"] * [#"Builds 2027 InScope"], type number),
+    WithBOM = Table.NestedJoin(C7, {"BOM PN"}, BOM_Header, {"BOM PN"}, "Hdr", JoinKind.LeftOuter),
+    AddBOMName = Table.ExpandTableColumn(WithBOM, "Hdr", {"Display Name"}, {"BOM Name"}),
+    AddPartLabel = Table.AddColumn(AddBOMName, "Part Label",
+        each Text.From([#"Part PN"]) & " " & Text.Start(if [#"Part Description"] = null then "" else [#"Part Description"], 28),
+        type text)
+in
+    AddPartLabel
+```
 
-这一版也只通过了语法检查，没有在 Power BI 里跑过，对数要做。
+**1.9 `PIC_Map`（新）**
 
-上一条就是最终版，路径已经写进查询里，整段粘贴即可。发出去的代码我回读核对过，和通过语法检查的文件一致；它没在 Power BI 里跑过，Apply 之后请跑一下对数。
+```powerquery
+let
+    Raw = Src{[Item = "tbl_PIC_Map", Kind = "Table"]}[Data],
+    NoEmptyText = Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+    Base = Table.RemoveColumns(NoEmptyText, {"Ann Saving Current 2027 USD", "Still to Find 2027 USD"}, MissingField.Ignore),
+    Typed = Table.TransformColumnTypes(Base, {
+            {"Purch Group", type text},
+            {"PIC Name", type text},
+            {"PNs", Int64.Type},
+            {"Ann PPX 2027 USD", type number},
+            {"Spend Share", type number},
+            {"FA Candidate PO Items", Int64.Type}
+        }),
+    Target = Settings{0}[#"Target Saving Pct"],
+    // savings per purchasing group follow Part_Price (SQL prices)
+    ByGroup = Table.Buffer(Table.Group(Part_Price, {"Purch Group"},
+        {{"Ann Saving Current 2027 USD", each List.Sum([#"Ann Saving Current 2027 USD"]), type number}})),
+    Joined = Table.NestedJoin(Typed, {"Purch Group"}, ByGroup, {"Purch Group"}, "g", JoinKind.LeftOuter),
+    AddSaving = Table.ExpandTableColumn(Joined, "g", {"Ann Saving Current 2027 USD"}),
+    FillZero = Table.ReplaceValue(AddSaving, null, 0, Replacer.ReplaceValue, {"Ann Saving Current 2027 USD"}),
+    AddGap = Table.AddColumn(FillZero, "Still to Find 2027 USD",
+        each List.Max({0, (if [#"Ann PPX 2027 USD"] = null then 0 else [#"Ann PPX 2027 USD"]) * Target - [#"Ann Saving Current 2027 USD"]}),
+        type number),
+    AddLabel = Table.AddColumn(AddGap, "Group Label",
+        each if [#"PIC Name"] = null then [#"Purch Group"] else [#"Purch Group"] & " " & [#"PIC Name"], type text)
+in
+    AddLabel
+```
 
-对数有哪个对不上，或者 Apply 报错，把结果或报错原文发我。
+两点补充：
 
+- 确认一下第 0 部分的 Privacy 已经设成 Ignore。没设的话 Power Query 会在 Excel 和 SQL 之间反复做隔离检查，也会很慢。
+- 如果新的 PO_Price 过了 5 分钟还没出来，告诉我 1.2（SQL_PO_Items）和 1.4（PO_Items）当时各用了多久。那就说明慢在 SQL 本身，我再改 SQL。
 
-EVALUATE
-    ROW (
-        "Rows", COUNTROWS ( Scale_Price ),
-        "PNs", DISTINCTCOUNT ( Scale_Price[PART_NUMBER] ),
-        "Vendors", DISTINCTCOUNT ( Scale_Price[VENDOR_CODE] ),
-        "Sum price per unit USD", SUM ( Scale_Price[PRICE_PER_UNIT_USD] ),
-        "Blank exchange rate", COUNTROWS ( FILTER ( Scale_Price, ISBLANK ( Scale_Price[EXCHNG_RT] ) ) ),
-        "Blank valid to", COUNTROWS ( FILTER ( Scale_Price, ISBLANK ( Scale_Price[VALID_TO] ) ) ) + 0,
-        "Earliest valid to", MIN ( Scale_Price[VALID_TO] ),
-        "Valid to in 9999", COUNTROWS ( FILTER ( Scale_Price, YEAR ( Scale_Price[VALID_TO] ) = 9999 ) ),
-        "Valid to 1 Apr 2028", COUNTROWS ( FILTER ( Scale_Price, Scale_Price[VALID_TO] = DATE ( 2028, 4, 1 ) ) ),
-        "ZMMRP lines with a scale price", COUNTROWS ( FILTER ( ZMMRP, NOT ISBLANK ( ZMMRP[Scale Price USD] ) ) )
-    )
+这三段和之前一样只通过了语法检查，我这边跑不了 M。慢的原因是我按 Power Query 的求值方式推出来的，没有实测过耗时，所以第 2 条的时间请留意一下。项目里的 v7 指南已经换成这一版。
+
+慢是我第一版 PO_Price 的写法造成的，不用再等。新的 PO_Price、BOM_Line、PIC_Map 在上一条里，发出去的代码我回读核对过，和通过语法检查的文件一致。
+
+先换 PO_Price。预览出来的时间应该和 1.4、1.5 加起来差不多；这个时间是我推的，没有实测过。超过 5 分钟还没出来，把 1.2 和 1.4 当时各用了多久告诉我，我再改 SQL。
