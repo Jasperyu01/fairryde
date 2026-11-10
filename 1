@@ -1,38 +1,13 @@
+-- A. 不碰 VAKEY，看视图主体能不能跑
+SELECT TOP 5 VNDR_NBR, INFO_NBR, COND_RECD_NBR, KSTBM_SCALE_QNT, KBETR_COND_RATE
+FROM [PowerBI].[DUN02_HESDATAMART01].[V_FOSO_PROCUREMENT] WITH (NOLOCK);
 
-
-COLUMN_NAME	DATA_TYPE
-DRW	varchar
-PINFO_TXT	varchar
-VNDR_NBR	varchar
-VENDOR NAME	varchar
-INFO_NBR	varchar
-PRC_UNIT	decimal
-PO_PRC_UOM_CD	varchar
-NET_PRC	money
-CRNCY_CD	varchar
-KLFN1_LINE_SCALE	decimal
-Sort_Term	varchar
-ERDAT_CREAT_DT	varchar
-DATAB_VLD_FRM_DT	varchar
-updatedVLD_FRM_DT	varchar
-Year	varchar
-MONTH	varchar
-DATBI_VLD_TO_DT	varchar
-COND_RECD_NBR	varchar
-last_cond_rcrd_nbr	varchar
-KOPOS_SEQ_NUM_OF_COND	decimal
-VAKEY_VAR_KEY	varchar
-QUOTE_VLD_TO_DT	datetime
-PRC_VLD_TO_DT	datetime
-DEL_FLG	smallint
-PRCH_ORG_DEL_FLG	smallint
-Status	varchar
-SIZE AND DIMENSION	varchar
-KSTBM_SCALE_QNT	decimal
-KBETR_COND_RATE	money
-
-
-Msg 245, Level 16, State 1, Line 1
-Conversion failed when converting the varchar value '0001044164AP01MEC120080550050172920880' to data type int.
-
-Completion time: 2026-11-10T13:53:56.5708856+08:00
+-- B. 只取 2750 工厂、按物料建的记录
+SELECT TOP 20
+    VNDR_NBR, [VENDOR NAME], INFO_NBR, COND_RECD_NBR,
+    SUBSTRING(VAKEY_VAR_KEY, 11, 18) AS MATERIAL,
+    PRC_UNIT, PO_PRC_UOM_CD, NET_PRC, CRNCY_CD,
+    KSTBM_SCALE_QNT, KBETR_COND_RATE, DATBI_VLD_TO_DT
+FROM [PowerBI].[DUN02_HESDATAMART01].[V_FOSO_PROCUREMENT] WITH (NOLOCK)
+WHERE LEN(VAKEY_VAR_KEY) = 37
+  AND SUBSTRING(VAKEY_VAR_KEY, 33, 4) = '2750';
