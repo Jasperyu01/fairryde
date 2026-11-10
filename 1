@@ -1,10 +1,38 @@
--- 1. 列清单
-SELECT COLUMN_NAME, DATA_TYPE
-FROM PowerBI.INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = 'DUN02_HESDATAMART01'
-  AND TABLE_NAME = 'V_FOSO_PROCUREMENT'
-ORDER BY ORDINAL_POSITION;
 
--- 2. 样例数据
-SELECT TOP 5 *
-FROM [PowerBI].[DUN02_HESDATAMART01].[V_FOSO_PROCUREMENT] WITH (NOLOCK);
+
+COLUMN_NAME	DATA_TYPE
+DRW	varchar
+PINFO_TXT	varchar
+VNDR_NBR	varchar
+VENDOR NAME	varchar
+INFO_NBR	varchar
+PRC_UNIT	decimal
+PO_PRC_UOM_CD	varchar
+NET_PRC	money
+CRNCY_CD	varchar
+KLFN1_LINE_SCALE	decimal
+Sort_Term	varchar
+ERDAT_CREAT_DT	varchar
+DATAB_VLD_FRM_DT	varchar
+updatedVLD_FRM_DT	varchar
+Year	varchar
+MONTH	varchar
+DATBI_VLD_TO_DT	varchar
+COND_RECD_NBR	varchar
+last_cond_rcrd_nbr	varchar
+KOPOS_SEQ_NUM_OF_COND	decimal
+VAKEY_VAR_KEY	varchar
+QUOTE_VLD_TO_DT	datetime
+PRC_VLD_TO_DT	datetime
+DEL_FLG	smallint
+PRCH_ORG_DEL_FLG	smallint
+Status	varchar
+SIZE AND DIMENSION	varchar
+KSTBM_SCALE_QNT	decimal
+KBETR_COND_RATE	money
+
+
+Msg 245, Level 16, State 1, Line 1
+Conversion failed when converting the varchar value '0001044164AP01MEC120080550050172920880' to data type int.
+
+Completion time: 2026-11-10T13:53:56.5708856+08:00
