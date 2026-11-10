@@ -1,0 +1,148 @@
+let
+    SourceSQL = Sql.Database("SCGREPORTING", "DUN02_HESDATAMART01", [Query="WITH MTRL_MASTER AS (
+    SELECT *
+    FROM [DUN02_HESDATAMART01].[dbo].[plnt_mtrl] WITH (NOLOCK)
+    WHERE PLNT_OID = '1387'
+)
+
+SELECT
+    A.PO_NBR,
+    A.PO_ITM_NBR,
+    C.CREAT_DT AS [OPNORDR Creation Date],
+    A.ACCT_ASGN_CATG_CD,
+    C.PRCH_ORG_CD,
+    C.PO_TYPE_CD,
+    C.PO_CATG_CD,
+    C.PRCH_GRP_CD,
+    E.NM AS PO_Buyer_Name,
+    MTRL_MASTER.BUYR_CD AS MM_Buyer,
+    G.NM AS MM_Buyer_Name,
+    MTRL_MASTER.MRP_CNTRLR_CD,
+    C.VNDR_NBR AS [OPNORDR Vendor Number],
+    V.SRCH_STRNG_1 AS [OPNORDR Vendor Name],
+    A.MTRL_NBR AS [OPNORDR Material Number],
+    D.MTRL_DSC,
+    A.PLNT_CD,
+    A.PR_NBR,
+    A.PR_ITM_NBR,
+    A.PRC_UOM_CD,
+    A.UOW_CD,
+    A.ICT_1,
+    A.ICT_2,
+    A.ACCT_ASGN_CATG_CD,
+    A.TRGT_QTY,
+    A.STRG_LOCN_CD,
+    A.BASE_UOM_CD,
+    A.MTRL_GRP_CD,
+    A.PO_UOM_CD,
+    A.PO_QTY,
+    A.PO_NET_UNT_PRC,
+    A.PRC_UNIT,
+    A.NMRTR_PO_PRC,
+    A.DNMNTR_PO_PRC,
+    A.NMRTR_UNT_CNVRSN,
+    A.DNMNTR_UNT_CNVRSN,
+    A.PO_VAL,
+    C.CRNCY_CD AS PO_CURRENCY,
+    A.MTRL_TYPE_CD,
+    A.NOTE,
+    A.RCPT_FLG,
+    A.OUT_AGREE,
+    B.SCHED_DLVRY_DT,
+    B.PR_ITM_NBR,
+    B.MRP_REDUCE_QTY,
+    B.COMMIT_DT,
+    B.PO_NBR,
+    B.PO_ITM_NBR,
+    B.DLVRY_SCHED_LN_NBR,
+    B.ITM_DLVRY_DT,
+    B.SCHED_QTY,
+    B.COMMIT_QTY,
+    B.STAT_DLVRY_DT,
+    B.RCVD_QTY
+
+FROM
+    [DUN02_HESDATAMART01].[dbo].[PRCH_ORDR_ITM] A WITH (NOLOCK)
+LEFT JOIN
+    [DUN02_HESDATAMART01].[dbo].[PO_ITM_SCHED] B WITH (NOLOCK) ON B.PO_ITM_OID = A.OID
+LEFT JOIN
+    [DUN02_HESDATAMART01].[dbo].[PRCH_ORDR] C WITH (NOLOCK) ON A.PO_NBR = C.PO_NBR
+LEFT JOIN
+    [DUN02_HESDATAMART01].[dbo].[MTRL] D WITH (NOLOCK) ON A.MTRL_OID = D.OID
+LEFT JOIN
+    MTRL_MASTER WITH (NOLOCK) ON MTRL_MASTER.MTRL_NBR = D.MTRL_NBR
+LEFT JOIN
+    [DUN02_HESDATAMART01].[dbo].[BUYR] E WITH (NOLOCK) ON E.BUYR_CD = C.PRCH_GRP_CD
+LEFT JOIN
+    [DUN02_HESDATAMART01].[dbo].[BUYR] G WITH (NOLOCK) ON G.BUYR_CD = MTRL_MASTER.BUYR_CD
+LEFT JOIN
+    [DUN02_HESDATAMART01].[dbo].[VNDR] V WITH (NOLOCK) ON V.OID = C.VNDR_OID
+
+WHERE
+    A.PLNT_CD = '2750' AND
+    A.DLVRY_CMPLT_FLG = 0 AND
+    A.DEL_CD IS NULL AND
+    B.RCVD_QTY < B.SCHED_QTY AND
+    C.PO_CATG_CD = 'F' AND
+    C.PO_TYPE_CD = 'NB' AND
+    C.DEL_FLG = 0 AND
+    A.MTRL_OID IS NOT NULL AND
+    A.ACCT_ASGN_CATG_CD IS NULL AND
+    A.PO_NBR LIKE '454%'
+
+ORDER BY
+    B.ITM_DLVRY_DT ASC"]),
+
+    // Exchange rates now come from FX_M_Rates (monthly M-rate export) instead of [STAGING].[dbo].[TCURR_EXCHANGE_RATE].
+    // Output columns are unchanged: FROM_CRNCY_RATE_FACTOR, EXCHANGE_RATE, TO_CRNCY_RATE_FACTOR, PO_NET_UNIT_PRICE_M_USD.
+    FXKey = Table.AddColumn(SourceSQL, "_FXKey", each if [PO_CURRENCY] = null then null else Text.Upper(Text.Trim([PO_CURRENCY])), type text),
+    FXJoin = Table.NestedJoin(FXKey, {"_FXKey"}, FX_M_Rates, {"FCURR"}, "_FX", JoinKind.LeftOuter),
+    FXExpand = Table.ExpandTableColumn(FXJoin, "_FX", {"FFACT", "UKURS", "TFACT"}, {"FROM_CRNCY_RATE_FACTOR", "EXCHANGE_RATE", "TO_CRNCY_RATE_FACTOR"}),
+    FXTyped = Table.TransformColumnTypes(FXExpand, {{"FROM_CRNCY_RATE_FACTOR", type number}, {"EXCHANGE_RATE", type number}, {"TO_CRNCY_RATE_FACTOR", type number}}),
+    FXPrice = Table.AddColumn(FXTyped, "PO_NET_UNIT_PRICE_M_USD", each
+        if [PRC_UNIT] = null or [PRC_UNIT] = 0 then null
+        else if [_FXKey] = "USD" then [PO_NET_UNT_PRC] / [PRC_UNIT]
+        else [PO_NET_UNT_PRC] / [FROM_CRNCY_RATE_FACTOR] * [EXCHANGE_RATE] * [TO_CRNCY_RATE_FACTOR] / [PRC_UNIT],
+        type number),
+    Source = Table.RemoveColumns(FXPrice, {"_FXKey"}),
+
+    #"Sorted Rows" = Table.Sort(Source, {{"SCHED_DLVRY_DT", Order.Descending}}),
+    #"Trimmed Text" = Table.TransformColumns(#"Sorted Rows", {{"OPNORDR Vendor Number", each Text.TrimStart(_, "0"), type text}}),
+    #"Filtered Rows" = Table.SelectRows(#"Trimmed Text", each true),
+    #"Merged Queries" = Table.NestedJoin(#"Filtered Rows", {"OPNORDR Vendor Number"}, #"Excel_Buyer-Vendor Allocation", {"Vendor Code"}, "Excel_Buyer-Vendor Allocation", JoinKind.LeftOuter),
+    #"Expanded Excel_Buyer-Vendor Allocation1" = Table.ExpandTableColumn(#"Merged Queries", "Excel_Buyer-Vendor Allocation", {"Vendor Code", "Tactical Team", "Strategic Team"}, {"Vendor Code", "Tactical Team", "Strategic Team"}),
+    #"Trimmed Text1" = Table.TransformColumns(#"Expanded Excel_Buyer-Vendor Allocation1", {
+        {"PO_ITM_NBR", each Text.TrimStart(_, "0"), type text},
+        {"OPNORDR Material Number", each Text.TrimStart(_, "0"), type text},
+        {"PR_NBR", each Text.TrimStart(_, "0"), type text},
+        {"PR_ITM_NBR", each Text.TrimStart(_, "0"), type text},
+        {"PR_ITM_NBR2", each Text.TrimStart(_, "0"), type text},
+        {"PO_ITM_NBR2", each Text.TrimStart(_, "0"), type text},
+        {"DLVRY_SCHED_LN_NBR", each Text.TrimStart(_, "0"), type text}
+    }),
+    #"Added Custom" = Table.AddColumn(#"Trimmed Text1", "PO_Item_Schd.", each [PO_NBR] & "_" & [PO_ITM_NBR] & "_" & [DLVRY_SCHED_LN_NBR]),
+    #"Removed Duplicates" = Table.Distinct(#"Added Custom", {"PO_Item_Schd."}),
+
+    #"Duplicated Column" = Table.DuplicateColumn(#"Removed Duplicates", "ITM_DLVRY_DT", "ITM_DLVRY_DT - Copy"),
+    #"Extracted Year" = Table.TransformColumns(#"Duplicated Column", {{"ITM_DLVRY_DT - Copy", Date.Year, Int64.Type}}),
+    #"Duplicated Column1" = Table.DuplicateColumn(#"Extracted Year", "ITM_DLVRY_DT", "ITM_DLVRY_DT - Copy.1"),
+    #"Extracted Month" = Table.TransformColumns(#"Duplicated Column1", {{"ITM_DLVRY_DT - Copy.1", Date.Month, Int64.Type}}),
+    #"Duplicated Column2" = Table.DuplicateColumn(#"Extracted Month", "ITM_DLVRY_DT", "ITM_DLVRY_DT - Copy.2"),
+    #"Extracted Day" = Table.TransformColumns(#"Duplicated Column2", {{"ITM_DLVRY_DT - Copy.2", Date.Day, Int64.Type}}),
+    #"Renamed Columns" = Table.RenameColumns(#"Extracted Day", {{"ITM_DLVRY_DT - Copy", "Del Year"}, {"ITM_DLVRY_DT - Copy.1", "Del Month"}, {"ITM_DLVRY_DT - Copy.2", "Del Day"}}),
+
+    #"Merged Queries1" = Table.NestedJoin(#"Renamed Columns", {"OPNORDR Material Number"}, SQL_PPX, {"MTRL_NBR"}, "SQL_PPX", JoinKind.LeftOuter),
+    #"Expanded SQL_PPX1" = Table.ExpandTableColumn(#"Merged Queries1", "SQL_PPX", {"FUT_PLN_PRC1", "FUT_PLN_PRC2", "PPX (USD)", "*PPxPr_Cal (Daily)"}, {"SQL_PPX.FUT_PLN_PRC1", "SQL_PPX.FUT_PLN_PRC2", "SQL_PPX.PPX (USD)", "SQL_PPX.*PPxPr_Cal (Daily)"}),
+    #"Inserted Merged Column" = Table.AddColumn(#"Expanded SQL_PPX1", "PO_Mtrl", each Text.Combine({[PO_NBR], [OPNORDR Material Number]}, "_"), type text),
+    #"Renamed Columns1" = Table.RenameColumns(#"Inserted Merged Column", {{"SQL_PPX.*PPxPr_Cal (Daily)", "*PPxPr_Cal (Daily)"}}),
+
+    #"Duplicated Column3" = Table.DuplicateColumn(#"Renamed Columns1", "PRCH_GRP_CD", "PRCH_GRP_CD - Copy"),
+    #"Extracted First Characters" = Table.TransformColumns(#"Duplicated Column3", {{"PRCH_GRP_CD - Copy", each Text.Start(_, 1), type text}}),
+    #"Added Custom1" = Table.AddColumn(#"Extracted First Characters", "HAL Core Sourcing", each if [#"PRCH_GRP_CD - Copy"] = "R" or [#"PRCH_GRP_CD - Copy"] = "666" then [Tactical Team] else [Strategic Team]),
+    #"Added Custom2" = Table.AddColumn(#"Added Custom1", "Buyer Name", each if [STRG_LOCN_CD] = "SGP2" then [MM_Buyer_Name] else [PO_Buyer_Name]),
+    #"Added Custom3" = Table.AddColumn(#"Added Custom2", "Custom", each if [PO_CURRENCY] = "USD" then [PO_NET_UNT_PRC] else [PO_NET_UNT_PRC] * [FROM_CRNCY_RATE_FACTOR]),
+    #"Changed Type" = Table.TransformColumnTypes(#"Added Custom3", {{"Custom", type number}}),
+    #"Removed Columns" = Table.RemoveColumns(#"Changed Type", {"PO_NET_UNT_PRC"}),
+    #"Renamed Columns2" = Table.RenameColumns(#"Removed Columns", {{"Custom", "PO_NET_UNT_PRC"}})
+in
+    #"Renamed Columns2"
