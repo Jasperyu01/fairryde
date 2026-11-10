@@ -1,148 +1,907 @@
+我先把 pbix 拆开看模型（查询、度量值、计算列、关系、报表页），再对照你的两段 SQL 和现在 Excel 里的逻辑做分析。
+
+分析完了。结论先说：现在的逻辑里有 1 个会影响数字的问题（PO_Lines 把迁移过的 PO 算了两次，线柱图 2027 年的 Total 多约 $68K）；AllPO 停在 29 Sep 是 query 里写死了日期；Open PO 和 AllPO 可以直接从 SQL 取。下面分 4 条发：这一条是分析，后面 3 条是照着做的步骤和代码。同一份内容也存进了项目：`claude/iCruise_PBI_v7_sql_direct_guide.md`。
+
+在 `iCruise_2027_Cost_Reduction.pbix`（10 Nov 2026 的版本）上改。改完以后 Open PO、AllPO 不用再贴进 Excel，last 3 PO 的价格由 Power BI 直接从 SQL 算。新建 5 个查询、替换 5 个查询；度量值、关系、页面都不用动。大约 30 到 40 分钟。从上到下做，哪一步的检查对不上就先停下来，把结果发我。
+
+## 现在的逻辑有什么问题
+
+**1. PO_Lines 把迁移过的 PO 算了两次（影响线柱图）。** PO_Lines 的 SQL 没有区分新旧 PO 号。cutover 时还开着的 PO，旧号（4518）的 schedule line 还在 SQL 里，数量是整张 PO 的；新号（4540）又带着剩余数量出现一次。iCruise PN 上 2027 年交货的 PO 数量现在是 205,424，实际大约 104,000 到 110,000；2026 年是 1,234,968，实际大约 1,010,000 到 1,058,000，多出来的都在 10 到 12 月。因为有 iCruise 需求封顶，金额没有翻倍，但是会错位：2027 年 PO 的 saving 多算约 $168K，Plan/PReq 的 saving 少算约 $100K，图上的 Total 多约 $68K（现在 $2,166,297，应该约 $2,098,000）。KPI 卡（PPV $2.30M）不受影响。第 2 部分修。
+
+**2. AllPO 停在 9 月 29 日，是 query 里写死了日期。** AllPO 的 SQL 里有 `po.PO_DT < '2026-10-01'`，所以 S/4 里新建的 PO 永远进不来；里面 4540 的行全是迁移过来的旧 PO（创建人是 DATA_CNV，PO 日期是原来的日期）。不是 SQL 源的问题。
+
+**3. Open PO 的创建日期用的是 `C.CREAT_DT`。** 迁移过的 PO 这个日期是 4、5、7 Oct 2026，也就是迁移那天。同一张表里的 `PO_DT` 保留了原始 PO 日期（PO_Lines 里迁移过的 PO，PO Date 最早到 2022 年），新的查询改用 `PO_DT`，就不需要我上午那样去配日期了。用它反过来核对我上午配的日期：1,131 张里有 2 张不对。4540033980 我填的是 15 May 2025，SQL 里是 7 Jan 2025；4540034405 我填的是 13 Jan 2025，SQL 里是 14 Jan 2025。两张都排不进 last 3，不影响任何价格，但 v25 Excel 的 Open_PO 表里这两张 PO 的日期是错的。
+
+**4. 小问题，不影响 iCruise 现在的数。**
+
+- JPY 的 PO 单价在 SQL 里是除以 100 存的（101381876 存的是 3,174，实际是 317,400 日元）。你的 Open PO 查询乘回来了，PO_Lines 和 AllPO 没有，全厂 87 行 JPY 的美元单价低了 100 倍。iCruise 的 PN 没有 JPY 的 PO；下面新的查询都乘回来了。
+- Scale_Price（205,205 行）和 ZMMRP[Scale Price USD] 这个计算列已经没有任何度量值和页面在用，只是拖慢刷新。想删的话先删计算列再删表，不删也不影响结果。
+- 120159505 在 ZMMRP 里有 10 张各 900 个的 PReq，而它 2027 年的需求只有 44 个。Part_Price[Plan PReq Value USD] 一共 $87.8M，它一个 PN 占了 $45.0M。线柱图有需求封顶，不受影响；BOM Detail 页上这个 PN 的 Plan/PReq 数量会显得很大。这是 SAP 里 MRP 的数，值得让 planner 查一下。
+- pbix 里 Settings 和 Last_Refresh 两张表上次没有一起刷新：ZMMRP data as of 还是 30 Sep，Open PO 还是 21 Sep，刷新时间是 10 Nov 10:18。数字不受影响（查询在刷新时直接读 Excel），全部做完以后点一次 Home > Refresh 就对了。
+
+## 关于"4518 的老 PO 不要了"
+
+我没有照字面全删，只删了已经有 4540 副本的那些。4518 里有两种 PO：
+
+- cutover 时还开着、已经迁移成 4540 的：这些是重复的，删掉（iCruise PN 上 2,049 行；上午说的 2,139 对里另外 90 对是合同，PO_CATG_CD = K，本来就不参与价格）。
+- cutover 之前已经收货关闭的：它们没有 4540 号，是这一年的价格历史（5,154 行）。
+
+如果 4518 全删，last 3 PO 就只剩 cutover 时还开着的 PO 和之后的新 PO。我按新的查询算了一遍：有 2027 需求的 PN 里，凑得齐 3 张 PO 的从 699 个掉到 243 个；227 个 PN 一张 PO 都没有了（其中 153 个有 2027 需求，$1.76M 的 spend 退回 Drusilla 的价或 PPX）；512 个 PN 的价格会变；PPV 从 $2,302,251 变成 $2,212,911。
+
+这些老 PO 会自己退场：S/4 里的新 PO 越来越多，它们就排不进 last 3 了；SQL 里也只取 `PO_DT >= '2025-10-01'` 的。如果你还是想全删，把 SQL_PO_Items 里的 `AND (po.PO_NBR LIKE '454%' OR po.PO_DT >= '2025-10-01')` 改成 `AND po.PO_NBR LIKE '454%'` 就行，别的不用动。
+
+你原来那个 pbix 里的 AllPO 查询我没有动：它还带着 Material Category、Quarter 这些列，我不知道那边的图怎么用它（按金额统计的话，应该留旧号那行的完整数量，和这里相反）。下面的 SQL_PO_Items 是给 iCruise 这个 pbix 用的新版 AllPO：去掉了日期上限，去掉了重复的旧号，只留 `PO_CATG_CD = 'F'`，只取算价格要用的列。要我按同样的办法改那边的 AllPO，把那边怎么用它告诉我。
+
+## 改完以后的结构
+
+| 查询 | 来源 | 加载到模型 | 作用 |
+|---|---|---|---|
+| PN_List（新） | Excel | 否 | Part_Price 的 PN 清单，用来筛 SQL 的数据 |
+| SQL_PO_Items（新） | SQL | 否 | 新版 AllPO：S/4 的 PO 全部，加上 Oct 2025 以后没有迁移的旧 PO |
+| SQL_Open_PO（新） | SQL | 否 | 你的 Open PO SQL，条件不变，多取 PO_DT 和 EXCHNG_RT |
+| PO_Items（新） | 上面三个 | 否 | iCruise PN 的 PO item，带 USD 单价 |
+| Open_PO（替换） | SQL_Open_PO | 是 | 和原来同名同列，多两列 Storage Location、PO Qty |
+| PO_Price（新） | PO_Items + Open_PO | 否 | 每个 PN 的 last 3 PO、open FA、open PO 价格 |
+| Part_Price（替换） | Excel + PO_Price | 是 | 价格相关的 29 列改成在这里算，其余列还是读 Excel |
+| BOM_Line（替换） | Excel + Part_Price | 是 | 价格相关的 10 列跟着 Part_Price 算 |
+| PIC_Map（替换） | Excel + Part_Price | 是 | 两列 saving 跟着 Part_Price 算 |
+| PO_Lines（替换，第 2 部分） | SQL | 是 | 交货数量改成"已收货 + 还开着的" |
+
+价格规则和 Excel v25 完全一样：last 3 PO、按数量加权、有 open FA 的 vendor 不算、intercompany 不算、只剩 open FA 的 PN 用 PPX、没有 PO 的用 Drusilla 20 Sep 的价。Settings 表里的开关（Current price basis、Last 3 PO: average、Last 3 PO: count intercompany POs、Count FA candidate POs in the PO price、FX USD per SGD、2027 PO price: deliveries from）继续生效，还是在 Excel 里改。
+
+## 第 0 部分：备份和隐私设置
+
+1. File > Save as，存成 `iCruise_2027_Cost_Reduction7.pbix`，在副本上改。
+2. File > Options and settings > **Options** > 左边 CURRENT FILE 下面的 **Privacy** > 选 **Ignore the Privacy Levels and potentially improve performance** > OK。新的查询要把 Excel 和 SQL 的数据合并，不设的话会弹隐私级别的提示，或者报 Formula.Firewall。如果以后把这个报表发布到 Power BI Service 上刷新，这个选项不会带过去，要在数据集的数据源设置里把 Excel 和 SQL 两个源的 Privacy level 设成同一个（比如 Organizational）。
+
+---
+
+## 第 1 部分：价格改成从 SQL 算
+
+Home > **Transform data**，打开 Power Query Editor。
+
+**新建查询的做法**（1.1、1.2、1.3、1.4、1.6）：Home > New Source > **Blank Query**，然后 Home > **Advanced Editor**，把里面的字全删掉，粘贴整段，点 Done；右边 Query Settings 的 **Name** 改成指定的名字，一个字符都不能差。带 SQL 的查询第一次会弹 Native Database Query，点 **Run**。
+
+**替换查询的做法**（1.5、1.7、1.8、1.9）：左边点这个查询，Home > Advanced Editor，全删，粘贴整段，Done。名字不要改。
+
+按这个顺序做，每一步的预览都应该能出数据。出现红字报错就停下来，把报错发我。
+
+### 1.1 新建 `PN_List`
+
+```powerquery
 let
-    SourceSQL = Sql.Database("SCGREPORTING", "DUN02_HESDATAMART01", [Query="WITH MTRL_MASTER AS (
-    SELECT *
-    FROM [DUN02_HESDATAMART01].[dbo].[plnt_mtrl] WITH (NOLOCK)
-    WHERE PLNT_OID = '1387'
-)
-
-SELECT
-    A.PO_NBR,
-    A.PO_ITM_NBR,
-    C.CREAT_DT AS [OPNORDR Creation Date],
-    A.ACCT_ASGN_CATG_CD,
-    C.PRCH_ORG_CD,
-    C.PO_TYPE_CD,
-    C.PO_CATG_CD,
-    C.PRCH_GRP_CD,
-    E.NM AS PO_Buyer_Name,
-    MTRL_MASTER.BUYR_CD AS MM_Buyer,
-    G.NM AS MM_Buyer_Name,
-    MTRL_MASTER.MRP_CNTRLR_CD,
-    C.VNDR_NBR AS [OPNORDR Vendor Number],
-    V.SRCH_STRNG_1 AS [OPNORDR Vendor Name],
-    A.MTRL_NBR AS [OPNORDR Material Number],
-    D.MTRL_DSC,
-    A.PLNT_CD,
-    A.PR_NBR,
-    A.PR_ITM_NBR,
-    A.PRC_UOM_CD,
-    A.UOW_CD,
-    A.ICT_1,
-    A.ICT_2,
-    A.ACCT_ASGN_CATG_CD,
-    A.TRGT_QTY,
-    A.STRG_LOCN_CD,
-    A.BASE_UOM_CD,
-    A.MTRL_GRP_CD,
-    A.PO_UOM_CD,
-    A.PO_QTY,
-    A.PO_NET_UNT_PRC,
-    A.PRC_UNIT,
-    A.NMRTR_PO_PRC,
-    A.DNMNTR_PO_PRC,
-    A.NMRTR_UNT_CNVRSN,
-    A.DNMNTR_UNT_CNVRSN,
-    A.PO_VAL,
-    C.CRNCY_CD AS PO_CURRENCY,
-    A.MTRL_TYPE_CD,
-    A.NOTE,
-    A.RCPT_FLG,
-    A.OUT_AGREE,
-    B.SCHED_DLVRY_DT,
-    B.PR_ITM_NBR,
-    B.MRP_REDUCE_QTY,
-    B.COMMIT_DT,
-    B.PO_NBR,
-    B.PO_ITM_NBR,
-    B.DLVRY_SCHED_LN_NBR,
-    B.ITM_DLVRY_DT,
-    B.SCHED_QTY,
-    B.COMMIT_QTY,
-    B.STAT_DLVRY_DT,
-    B.RCVD_QTY
-
-FROM
-    [DUN02_HESDATAMART01].[dbo].[PRCH_ORDR_ITM] A WITH (NOLOCK)
-LEFT JOIN
-    [DUN02_HESDATAMART01].[dbo].[PO_ITM_SCHED] B WITH (NOLOCK) ON B.PO_ITM_OID = A.OID
-LEFT JOIN
-    [DUN02_HESDATAMART01].[dbo].[PRCH_ORDR] C WITH (NOLOCK) ON A.PO_NBR = C.PO_NBR
-LEFT JOIN
-    [DUN02_HESDATAMART01].[dbo].[MTRL] D WITH (NOLOCK) ON A.MTRL_OID = D.OID
-LEFT JOIN
-    MTRL_MASTER WITH (NOLOCK) ON MTRL_MASTER.MTRL_NBR = D.MTRL_NBR
-LEFT JOIN
-    [DUN02_HESDATAMART01].[dbo].[BUYR] E WITH (NOLOCK) ON E.BUYR_CD = C.PRCH_GRP_CD
-LEFT JOIN
-    [DUN02_HESDATAMART01].[dbo].[BUYR] G WITH (NOLOCK) ON G.BUYR_CD = MTRL_MASTER.BUYR_CD
-LEFT JOIN
-    [DUN02_HESDATAMART01].[dbo].[VNDR] V WITH (NOLOCK) ON V.OID = C.VNDR_OID
-
-WHERE
-    A.PLNT_CD = '2750' AND
-    A.DLVRY_CMPLT_FLG = 0 AND
-    A.DEL_CD IS NULL AND
-    B.RCVD_QTY < B.SCHED_QTY AND
-    C.PO_CATG_CD = 'F' AND
-    C.PO_TYPE_CD = 'NB' AND
-    C.DEL_FLG = 0 AND
-    A.MTRL_OID IS NOT NULL AND
-    A.ACCT_ASGN_CATG_CD IS NULL AND
-    A.PO_NBR LIKE '454%'
-
-ORDER BY
-    B.ITM_DLVRY_DT ASC"]),
-
-    // Exchange rates now come from FX_M_Rates (monthly M-rate export) instead of [STAGING].[dbo].[TCURR_EXCHANGE_RATE].
-    // Output columns are unchanged: FROM_CRNCY_RATE_FACTOR, EXCHANGE_RATE, TO_CRNCY_RATE_FACTOR, PO_NET_UNIT_PRICE_M_USD.
-    FXKey = Table.AddColumn(SourceSQL, "_FXKey", each if [PO_CURRENCY] = null then null else Text.Upper(Text.Trim([PO_CURRENCY])), type text),
-    FXJoin = Table.NestedJoin(FXKey, {"_FXKey"}, FX_M_Rates, {"FCURR"}, "_FX", JoinKind.LeftOuter),
-    FXExpand = Table.ExpandTableColumn(FXJoin, "_FX", {"FFACT", "UKURS", "TFACT"}, {"FROM_CRNCY_RATE_FACTOR", "EXCHANGE_RATE", "TO_CRNCY_RATE_FACTOR"}),
-    FXTyped = Table.TransformColumnTypes(FXExpand, {{"FROM_CRNCY_RATE_FACTOR", type number}, {"EXCHANGE_RATE", type number}, {"TO_CRNCY_RATE_FACTOR", type number}}),
-    FXPrice = Table.AddColumn(FXTyped, "PO_NET_UNIT_PRICE_M_USD", each
-        if [PRC_UNIT] = null or [PRC_UNIT] = 0 then null
-        else if [_FXKey] = "USD" then [PO_NET_UNT_PRC] / [PRC_UNIT]
-        else [PO_NET_UNT_PRC] / [FROM_CRNCY_RATE_FACTOR] * [EXCHANGE_RATE] * [TO_CRNCY_RATE_FACTOR] / [PRC_UNIT],
-        type number),
-    Source = Table.RemoveColumns(FXPrice, {"_FXKey"}),
-
-    #"Sorted Rows" = Table.Sort(Source, {{"SCHED_DLVRY_DT", Order.Descending}}),
-    #"Trimmed Text" = Table.TransformColumns(#"Sorted Rows", {{"OPNORDR Vendor Number", each Text.TrimStart(_, "0"), type text}}),
-    #"Filtered Rows" = Table.SelectRows(#"Trimmed Text", each true),
-    #"Merged Queries" = Table.NestedJoin(#"Filtered Rows", {"OPNORDR Vendor Number"}, #"Excel_Buyer-Vendor Allocation", {"Vendor Code"}, "Excel_Buyer-Vendor Allocation", JoinKind.LeftOuter),
-    #"Expanded Excel_Buyer-Vendor Allocation1" = Table.ExpandTableColumn(#"Merged Queries", "Excel_Buyer-Vendor Allocation", {"Vendor Code", "Tactical Team", "Strategic Team"}, {"Vendor Code", "Tactical Team", "Strategic Team"}),
-    #"Trimmed Text1" = Table.TransformColumns(#"Expanded Excel_Buyer-Vendor Allocation1", {
-        {"PO_ITM_NBR", each Text.TrimStart(_, "0"), type text},
-        {"OPNORDR Material Number", each Text.TrimStart(_, "0"), type text},
-        {"PR_NBR", each Text.TrimStart(_, "0"), type text},
-        {"PR_ITM_NBR", each Text.TrimStart(_, "0"), type text},
-        {"PR_ITM_NBR2", each Text.TrimStart(_, "0"), type text},
-        {"PO_ITM_NBR2", each Text.TrimStart(_, "0"), type text},
-        {"DLVRY_SCHED_LN_NBR", each Text.TrimStart(_, "0"), type text}
-    }),
-    #"Added Custom" = Table.AddColumn(#"Trimmed Text1", "PO_Item_Schd.", each [PO_NBR] & "_" & [PO_ITM_NBR] & "_" & [DLVRY_SCHED_LN_NBR]),
-    #"Removed Duplicates" = Table.Distinct(#"Added Custom", {"PO_Item_Schd."}),
-
-    #"Duplicated Column" = Table.DuplicateColumn(#"Removed Duplicates", "ITM_DLVRY_DT", "ITM_DLVRY_DT - Copy"),
-    #"Extracted Year" = Table.TransformColumns(#"Duplicated Column", {{"ITM_DLVRY_DT - Copy", Date.Year, Int64.Type}}),
-    #"Duplicated Column1" = Table.DuplicateColumn(#"Extracted Year", "ITM_DLVRY_DT", "ITM_DLVRY_DT - Copy.1"),
-    #"Extracted Month" = Table.TransformColumns(#"Duplicated Column1", {{"ITM_DLVRY_DT - Copy.1", Date.Month, Int64.Type}}),
-    #"Duplicated Column2" = Table.DuplicateColumn(#"Extracted Month", "ITM_DLVRY_DT", "ITM_DLVRY_DT - Copy.2"),
-    #"Extracted Day" = Table.TransformColumns(#"Duplicated Column2", {{"ITM_DLVRY_DT - Copy.2", Date.Day, Int64.Type}}),
-    #"Renamed Columns" = Table.RenameColumns(#"Extracted Day", {{"ITM_DLVRY_DT - Copy", "Del Year"}, {"ITM_DLVRY_DT - Copy.1", "Del Month"}, {"ITM_DLVRY_DT - Copy.2", "Del Day"}}),
-
-    #"Merged Queries1" = Table.NestedJoin(#"Renamed Columns", {"OPNORDR Material Number"}, SQL_PPX, {"MTRL_NBR"}, "SQL_PPX", JoinKind.LeftOuter),
-    #"Expanded SQL_PPX1" = Table.ExpandTableColumn(#"Merged Queries1", "SQL_PPX", {"FUT_PLN_PRC1", "FUT_PLN_PRC2", "PPX (USD)", "*PPxPr_Cal (Daily)"}, {"SQL_PPX.FUT_PLN_PRC1", "SQL_PPX.FUT_PLN_PRC2", "SQL_PPX.PPX (USD)", "SQL_PPX.*PPxPr_Cal (Daily)"}),
-    #"Inserted Merged Column" = Table.AddColumn(#"Expanded SQL_PPX1", "PO_Mtrl", each Text.Combine({[PO_NBR], [OPNORDR Material Number]}, "_"), type text),
-    #"Renamed Columns1" = Table.RenameColumns(#"Inserted Merged Column", {{"SQL_PPX.*PPxPr_Cal (Daily)", "*PPxPr_Cal (Daily)"}}),
-
-    #"Duplicated Column3" = Table.DuplicateColumn(#"Renamed Columns1", "PRCH_GRP_CD", "PRCH_GRP_CD - Copy"),
-    #"Extracted First Characters" = Table.TransformColumns(#"Duplicated Column3", {{"PRCH_GRP_CD - Copy", each Text.Start(_, 1), type text}}),
-    #"Added Custom1" = Table.AddColumn(#"Extracted First Characters", "HAL Core Sourcing", each if [#"PRCH_GRP_CD - Copy"] = "R" or [#"PRCH_GRP_CD - Copy"] = "666" then [Tactical Team] else [Strategic Team]),
-    #"Added Custom2" = Table.AddColumn(#"Added Custom1", "Buyer Name", each if [STRG_LOCN_CD] = "SGP2" then [MM_Buyer_Name] else [PO_Buyer_Name]),
-    #"Added Custom3" = Table.AddColumn(#"Added Custom2", "Custom", each if [PO_CURRENCY] = "USD" then [PO_NET_UNT_PRC] else [PO_NET_UNT_PRC] * [FROM_CRNCY_RATE_FACTOR]),
-    #"Changed Type" = Table.TransformColumnTypes(#"Added Custom3", {{"Custom", type number}}),
-    #"Removed Columns" = Table.RemoveColumns(#"Changed Type", {"PO_NET_UNT_PRC"}),
-    #"Renamed Columns2" = Table.RenameColumns(#"Removed Columns", {{"Custom", "PO_NET_UNT_PRC"}})
+    Raw = Src{[Item = "tbl_Part_Price", Kind = "Table"]}[Data],
+    Kept = Table.SelectColumns(Raw, {"Part PN"}),
+    NoEmptyText = Table.ReplaceValue(Kept, "", null, Replacer.ReplaceValue, {"Part PN"}),
+    Typed = Table.TransformColumnTypes(NoEmptyText, {{"Part PN", Int64.Type}}),
+    NoNull = Table.SelectRows(Typed, each [#"Part PN"] <> null),
+    Out = Table.Buffer(Table.Distinct(NoNull))
 in
-    #"Renamed Columns2"
+    Out
+```
+
+### 1.2 新建 `SQL_PO_Items`
+
+新版 AllPO。`old_scored`、`old_matched`、`old_ranked` 三段是去重：一张迁移过的 PO，旧号那行和新号那行的物料、vendor、PO 日期、item 号都一样，旧号那行删掉。同一天同一个 vendor 有两张旧 PO 都对得上、只迁移了一张的时候，先按单价和数量挑，还分不出来就挑整张 PO 对得上的 item 更多的那张。没有物料号的 item 不去重（筛 PN 的时候本来就会去掉）。
+
+```powerquery
+let
+    Source = Sql.Database("SCGREPORTING", "DUN02_HESDATAMART01", [Query = "
+WITH base AS (
+    SELECT
+        po.PO_NBR, poi.PO_ITM_NBR, TRY_CAST(po.PO_DT AS date) AS PO_DT,
+        po.VNDR_NBR, v.SRCH_STRNG_1 AS VNDR_NM, po.CRNCY_CD, po.EXCHNG_RT, po.CREAT_BY_NM,
+        poi.MTRL_NBR, poi.STRG_LOCN_CD, poi.PO_UOM_CD, poi.BASE_UOM_CD,
+        poi.PRC_UNIT, poi.PO_QTY, poi.PO_NET_UNT_PRC, poi.DEL_CD,
+        CASE WHEN po.PO_NBR LIKE '454%' THEN 1 ELSE 0 END AS IS_S4,
+        CASE WHEN po.PO_NBR LIKE '454%' AND po.CREAT_BY_NM = 'DATA_CNV' THEN 1 ELSE 0 END AS IS_CNV
+    FROM dbo.PRCH_ORDR AS po WITH (NOLOCK)
+    INNER JOIN dbo.PRCH_ORDR_ITM AS poi WITH (NOLOCK) ON po.OID = poi.PO_OID
+    LEFT JOIN dbo.VNDR AS v WITH (NOLOCK) ON v.OID = po.VNDR_OID
+    WHERE po.CO_CD = '8093'
+      AND poi.STRG_LOCN_CD IN ('S2FA', 'SGP2')
+      AND po.PO_CATG_CD = 'F'
+      AND (po.PO_NBR LIKE '454%' OR po.PO_DT >= '2025-10-01')
+),
+old_scored AS (
+    SELECT
+        o.PO_NBR, o.PO_ITM_NBR, o.MTRL_NBR, o.VNDR_NBR, o.PO_DT,
+        COUNT(*) AS N_CNV,
+        MIN(CASE
+                WHEN c.PO_NET_UNT_PRC = o.PO_NET_UNT_PRC AND c.PO_QTY = o.PO_QTY THEN 0
+                WHEN c.PO_NET_UNT_PRC = o.PO_NET_UNT_PRC THEN 1
+                WHEN c.PO_QTY = o.PO_QTY THEN 2
+                ELSE 3
+            END) AS SCORE
+    FROM base AS o
+    INNER JOIN base AS c
+        ON c.IS_CNV = 1
+       AND c.MTRL_NBR = o.MTRL_NBR
+       AND c.VNDR_NBR = o.VNDR_NBR
+       AND c.PO_DT = o.PO_DT
+       AND c.PO_ITM_NBR = o.PO_ITM_NBR
+    WHERE o.IS_S4 = 0
+    GROUP BY o.PO_NBR, o.PO_ITM_NBR, o.MTRL_NBR, o.VNDR_NBR, o.PO_DT
+),
+old_matched AS (
+    SELECT
+        s.PO_NBR, s.PO_ITM_NBR, s.MTRL_NBR, s.VNDR_NBR, s.PO_DT, s.N_CNV, s.SCORE,
+        SUM(CASE WHEN s.SCORE <= 1 THEN 1 ELSE 0 END) OVER (PARTITION BY s.PO_NBR) AS PO_MATCHES
+    FROM old_scored AS s
+),
+old_ranked AS (
+    SELECT
+        PO_NBR, PO_ITM_NBR, N_CNV,
+        ROW_NUMBER() OVER (
+            PARTITION BY MTRL_NBR, VNDR_NBR, PO_DT, PO_ITM_NBR
+            ORDER BY SCORE, PO_MATCHES DESC, PO_NBR
+        ) AS RN
+    FROM old_matched
+)
+SELECT
+    b.PO_NBR, b.PO_ITM_NBR, b.PO_DT, b.VNDR_NBR, b.VNDR_NM, b.CRNCY_CD, b.EXCHNG_RT, b.CREAT_BY_NM,
+    b.MTRL_NBR, b.STRG_LOCN_CD, b.PO_UOM_CD, b.BASE_UOM_CD, b.PRC_UNIT, b.PO_QTY, b.PO_NET_UNT_PRC, b.DEL_CD,
+    b.IS_S4, b.IS_CNV
+FROM base AS b
+LEFT JOIN old_ranked AS t
+    ON t.PO_NBR = b.PO_NBR
+   AND t.PO_ITM_NBR = b.PO_ITM_NBR
+   AND t.RN <= t.N_CNV
+WHERE t.PO_NBR IS NULL
+"]),
+    Typed = Table.TransformColumnTypes(Source, {
+            {"PO_NBR", Int64.Type}, {"PO_ITM_NBR", Int64.Type}, {"PO_DT", type date},
+            {"VNDR_NBR", type text}, {"VNDR_NM", type text}, {"CRNCY_CD", type text},
+            {"EXCHNG_RT", type number}, {"CREAT_BY_NM", type text}, {"MTRL_NBR", type text},
+            {"STRG_LOCN_CD", type text}, {"PO_UOM_CD", type text}, {"BASE_UOM_CD", type text},
+            {"PRC_UNIT", type number}, {"PO_QTY", type number}, {"PO_NET_UNT_PRC", type number},
+            {"DEL_CD", type text}, {"IS_S4", Int64.Type}, {"IS_CNV", Int64.Type}
+        }),
+    Trimmed = Table.TransformColumns(Typed, {
+            {"CRNCY_CD", Text.Trim, type text}, {"STRG_LOCN_CD", Text.Trim, type text},
+            {"PO_UOM_CD", Text.Trim, type text}, {"BASE_UOM_CD", Text.Trim, type text},
+            {"VNDR_NM", Text.Trim, type text}
+        }),
+    Deduped = Table.Distinct(Trimmed, {"PO_NBR", "PO_ITM_NBR"})
+in
+    Deduped
+```
+
+### 1.3 新建 `SQL_Open_PO`
+
+FROM 和 WHERE 和你原来的 Open PO 一样，所以行数不变；只取这个 pbix 要用的列，多取了 `C.PO_DT`（原始 PO 日期）和 `C.EXCHNG_RT`。不再依赖 FX_M_Rates、Excel_Buyer-Vendor Allocation、SQL_PPX 这几个查询。
+
+```powerquery
+let
+    Source = Sql.Database("SCGREPORTING", "DUN02_HESDATAMART01", [Query = "
+SELECT
+    A.PO_NBR, A.PO_ITM_NBR, B.DLVRY_SCHED_LN_NBR,
+    TRY_CAST(C.PO_DT AS date) AS PO_DT,
+    C.PO_TYPE_CD, C.PRCH_GRP_CD, C.VNDR_NBR, V.SRCH_STRNG_1 AS VNDR_NM,
+    A.MTRL_NBR, D.MTRL_DSC, A.STRG_LOCN_CD, A.PO_UOM_CD, A.BASE_UOM_CD,
+    A.PO_QTY, A.PO_NET_UNT_PRC, A.PRC_UNIT, C.CRNCY_CD, C.EXCHNG_RT,
+    TRY_CAST(B.ITM_DLVRY_DT AS date) AS ITM_DLVRY_DT, B.SCHED_QTY, B.RCVD_QTY
+FROM dbo.PRCH_ORDR_ITM AS A WITH (NOLOCK)
+LEFT JOIN dbo.PO_ITM_SCHED AS B WITH (NOLOCK) ON B.PO_ITM_OID = A.OID
+LEFT JOIN dbo.PRCH_ORDR AS C WITH (NOLOCK) ON A.PO_NBR = C.PO_NBR
+LEFT JOIN dbo.MTRL AS D WITH (NOLOCK) ON A.MTRL_OID = D.OID
+LEFT JOIN dbo.VNDR AS V WITH (NOLOCK) ON V.OID = C.VNDR_OID
+WHERE A.PLNT_CD = '2750'
+  AND A.DLVRY_CMPLT_FLG = 0
+  AND A.DEL_CD IS NULL
+  AND B.RCVD_QTY < B.SCHED_QTY
+  AND C.PO_CATG_CD = 'F'
+  AND C.PO_TYPE_CD = 'NB'
+  AND C.DEL_FLG = 0
+  AND A.MTRL_OID IS NOT NULL
+  AND A.ACCT_ASGN_CATG_CD IS NULL
+  AND A.PO_NBR LIKE '454%'
+"]),
+    Typed = Table.TransformColumnTypes(Source, {
+            {"PO_NBR", Int64.Type}, {"PO_ITM_NBR", Int64.Type}, {"DLVRY_SCHED_LN_NBR", Int64.Type},
+            {"PO_DT", type date}, {"PO_TYPE_CD", type text}, {"PRCH_GRP_CD", type text},
+            {"VNDR_NBR", type text}, {"VNDR_NM", type text}, {"MTRL_NBR", type text}, {"MTRL_DSC", type text},
+            {"STRG_LOCN_CD", type text}, {"PO_UOM_CD", type text}, {"BASE_UOM_CD", type text},
+            {"PO_QTY", type number}, {"PO_NET_UNT_PRC", type number}, {"PRC_UNIT", type number},
+            {"CRNCY_CD", type text}, {"EXCHNG_RT", type number}, {"ITM_DLVRY_DT", type date},
+            {"SCHED_QTY", type number}, {"RCVD_QTY", type number}
+        }),
+    Trimmed = Table.TransformColumns(Typed, {
+            {"CRNCY_CD", Text.Trim, type text}, {"STRG_LOCN_CD", Text.Trim, type text},
+            {"PO_UOM_CD", Text.Trim, type text}, {"BASE_UOM_CD", Text.Trim, type text},
+            {"VNDR_NM", Text.Trim, type text}, {"PRCH_GRP_CD", Text.Trim, type text},
+            {"PO_TYPE_CD", Text.Trim, type text}
+        })
+in
+    Trimmed
+```
+
+### 1.4 新建 `PO_Items`
+
+```powerquery
+let
+    AddPN = Table.AddColumn(SQL_PO_Items, "Part PN",
+        each try Int64.From(Text.TrimStart(Text.Trim([MTRL_NBR]), "0")) otherwise null, Int64.Type),
+    Joined = Table.NestedJoin(AddPN, {"Part PN"}, PN_List, {"Part PN"}, "pn", JoinKind.Inner),
+    OnlyPNs = Table.RemoveColumns(Joined, {"pn"}),
+    AddVendor = Table.AddColumn(OnlyPNs, "Vendor Number",
+        each if [VNDR_NBR] = null then null else Text.TrimStart(Text.Trim([VNDR_NBR]), "0"), type text),
+    AddLabel = Table.AddColumn(AddVendor, "Vendor Label",
+        each if [VNDR_NM] = null or [VNDR_NM] = "" then [#"Vendor Number"] else [VNDR_NM], type text),
+    FX = Settings{0}[#"FX USD per SGD"],
+    // USD per unit: USD as is; other currencies x SGD rate on the PO x FX (same as PPX). JPY prices are stored / 100 in the datamart.
+    AddUSD = Table.AddColumn(AddLabel, "USD Unit Price",
+        each if [PO_NET_UNT_PRC] = null then null
+            else
+                let
+                    p = [PO_NET_UNT_PRC] * (if [CRNCY_CD] = "JPY" then 100 else 1)
+                        / (if [PRC_UNIT] = null or [PRC_UNIT] <= 0 then 1 else [PRC_UNIT])
+                in
+                    if [CRNCY_CD] = "USD" then p else p * (if [EXCHNG_RT] = null then 0 else [EXCHNG_RT]) * FX,
+        type number),
+    Out = Table.Buffer(AddUSD)
+in
+    Out
+```
+
+### 1.5 替换 `Open_PO`
+
+```powerquery
+let
+    AddPN = Table.AddColumn(SQL_Open_PO, "Part PN",
+        each try Int64.From(Text.TrimStart(Text.Trim([MTRL_NBR]), "0")) otherwise null, Int64.Type),
+    Joined = Table.NestedJoin(AddPN, {"Part PN"}, PN_List, {"Part PN"}, "pn", JoinKind.Inner),
+    OnlyPNs = Table.RemoveColumns(Joined, {"pn"}),
+    AddKey = Table.AddColumn(OnlyPNs, "Schedule Key",
+        each Text.From([PO_NBR]) & "_" & Text.From([PO_ITM_NBR]) & "_" & Text.From([DLVRY_SCHED_LN_NBR]), type text),
+    Deduped = Table.Distinct(AddKey, {"Schedule Key"}),
+    FX = Settings{0}[#"FX USD per SGD"],
+    From2027 = Settings{0}[#"PO Price From"],
+    AddVendor = Table.AddColumn(Deduped, "Vendor Number",
+        each if [VNDR_NBR] = null then null else Text.TrimStart(Text.Trim([VNDR_NBR]), "0"), type text),
+    // price per price unit in the PO currency (JPY prices are stored / 100 in the datamart)
+    AddPrice = Table.AddColumn(AddVendor, "Unit Price PO Crcy",
+        each if [PO_NET_UNT_PRC] = null then null else [PO_NET_UNT_PRC] * (if [CRNCY_CD] = "JPY" then 100 else 1), type number),
+    // USD per unit of PO currency: SGD at the Settings FX, other currencies at the SGD rate on the PO x FX (same as PO_Lines)
+    AddRate = Table.AddColumn(AddPrice, "Exchange Rate",
+        each if [CRNCY_CD] = "USD" then 1
+            else if [CRNCY_CD] = "SGD" then FX
+            else (if [EXCHNG_RT] = null then 0 else [EXCHNG_RT]) * FX, type number),
+    AddFactor = Table.AddColumn(AddRate, "Rate Factor", each 1, type number),
+    AddOpen = Table.AddColumn(AddFactor, "Open Qty",
+        each (if [SCHED_QTY] = null then 0 else [SCHED_QTY]) - (if [RCVD_QTY] = null then 0 else [RCVD_QTY]), type number),
+    Renamed = Table.RenameColumns(AddOpen, {
+            {"PO_NBR", "PO Number"}, {"PO_ITM_NBR", "PO Item"}, {"DLVRY_SCHED_LN_NBR", "Schedule Line"},
+            {"PO_DT", "PO Created"}, {"VNDR_NM", "Vendor Name"}, {"MTRL_DSC", "Material Description"},
+            {"PO_TYPE_CD", "PO Type"}, {"PRCH_GRP_CD", "Purch Group (PO)"}, {"CRNCY_CD", "PO Currency"},
+            {"PRC_UNIT", "Price Unit"}, {"PO_UOM_CD", "PO UoM"}, {"BASE_UOM_CD", "Base UoM"},
+            {"ITM_DLVRY_DT", "Delivery Date"}, {"STRG_LOCN_CD", "Storage Location"}, {"PO_QTY", "PO Qty"}
+        }),
+    AddUSD = Table.AddColumn(Renamed, "USD Unit Price",
+        each [#"Unit Price PO Crcy"]
+            / (if [#"Price Unit"] = null or [#"Price Unit"] = 0 then 1 else [#"Price Unit"])
+            * [#"Exchange Rate"],
+        type number),
+    AddValue = Table.AddColumn(AddUSD, "Open Value USD", each [#"USD Unit Price"] * [#"Open Qty"], type number),
+    AddPriced = Table.AddColumn(AddValue, "Priced Line", each if [#"PO UoM"] = [#"Base UoM"] then "Y" else "N", type text),
+    Add2027 = Table.AddColumn(AddPriced, "Delivers 2027+",
+        each if [#"Delivery Date"] <> null and [#"Delivery Date"] >= From2027 then "Y" else "N", type text),
+    Kept = Table.SelectColumns(Add2027, {"PO Number", "PO Item", "Schedule Line", "Schedule Key", "PO Created", "Vendor Number", "Vendor Name", "Part PN", "Material Description", "PO Type", "Purch Group (PO)", "PO Currency", "Unit Price PO Crcy", "Price Unit", "Exchange Rate", "Rate Factor", "PO UoM", "Base UoM", "Open Qty", "Delivery Date", "USD Unit Price", "Open Value USD", "Priced Line", "Delivers 2027+", "Storage Location", "PO Qty"})
+in
+    Kept
+```
+
+预览里 PO Number 应该全是 4540 开头，PO Created 是原始 PO 日期（最早到 2022 年）。
+
+和原来比有两点变化。PO Created 现在是原始 PO 日期，不是迁移日期。非 USD、非 SGD 的 PO（iCruise 现在有 CAD 85 行、GBP 62 行、EUR 4 行）美元单价改用 PO 上的汇率 x 0.7845，和 PO_Lines、AllPO 同一个算法；以前用的是 FX_M_Rates 的月汇率，两种算法最多差 4% 左右。USD 和 SGD 的行（1,855 行）一分钱不差。
+
+### 1.6 新建 `PO_Price`
+
+```powerquery
+let
+    SRaw = Src{[Item = "tbl_Settings", Kind = "Table"]}[Data],
+    Get = (name as text, default as any) as any =>
+        let
+            r = Table.SelectRows(SRaw, each [Setting] = name)
+        in
+            if Table.RowCount(r) = 0 or r{0}[Value] = null or r{0}[Value] = "" then default else r{0}[Value],
+    CountIC = Text.From(Get("Last 3 PO: count intercompany POs", "N")),
+    CountFA = Settings{0}[#"Count FA POs"],
+    From2027 = Settings{0}[#"PO Price From"],
+    Sum0 = (l as list) as number => let s = List.Sum(l) in if s = null then 0 else s,
+
+    // ---- open FA: S2FA items still open (one row per PO item)
+    OpenItems = Table.Distinct(
+        Table.SelectColumns(Open_PO, {"PO Number", "PO Item", "Part PN", "Vendor Number", "Storage Location"}),
+        {"PO Number", "PO Item"}),
+    FAItems = Table.SelectRows(OpenItems, each [#"Storage Location"] = "S2FA"),
+    FAKeys = Table.Distinct(Table.SelectColumns(FAItems, {"Part PN", "Vendor Number"})),
+    FACount = Table.Group(FAItems, {"Part PN"}, {{"Open FA Items", each Table.RowCount(_), Int64.Type}}),
+
+    // ---- last 3 PO: every PO of a vendor with an open FA item for the PN is left out
+    WithFA = Table.NestedJoin(PO_Items, {"Part PN", "Vendor Number"}, FAKeys, {"Part PN", "Vendor Number"}, "fa", JoinKind.LeftOuter),
+    Flagged = Table.AddColumn(WithFA, "Open FA Vendor", each if Table.RowCount([fa]) > 0 then 1 else 0, Int64.Type),
+    Items = Table.RemoveColumns(Flagged, {"fa"}),
+    LeftOut = Table.Group(Table.SelectRows(Items, each [#"Open FA Vendor"] = 1), {"Part PN"},
+        {{"PO Items Left Out (Open FA)", each Table.RowCount(_), Int64.Type}}),
+    Valid = Table.SelectRows(Items, each
+        [#"Open FA Vendor"] = 0
+        and [PO_UOM_CD] = [BASE_UOM_CD]
+        and [#"USD Unit Price"] <> null and [#"USD Unit Price"] > 0
+        and [PO_QTY] <> null and [PO_QTY] > 0
+        and (CountIC <> "N" or not Text.StartsWith(if [#"Vendor Number"] = null then "" else [#"Vendor Number"], "P"))),
+    AddValue = Table.AddColumn(Valid, "Value USD", each [#"USD Unit Price"] * [PO_QTY], type number),
+    POs = Table.Group(AddValue, {"Part PN", "PO_NBR"}, {
+            {"PO Date", each List.Max([PO_DT]), type date},
+            {"Qty", each List.Sum([PO_QTY]), type number},
+            {"Value", each List.Sum([#"Value USD"]), type number},
+            {"Vendor", each List.First([#"Vendor Label"]), type text}
+        }),
+    // newest PO date first; same date: higher PO number first
+    ByPN = Table.Group(POs, {"Part PN"}, {
+            {"Top", (t) => Table.FirstN(Table.Sort(t, {{"PO Date", Order.Descending}, {"PO_NBR", Order.Descending}}), 3), type table}
+        }),
+    L3 = Table.AddColumn(ByPN, "r", each
+        let
+            t = [Top],
+            n = Table.RowCount(t),
+            q = Sum0(t[Qty]),
+            v = Sum0(t[Value])
+        in
+            [
+                #"Last 3 PO Count" = n,
+                #"Last 3 PO Qty" = q,
+                #"Last 3 PO Wtd Price USD" = if q > 0 then v / q else null,
+                #"Last 3 PO Avg Price USD" = List.Average(List.Transform(Table.ToRecords(t), (x) => x[Value] / x[Qty])),
+                #"Last 3 PO Newest Date" = t[#"PO Date"]{0},
+                #"Last 3 PO Oldest Date" = t[#"PO Date"]{n - 1},
+                #"Last 3 PO Numbers" = Text.Combine(List.Transform(t[PO_NBR], each Text.From(_)), ", "),
+                #"Last 3 PO Vendors" = Text.Combine(List.Transform(t[Vendor], each if _ = null then "" else _), ", ")
+            ]),
+    L3Out = Table.ExpandRecordColumn(Table.RemoveColumns(L3, {"Top"}), "r", {"Last 3 PO Count", "Last 3 PO Qty", "Last 3 PO Wtd Price USD", "Last 3 PO Avg Price USD", "Last 3 PO Newest Date", "Last 3 PO Oldest Date", "Last 3 PO Numbers", "Last 3 PO Vendors"}),
+
+    // ---- open PO figures per PN (reference columns; used when Current price basis = PO or Drusilla)
+    FARows = Table.SelectRows(FA_Tracker, each [#"Confirmed FA"] <> "N" and [#"FA PO Number"] <> null),
+    FAList = List.Buffer(List.Transform(Table.ToRecords(FARows),
+        (x) => x[#"FA PO Number"] & "|" & (if x[#"FA PO Item"] = null then "" else x[#"FA PO Item"]))),
+    OL = Table.AddColumn(Open_PO, "FA Cand",
+        each if List.Contains(FAList, Text.From([#"PO Number"]) & "|" & Text.From([#"PO Item"])) then 1 else 0, Int64.Type),
+    OpenAgg = Table.Group(OL, {"Part PN"}, {{"o", (t) =>
+        let
+            val = (x as table) as number =>
+                Sum0(List.Transform(Table.ToRecords(x),
+                    (y) => (if y[#"USD Unit Price"] = null then 0 else y[#"USD Unit Price"]) * y[#"Open Qty"])),
+            priced = Table.SelectRows(t, each [#"Priced Line"] = "Y"),
+            pq = Sum0(priced[#"Open Qty"]),
+            fq = Sum0(Table.SelectRows(priced, each [#"FA Cand"] = 1)[#"Open Qty"]),
+            counted = if CountFA = "N" then Table.SelectRows(priced, each [#"FA Cand"] = 0) else priced,
+            c27 = Table.SelectRows(counted, each [#"Delivery Date"] <> null and [#"Delivery Date"] >= From2027),
+            q27 = Sum0(c27[#"Open Qty"]),
+            qa = Sum0(counted[#"Open Qty"]),
+            p27 = if q27 > 0 then val(c27) / q27 else if qa > 0 then val(counted) / qa else null,
+            latest = List.Max(t[#"PO Created"]),
+            cl = Table.SelectRows(counted, each [#"PO Created"] = latest),
+            ql = Sum0(cl[#"Open Qty"])
+        in
+            [
+                #"SQL Open PO Lines" = Table.RowCount(t),
+                #"SQL Open PO Qty" = Sum0(t[#"Open Qty"]),
+                #"FA Share of Open PO Qty" = if pq = 0 then 0 else fq / pq,
+                #"PO Price 2027 USD" = p27,
+                #"PO Price Basis" = if p27 = null then null else if q27 > 0 then "2027 deliveries" else "All open lines",
+                #"Latest PO Date" = latest,
+                #"Latest PO Price USD" = if ql > 0 then val(cl) / ql else null
+            ], type record}}),
+    OpenOut = Table.ExpandRecordColumn(OpenAgg, "o", {"SQL Open PO Lines", "SQL Open PO Qty", "FA Share of Open PO Qty", "PO Price 2027 USD", "PO Price Basis", "Latest PO Date", "Latest PO Price USD"}),
+
+    // ---- one row per PN
+    J1 = Table.NestedJoin(PN_List, {"Part PN"}, L3Out, {"Part PN"}, "a", JoinKind.LeftOuter),
+    E1 = Table.ExpandTableColumn(J1, "a", {"Last 3 PO Count", "Last 3 PO Qty", "Last 3 PO Wtd Price USD", "Last 3 PO Avg Price USD", "Last 3 PO Newest Date", "Last 3 PO Oldest Date", "Last 3 PO Numbers", "Last 3 PO Vendors"}),
+    J2 = Table.NestedJoin(E1, {"Part PN"}, OpenOut, {"Part PN"}, "b", JoinKind.LeftOuter),
+    E2 = Table.ExpandTableColumn(J2, "b", {"SQL Open PO Lines", "SQL Open PO Qty", "FA Share of Open PO Qty", "PO Price 2027 USD", "PO Price Basis", "Latest PO Date", "Latest PO Price USD"}),
+    J3 = Table.NestedJoin(E2, {"Part PN"}, FACount, {"Part PN"}, "c", JoinKind.LeftOuter),
+    E3 = Table.ExpandTableColumn(J3, "c", {"Open FA Items"}),
+    J4 = Table.NestedJoin(E3, {"Part PN"}, LeftOut, {"Part PN"}, "d", JoinKind.LeftOuter),
+    E4 = Table.ExpandTableColumn(J4, "d", {"PO Items Left Out (Open FA)"}),
+    Zeros = Table.ReplaceValue(E4, null, 0, Replacer.ReplaceValue,
+        {"Last 3 PO Count", "Last 3 PO Qty", "SQL Open PO Lines", "SQL Open PO Qty", "FA Share of Open PO Qty", "Open FA Items", "PO Items Left Out (Open FA)"}),
+    Typed = Table.TransformColumnTypes(Zeros, {
+            {"Last 3 PO Count", Int64.Type}, {"Last 3 PO Qty", type number},
+            {"Last 3 PO Wtd Price USD", type number}, {"Last 3 PO Avg Price USD", type number},
+            {"Last 3 PO Newest Date", type date}, {"Last 3 PO Oldest Date", type date},
+            {"Last 3 PO Numbers", type text}, {"Last 3 PO Vendors", type text},
+            {"SQL Open PO Lines", Int64.Type}, {"SQL Open PO Qty", type number},
+            {"FA Share of Open PO Qty", type number}, {"PO Price 2027 USD", type number},
+            {"PO Price Basis", type text}, {"Latest PO Date", type date}, {"Latest PO Price USD", type number},
+            {"Open FA Items", Int64.Type}, {"PO Items Left Out (Open FA)", Int64.Type}
+        })
+in
+    Typed
+```
+
+### 1.7 替换 `Part_Price`
+
+和原来比：29 个价格相关的列不再从 Excel 读（`FromSQL` 那个清单），改成从 PO_Price 带过来，或者在 `Calc` 这一步按 Excel 里同样的公式算；其余 51 列照旧读 Excel。Excel 里以后就算把这 29 列删了，这个查询也不会报错。
+
+```powerquery
+let
+    Raw = Src{[Item = "tbl_Part_Price", Kind = "Table"]}[Data],
+    NoEmptyText = Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+    // these columns are no longer read from Excel: they are worked out here from the SQL POs
+    FromSQL = {
+            "SQL Open PO Lines", "SQL Open PO Qty", "FA Share of Open PO Qty", "PO Price 2027 USD",
+            "PO Price Basis", "Latest PO Date", "Latest PO Price USD", "Last 3 PO Count",
+            "Last 3 PO Qty", "Last 3 PO Wtd Price USD", "Last 3 PO Avg Price USD", "Last 3 PO Newest Date",
+            "Last 3 PO Oldest Date", "Last 3 PO Numbers", "Last 3 PO Vendors", "Open FA Items",
+            "PO Items Left Out (Open FA)", "Last 3 PO Price USD", "Current Price USD", "Price Source",
+            "Price vs PPX Check", "Projected Price USD", "Has New Price", "Unit Saving Current USD",
+            "Unit Saving Current Pct", "Ann Saving Current 2027 USD", "Ann Saving Projected 2027 USD", "Gap to Target 2027 USD",
+            "Ann Saving vs PPX Mar 2027 USD"
+        },
+    Base = Table.RemoveColumns(NoEmptyText, FromSQL, MissingField.Ignore),
+    Typed = Table.TransformColumnTypes(Base, {
+            {"Part PN", Int64.Type}, {"Part Description", type text}, {"Top 80%", type text},
+            {"Focus Part", type text}, {"Commodity", type text}, {"Product", type text},
+            {"Sub", type text}, {"Category Source", type text}, {"Commodity (Drusilla)", type text},
+            {"Product Family (Drusilla)", type text}, {"In Drusilla Summary", type text}, {"Loading Tab", type text},
+            {"On Loading Top 80% Tab", type text}, {"Single/Sole", type text}, {"CM Comments", type text},
+            {"Tiger Comments", type text}, {"Purch Group", type text}, {"MRP Controller", type text},
+            {"Planned Deliv Days", Int64.Type}, {"Std Price USD", type number}, {"Baseline PPX SGD", type number},
+            {"Baseline PPX USD", type number}, {"Baseline PPX Source", type text}, {"SAP PPX Now USD", type number},
+            {"PPX Changed", type text}, {"SAP Planned Price 1 USD", type number}, {"SAP Planned Price 2 USD", type number},
+            {"PPX Mar 2027 USD", type number}, {"Drusilla 20 Sep Price USD", type number}, {"Target Price USD", type number},
+            {"BOM Lines", Int64.Type}, {"Capital Qty 2027", type number}, {"Product Qty JanSep26", type number},
+            {"Product Qty 2027 Est", type number}, {"Ann Qty 2027", type number}, {"Capital PPX 2027 USD", type number},
+            {"Product PPX 2027 USD", type number}, {"Ann PPX 2027 USD", type number}, {"Target Saving 2027 USD", type number},
+            {"Spend Rank", Int64.Type}, {"Cum Spend Share", type number}, {"Pareto Group", type text},
+            {"In ZMMRP", type text}, {"Open PO Qty", type number}, {"Open PO Lines", Int64.Type},
+            {"Past Due PO Qty", type number}, {"Earliest PO Delivery", type date}, {"Plan PReq Qty", type number},
+            {"Plan PReq Value USD", type number}, {"Approved Suppliers 2750", Int64.Type}, {"FA Candidate PO Items", Int64.Type}
+        }),
+    Joined = Table.NestedJoin(Typed, {"Part PN"}, PO_Price, {"Part PN"}, "po", JoinKind.LeftOuter),
+    WithPO = Table.ExpandTableColumn(Joined, "po", {
+            "SQL Open PO Lines", "SQL Open PO Qty", "FA Share of Open PO Qty", "PO Price 2027 USD",
+            "PO Price Basis", "Latest PO Date", "Latest PO Price USD", "Last 3 PO Count",
+            "Last 3 PO Qty", "Last 3 PO Wtd Price USD", "Last 3 PO Avg Price USD", "Last 3 PO Newest Date",
+            "Last 3 PO Oldest Date", "Last 3 PO Numbers", "Last 3 PO Vendors", "Open FA Items",
+            "PO Items Left Out (Open FA)"
+        }),
+    SRaw = Src{[Item = "tbl_Settings", Kind = "Table"]}[Data],
+    Get = (name as text, default as any) as any =>
+        let
+            r = Table.SelectRows(SRaw, each [Setting] = name)
+        in
+            if Table.RowCount(r) = 0 or r{0}[Value] = null or r{0}[Value] = "" then default else r{0}[Value],
+    Basis = Settings{0}[#"Price Basis"],
+    AvgMode = Text.From(Get("Last 3 PO: average", "Weighted")),
+    // same rules as the Excel columns Current Price USD, Price Source and the ones that follow from them
+    Calc = Table.AddColumn(WithPO, "c", each
+        let
+            V = [#"Baseline PPX USD"],
+            AC = [#"Drusilla 20 Sep Price USD"],
+            AG = [#"PO Price 2027 USD"],
+            AK = [#"Target Price USD"],
+            AB = [#"PPX Mar 2027 USD"],
+            AW = if [#"Ann Qty 2027"] = null then 0 else [#"Ann Qty 2027"],
+            BC = if [#"Target Saving 2027 USD"] = null then 0 else [#"Target Saving 2027 USD"],
+            n = if [#"Last 3 PO Count"] = null then 0 else [#"Last 3 PO Count"],
+            fa = if [#"Open FA Items"] = null then 0 else [#"Open FA Items"],
+            BV = if n = 0 then null
+                else if AvgMode = "Simple" then [#"Last 3 PO Avg Price USD"]
+                else [#"Last 3 PO Wtd Price USD"],
+            pick =
+                if Basis = "Last 3 PO" then
+                    (if BV <> null then [p = BV, s = "Last " & Text.From(n) & " PO"]
+                     else if fa > 0 then [p = V, s = "Open FA only: PPX"]
+                     else if AC <> null then [p = AC, s = "Drusilla 20 Sep"]
+                     else [p = V, s = "None"])
+                else if Basis = "Drusilla" then
+                    (if AC <> null then [p = AC, s = "Drusilla 20 Sep"]
+                     else if AG <> null then [p = AG, s = "SQL open PO"]
+                     else [p = V, s = "None"])
+                else
+                    (if AG <> null then [p = AG, s = "SQL open PO"]
+                     else if AC <> null then [p = AC, s = "Drusilla 20 Sep"]
+                     else [p = V, s = "None"]),
+            cur = pick[p],
+            src = pick[s],
+            has = if src = "None" or src = "Open FA only: PPX" then 0 else 1,
+            proj = if AK <> null then AK else cur,
+            us = if V = null or cur = null then null else V - cur,
+            ann = if us = null then null else AW * us
+        in
+            [
+                #"Last 3 PO Price USD" = BV,
+                #"Current Price USD" = cur,
+                #"Price Source" = src,
+                #"Price vs PPX Check" =
+                    if has = 0 or V = null or V = 0 or cur = null then null
+                    else if cur / V > 2 then "Above 2x PPX"
+                    else if cur / V < 0.5 then "Below 0.5x PPX"
+                    else null,
+                #"Projected Price USD" = proj,
+                #"Has New Price" = has,
+                #"Unit Saving Current USD" = us,
+                #"Unit Saving Current Pct" = if us = null then null else if V = 0 then 0 else us / V,
+                #"Ann Saving Current 2027 USD" = ann,
+                #"Ann Saving Projected 2027 USD" = if V = null or proj = null then null else AW * (V - proj),
+                #"Gap to Target 2027 USD" = List.Max({0, BC - (if ann = null then 0 else ann)}),
+                #"Ann Saving vs PPX Mar 2027 USD" =
+                    if AB = null then null else AW * (if has = 1 and cur <> null then AB - cur else 0)
+            ]),
+    Expanded = Table.ExpandRecordColumn(Calc, "c", {
+            "Last 3 PO Price USD", "Current Price USD", "Price Source", "Price vs PPX Check",
+            "Projected Price USD", "Has New Price", "Unit Saving Current USD", "Unit Saving Current Pct",
+            "Ann Saving Current 2027 USD", "Ann Saving Projected 2027 USD", "Gap to Target 2027 USD", "Ann Saving vs PPX Mar 2027 USD"
+        }),
+    TypedCalc = Table.TransformColumnTypes(Expanded, {
+            {"Last 3 PO Price USD", type number}, {"Current Price USD", type number}, {"Price Source", type text},
+            {"Price vs PPX Check", type text}, {"Projected Price USD", type number}, {"Has New Price", Int64.Type},
+            {"Unit Saving Current USD", type number}, {"Unit Saving Current Pct", type number}, {"Ann Saving Current 2027 USD", type number},
+            {"Ann Saving Projected 2027 USD", type number}, {"Gap to Target 2027 USD", type number}, {"Ann Saving vs PPX Mar 2027 USD", type number}
+        }),
+    AddLabel = Table.AddColumn(TypedCalc, "PN Label",
+        each Text.From([#"Part PN"]) & "  " & (if [#"Part Description"] = null then "" else [#"Part Description"]), type text),
+    AddPriceStatus = Table.AddColumn(AddLabel, "Price Status",
+        each if [#"Has New Price"] <> 1 then "No new price"
+            else if (if [#"Unit Saving Current USD"] = null then 0 else [#"Unit Saving Current USD"]) < 0 then "Dearer than PPX"
+            else "Cheaper than or at PPX", type text)
+in
+    AddPriceStatus
+```
+
+### 1.8 替换 `BOM_Line`
+
+```powerquery
+let
+    Raw = Src{[Item = "tbl_BOM_Line", Kind = "Table"]}[Data],
+    NoEmptyText = Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+    // price columns are no longer read from Excel: they follow Part_Price (SQL prices)
+    FromPrice = {
+            "Current Price USD", "Projected Price USD", "Has New Price", "Ext Current Price USD",
+            "Ext Projected USD", "Saving Current USD", "Saving Projected USD", "Ext PPX Priced USD",
+            "Ann Saving Current 2027 USD", "Ann Saving Projected 2027 USD"
+        },
+    Base = Table.RemoveColumns(NoEmptyText, FromPrice, MissingField.Ignore),
+    Typed = Table.TransformColumnTypes(Base, {
+            {"Line ID", type text}, {"BOM PN", Int64.Type}, {"Level", Int64.Type},
+            {"Part PN", Int64.Type}, {"Part Description", type text}, {"Parent PN", Int64.Type},
+            {"Module PN", Int64.Type}, {"Module Description", type text}, {"Focus Flag", type text},
+            {"Top 80%", type text}, {"Item", type text}, {"Qty per Parent", type number},
+            {"Qty per Tool", type number}, {"UoM", type text}, {"Special Proc Type", type text},
+            {"Material Status", type text}, {"MRP Controller", type text}, {"Purch Group", type text},
+            {"Planned Deliv Days", Int64.Type}, {"Source Sheet", type text}, {"Source Row", Int64.Type},
+            {"Part Row", Int64.Type}, {"Std Cost USD", type number}, {"PPX USD", type number},
+            {"Builds 2027 InScope", Int64.Type}, {"Ext Std Price USD", type number}, {"Ext PPX USD", type number},
+            {"Ann Qty 2027", type number}, {"Ann PPX 2027 USD", type number}
+        }),
+    WithPrice = Table.NestedJoin(Typed, {"Part PN"}, Part_Price, {"Part PN"}, "pp", JoinKind.LeftOuter),
+    AddPrice = Table.ExpandTableColumn(WithPrice, "pp", {"Current Price USD", "Projected Price USD", "Has New Price"}),
+    C1 = Table.AddColumn(AddPrice, "Ext Current Price USD", each [#"Qty per Tool"] * [#"Current Price USD"], type number),
+    C2 = Table.AddColumn(C1, "Ext Projected USD", each [#"Qty per Tool"] * [#"Projected Price USD"], type number),
+    C3 = Table.AddColumn(C2, "Saving Current USD", each [#"Ext PPX USD"] - [#"Ext Current Price USD"], type number),
+    C4 = Table.AddColumn(C3, "Saving Projected USD", each [#"Ext PPX USD"] - [#"Ext Projected USD"], type number),
+    C5 = Table.AddColumn(C4, "Ext PPX Priced USD", each [#"Ext PPX USD"] * [#"Has New Price"], type number),
+    C6 = Table.AddColumn(C5, "Ann Saving Current 2027 USD", each [#"Saving Current USD"] * [#"Builds 2027 InScope"], type number),
+    C7 = Table.AddColumn(C6, "Ann Saving Projected 2027 USD", each [#"Saving Projected USD"] * [#"Builds 2027 InScope"], type number),
+    WithBOM = Table.NestedJoin(C7, {"BOM PN"}, BOM_Header, {"BOM PN"}, "Hdr", JoinKind.LeftOuter),
+    AddBOMName = Table.ExpandTableColumn(WithBOM, "Hdr", {"Display Name"}, {"BOM Name"}),
+    AddPartLabel = Table.AddColumn(AddBOMName, "Part Label",
+        each Text.From([#"Part PN"]) & " " & Text.Start(if [#"Part Description"] = null then "" else [#"Part Description"], 28),
+        type text)
+in
+    AddPartLabel
+```
+
+### 1.9 替换 `PIC_Map`
+
+```powerquery
+let
+    Raw = Src{[Item = "tbl_PIC_Map", Kind = "Table"]}[Data],
+    NoEmptyText = Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+    Base = Table.RemoveColumns(NoEmptyText, {"Ann Saving Current 2027 USD", "Still to Find 2027 USD"}, MissingField.Ignore),
+    Typed = Table.TransformColumnTypes(Base, {
+            {"Purch Group", type text},
+            {"PIC Name", type text},
+            {"PNs", Int64.Type},
+            {"Ann PPX 2027 USD", type number},
+            {"Spend Share", type number},
+            {"FA Candidate PO Items", Int64.Type}
+        }),
+    Target = Settings{0}[#"Target Saving Pct"],
+    // savings per purchasing group follow Part_Price (SQL prices)
+    ByGroup = Table.Group(Part_Price, {"Purch Group"},
+        {{"Ann Saving Current 2027 USD", each List.Sum([#"Ann Saving Current 2027 USD"]), type number}}),
+    Joined = Table.NestedJoin(Typed, {"Purch Group"}, ByGroup, {"Purch Group"}, "g", JoinKind.LeftOuter),
+    AddSaving = Table.ExpandTableColumn(Joined, "g", {"Ann Saving Current 2027 USD"}),
+    FillZero = Table.ReplaceValue(AddSaving, null, 0, Replacer.ReplaceValue, {"Ann Saving Current 2027 USD"}),
+    AddGap = Table.AddColumn(FillZero, "Still to Find 2027 USD",
+        each List.Max({0, (if [#"Ann PPX 2027 USD"] = null then 0 else [#"Ann PPX 2027 USD"]) * Target - [#"Ann Saving Current 2027 USD"]}),
+        type number),
+    AddLabel = Table.AddColumn(AddGap, "Group Label",
+        each if [#"PIC Name"] = null then [#"Purch Group"] else [#"Purch Group"] & " " & [#"PIC Name"], type text)
+in
+    AddLabel
+```
+
+### 1.10 5 个新查询不加载到模型
+
+左边分别右键 `PN_List`、`SQL_PO_Items`、`SQL_Open_PO`、`PO_Items`、`PO_Price`，把 **Enable load** 的勾去掉（名字会变成斜体）。
+
+### 1.11 Close & Apply
+
+Home > **Close & Apply**。会重新加载 Open_PO、Part_Price、BOM_Line、PIC_Map，比以前多花一两分钟（SQL 会跑几遍）。PO_Lines 这一步不会动。
+
+### 1.12 对数
+
+左边 **DAX query view**，新开一个 tab，粘贴，**Run**，结果在下面的 Result 1 到 Result 4 里切换。下面的数是按今天（10 Nov）上午 SQL 的数据算的，今天做应该一致或者只差一点；SQL 更新以后会跟着变。
+
+```dax
+EVALUATE
+    ROW (
+        "PPV", [Saving Now],
+        "PPV %", [Saving Now %],
+        "PPX 2027", [Baseline PPX 2027],
+        "Cost 2027", [Cost 2027 Now],
+        "Capital savings 2027", [BOM Saving 2027],
+        "Focus tools %", [Focus Tools Saving %],
+        "Open_PO rows", COUNTROWS ( Open_PO ),
+        "Open qty", SUM ( Open_PO[Open Qty] ),
+        "Open FA items", SUM ( Part_Price[Open FA Items] ),
+        "Left out", SUM ( Part_Price[PO Items Left Out (Open FA)] )
+    )
+
+EVALUATE
+    SUMMARIZECOLUMNS (
+        Part_Price[Price Source],
+        "PNs", COUNTROWS ( Part_Price ),
+        "PNs with 2027 demand", CALCULATE ( COUNTROWS ( Part_Price ), KEEPFILTERS ( Part_Price[Ann Qty 2027] > 0 ) )
+    )
+
+EVALUATE
+    SELECTCOLUMNS (
+        FILTER (
+            Part_Price,
+            Part_Price[Part PN] IN { 102763476, 102776765, 102791301, 102814796, 102876792, 102958553, 103032811, 103159923 }
+        ),
+        "Part PN", Part_Price[Part PN],
+        "Current price", Part_Price[Current Price USD],
+        "Source", Part_Price[Price Source],
+        "POs", Part_Price[Last 3 PO Numbers],
+        "Newest PO", Part_Price[Last 3 PO Newest Date],
+        "Open FA items", Part_Price[Open FA Items],
+        "Left out", Part_Price[PO Items Left Out (Open FA)]
+    )
+    ORDER BY [Part PN]
+
+EVALUATE
+    ADDCOLUMNS (
+        VALUES ( Delivery_Month[Year] ),
+        "PO", [PO Saving iCruise],
+        "Plan PReq", [Plan Saving iCruise],
+        "Total", [Saving Shown]
+    )
+    ORDER BY Delivery_Month[Year]
+```
+
+**Result 1**
+
+| 列 | 应该是 |
+|---|---|
+| PPV | 2,302,251.16 |
+| PPV % | 0.0323 |
+| PPX 2027 | 71,209,142.37 |
+| Cost 2027 | 68,906,891.21 |
+| Capital savings 2027 | 1,941,796.56 |
+| Focus tools % | 0.0383 |
+| Open_PO rows | 2,006 |
+| Open qty | 240,958 |
+| Open FA items | 160 |
+| Left out | 231 |
+
+**Result 2**
+
+| Price Source | PNs | PNs with 2027 demand |
+|---|---|---|
+| Last 3 PO | 750 | 699 |
+| Last 2 PO | 113 | 92 |
+| Last 1 PO | 123 | 78 |
+| Open FA only: PPX | 7 | 4 |
+| Drusilla 20 Sep | 5 | 4 |
+| None | 76 | 59 |
+
+**Result 3**
+
+| Part PN | Current price | Source | POs | Newest PO | Open FA items | Left out |
+|---|---|---|---|---|---|---|
+| 102763476 | 2437.22 | Last 3 PO | 4540147511, 4540048216, 4540099601 | 6 Nov 2026 | 0 | 0 |
+| 102776765 | 11276.74 | Last 3 PO | 4540069623, 4518915156, 4540083776 | 3 Sep 2026 | 0 | 0 |
+| 102791301 | 11286.78 | Last 3 PO | 4540092920, 4518559781, 4540102578 | 1 Sep 2026 | 0 | 0 |
+| 102814796 | 15771.50 | Last 3 PO | 4540069623, 4518915156, 4540093016 | 3 Sep 2026 | 0 | 0 |
+| 102876792 | 10780.32 | Last 3 PO | 4540089730, 4540034020, 4540086552 | 16 Apr 2026 | 1 | 3 |
+| 102958553 | 1570.00 | Last 1 PO | 4540120600 | 10 Jul 2025 | 0 | 0 |
+| 103032811 | 599.81 | Last 3 PO | 4540120577, 4540036789, 4540036781 | 22 Apr 2023 | 0 | 0 |
+| 103159923 | 355.28 | Last 3 PO | 4540025500, 4540106642, 4540064741 | 6 Sep 2026 | 1 | 4 |
+
+这几个 PN 是特意挑的，每个检查一件事：
+
+- **102763476**：新 PO 进来了没有（4540147511，6 Nov 2026 下的）。
+- **102814796 和 102776765**：去重有没有挑对。同一天同一个 vendor 有两张旧 PO，4518915156 没有迁移，4518915159 迁移成了 4540069623。对的结果是列表里有 4518915156，没有 4518915159。如果 102814796 显示 4518915159、价格 16,865.88，说明删错了行。
+- **102876792**：PO 日期用的是不是原始日期。如果显示的是 4540089730, 4540086552, 4540078556、价格 10,727.97，说明用成了迁移日期。它和 103159923 也检查 open FA 的规则（Open FA items 和 Left out 两列）。
+- **102791301、103032811、102958553**：这三个是和 Excel v25 不一样的 PN，原因在后面"和 Excel v25 不一样的地方"。
+
+**Result 4**（线柱图，PO_Lines 还没改，所以和现在的图基本一样）
+
+| Year | PO | Plan PReq | Total |
+|---|---|---|---|
+| 2026 | 2,074,505 | -854 | 2,073,651 |
+| 2027 | 1,746,186 | 419,787 | 2,165,973 |
+
+Overview 页的 KPI 卡应该是 PPV **$2,302,251**、PPV % **3.23%**、PPX 2027 **$71,209,142**、2027 cost at current prices **$68,906,891**。
+
+对上以后存盘，再做第 2 部分。
+
+---
+
+## 第 2 部分：PO_Lines 不再重复算迁移过的 PO
+
+交货数量（Delivery Qty）的规则改成：**S/4 里还开着的 PO 行算计划数量（SCHED_QTY），其他的只算已收货数量（RCVD_QTY）**。旧号 PO 在 cutover 以后不会再收货，没收的那部分已经在新号上，所以旧号只算收到的。没收完就关闭或删除的行，以前按整行的计划数量算，现在也只算收到的。
+
+依据：iCruise PN 上能和 21 Sep 那版 Open PO 对上的迁移过的 item 有 1,914 个，其中 1,868 个（98%）新 PO 的数量正好等于旧 PO 当时的未收数量，33 个更少（这期间又收了货），13 个更多。也就是新号带的是剩余数量，不是整张 PO。
+
+### 2.1 替换 `PO_Lines`
+
+Home > Transform data，左边点 **PO_Lines**，Advanced Editor，全删，粘贴，Done（SQL 变了，会再弹一次 Native Database Query，点 Run），Close & Apply。和原来比：SQL 里多取 SCHED_QTY、RCVD_QTY，DLVRY_QTY 改成上面的规则；JPY 的单价乘回 100；表里多了 `Sched Qty`、`Rcvd Qty` 两列用来核对。FROM 和 WHERE 没动，行数不变。
+
+```powerquery
+let
+    Source = Sql.Database("SCGREPORTING", "DUN02_HESDATAMART01", [Query = "
+SELECT
+    po.PO_NBR, poi.PO_ITM_NBR, sl.DLVRY_SCHED_LN_NBR AS SCHED_LN_NBR, po.PO_DT,
+    TRY_CAST(sl.ITM_DLVRY_DT AS DATE) AS DLVRY_DT,
+    TRY_CAST(sl.SCHED_DLVRY_DT AS DATE) AS SCHED_DT,
+    sl.SCHED_QTY AS SCHED_QTY,
+    ISNULL(sl.RCVD_QTY, 0) AS RCVD_QTY,
+    CASE
+        WHEN po.PO_NBR LIKE '454%'
+             AND poi.DEL_CD IS NULL
+             AND ISNULL(poi.DLVRY_CMPLT_FLG, 0) = 0
+             AND sl.SCHED_QTY > ISNULL(sl.RCVD_QTY, 0)
+        THEN sl.SCHED_QTY
+        ELSE ISNULL(sl.RCVD_QTY, 0)
+    END AS DLVRY_QTY,
+    po.VNDR_NBR, po.CRNCY_CD, po.EXCHNG_RT, po.PRCH_GRP_CD,
+    poi.MTRL_NBR, poi.STRG_LOCN_CD, poi.PO_UOM_CD, poi.BASE_UOM_CD, poi.PRC_UNIT, poi.PO_NET_UNT_PRC
+FROM dbo.PRCH_ORDR AS po WITH (NOLOCK)
+INNER JOIN dbo.PRCH_ORDR_ITM AS poi WITH (NOLOCK) ON po.OID = poi.PO_OID
+INNER JOIN dbo.PO_ITM_SCHED AS sl WITH (NOLOCK) ON sl.PO_ITM_OID = poi.OID
+WHERE po.CO_CD = '8093'
+  AND poi.STRG_LOCN_CD IN ('S2FA', 'SGP2')
+  AND po.PO_CATG_CD = 'F'
+  AND ISNULL(po.DEL_FLG, 0) = 0
+  AND sl.ITM_DLVRY_DT >= '2026-01-01'
+  AND sl.ITM_DLVRY_DT < '2028-01-01'
+"]),
+    Typed = Table.TransformColumnTypes(Source, {
+            {"PO_NBR", Int64.Type}, {"PO_ITM_NBR", Int64.Type}, {"SCHED_LN_NBR", Int64.Type},
+            {"PO_DT", type date}, {"DLVRY_DT", type date}, {"SCHED_DT", type date}, {"SCHED_QTY", type number}, {"RCVD_QTY", type number}, {"DLVRY_QTY", type number},
+            {"VNDR_NBR", type text}, {"CRNCY_CD", type text}, {"EXCHNG_RT", type number},
+            {"PRCH_GRP_CD", type text}, {"MTRL_NBR", type text}, {"STRG_LOCN_CD", type text},
+            {"PO_UOM_CD", type text}, {"BASE_UOM_CD", type text}, {"PRC_UNIT", type number},
+            {"PO_NET_UNT_PRC", type number}
+        }),
+    Trimmed = Table.TransformColumns(Typed, {
+            {"CRNCY_CD", Text.Trim, type text}, {"STRG_LOCN_CD", Text.Trim, type text},
+            {"PO_UOM_CD", Text.Trim, type text}, {"BASE_UOM_CD", Text.Trim, type text}
+        }),
+    Deduped = Table.Distinct(Trimmed, {"PO_NBR", "PO_ITM_NBR", "SCHED_LN_NBR"}),
+    AddPN = Table.AddColumn(Deduped, "Part PN",
+        each try Int64.From(Text.TrimStart(Text.Trim([MTRL_NBR]), "0")) otherwise null, Int64.Type),
+    AddVendor = Table.AddColumn(AddPN, "Vendor Number",
+        each if [VNDR_NBR] = null then null else Text.TrimStart(Text.Trim([VNDR_NBR]), "0"), type text),
+    // JPY prices are stored / 100 in the datamart
+    AddUnit = Table.AddColumn(AddVendor, "Unit Price PO Crcy",
+        each [PO_NET_UNT_PRC] * (if [CRNCY_CD] = "JPY" then 100 else 1)
+            / (if [PRC_UNIT] = null or [PRC_UNIT] = 0 then 1 else [PRC_UNIT]), type number),
+    AddPriced = Table.AddColumn(AddUnit, "Priced Line",
+        each if [PO_UOM_CD] <> null and [PO_UOM_CD] = [BASE_UOM_CD] then "Y" else "N", type text),
+    AddFA = Table.AddColumn(AddPriced, "FA PO",
+        each if [STRG_LOCN_CD] = "S2FA" then "Y" else "N", type text),
+    AddMonth = Table.AddColumn(AddFA, "Delivery Month",
+        each if [DLVRY_DT] = null then null else Date.StartOfMonth([DLVRY_DT]), type date),
+    Renamed = Table.RenameColumns(AddMonth, {
+            {"PO_NBR", "PO Number"}, {"PO_ITM_NBR", "PO Item"}, {"SCHED_LN_NBR", "Schedule Line"},
+            {"PO_DT", "PO Date"}, {"DLVRY_DT", "Delivery Date"}, {"SCHED_DT", "Sched Delivery Date"},
+            {"DLVRY_QTY", "Delivery Qty"}, {"SCHED_QTY", "Sched Qty"}, {"RCVD_QTY", "Rcvd Qty"}, {"CRNCY_CD", "PO Currency"}, {"EXCHNG_RT", "SGD per PO Currency"},
+            {"PRCH_GRP_CD", "Purch Group (PO)"}, {"STRG_LOCN_CD", "Storage Location"}
+        }),
+    Kept = Table.SelectColumns(Renamed, {
+            "PO Number", "PO Item", "Schedule Line", "Part PN", "Vendor Number", "PO Date",
+            "Delivery Date", "Sched Delivery Date", "Delivery Month", "Delivery Qty", "PO Currency",
+            "SGD per PO Currency", "Unit Price PO Crcy", "Priced Line", "FA PO", "Storage Location",
+            "Purch Group (PO)", "Sched Qty", "Rcvd Qty"
+        })
+in
+    Kept
+```
+
+### 2.2 对数
+
+DAX query view，新 tab：
+
+```dax
+EVALUATE
+    ADDCOLUMNS (
+        VALUES ( Delivery_Month[Year] ),
+        "Sched qty (old basis)", CALCULATE ( SUM ( PO_Lines[Sched Qty] ), KEEPFILTERS ( NOT ISBLANK ( PO_Lines[Saving USD] ) ) ),
+        "Delivery qty (new)", CALCULATE ( SUM ( PO_Lines[Delivery Qty] ), KEEPFILTERS ( NOT ISBLANK ( PO_Lines[Saving USD] ) ) ),
+        "PO", [PO Saving iCruise],
+        "Plan PReq", [Plan Saving iCruise],
+        "Total", [Saving Shown]
+    )
+    ORDER BY Delivery_Month[Year]
+
+EVALUATE
+    ADDCOLUMNS (
+        VALUES ( Delivery_Month[Month Start] ),
+        "Sched qty (old basis)", CALCULATE ( SUM ( PO_Lines[Sched Qty] ), KEEPFILTERS ( NOT ISBLANK ( PO_Lines[Saving USD] ) ) ),
+        "Delivery qty (new)", CALCULATE ( SUM ( PO_Lines[Delivery Qty] ), KEEPFILTERS ( NOT ISBLANK ( PO_Lines[Saving USD] ) ) )
+    )
+    ORDER BY Delivery_Month[Month Start]
+```
+
+这一部分我手上没有 SQL 里旧 PO 的 RCVD_QTY，下面是估算，只能对范围，不能对到个位。范围的两头是：cutover 以后才到期、又没有迁移的旧 PO 行（489 行，55,485 个），全部当作已经收货，或者全部当作没有收货。
+
+| Year | Sched qty (old basis) | Delivery qty (new) | PO | Plan PReq | Total |
+|---|---|---|---|---|---|
+| 2026 | 约 1,235,000 | 1,009,000 到 1,058,000 | 2,027,000 到 2,036,000 | 约 -1,500 | 2,026,000 到 2,034,500 |
+| 2027 | 约 205,400 | 104,000 到 110,000 | 约 1,578,000 | 519,500 到 521,000 | 2,097,000 到 2,099,000 |
+
+- Sched qty (old basis) 就是改之前的算法，应该和改之前的 1,234,968 和 205,424 一样，或者只差一点（SQL 在这期间更新了）。
+- Result 2 按月看：2026 年 1 到 9 月，Delivery qty 应该和 Sched qty 基本一样（我估的是 100%，实际会略低，因为没收完就关掉的行现在只算收到的）；10 月大约 30% 到 45%，11 月 50% 到 60%，12 月和 2027 年各月 50% 上下。
+- **如果 2026 年 1 到 8 月里有哪个月掉了 10% 以上，先不要用这一版，把 Result 2 发我。** 那说明 SQL 里旧 PO 的 RCVD_QTY 不可靠，要换成按日期切的规则。
+
+对上以后点一次 Home > **Refresh**（全部刷新），让 Settings 和 Last_Refresh 也更新，然后存盘。
+
+---
+
+## 以后怎么刷新
+
+1. Power BI：Home > **Refresh**。PO 的数据都是 SQL 的，不用再导出、粘贴。
+2. Excel 还要维护的：ZMMRP（每次从 SAP 导出，按列名对位贴进去，改 Settings 的 ZMMRP data as of）、FA_Tracker、Actions、Settings 的开关。FA_Tracker 里的 PO 号还是要用 4540 的新号。
+3. Excel 里的 Open_PO、All_PO 两张表不用再贴。Part_Price、BOM_Line、PIC_Map 里价格相关的列 Power BI 不再读，Excel 里这些列会停在 10 Nov 的数，以 Power BI 为准。
+4. Settings 里的 Open PO (SQL) data as of、All PO (SQL) data as of 两个日期不再有用，但是**这两行不要删**：Settings 查询还在读 Open PO (SQL) data as of，删了整个刷新会报错。
+5. 等 Power BI 这版跑稳了，我可以出一版去掉 Open_PO、All_PO、Open_PO_Calc、All_PO_Calc 四张表的 Excel。这四张表占了现在 16.7 MB 里的 11.3 MB。
+
+## 和 Excel v25 不一样的地方
+
+价格不一样的只有 2 个 PN，PPV 因此从 $2,302,575 变成 $2,302,251（少 $324）：
+
+- **102791301**：10,868.48 变成 11,286.78。Apollo 那张 CAD 的 PO（4540102578）改用 PO 上的汇率 x 0.7845，以前用 FX_M_Rates 的月汇率。
+- **103032811**：601.95（Last 2 PO）变成 599.81（Last 3 PO）。多算进了 4540036781：2022 年的老 PO，迁移过来以后已经收完关闭，所以 Open PO 里没有；它的 PO 日期早于 Oct 2025，原来的 AllPO 里也没有。
+
+价格一样、别的列不一样的：
+
+- **102958553**：价格还是 1,570.00，来源从 Drusilla 20 Sep 变成 Last 1 PO（4540120600，Jul 2025 的 PO，情况和上面那张一样）。
+- **103243984**：PO Items Left Out 从 6 变成 5。Excel 把一个有两条 schedule line 的 item 数了两次。
+- PO Price 2027 USD（61 个 PN）和 Latest PO Price USD（57 个 PN）：都是有 CAD、GBP、EUR open PO 的 PN，汇率算法变了，最多差 3.6%。Current price basis = Last 3 PO 的时候这两列不参与价格。隐藏页 Duplicate of Overview 上的 [on CAPEX Prices] 用到了 PO Price 2027 USD，会从 4.78% 变成 4.76%。
+- Last 3 PO Vendors：vendor 名字改成 SQL 里 vendor 主数据的名字（和 Open PO 的 Vendor Name 同一个字段，最多 25 个字符，比如 ORIENT SEMICONDUCTOR ELEC），以前是 Buyer-Vendor Allocation 表里的全名。这一列没有放在任何页面上。
+
+## 我验证了什么，没验证什么
+
+- **SQL**：三段 SQL 用 T-SQL 语法解析通过；又用今天的 AllPO、OpenPO 和 pbix 里的 PO_Lines 重建了 PRCH_ORDR、PRCH_ORDR_ITM、PO_ITM_SCHED 这几张表，在 SQLite 里实际跑了一遍。iCruise PN 上去重删掉的 2,049 行，和我上午逐张 PO 配出来的对应关系完全一致；一个 key 对得上两张旧 PO 的有 7 组，全部挑对。**没有在你的 SQL Server 上跑过。**
+- **Power Query**：10 段都用微软的 M 解析器检查过语法。M 没法在我这边运行，所以另外用 Python 按同样的步骤算了一遍：把 Excel v25 自己的输入喂进去，Part_Price 12 列 x 1,074 个 PN、BOM_Line 10 列 x 6,082 行、PIC_Map 全部和 Excel 一致；从 SQL 结果一路算下来，和 Excel 不一样的就是上面列的那些。**没有在 Power BI 里跑过**，所以 1.12 的对数是必须做的。
+- **线柱图**：度量值我按 DAX 的写法重算过，和 pbix 里存的 Plan Share iCruise（2027 年的 1,923 行）、PO Qty 2026、PO Qty 2027 完全一致，所以第 1 部分 Result 4 是准的。第 2 部分是估算，原因写在 2.2。
+- **我的测试数据缺一小块**：迁移过来、现在已经关闭、PO 日期早于 Oct 2025、交货日期又全在 2026 年以前的 PO，今天的三份数据里都没有，SQL 里会有。它们会像 103032811 那样多带进几张老 PO，所以个别 PN 的 last 3 可能和上面的检查数不同。
+- 检查数取决于你刷新时 SQL 的内容。我用的是今天上午的 AllPO、OpenPO，和 pbix 里 10:18 刷新的 PO_Lines。
+
+上面 4 条就是完整交付：第 1 条是分析，后 3 条是步骤和 10 段代码。聊天里发出去的代码我回读核对过，和通过语法检查的文件逐字节一致。
+
+- **现在的逻辑**：真正影响数字的只有一处，PO_Lines 把迁移过的 PO 算了两次，线柱图 2027 年的 Total 多约 $68K。KPI 卡不受影响。
+- **AllPO 停在 29 Sep**：是你的 query 里写死了 `po.PO_DT < '2026-10-01'`，新版去掉了。
+- **4518 的老 PO**：我没有全删，只删了已经有 4540 副本的 2,049 行。全删的话 227 个 PN 一张 PO 都不剩，PPV 会从 $2,302,251 掉到 $2,212,911。你仍想全删，改 SQL 里一行就行，第 1 条里写了改哪一行。
+- **我上午的错**：恢复的 PO 日期有 2 张不对（4540033980、4540034405）。不影响任何价格，新查询直接用 SQL 的 `PO_DT`，以后不会再有这个问题。
+
+这套代码没有在你的 SQL Server 和 Power BI 里跑过，我这边只做了语法检查，并用今天的数据在本地跑了一遍。所以 1.12 的对数必须做，对不上就把 Result 1 到 4 发我。第 2 部分的检查数是估算的范围；判断能不能用，看 2026 年 1 到 8 月的 Delivery qty 有没有掉 10% 以上。
+
+指南存进了项目 `claude/iCruise_PBI_v7_sql_direct_guide.md`，上午那份刷新记录也补了这几条。
