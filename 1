@@ -1,5 +1,68 @@
-Hi team, the view PowerBI.STAGING.V_ZCLS_PRICE_SCALES_REPORTING on SCGREPORTING is failing on refresh with this error:
+可以，快照我已经做好了，不用你从 Power BI 里导。附件 `Scale_Price_snapshot_10Nov2026.txt` 就是你 11:21 发我的那个 pbix 里存着的 Scale_Price：205,205 行、13 列，原样导出（只要这之后它没有成功刷新过，就和你现在 pbix 里的是同一份）。把 Scale_Price 的查询从读 SQL 换成读这个文件，Close & Apply 和以后的 Refresh 就都不会再碰那个坏掉的 view。表名、列名、列类型都不变，ZMMRP[Scale Price USD] 这个计算列照常算。
 
-Invalid object name 'STAGING.dbo.A017_CONDITIONS_PLNT_SPECIFIC'. Could not use view or function 'PowerBI.STAGING.V_ZCLS_PRICE_SCALES_REPORTING' because of binding errors.
+**步骤**
 
-Could you restore that table, or point me to its replacement? Thanks.
+1. 把附件存到和 `iCruise_CR_PBI_Input_v25.xlsx` 同一个文件夹（按 pbix 里的 SourceFile，是 `C:\Users\H329097\OneDrive - Halliburton\Desktop\`）。文件名不要改，也不要用 Excel 打开再保存。
+2. Transform data，左边点 **Scale_Price**，Home > Advanced Editor，全删，粘贴下面这段，Done。预览应该出 13 列数据。如果弹出隐私级别的提示，按第 0 部分把 Privacy 设成 Ignore。
+3. Close & Apply。Include in report refresh 勾不勾都可以。
+
+```powerquery
+let
+    // Snapshot of Scale_Price as it was loaded in this pbix on 10 Nov 2026.
+    // The SQL view behind it (PowerBI.STAGING.V_ZCLS_PRICE_SCALES_REPORTING) no longer runs, so this reads a saved copy.
+    // The file must sit in the same folder as the Excel input (the SourceFile parameter).
+    Cut = List.Max({Text.PositionOf(SourceFile, "\", Occurrence.Last), Text.PositionOf(SourceFile, "/", Occurrence.Last)}),
+    Folder = Text.Start(SourceFile, Cut + 1),
+    Source = Csv.Document(File.Contents(Folder & "Scale_Price_snapshot_10Nov2026.txt"),
+        [Delimiter = "#(tab)", Columns = 13, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+    NoEmptyText = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+    NoBlankRows = Table.SelectRows(NoEmptyText, each [PART_NUMBER] <> null),
+    Typed = Table.TransformColumnTypes(NoBlankRows, {
+        {"VENDOR_CODE",                 type text},
+        {"VENDOR_NAME",                 type text},
+        {"PART_NUMBER",                 type text},
+        {"PRICING_UNIT",                type number},
+        {"SCALE_QTY",                   type number},
+        {"UOM",                         type text},
+        {"PRICE_PER_PRICING_UNIT",      type number},
+        {"PRICE_PER_UNIT",              type number},
+        {"PRICE_PER_PRICING_UNIT_USD",  type number},
+        {"PRICE_PER_UNIT_USD",          type number},
+        {"COND_CURRENCY",               type text},
+        {"EXCHNG_RT",                   type number},
+        {"VALID_TO",                    type datetime}
+    }, "en-US"),
+    #"Trimmed Vendor" = Table.TransformColumns(Typed, {
+        {"VENDOR_CODE", each Text.TrimStart(_, "0"), type text}
+    })
+in
+    #"Trimmed Vendor"
+```
+
+**对数**（DAX query view）
+
+```dax
+EVALUATE
+    ROW (
+        "Rows", COUNTROWS ( Scale_Price ),
+        "PNs", DISTINCTCOUNT ( Scale_Price[PART_NUMBER] ),
+        "Vendors", DISTINCTCOUNT ( Scale_Price[VENDOR_CODE] ),
+        "Sum price per unit USD", SUM ( Scale_Price[PRICE_PER_UNIT_USD] ),
+        "Blank exchange rate", COUNTROWS ( FILTER ( Scale_Price, ISBLANK ( Scale_Price[EXCHNG_RT] ) ) ),
+        "ZMMRP lines with a scale price", COUNTROWS ( FILTER ( ZMMRP, NOT ISBLANK ( ZMMRP[Scale Price USD] ) ) )
+    )
+```
+
+应该是：Rows 205,205；PNs 28,649；Vendors 607；Sum price per unit USD 420,453,249.42；Blank exchange rate 134,416；ZMMRP lines with a scale price 1,942。
+
+**几点说明**
+
+- 取消勾选 Include in report refresh 没用，是因为它只管 Refresh 按钮；Close & Apply 时 Power BI 认为要重新加载的表照样会去读数据源。
+- 报错的原因在数据库那边：view `PowerBI.STAGING.V_ZCLS_PRICE_SCALES_REPORTING` 引用的表 `STAGING.dbo.A017_CONDITIONS_PLNT_SPECIFIC` 没有了，要等管这个 view 的人把它指到新的表。Power BI 这边改不了。修好以后把原来的查询贴回去就恢复成读 SQL，原来的查询我存在项目的 v7 指南最后一节了。
+- 快照里的价格以后不会更新。现在没有任何度量值和页面用 Scale_Price，所以报表上的数不受影响。如果你其实不需要留着它，更省事的做法是直接删：先在 ZMMRP 表里删掉 Scale Price USD 这一列，再删 Scale_Price 这个查询。
+- 我验证了的：文件按这个查询的读法（按 tab 分列、不处理引号）读回来，和 pbix 里的 205,205 行 x 13 列逐个值一致，数字没有损失精度；查询通过了 M 语法检查，列和类型和原来的查询一样。没验证的：这段查询没有在 Power BI 里跑过，所以上面的对数要做一下。
+
+快照文件 `Scale_Price_snapshot_10Nov2026.txt` 和替换用的查询都发给你了：把文件放到 Excel 同一个文件夹，换掉 Scale_Price 的查询，再 Close & Apply 就能过。这段查询没在 Power BI 里跑过，Apply 之后请跑一下那段对数。
+
+Apply 还报错的话，把报错原文发我。
