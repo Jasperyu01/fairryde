@@ -1,68 +1,8 @@
-let
-    Source = Sql.Database("SCGREPORTING", "PowerBI", [Query="
-        SELECT 
-            [SUPPLIER] AS VENDOR_CODE, 
-            [VENDOR_NAME], 
-            CAST(CAST([MATERIAL] AS BIGINT) AS NVARCHAR(20)) AS PART_NUMBER,
-            [PRICING_UNIT], 
-            [SCALE_QTY], 
-            [UOM], 
-            CASE 
-                WHEN [COND_RATE] <> 0 THEN [COND_RATE]
-                ELSE [AMOUNT]
-            END AS PRICE_PER_PRICING_UNIT, 
-            CASE 
-                WHEN [COND_RATE] <> 0 THEN [COND_RATE] / [PRICING_UNIT]
-                ELSE [AMOUNT] / [PRICING_UNIT]
-            END AS PRICE_PER_UNIT, 
-            CASE
-                WHEN [COND_CURRENCY] = 'USD' AND [COND_RATE] <> 0 THEN [COND_RATE]
-                WHEN [COND_CURRENCY] = 'USD' AND [COND_RATE] = 0 THEN [AMOUNT]
-                WHEN [COND_CURRENCY] <> 'USD' AND [COND_RATE] <> 0 THEN [COND_RATE] * [EXCHNG_RT]
-                ELSE [AMOUNT] * [EXCHNG_RT]
-            END AS PRICE_PER_PRICING_UNIT_USD, 
-            CASE
-                WHEN [COND_CURRENCY] = 'USD' AND [COND_RATE] <> 0 THEN [COND_RATE] / [PRICING_UNIT]
-                WHEN [COND_CURRENCY] = 'USD' AND [COND_RATE] = 0 THEN [AMOUNT] / [PRICING_UNIT]
-                WHEN [COND_CURRENCY] <> 'USD' AND [COND_RATE] <> 0 THEN ([COND_RATE] / [PRICING_UNIT]) * [EXCHNG_RT]
-                ELSE ([AMOUNT] / [PRICING_UNIT]) * [EXCHNG_RT]
-            END AS PRICE_PER_UNIT_USD, 
-            [COND_CURRENCY], 
-            [EXCHNG_RT], 
-            [VALID_TO] 
-        FROM [PowerBI].[STAGING].[V_ZCLS_PRICE_SCALES_REPORTING] WITH (NOLOCK) 
-        WHERE 
-            [PLNT] = '2750' 
-            AND [VALID_TO] >= GETDATE() 
-            AND [PRICING_UNIT] <> 0 
-            AND TRY_CAST([SUPPLIER] AS BIGINT) IS NOT NULL 
-            AND [SUPPLIER] NOT LIKE 'P%%' 
-        ORDER BY 
-            [SUPPLIER], 
-            [MATERIAL], 
-            [SCALE_QTY] ASC
-    "]),
-    Typed = Table.TransformColumnTypes(Source, {
-        {"VENDOR_CODE",                 type text},
-        {"VENDOR_NAME",                 type text},
-        {"PART_NUMBER",                 type text},
-        {"PRICING_UNIT",                type number},
-        {"SCALE_QTY",                   type number},
-        {"UOM",                         type text},
-        {"PRICE_PER_PRICING_UNIT",      type number},
-        {"PRICE_PER_UNIT",              type number},
-        {"PRICE_PER_PRICING_UNIT_USD",  type number},
-        {"PRICE_PER_UNIT_USD",          type number},
-        {"COND_CURRENCY",               type text},
-        {"EXCHNG_RT",                   type number},
-        {"VALID_TO",                    type datetime}
-    }),
-    #"Trimmed Vendor" = Table.TransformColumns(Typed, {
-        {"VENDOR_CODE", each Text.TrimStart(_, "0"), type text}
-    })
-in
-    #"Trimmed Vendor"
+-- 1. 表还在不在，或者是否改了名
+SELECT name, create_date, modify_date
+FROM STAGING.sys.tables
+WHERE name LIKE '%A017%';
 
-
-Scale_Price
-Microsoft SQL: Invalid object name 'STAGING.dbo.A017_CONDITIONS_PLNT_SPECIFIC'. Could not use view or function 'PowerBI.STAGING.V_ZCLS_PRICE_SCALES_REPORTING' because of binding errors.
+-- 2. 视图定义里实际引用了什么
+USE PowerBI;
+EXEC sp_helptext 'STAGING.V_ZCLS_PRICE_SCALES_REPORTING';
