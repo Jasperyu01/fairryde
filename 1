@@ -1,16 +1,19 @@
-这是我那段查询写法的问题，不是你的电脑或 SQL 的问题，不用再等了。
+找到了，谢谢截图。出错的只有 `Last 3 PO Oldest Date` 这一列，原因在 PO_Price 里我取"最新 3 张 PO"的写法。
 
-**原因**：第一版里判断"这个 vendor 对这个 PN 有没有 open FA"，用的是先合并查询、再逐行数子表的写法。这种写法下 Power Query 会为 PO_Items 的每一行（7,000 多行）把 Open_PO 那条链重新算一遍，包括重新读 SQL 和 Excel，所以跑不完。新版把 Open PO 只读一次、放进内存，open FA 的判断改成查一张一百多项的清单。只改了取数的方式，价格规则没有动。
+**原因**：我先排序、取前 3 行，再用 `Table.RowCount` 数这张小表有几行，然后用"第几行"去取最老那张的日期。在 Power BI 里这个行数返回的是这个 PN 全部 PO 的张数，不是 3。PO 不超过 3 张的 PN 没事；超过 3 张的 638 个 PN，取日期时就数过了头，报 not enough elements。
 
-**现在这样做**
+**影响到什么**（这 638 个 PN）
 
-1. 左边点 **PO_Price**，Home > Advanced Editor，全删，粘贴下面这段，Done。正在跑的那次会被新的取代；如果界面点不动，先点 Home > Refresh Preview 下拉里的 **Cancel Refresh**。
-2. 预览出来的时间应该和 1.4（PO_Items）、1.5（Open_PO）加起来差不多。出来以后第一列是 Part PN，后面 17 列。
-3. 1.7 的 Part_Price 不用改，照原来那段贴。
-4. 1.8 的 BOM_Line、1.9 的 PIC_Map 用下面这两段，代替之前发的。逻辑没变，只是把 Part_Price 先算一次放进内存再合并，避免同样的问题。
-5. 1.10 以后的步骤和检查数都不变。
+- `Last 3 PO Oldest Date`：报错，加载成空白。
+- `Last 3 PO Count`：没有报错，但是数偏大，是全部 PO 的张数。`Price Source` 跟着写成了 Last 7 PO、Last 12 PO 这样。这一条是我从报错推出来的，截图里看不到这两列。
+- 价格、数量、PO 号、saving：不受影响。你截图里能看到的 25 行，我拿 Last 3 PO Qty、加权价、平均价、最新日期、PO 号和我这边算的期望值逐个对了一遍，23 行完全一样。另外 2 行（103028399、102755632）价格一样，只是多了一张 4 Nov 的新 PO（4540143566、4540143574），是 S/4 里新建、但上午的 Open PO 里没有的 PO。
 
-**1.6 `PO_Price`（新）**
+**改法**：只换 PO_Price 这一个查询，其他都不动。新版先把排好序的 PO 读进内存，再取前 3 条，张数和新老日期都直接从这 3 条里取，不再数行数、不再按"第几行"取。
+
+1. Transform data，左边点 **PO_Price**，Home > Advanced Editor，全删，粘贴下面这段，Done。
+2. Close & Apply。这次加载完不应该再有错误提示。
+3. 左边那个 Query Errors 分组可以右键删掉，它只是 Power BI 帮你列出错行用的。
+4. 然后做 1.12 的对数。
 
 ```powerquery
 let
@@ -59,25 +62,28 @@ let
             {"Vendor", each List.First([#"Vendor Label"]), type text}
         })),
     // newest PO date first; same date: higher PO number first
+    // the group is sorted, read into memory as a list of records, and the first 3 records are kept
     ByPN = Table.Group(POs, {"Part PN"}, {
-            {"Top", (t) => Table.FirstN(Table.Sort(t, {{"PO Date", Order.Descending}, {"PO_NBR", Order.Descending}}), 3), type table}
+            {"Top", (t) => List.FirstN(
+                List.Buffer(Table.ToRecords(Table.Sort(t, {{"PO Date", Order.Descending}, {"PO_NBR", Order.Descending}}))),
+                3), type list}
         }),
     L3 = Table.AddColumn(ByPN, "r", each
         let
-            t = [Top],
-            n = Table.RowCount(t),
-            q = Sum0(t[Qty]),
-            v = Sum0(t[Value])
+            recs = [Top],
+            n = List.Count(recs),
+            q = Sum0(List.Transform(recs, (x) => x[Qty])),
+            v = Sum0(List.Transform(recs, (x) => x[Value]))
         in
             [
                 #"Last 3 PO Count" = n,
                 #"Last 3 PO Qty" = q,
                 #"Last 3 PO Wtd Price USD" = if q > 0 then v / q else null,
-                #"Last 3 PO Avg Price USD" = List.Average(List.Transform(Table.ToRecords(t), (x) => x[Value] / x[Qty])),
-                #"Last 3 PO Newest Date" = t[#"PO Date"]{0},
-                #"Last 3 PO Oldest Date" = t[#"PO Date"]{n - 1},
-                #"Last 3 PO Numbers" = Text.Combine(List.Transform(t[PO_NBR], each Text.From(_)), ", "),
-                #"Last 3 PO Vendors" = Text.Combine(List.Transform(t[Vendor], each if _ = null then "" else _), ", ")
+                #"Last 3 PO Avg Price USD" = List.Average(List.Transform(recs, (x) => x[Value] / x[Qty])),
+                #"Last 3 PO Newest Date" = List.First(recs)[#"PO Date"],
+                #"Last 3 PO Oldest Date" = List.Last(recs)[#"PO Date"],
+                #"Last 3 PO Numbers" = Text.Combine(List.Transform(recs, (x) => Text.From(x[PO_NBR])), ", "),
+                #"Last 3 PO Vendors" = Text.Combine(List.Transform(recs, (x) => if x[Vendor] = null then "" else x[Vendor]), ", ")
             ]),
     L3Out = Table.Buffer(Table.ExpandRecordColumn(Table.RemoveColumns(L3, {"Top"}), "r", {"Last 3 PO Count", "Last 3 PO Qty", "Last 3 PO Wtd Price USD", "Last 3 PO Avg Price USD", "Last 3 PO Newest Date", "Last 3 PO Oldest Date", "Last 3 PO Numbers", "Last 3 PO Vendors"})),
 
@@ -141,89 +147,16 @@ in
     Out
 ```
 
-**1.8 `BOM_Line`（新）**
+**关于 1.12 的检查数，要改一下预期**：从你的截图看，SQL 里有 S/4 新建、但不在 Open PO 里的 PO（上面那两张就是，多半是已经收完货的），这类 PO 在我上午拿到的 AllPO、OpenPO 里都没有。所以 Result 1 到 3 不会和我给的数一分不差，有这类新 PO 的 PN 会不一样，这是对的，不是错。判断标准改成：
 
-```powerquery
-let
-    Raw = Src{[Item = "tbl_BOM_Line", Kind = "Table"]}[Data],
-    NoEmptyText = Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
-    // price columns are no longer read from Excel: they follow Part_Price (SQL prices)
-    FromPrice = {
-            "Current Price USD", "Projected Price USD", "Has New Price", "Ext Current Price USD",
-            "Ext Projected USD", "Saving Current USD", "Saving Projected USD", "Ext PPX Priced USD",
-            "Ann Saving Current 2027 USD", "Ann Saving Projected 2027 USD"
-        },
-    Base = Table.RemoveColumns(NoEmptyText, FromPrice, MissingField.Ignore),
-    Typed = Table.TransformColumnTypes(Base, {
-            {"Line ID", type text}, {"BOM PN", Int64.Type}, {"Level", Int64.Type},
-            {"Part PN", Int64.Type}, {"Part Description", type text}, {"Parent PN", Int64.Type},
-            {"Module PN", Int64.Type}, {"Module Description", type text}, {"Focus Flag", type text},
-            {"Top 80%", type text}, {"Item", type text}, {"Qty per Parent", type number},
-            {"Qty per Tool", type number}, {"UoM", type text}, {"Special Proc Type", type text},
-            {"Material Status", type text}, {"MRP Controller", type text}, {"Purch Group", type text},
-            {"Planned Deliv Days", Int64.Type}, {"Source Sheet", type text}, {"Source Row", Int64.Type},
-            {"Part Row", Int64.Type}, {"Std Cost USD", type number}, {"PPX USD", type number},
-            {"Builds 2027 InScope", Int64.Type}, {"Ext Std Price USD", type number}, {"Ext PPX USD", type number},
-            {"Ann Qty 2027", type number}, {"Ann PPX 2027 USD", type number}
-        }),
-    // Part_Price is worked out once and held in memory for the join
-    PP = Table.Buffer(Table.SelectColumns(Part_Price, {"Part PN", "Current Price USD", "Projected Price USD", "Has New Price"})),
-    WithPrice = Table.NestedJoin(Typed, {"Part PN"}, PP, {"Part PN"}, "pp", JoinKind.LeftOuter),
-    AddPrice = Table.ExpandTableColumn(WithPrice, "pp", {"Current Price USD", "Projected Price USD", "Has New Price"}),
-    C1 = Table.AddColumn(AddPrice, "Ext Current Price USD", each [#"Qty per Tool"] * [#"Current Price USD"], type number),
-    C2 = Table.AddColumn(C1, "Ext Projected USD", each [#"Qty per Tool"] * [#"Projected Price USD"], type number),
-    C3 = Table.AddColumn(C2, "Saving Current USD", each [#"Ext PPX USD"] - [#"Ext Current Price USD"], type number),
-    C4 = Table.AddColumn(C3, "Saving Projected USD", each [#"Ext PPX USD"] - [#"Ext Projected USD"], type number),
-    C5 = Table.AddColumn(C4, "Ext PPX Priced USD", each [#"Ext PPX USD"] * [#"Has New Price"], type number),
-    C6 = Table.AddColumn(C5, "Ann Saving Current 2027 USD", each [#"Saving Current USD"] * [#"Builds 2027 InScope"], type number),
-    C7 = Table.AddColumn(C6, "Ann Saving Projected 2027 USD", each [#"Saving Projected USD"] * [#"Builds 2027 InScope"], type number),
-    WithBOM = Table.NestedJoin(C7, {"BOM PN"}, BOM_Header, {"BOM PN"}, "Hdr", JoinKind.LeftOuter),
-    AddBOMName = Table.ExpandTableColumn(WithBOM, "Hdr", {"Display Name"}, {"BOM Name"}),
-    AddPartLabel = Table.AddColumn(AddBOMName, "Part Label",
-        each Text.From([#"Part PN"]) & " " & Text.Start(if [#"Part Description"] = null then "" else [#"Part Description"], 28),
-        type text)
-in
-    AddPartLabel
-```
+- 加载没有错误提示。
+- Result 2 里 Price Source 只有 Last 3 PO、Last 2 PO、Last 1 PO、Open FA only: PPX、Drusilla 20 Sep、None 这六种，各自的个数和我给的差不多（差几个到十几个）。
+- Result 3 里 102814796、102776765、102876792 这三个检查去重和日期的 PN，PO 号还是应该和表里一样，除非它们正好也进了新 PO。
 
-**1.9 `PIC_Map`（新）**
+跑完把 Result 1 到 4 截图发我，我来逐项核对哪些差异是新 PO 带来的。
 
-```powerquery
-let
-    Raw = Src{[Item = "tbl_PIC_Map", Kind = "Table"]}[Data],
-    NoEmptyText = Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
-    Base = Table.RemoveColumns(NoEmptyText, {"Ann Saving Current 2027 USD", "Still to Find 2027 USD"}, MissingField.Ignore),
-    Typed = Table.TransformColumnTypes(Base, {
-            {"Purch Group", type text},
-            {"PIC Name", type text},
-            {"PNs", Int64.Type},
-            {"Ann PPX 2027 USD", type number},
-            {"Spend Share", type number},
-            {"FA Candidate PO Items", Int64.Type}
-        }),
-    Target = Settings{0}[#"Target Saving Pct"],
-    // savings per purchasing group follow Part_Price (SQL prices)
-    ByGroup = Table.Buffer(Table.Group(Part_Price, {"Purch Group"},
-        {{"Ann Saving Current 2027 USD", each List.Sum([#"Ann Saving Current 2027 USD"]), type number}})),
-    Joined = Table.NestedJoin(Typed, {"Purch Group"}, ByGroup, {"Purch Group"}, "g", JoinKind.LeftOuter),
-    AddSaving = Table.ExpandTableColumn(Joined, "g", {"Ann Saving Current 2027 USD"}),
-    FillZero = Table.ReplaceValue(AddSaving, null, 0, Replacer.ReplaceValue, {"Ann Saving Current 2027 USD"}),
-    AddGap = Table.AddColumn(FillZero, "Still to Find 2027 USD",
-        each List.Max({0, (if [#"Ann PPX 2027 USD"] = null then 0 else [#"Ann PPX 2027 USD"]) * Target - [#"Ann Saving Current 2027 USD"]}),
-        type number),
-    AddLabel = Table.AddColumn(AddGap, "Group Label",
-        each if [#"PIC Name"] = null then [#"Purch Group"] else [#"Purch Group"] & " " & [#"PIC Name"], type text)
-in
-    AddLabel
-```
+这一版同样只做了语法检查。这次的问题是 Power BI 引擎的实际行为和我预想的不一样，语法检查和我这边的重算都发现不了，只能靠你那边实际跑出来。
 
-两点补充：
+出错的是 `Last 3 PO Oldest Date` 这一列，是我在 PO_Price 里取"最新 3 张 PO"的写法有错，价格和 saving 不受影响。改好的 PO_Price 在上一条里，只换这一个查询再 Close & Apply 就行。发出去的代码我回读核对过，和通过语法检查的文件一致；它同样没在 Power BI 里跑过。
 
-- 确认一下第 0 部分的 Privacy 已经设成 Ignore。没设的话 Power Query 会在 Excel 和 SQL 之间反复做隔离检查，也会很慢。
-- 如果新的 PO_Price 过了 5 分钟还没出来，告诉我 1.2（SQL_PO_Items）和 1.4（PO_Items）当时各用了多久。那就说明慢在 SQL 本身，我再改 SQL。
-
-这三段和之前一样只通过了语法检查，我这边跑不了 M。慢的原因是我按 Power Query 的求值方式推出来的，没有实测过耗时，所以第 2 条的时间请留意一下。项目里的 v7 指南已经换成这一版。
-
-慢是我第一版 PO_Price 的写法造成的，不用再等。新的 PO_Price、BOM_Line、PIC_Map 在上一条里，发出去的代码我回读核对过，和通过语法检查的文件一致。
-
-先换 PO_Price。预览出来的时间应该和 1.4、1.5 加起来差不多；这个时间是我推的，没有实测过。超过 5 分钟还没出来，把 1.2 和 1.4 当时各用了多久告诉我，我再改 SQL。
+跑完 1.12 把 Result 1 到 4 截图发我。SQL 里有我上午数据里没有的新 PO，结果不会和我之前给的数完全一样，我来核对哪些差异是新 PO 带来的。
