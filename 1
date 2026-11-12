@@ -1,1 +1,430 @@
-Internal error: looking up invalid data on a dense spool.
+下面是完整的最终版，照着从头做到尾就行，前面几条消息里的代码都不用再看。
+
+**最终口径**
+- **收货：** 7/1 以前用 SQL，7 到 9 月用 Excel，10 月起用 PPV Details。
+- **PPV：** 7 到 9 月用 Excel 的 PO 行，不含 reclass。10 月起等于 `@PPV Calc`。7 月以前暂时没有。
+- **MA 6.5%：** 10 月起用财务文件里每行的 Calc Matapp，9 月及以前用 USD ÷ 1.065。所以 9 月及以前的所有月份都比原来低 1.34%。
+
+## 第 1 步：备份和放文件
+
+1. 把 pbix 另存一份备份。
+2. 在 Desktop 上建文件夹 `GR History`（和 `PPV Details` 并排），把 `Receipts_Jul_to_Sep26.XLSX` 和 `PPV_Jul_to_Sep26.XLSX` 放进去。放在别处的话，改下面两段代码开头的 `ExcelPath`。
+
+## 第 2 步：替换 3 个 query
+
+Transform data，按顺序打开每个 query 的 Advanced Editor，全选删除后粘贴。三个都换完再点 Close & Apply。
+
+**2.1 SQL_Receipts Profit Centre**
+
+```
+// SQL_Receipts Profit Centre
+// One receipts table built from three sources. The split is by posting date, so no receipt can be counted twice:
+//   1. SQL    GLPCA_RECEIPTS_PROFIT_CENTER            posting date before 1 Jul 2026
+//   2. Excel  Receipts_Jul_to_Sep26.XLSX (KE5Z)       posting date 1 Jul 2026 to 30 Sep 2026
+//   3. PPV_Details query (finance PPV Details)        finance periods from Oct 2026 onward
+let
+    // ===== Settings: change the file path on the next line =====
+    ExcelPath = "C:\Users\H329097\OneDrive - Halliburton\Desktop\GR History\Receipts_Jul_to_Sep26.XLSX",
+    ExcelStart = #date(2026, 7, 1),        // first posting date taken from the Excel
+    DetailsStart = #date(2026, 10, 1),     // first posting date NOT taken from the Excel any more
+    DetailsStartPeriod = 202610,           // PPV_Details is used from this finance period (Year * 100 + Month)
+    ProfitCenters = {"8081111599", "8081111699", "8081111830", "8081111860", "8081111880"},
+    SrcSql = "SQL",
+    SrcExcel = "Excel",
+    SrcDetails = "PPV Details",
+
+    // Text helpers: ToText trims and turns "" into null; ToKey also removes leading zeros
+    ToText = (v as any) as nullable text =>
+        let
+            t = if v = null then null else Text.Trim(Text.From(v, "en-US"))
+        in
+            if t = null or t = "" then null else t,
+    ToKey = (v as any) as nullable text =>
+        let
+            t = ToText(v),
+            z = if t = null then null else Text.TrimStart(t, "0")
+        in
+            if z = null or z = "" then null else z,
+    Blank = (v as any) as text => if v = null then "" else Text.From(v, "en-US"),
+    // Number and date helpers: the SAP export stores empty cells as "", which a plain type change cannot convert
+    ToNumber = (v as any) as nullable number =>
+        if v = null then null
+        else if v is number then v
+        else
+            let
+                t = Text.Trim(Text.From(v, "en-US"))
+            in
+                if t = "" then null else Number.FromText(t, "en-US"),
+    ToDate = (v as any) as nullable date =>
+        if v = null then null
+        else if v is text then (if Text.Trim(v) = "" then null else Date.FromText(Text.Trim(v), "en-US"))
+        else Date.From(v),
+
+    // ===== Part 1: SQL. Same query and same steps as before; only rows posted before ExcelStart are kept =====
+    Source = Sql.Database("scgreporting", "CAR01_CPS_RPTS", [Query="SELECT *#(lf)FROM [CAR01_CPS_RPTS].[dbo].[GLPCA_RECEIPTS_PROFIT_CENTER] WITH (NOLOCK)#(lf)WHERE COMPANY_CODE = '8093'#(lf)  AND PLANT = '2750'#(lf)  AND POSTING_YEAR >= 2024#(lf)  AND PROFIT_CENTER IN (#(lf)        8081111599,#(lf)        8081111699,#(lf)        8081111830,#(lf)        8081111860,#(lf)        8081111880#(lf)  )"]),
+    #"Trimmed Text" = Table.TransformColumns(Source,{{"ACCT_DOC_NBR", each Text.TrimStart(_,"0"), type text}, {"ACCOUNT_NUM", each Text.TrimStart(_,"0"), type text}, {"MATERIAL", each Text.TrimStart(_,"0"), type text}, {"VENDOR_ACCT_NBR", each Text.TrimStart(_,"0"), type text}}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Trimmed Text",{{"ACCT_ENTRY_DATE", type date}, {"ACCT_ENTRY_DATE_TIME", type date}, {"POSTING_DATE", type date}, {"VALUE_DATE", type date}, {"UPDTTM", type date}}),
+    #"Duplicated Column" = Table.DuplicateColumn(#"Changed Type", "PURCHASE_ORDER", "PURCHASE_ORDER - Copy"),
+    #"Duplicated Column1" = Table.DuplicateColumn(#"Duplicated Column", "PURCHASE_ORDER_ITEM", "PURCHASE_ORDER_ITEM - Copy"),
+    #"Merged Columns" = Table.CombineColumns(Table.TransformColumnTypes(#"Duplicated Column1", {{"PURCHASE_ORDER_ITEM - Copy", type text}}, "en-US"),{"PURCHASE_ORDER - Copy", "PURCHASE_ORDER_ITEM - Copy"},Combiner.CombineTextByDelimiter("_", QuoteStyle.None),"PO_Item"),
+    #"Filtered Rows" = Table.SelectRows(#"Merged Columns", each ([PO_Item] <> "_0") and ([ACCOUNT_NUM] = "145000" or [ACCOUNT_NUM] = "145300")),
+    SqlRows = Table.SelectRows(#"Filtered Rows", each [POSTING_DATE] <> null and [POSTING_DATE] < ExcelStart),
+    SqlKeyed = Table.AddColumn(SqlRows, "PO_Mtrl", each Blank([PURCHASE_ORDER]) & "_" & Blank([MATERIAL]), type text),
+    SqlPart = Table.AddColumn(SqlKeyed, "DATA_SOURCE", each SrcSql, type text),
+
+    // ===== Part 2: Excel (KE5Z export, same scope as the SQL filter above) =====
+    XlBook = Excel.Workbook(File.Contents(ExcelPath), null, true),
+    XlSheet = XlBook{[Item = "Sheet1", Kind = "Sheet"]}[Data],
+    XlHeaders = Table.PromoteHeaders(XlSheet, [PromoteAllScalars = true]),
+    XlSelected = Table.SelectColumns(XlHeaders, {
+        "Fiscal Year", "Posting Period", "Profit Center", "Account Number", "MSL Quantity", "Supplier", "User Name", "Text",
+        "Purchasing Document", "Purch. Doc. Item", "Material", "Posting Date",
+        "In profit center local currency", "In company code currency"}, MissingField.Error),
+    XlCleaned = Table.TransformColumns(XlSelected, {
+        {"Profit Center", ToKey, type nullable text}, {"Account Number", ToKey, type nullable text},
+        {"Supplier", ToKey, type nullable text}, {"Purchasing Document", ToKey, type nullable text},
+        {"Purch. Doc. Item", ToKey, type nullable text}, {"Material", ToKey, type nullable text},
+        {"User Name", ToText, type nullable text}, {"Text", ToText, type nullable text}}),
+    XlTyped = Table.TransformColumns(XlCleaned, {
+        {"Fiscal Year", ToNumber, type nullable number}, {"Posting Period", ToNumber, type nullable number},
+        {"Purch. Doc. Item", ToNumber, type nullable number}, {"MSL Quantity", ToNumber, type nullable number},
+        {"In profit center local currency", ToNumber, type nullable number},
+        {"In company code currency", ToNumber, type nullable number}, {"Posting Date", ToDate, type nullable date}}),
+    // Drops the SAP total row at the bottom and anything outside the Excel's date window or scope
+    XlRows = Table.SelectRows(XlTyped, each
+        [Posting Date] <> null and [Posting Date] >= ExcelStart and [Posting Date] < DetailsStart
+        and [Purchasing Document] <> null
+        and ([Account Number] = "145000" or [Account Number] = "145300")
+        and List.Contains(ProfitCenters, [Profit Center])),
+    XlRenamed = Table.RenameColumns(XlRows, {
+        {"Fiscal Year", "POSTING_YEAR"}, {"Posting Period", "POSTING_PERIOD"}, {"Profit Center", "PROFIT_CENTER"},
+        {"Account Number", "ACCOUNT_NUM"}, {"MSL Quantity", "QUANTITY"}, {"Supplier", "VENDOR_ACCT_NBR"},
+        {"User Name", "USER_ID"}, {"Text", "ITEM_TEXT"}, {"Purchasing Document", "PURCHASE_ORDER"},
+        {"Purch. Doc. Item", "PURCHASE_ORDER_ITEM"}, {"Material", "MATERIAL"}, {"Posting Date", "POSTING_DATE"},
+        {"In profit center local currency", "USD_CURRENCY_VALUE"}, {"In company code currency", "LOCAL_CURRENCY_VALUE"}}),
+    // KE5Z shows a receipt as a negative quantity; the SQL table shows it as positive
+    XlSigned = Table.TransformColumns(XlRenamed, {{"QUANTITY", each if _ = null then null else -_, type nullable number}}),
+    XlItemKey = Table.AddColumn(XlSigned, "PO_Item", each
+        Blank([PURCHASE_ORDER]) & "_" & (if [PURCHASE_ORDER_ITEM] = null then "" else Text.From([PURCHASE_ORDER_ITEM], "en-US")), type text),
+    XlMtrlKey = Table.AddColumn(XlItemKey, "PO_Mtrl", each Blank([PURCHASE_ORDER]) & "_" & Blank([MATERIAL]), type text),
+    XlCompany = Table.AddColumn(XlMtrlKey, "COMPANY_CODE", each "8093", type text),
+    XlPlant = Table.AddColumn(XlCompany, "PLANT", each "2750", type text),
+    XlCurrency = Table.AddColumn(XlPlant, "LOCAL_CURRENCY_CD", each "SGD", type text),
+    XlPart = Table.AddColumn(XlCurrency, "DATA_SOURCE", each SrcExcel, type text),
+
+    // ===== Part 3: PPV_Details (GR / Return lines of finance periods from DetailsStartPeriod) =====
+    DetRows = Table.SelectRows(PPV_Details, each
+        [Line Type] = "GR / Return" and [GR Date] <> null
+        and [Year] <> null and [Month] <> null and [Year] * 100 + [Month] >= DetailsStartPeriod),
+    DetSelected = Table.SelectColumns(DetRows, {
+        "GR Date", "Year", "Month", "PO", "PO Item", "Material", "Material Description", "Supplier", "Profit Center",
+        "Plant", "Last Ref Doc", "Last Mvt Type", "Qty", "Inventory Amt", "Calc Matapp"}),
+    DetRenamed = Table.RenameColumns(DetSelected, {
+        {"GR Date", "POSTING_DATE"}, {"Year", "POSTING_YEAR"}, {"Month", "POSTING_PERIOD"}, {"PO", "PURCHASE_ORDER"},
+        {"Material", "MATERIAL"}, {"Material Description", "ITEM_TEXT"}, {"Supplier", "VENDOR_ACCT_NBR"},
+        {"Profit Center", "PROFIT_CENTER"}, {"Plant", "PLANT"}, {"Last Ref Doc", "REF_DOCUMENT_NUM"},
+        {"Last Mvt Type", "MOVEMENT_TYPE"}, {"Qty", "QUANTITY"}, {"Inventory Amt", "USD_CURRENCY_VALUE"},
+        {"Calc Matapp", "CALC_MATAPP"}}),
+    DetItemNumber = Table.AddColumn(DetRenamed, "PURCHASE_ORDER_ITEM", each try Number.From([PO Item], "en-US") otherwise null, type nullable number),
+    DetItemKey = Table.AddColumn(DetItemNumber, "PO_Item", each Blank([PURCHASE_ORDER]) & "_" & Blank([PO Item]), type text),
+    DetMtrlKey = Table.AddColumn(DetItemKey, "PO_Mtrl", each Blank([PURCHASE_ORDER]) & "_" & Blank([MATERIAL]), type text),
+    DetNoItemText = Table.RemoveColumns(DetMtrlKey, {"PO Item"}),
+    DetCompany = Table.AddColumn(DetNoItemText, "COMPANY_CODE", each "8093", type text),
+    DetPart = Table.AddColumn(DetCompany, "DATA_SOURCE", each SrcDetails, type text),
+
+    // ===== Combine, build the PO + material + date key, and fix the data types =====
+    Combined = Table.Combine({SqlPart, XlPart, DetPart}),
+    WithDateKey = Table.AddColumn(Combined, "PO_Mtrl_Date", each
+        if [POSTING_DATE] = null then null
+        else Text.Upper(Blank([PO_Mtrl]) & "_" & Date.ToText(Date.From([POSTING_DATE]), "yyyy-MM-dd", "en-US")), type nullable text),
+    TypeMap = {
+        {"PO_Item", type text}, {"PO_Mtrl", type text}, {"PO_Mtrl_Date", type text}, {"DATA_SOURCE", type text},
+        {"POSTING_DATE", type date}, {"POSTING_YEAR", type number}, {"POSTING_PERIOD", type number},
+        {"PURCHASE_ORDER", type text}, {"PURCHASE_ORDER_ITEM", type number}, {"MATERIAL", type text},
+        {"VENDOR_ACCT_NBR", type text}, {"PROFIT_CENTER", type text}, {"ACCOUNT_NUM", type text},
+        {"COMPANY_CODE", type text}, {"PLANT", type text}, {"LOCAL_CURRENCY_CD", type text},
+        {"ITEM_TEXT", type text}, {"USER_ID", type text}, {"REF_DOCUMENT_NUM", type text}, {"MOVEMENT_TYPE", type text},
+        {"QUANTITY", type number}, {"USD_CURRENCY_VALUE", type number}, {"LOCAL_CURRENCY_VALUE", type number},
+        {"CALC_MATAPP", type number},
+        // columns that only the SQL part fills: kept on the types they had before
+        {"ACCT_DOC_NBR", type text}, {"ACCT_DOC_ITM", Int64.Type}, {"ACCT_ENTRY_DATE", type date},
+        {"ACCT_ENTRY_DATE_TIME", type date}, {"VALUE_DATE", type date}, {"UPDTTM", type date},
+        {"ORDER_NUMBER", type text}, {"ORDER_TYPE", type text}, {"SPECIAL_STOCK", type text},
+        {"REF_DOCUMENT_ITEM", type number}, {"LI_DOC_TYPE", type text}, {"OBJECT_TYPE", type number}, {"ACTIVITY", type text}},
+    ExistingColumns = Table.ColumnNames(WithDateKey),
+    Result = Table.TransformColumnTypes(WithDateKey, List.Select(TypeMap, each List.Contains(ExistingColumns, _{0})), "en-US")
+in
+    Result
+```
+
+**2.2 SQL_Actual PPV**
+
+```
+// SQL_Actual PPV
+// One actual-PPV table built from three sources. The split is by posting date, so nothing can be counted twice:
+//   1. SQL    GLPCA_ACTUAL_LI                    posting date before 1 Jul 2026 (the table has no usable rows at the moment)
+//   2. Excel  PPV_Jul_to_Sep26.XLSX (KE5Z)       posting date 1 Jul 2026 to 30 Sep 2026, posted PPV
+//   3. PPV_Details query (finance PPV Details)   finance periods from Oct 2026 onward, Calc PPV
+// PO lines from sources 1 and 2 follow the original rules: supplier is in Buyer-Vendor Allocation and the PO line has a receipt.
+// Lines without a PO in the SQL and Excel parts (reclass, MA adjustments) are left out.
+let
+    // ===== Settings: change the file path on the next line =====
+    ExcelPath = "C:\Users\H329097\OneDrive - Halliburton\Desktop\GR History\PPV_Jul_to_Sep26.XLSX",
+    ExcelStart = #datetime(2026, 7, 1, 0, 0, 0),       // first posting date taken from the Excel
+    DetailsStart = #datetime(2026, 10, 1, 0, 0, 0),    // first posting date NOT taken from the Excel any more
+    DetailsStartPeriod = 202610,                       // PPV_Details is used from this finance period (Year * 100 + Month)
+    ProfitCenters = {"8081111599", "8081111699", "8081111830", "8081111860", "8081111880"},
+    SrcSql = "SQL",
+    SrcExcel = "Excel",
+    SrcDetails = "PPV Details",
+    TypePO = "PO line",
+    TypeNonPO = "Non-PO adjustment",
+
+    // Text helpers: ToText trims and turns "" into null; ToKey also removes leading zeros
+    ToText = (v as any) as nullable text =>
+        let
+            t = if v = null then null else Text.Trim(Text.From(v, "en-US"))
+        in
+            if t = null or t = "" then null else t,
+    ToKey = (v as any) as nullable text =>
+        let
+            t = ToText(v),
+            z = if t = null then null else Text.TrimStart(t, "0")
+        in
+            if z = null or z = "" then null else z,
+    Blank = (v as any) as text => if v = null then "" else Text.From(v, "en-US"),
+    // Number and date helpers: the SAP export stores empty cells as "", which a plain type change cannot convert
+    ToNumber = (v as any) as nullable number =>
+        if v = null then null
+        else if v is number then v
+        else
+            let
+                t = Text.Trim(Text.From(v, "en-US"))
+            in
+                if t = "" then null else Number.FromText(t, "en-US"),
+    ToDateTime = (v as any) as nullable datetime =>
+        if v = null then null
+        else if v is text then (if Text.Trim(v) = "" then null else DateTime.FromText(Text.Trim(v), "en-US"))
+        else DateTime.From(v),
+
+    // ===== Part 1: SQL. Same query and same first steps as before; only rows posted before ExcelStart are kept =====
+    Source = Sql.Database("SCGREPORTING", "QV_GENERAL", [Query="SELECT *#(lf)FROM [QV_GENERAL].[dbo].[GLPCA_ACTUAL_LI] WITH (NOLOCK)#(lf)WHERE PRFT_CNTR IN (#(lf)    '8081111599', #(lf)    '8081111699', #(lf)    '8081111830', #(lf)    '8081111860', #(lf)    '8081111880' #(lf))#(lf)AND PLANT = '2750'#(lf)AND ACCT_NBR = '0000500332'#(lf)AND FISCAL_YEAR >= '2024'"]),
+    #"Changed Type" = Table.TransformColumnTypes(Source,{{"OID", type text}, {"FISCAL_YEAR", type text}, {"POSTING_PERIOD", type text}, {"FISCAL_YR", type text}, {"PRCH_DOC_ITM_NBR", type text}}),
+    #"Trimmed Text" = Table.TransformColumns(#"Changed Type",{{"LI_REC_NBR", each Text.TrimStart(_,"0"), type text}, {"ACCT_DOC_NBR", each Text.TrimStart(_,"0"), type text}, {"ACCT_NBR", each Text.TrimStart(_,"0"), type text}, {"MTRL_NBR", each Text.TrimStart(_,"0"), type text}, {"VENDOR_ACCT_NBR", each Text.TrimStart(_,"0"), type text}}),
+    SqlRows = Table.SelectRows(#"Trimmed Text", each [POST_DTTM] <> null and DateTime.From([POST_DTTM]) < ExcelStart),
+    SqlPart = Table.AddColumn(SqlRows, "DATA_SOURCE", each SrcSql, type text),
+
+    // ===== Part 2: Excel (KE5Z export of account 500332) =====
+    XlBook = Excel.Workbook(File.Contents(ExcelPath), null, true),
+    XlSheet = XlBook{[Item = "Sheet1", Kind = "Sheet"]}[Data],
+    XlHeaders = Table.PromoteHeaders(XlSheet, [PromoteAllScalars = true]),
+    XlSelected = Table.SelectColumns(XlHeaders, {
+        "Document Cat.", "Ref. Document", "Posting Period", "Profit Center", "Account Number", "Posting Date",
+        "In company code currency", "In profit center local currency", "Supplier", "Text", "Document line",
+        "Document Number", "Purch. Doc. Item", "Purchasing Document", "Quantity", "In transaction currency", "Material"},
+        MissingField.Error),
+    XlCleaned = Table.TransformColumns(XlSelected, {
+        {"Profit Center", ToKey, type nullable text}, {"Account Number", ToKey, type nullable text},
+        {"Supplier", ToKey, type nullable text}, {"Purchasing Document", ToKey, type nullable text},
+        {"Purch. Doc. Item", ToKey, type nullable text}, {"Material", ToKey, type nullable text},
+        {"Document Number", ToKey, type nullable text}, {"Ref. Document", ToKey, type nullable text},
+        {"Document Cat.", ToText, type nullable text}, {"Posting Period", ToText, type nullable text},
+        {"Text", ToText, type nullable text}, {"Document line", ToText, type nullable text}}),
+    XlTyped = Table.TransformColumns(XlCleaned, {
+        {"In company code currency", ToNumber, type nullable number}, {"In profit center local currency", ToNumber, type nullable number},
+        {"In transaction currency", ToNumber, type nullable number}, {"Quantity", ToNumber, type nullable number},
+        {"Posting Date", ToDateTime, type nullable datetime}}),
+    // Drops the SAP total row at the bottom and anything outside the Excel's date window or scope
+    XlRows = Table.SelectRows(XlTyped, each
+        [Posting Date] <> null and [Posting Date] >= ExcelStart and [Posting Date] < DetailsStart
+        and [Account Number] = "500332"
+        and List.Contains(ProfitCenters, [Profit Center])),
+    XlRenamed = Table.RenameColumns(XlRows, {
+        {"Document Cat.", "DOC_TYPE"}, {"Ref. Document", "REF_DOC_NBR"}, {"Posting Period", "POSTING_PERIOD"},
+        {"Profit Center", "PRFT_CNTR"}, {"Account Number", "ACCT_NBR"}, {"Posting Date", "POST_DTTM"},
+        {"In company code currency", "CO_CD_AMT"}, {"In profit center local currency", "PRFT_CNTR_AMT"},
+        {"Supplier", "VENDOR_ACCT_NBR"}, {"Text", "ITM_TXT"}, {"Document line", "ACCT_DOC_ITM"},
+        {"Document Number", "ACCT_DOC_NBR"}, {"Purch. Doc. Item", "PRCH_DOC_ITM_NBR"},
+        {"Purchasing Document", "PRCH_DOC_NBR"}, {"Quantity", "QUANTITY"},
+        {"In transaction currency", "TRANS_CRNCY_AMT"}, {"Material", "MTRL_NBR"}}),
+    // The date relationship of this table sits on ACCT_DOC_ENTRY_DTTM, so the posting date is copied into it
+    XlEntryDate = Table.AddColumn(XlRenamed, "ACCT_DOC_ENTRY_DTTM", each [POST_DTTM], type nullable datetime),
+    XlYear = Table.AddColumn(XlEntryDate, "FISCAL_YEAR", each Text.From(Date.Year([POST_DTTM]), "en-US"), type text),
+    XlPart = Table.AddColumn(XlYear, "DATA_SOURCE", each SrcExcel, type text),
+
+    // ===== Part 3: PPV_Details (all lines of finance periods from DetailsStartPeriod, Calc PPV) =====
+    DetRows = Table.SelectRows(PPV_Details, each
+        [PPV Date] <> null and [Year] <> null and [Month] <> null and [Year] * 100 + [Month] >= DetailsStartPeriod),
+    DetSelected = Table.SelectColumns(DetRows, {
+        "PPV Date", "Year", "Month", "PO", "PO Item", "Material", "Item Text", "Supplier", "Profit Center", "Plant",
+        "Last Ref Doc", "Last Mvt Type", "Qty", "Calc PPV"}),
+    DetRenamed = Table.RenameColumns(DetSelected, {
+        {"PO", "PRCH_DOC_NBR"}, {"PO Item", "PRCH_DOC_ITM_NBR"}, {"Material", "MTRL_NBR"}, {"Item Text", "ITM_TXT"},
+        {"Supplier", "VENDOR_ACCT_NBR"}, {"Profit Center", "PRFT_CNTR"}, {"Plant", "PLANT"},
+        {"Last Ref Doc", "REF_DOC_NBR"}, {"Last Mvt Type", "MOVEMENT_TYPE"}, {"Qty", "QUANTITY"}}),
+    DetPostDate = Table.AddColumn(DetRenamed, "POST_DTTM", each DateTime.From([PPV Date]), type nullable datetime),
+    DetEntryDate = Table.AddColumn(DetPostDate, "ACCT_DOC_ENTRY_DTTM", each [POST_DTTM], type nullable datetime),
+    // Calc PPV is positive when favourable; PRFT_CNTR_AMT carries the posting sign, so the sign is reversed here
+    DetAmount = Table.AddColumn(DetEntryDate, "PRFT_CNTR_AMT", each if [Calc PPV] = null then null else -Number.From([Calc PPV]), type nullable number),
+    DetYear = Table.AddColumn(DetAmount, "FISCAL_YEAR", each Text.From([Year], "en-US"), type text),
+    DetPeriod = Table.AddColumn(DetYear, "POSTING_PERIOD", each Text.From([Month], "en-US"), type text),
+    DetCleaned = Table.RemoveColumns(DetPeriod, {"PPV Date", "Year", "Month", "Calc PPV"}),
+    DetPart = Table.AddColumn(DetCleaned, "DATA_SOURCE", each SrcDetails, type text),
+
+    // ===== Combine, then apply the original rules to the PO lines of the SQL and Excel parts =====
+    AllRows = Table.Combine({SqlPart, XlPart, DetPart}),
+    WithLineType = Table.AddColumn(AllRows, "LINE_TYPE", each
+        if [PRCH_DOC_NBR] = null or Text.Trim(Blank([PRCH_DOC_NBR])) = "" then TypeNonPO else TypePO, type text),
+    WithItemKey = Table.AddColumn(WithLineType, "PO_Item", each Blank([PRCH_DOC_NBR]) & "_" & Blank([PRCH_DOC_ITM_NBR]), type text),
+
+    LegacyPOLines = Table.SelectRows(WithItemKey, each [DATA_SOURCE] <> SrcDetails and [LINE_TYPE] = TypePO),
+    VendorJoin = Table.NestedJoin(LegacyPOLines, {"VENDOR_ACCT_NBR"}, #"Excel_Buyer-Vendor Allocation", {"Vendor Code"}, "Vendor Match", JoinKind.Inner),
+    VendorKept = Table.RemoveColumns(VendorJoin, {"Vendor Match"}),
+    ReceiptKeys = Table.Distinct(Table.SelectColumns(#"SQL_Receipts Profit Centre", {"PO_Item"})),
+    ReceiptJoin = Table.NestedJoin(VendorKept, {"PO_Item"}, ReceiptKeys, {"PO_Item"}, "Receipt Match", JoinKind.Inner),
+    ReceiptKept = Table.RemoveColumns(ReceiptJoin, {"Receipt Match"}),
+
+    // Kept as they are: every PPV_Details line (finance's Calc PPV, so it always equals @PPV Calc)
+    OtherLines = Table.SelectRows(WithItemKey, each [DATA_SOURCE] = SrcDetails),
+
+    Kept = Table.Combine({ReceiptKept, OtherLines}),
+    #"Added Custom" = Table.AddColumn(Kept, "*Actual PPV", each -1 * [PRFT_CNTR_AMT]),
+    WithMtrlKey = Table.AddColumn(#"Added Custom", "PO_Mtrl", each Blank([PRCH_DOC_NBR]) & "_" & Blank([MTRL_NBR]), type text),
+
+    // ===== Data types =====
+    TypeMap = {
+        {"PO_Item", type text}, {"PO_Mtrl", type text}, {"DATA_SOURCE", type text}, {"LINE_TYPE", type text},
+        {"FISCAL_YEAR", type text}, {"POSTING_PERIOD", type text}, {"ACCT_DOC_NBR", type text}, {"ACCT_DOC_ITM", type text},
+        {"PRFT_CNTR", type text}, {"ACCT_NBR", type text}, {"ITM_TXT", type text}, {"REF_DOC_NBR", type text},
+        {"DOC_TYPE", type text}, {"PLANT", type text}, {"MTRL_NBR", type text}, {"VENDOR_ACCT_NBR", type text},
+        {"PRCH_DOC_NBR", type text}, {"PRCH_DOC_ITM_NBR", type text}, {"MOVEMENT_TYPE", type text},
+        {"TRANS_CRNCY_AMT", type number}, {"CO_CD_AMT", type number}, {"PRFT_CNTR_AMT", type number}, {"QUANTITY", type number},
+        {"ACCT_DOC_ENTRY_DTTM", type datetime}, {"POST_DTTM", type datetime},
+        // columns that only the SQL part fills: kept on the types they had before
+        {"DOC_DTTM", type datetime}, {"CURR_VAL_DTTM", type datetime}, {"SETTLEMENT_DTTM", type datetime},
+        {"VALUE_DTTM", type datetime}, {"UPDTTM", type datetime}, {"Change_Date", type datetime},
+        {"OBJECT_TYPE", type number}, {"REAL_DEPRECIATION_AREA", type number}, {"ORIGINAL_CLIENT", type number},
+        {"REC_OBJ_TYPE", type number}, {"ACCT_DOC_LI_NBR", type number}, {"OPR_ROUTING_NBR", type number},
+        {"PROFIT_SEG_NBR", type number}, {"PROFIT_SEG_CHANGES", type number}, {"WBS_ELEM", type number},
+        {"SO_ITM_NBR", type number}, {"SALES_DOC_ITEM", type number}, {"SD_DOC_ITM_NBR", type number}},
+    ExistingColumns = Table.ColumnNames(WithMtrlKey),
+    Result = Table.TransformColumnTypes(WithMtrlKey, List.Select(TypeMap, each List.Contains(ExistingColumns, _{0})), "en-US")
+in
+    Result
+```
+
+**2.3 SQL_Actual PPV GR**
+
+```
+// SQL_Actual PPV GR
+// PPV per PO + material + posting date. It is matched to SQL_Receipts Profit Centre[PO_Mtrl_Date]
+// so that each receipt line can show its PPV. The key is built the same way in both queries.
+let
+    Source = #"SQL_Actual PPV",
+    POLines = Table.SelectRows(Source, each [LINE_TYPE] = "PO line" and [POST_DTTM] <> null),
+    WithDateKey = Table.AddColumn(POLines, "PO_Mtrl_Date", each
+        Text.Upper([PO_Mtrl] & "_" & Date.ToText(Date.From([POST_DTTM]), "yyyy-MM-dd", "en-US")), type text),
+    #"Grouped Rows" = Table.Group(WithDateKey, {"PO_Mtrl_Date"}, {{"PPV", each -1 * List.Sum([PRFT_CNTR_AMT]), type nullable number}})
+in
+    #"Grouped Rows"
+```
+
+**2.4 Close & Apply**
+
+- 如果弹出隐私级别提示，或者报 Formula.Firewall：File > Options > Current File > Privacy，选 Ignore the Privacy Levels。
+- 如果报找不到文件，检查 `ExcelPath`。
+
+## 第 3 步：改 2 处 DAX（Apply 完成之后再改）
+
+**3.1** 计算列 `'SQL_Receipts Profit Centre'[#Std Cost less MA]`，整段替换：
+
+```
+#Std Cost less MA = 
+VAR MARate = 0.065
+RETURN
+    IF (
+        'SQL_Receipts Profit Centre'[DATA_SOURCE] = "PPV Details",
+        'SQL_Receipts Profit Centre'[USD_CURRENCY_VALUE] + 'SQL_Receipts Profit Centre'[CALC_MATAPP],
+        DIVIDE ( 'SQL_Receipts Profit Centre'[USD_CURRENCY_VALUE], 1 + MARate )
+    )
+```
+
+**3.2** 度量值 `PPV_Adjusted`，整段替换（去掉 ke5z）：
+
+```
+PPV_Adjusted = SUM ( 'SQL_Actual PPV'[#Actual PPV] )
+```
+
+## 第 4 步：页面
+
+- **GR Analysis：** 不用改，PPV 卡片保持 `PPV_Adjusted`。
+- **Monthly Summary：** 卡片都不用动，PPV 保持 `@PPV Calc`。Incoming 行那个提醒见上一条，你自己定。
+- **关系：** 一条都不用改。
+
+## 第 5 步：验证
+
+在 DAX query view 里跑：
+
+```
+// 1. Receipts by source
+EVALUATE
+SUMMARIZECOLUMNS (
+    'SQL_Receipts Profit Centre'[DATA_SOURCE],
+    "Rows", COUNTROWS ( 'SQL_Receipts Profit Centre' ),
+    "From", MIN ( 'SQL_Receipts Profit Centre'[POSTING_DATE] ),
+    "To", MAX ( 'SQL_Receipts Profit Centre'[POSTING_DATE] ),
+    "USD", SUM ( 'SQL_Receipts Profit Centre'[USD_CURRENCY_VALUE] ),
+    "Std Cost less MA", SUM ( 'SQL_Receipts Profit Centre'[#Std Cost less MA] )
+)
+
+// 2. PPV by month, source and line type
+EVALUATE
+SUMMARIZECOLUMNS (
+    'SQL_Actual PPV'[FISCAL_YEAR],
+    'SQL_Actual PPV'[POSTING_PERIOD],
+    'SQL_Actual PPV'[DATA_SOURCE],
+    'SQL_Actual PPV'[LINE_TYPE],
+    "Rows", COUNTROWS ( 'SQL_Actual PPV' ),
+    "PPV", SUM ( 'SQL_Actual PPV'[#Actual PPV] )
+)
+
+// 3. From October on, both pairs must be equal
+EVALUATE
+ROW (
+    "PPV in SQL_Actual PPV", CALCULATE ( SUM ( 'SQL_Actual PPV'[#Actual PPV] ), 'SQL_Actual PPV'[DATA_SOURCE] = "PPV Details" ),
+    "PPV in PPV_Details", CALCULATE ( SUM ( PPV_Details[Calc PPV] ), FILTER ( PPV_Details, PPV_Details[Year] * 100 + PPV_Details[Month] >= 202610 ) ),
+    "Receipt in SQL_Receipts", CALCULATE ( SUM ( 'SQL_Receipts Profit Centre'[#Std Cost less MA] ), 'SQL_Receipts Profit Centre'[DATA_SOURCE] = "PPV Details" ),
+    "Receipt in PPV_Details", CALCULATE ( SUM ( PPV_Details[Inventory Amt] ) + SUM ( PPV_Details[Calc Matapp] ), FILTER ( PPV_Details, PPV_Details[Year] * 100 + PPV_Details[Month] >= 202610 ) )
+)
+```
+
+**结果 1 应该是：**
+
+| DATA_SOURCE | Rows | From | To | USD | Std Cost less MA |
+|---|---|---|---|---|---|
+| SQL | 104,418 | 2024-01-01 | 2026-06-30 | 1,010,169,367.46 | 948,515,837.99 |
+| Excel | 11,957 | 2026-07-01 | 2026-09-30 | 93,201,009.39 | 87,512,684.87 |
+| PPV Details | 看你文件夹里的导出 | | | | |
+
+**结果 2 里 Excel 应该只有这 3 行，都是 PO line：**
+
+| 月 | Rows | PPV |
+|---|---|---|
+| 7 | 4,177 | 1,280,155.91 |
+| 8 | 4,564 | 839,894.19 |
+| 9 | 3,048 | 89,003.69 |
+
+行数取决于 Buyer-Vendor Allocation，上面是按 11/2 那版算的。PPV Details 部分会有 PO line 和 Non-PO adjustment 两种，那是财务文件自带的。
+
+**结果 3：** 两个 PPV 相等，两个 Receipt 相等。
+
+**页面上再看一眼：** GR Analysis 现在停在 2026 年 8 月，应该显示 Receipt 32.79M、Quantity 346.69K、PPV 839.89K。
+
+## 改完以后会跟着变的地方
+
+- **每月的数：** 7 月 30.90M / 1,280.2K，8 月 32.79M / 839.9K，9 月 23.83M / 89.0K，10 月 14.34M / 247.9K（10 月按 11/2 那份导出）。
+- **GR Details：** 10 月以后的 Top 20 Unfavourable PPV 里可能有一行 PO 为空，是财务文件里的 Non-PO adjustment。不想看到就给那张表加 visual 筛选 `LINE_TYPE` = PO line。
+- **Actual Inflation Trending 那几页：** PPV 现在是空的，刷新后 7 月起会有数。
+- **以后每个月：** 往 PPV Details 文件夹放新导出就行，不用再改 query。
+
+代码我这边没法实际运行，只做了语法和函数检查，并用 Python 按同样的逻辑在你的数据上算出了上面的预期数。所以第 5 步一定要跑，结果发我，我帮你核对。
