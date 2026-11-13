@@ -1,203 +1,35 @@
-查询写好了：直接替换现有 `SQL_Plan PR` 的代码，表名和列名都不变，所以页面上的视觉对象、关系、计算列都不用重新绑。我这里跑不了 Power BI，只做了两件事：用微软的 Power Query 解析器查过语法，并把同样的逻辑在今天这份导出上跑了一遍（7,193 行，3,967 Plan + 3,226 PReq）。
+按 FAS QTY 3 件写的，表格按你 DFM 模板的栏位顺序，逐格填进去就行。
 
-**先更正上一条的第 6 点**：供应商代码没有变，是 S/4 版 ZMMRP 导出把 Vendor 列截成了 6 位。我拿 4,264 张两边都有的 PO 对过，ZMMRP 的 Vendor 全部是 datamart 里 7 位代码的前 6 位。查询里已按"前 6 位，重码时再比名称"还原成完整代码。
+**Subject:** FA Request for PN 103283267 - CHENGDU PERFECT-ROCK TECHNOLOGY CO.,LTD
 
-## 第 1 步：替换查询
+Hi Drusilla,
 
-Transform data > 选中 `SQL_Plan PR` > Advanced Editor > 全部替换成下面的代码。第一行 `FolderPath` 改成和 `Excel_ZMMRP S4` 里一样的文件夹，然后 Close & Apply。
+Please help to provide approval for below part to FA developments.
 
-```m
-let
-    // ===== 1. Folder that holds the ZMMRP exports: use the same folder as Excel_ZMMRP S4 (change this one line) =====
-    FolderPath = "\\ap1nas101it0593.file.core.windows.net\sinfile\Data\Procurement\Buyer's Folder\Jiaqi\ZMMRP S4",
+| Field | Value |
+|---|---|
+| Material Number | 103283267 |
+| Description | TUBE, EXT TOP, HARD CONNECT, 22 IN LG, NG SOLAR 175 |
+| Proposed Vendor Number | 1277437 |
+| Proposed Vendor Name | CHENGDU PERFECT-ROCK TECHNOLOGY CO.,LTD |
+| Quoted Price/UOM | 1532.00 |
+| Quoted Price Currency | USD/EA |
+| FAS QTY | 3 |
+| Total FA PO Price | 4596.00 |
+| LT | 126 |
+| FAS Delivery Date | 3/19/2027 |
+| Scale Pricing | 1: 1540.00 USD/EA, 3: 1532.00, 5: 1525.00, 10: 1517.00, 15: 1509.00 |
+| Justification For Award | No approved vendor; lowest of 3 quotes |
+| Other Vendor Quotation | 1224888 DONGGUAN POOWARD PRECISION MACHINERY MANUFACTURE LTD (USD/EA): 1 to 3: 2537.06, 4 to 9: 2388.33, 10 to 19: 2258.88, 20 to 49: 2201.04, 50 to 99: 2122.91, >=100: 2113.70 |
+| | [Vendor No.] [Vendor Name] (USD/EA): 1: 3245, 3: 2420, 5: 2085, 10: 1970, 15: 1910 |
+| PPX & PPV | PPX: USD [ ], PPV: USD [ ] |
 
-    // ===== 2. Take the newest .xlsx in that folder =====
-    Files = Folder.Files(FolderPath),
-    XlsxFiles = Table.SelectRows(Files, each Text.Lower([Extension]) = ".xlsx" and not Text.StartsWith([Name], "~$")),
-    Latest = if Table.IsEmpty(XlsxFiles)
-        then error "ZMMRP: no .xlsx file found in " & FolderPath
-        else Table.First(Table.Sort(XlsxFiles, {{"Date modified", Order.Descending}})),
-    Book = Excel.Workbook(Latest[Content], null, true),
-    Raw = Table.SelectRows(Book, each [Kind] = "Sheet"){0}[Data],
+Best regards,
+Jiaqi Yu
 
-    // ===== 3. Find the header row and the columns by name =====
-    // The export pads every cell with spaces, puts the header on row 5 and cuts names to 10 characters.
-    Clean = (v as any) as text => if v = null then "" else Text.Trim(Text.From(v)),
-    AllRows = List.Buffer(Table.ToRows(Raw)),
-    HeaderFlags = List.Transform(List.FirstN(AllRows, 50), (r) => let c = List.Transform(r, Clean) in List.Contains(c, "Order") and List.Contains(c, "MRP El")),
-    HeaderIndex = if List.PositionOf(HeaderFlags, true) < 0
-        then error "ZMMRP: header row with Order and MRP El not found"
-        else List.PositionOf(HeaderFlags, true),
-    Header = List.Transform(AllRows{HeaderIndex}, Clean),
-    Col = (name as text) as number =>
-        let
-            exact = List.PositionOf(Header, name),
-            i = if exact >= 0 then exact else List.PositionOf(List.Transform(Header, each Text.StartsWith(_, name)), true)
-        in
-            if i < 0 then error "ZMMRP: column not found: " & name else i,
-    iPlant = Col("Plant"),
-    iMat = Col("Material"),
-    iOrder = Col("Order"),
-    iItem = Col("Item"),
-    iEl = Col("MRP El"),
-    iMad = Col("MAD wo GR"),
-    iRel = Col("Strt/Rel D"),
-    iQty = Col("Supply Qty"),
-    iVendor = Col("Vendor"),
-    iName = Col("Name"),
-    iStd = Col("STD Price"),
-    iPpx = Col("Planned Pr"),
-    iUnit = Col("Price Unit"),
+发之前有三处要你补或确认：
+- **第三家供应商**：Clint Pargmann 那家的供应商号和公司全称，截图里看不到。
+- **PPX & PPV**：SAP 查到 PPX 后，PPV 填 PPX 减 1532.00。没有历史价就两个都写 N/A。
+- **FAS QTY**：3 件是我按建议值填的，Drusilla 还没确认。如果改成 5 件，Quoted Price 改 1525.00，Total 改 7625.00。
 
-    // ===== 4. Converters (independent of the PC's regional settings) =====
-    ToDate = (v as any) as nullable date =>
-        if v = null then null
-        else if v is date then v
-        else if v is datetime then Date.From(v)
-        else
-            let
-                t = Text.Trim(Text.From(v)),
-                sep = if Text.Contains(t, "/") then "/" else if Text.Contains(t, ".") then "." else "-",
-                p = Text.Split(t, sep)
-            in
-                if List.Count(p) <> 3 then null
-                else try (
-                    if Text.Length(p{0}) = 4 then #date(Number.FromText(p{0}), Number.FromText(p{1}), Number.FromText(p{2}))
-                    else if sep = "." then #date(Number.FromText(p{2}), Number.FromText(p{1}), Number.FromText(p{0}))
-                    else #date(Number.FromText(p{2}), Number.FromText(p{0}), Number.FromText(p{1}))
-                ) otherwise null,
-    // Numbers arrive as text such as 1,434.00 (comma = thousands, dot = decimals).
-    ToNum = (v as any) as nullable number =>
-        if v = null then null
-        else if v is number then v
-        else
-            let
-                t = Text.Remove(Text.Trim(Text.From(v)), {",", " "}),
-                neg = Text.EndsWith(t, "-"),
-                n = try Number.FromText(Text.TrimEnd(t, "-"), "en-US") otherwise null
-            in
-                if n = null then null else if neg then -n else n,
-
-    // ===== 5. Planning (P) rate SGD -> USD: this year's row of SQL_Planning Currency, else the latest earlier year =====
-    RateRows = Table.SelectRows(#"SQL_Planning Currency", each Text.StartsWith([#"CRNCY-Year"], "SGD-")),
-    RateYears = Table.AddColumn(RateRows, "RateYear", each Number.FromText(Text.AfterDelimiter([#"CRNCY-Year"], "-")), Int64.Type),
-    UsableRates = Table.SelectRows(RateYears, each [RateYear] <= Date.Year(DateTime.LocalNow())),
-    PRate = if Table.IsEmpty(UsableRates)
-        then error "ZMMRP: no SGD planning rate found in SQL_Planning Currency"
-        else Table.Max(UsableRates, "RateYear")[UKURS_EXCHANGE_RATE],
-
-    // ===== 6. Keep planned orders (Plan) and purchase requisitions (PReq) =====
-    DataRows = List.Skip(AllRows, HeaderIndex + 1),
-    PlanPR = List.Buffer(List.Select(DataRows, (r) =>
-        let el = Text.Lower(Clean(r{iEl}))
-        in (el = "plan" or el = "preq") and Clean(r{iOrder}) <> "")),
-
-    // ===== 7. Vendor code: the export cuts the 7-digit vendor number to 6 characters =====
-    // Rebuild the full code from Excel_Buyer-Vendor Allocation: same first 6 digits, and the same name when several codes share them.
-    // A vendor that cannot be matched keeps the code as exported.
-    NameKey = (v as any) as text => Text.Start(Text.Select(Text.Upper(Clean(v)), {"A".."Z", "0".."9"}), 6),
-    Alloc = List.Buffer(List.Transform(
-        Table.ToRecords(Table.SelectColumns(#"Excel_Buyer-Vendor Allocation", {"Vendor Code", "Vendor Name"})),
-        (a) => [Code = Clean(a[Vendor Code]), Key = NameKey(a[Vendor Name])])),
-    MapVendor = (code as text, name as text) as nullable text =>
-        if code = "" then null
-        else
-            let
-                cands = List.Select(Alloc, (a) => a[Code] = code or (Text.Length(code) = 6 and Text.Length(a[Code]) = 7 and Text.StartsWith(a[Code], code))),
-                byName = List.Select(cands, (a) => a[Key] = NameKey(name))
-            in
-                if List.Count(cands) = 1 then cands{0}[Code]
-                else if List.Count(byName) = 1 then byName{0}[Code]
-                else code,
-    Pairs = List.Buffer(List.Distinct(List.Transform(PlanPR, (r) => Clean(r{iVendor}) & "|" & Clean(r{iName})))),
-    VendorMap = Record.FromList(
-        List.Transform(Pairs, (k) => MapVendor(Text.BeforeDelimiter(k, "|"), Text.AfterDelimiter(k, "|"))),
-        Pairs),
-
-    // ===== 8. Same column names as the old SQL_Plan PR, so visuals, relationships and calculated columns keep working =====
-    Records = List.Transform(PlanPR, (r) =>
-        let
-            isPlan = Text.Lower(Clean(r{iEl})) = "plan",
-            ord = Text.TrimStart(Clean(r{iOrder}), "0"),
-            itm = Text.TrimStart(Clean(r{iItem}), "0"),
-            qty = ToNum(r{iQty}),
-            unit = ToNum(r{iUnit}),
-            std = ToNum(r{iStd}),
-            mad = ToDate(r{iMad}),
-            rel = ToDate(r{iRel}),
-            vName = Clean(r{iName})
-        in
-            [
-                PLANT = Clean(r{iPlant}),
-                MTRL_NBR = Text.TrimStart(Clean(r{iMat}), "0"),
-                MRP_ELEM_CD = if isPlan then "PA" else "BA",
-                ISU_STRG_LOCN = null,                                   // not in the export
-                MRP_ELEM_NBR = ord,
-                MRP_ELEM_ITM_NBR = itm,
-                DLVRY_DT = if mad = null then null else DateTime.From(mad),   // MAD wo GR
-                REQ_DT = null,                                          // not in the export
-                RLS_DT = if rel = null then null else DateTime.From(rel),     // Strt/Rel D
-                SCHED_NBR = null,                                       // not in the export
-                REQ_QTY = qty,                                          // Supply Qty
-                SCRAP_QTY = 0,
-                VNDR_NBR = Record.Field(VendorMap, Clean(r{iVendor}) & "|" & vName),
-                VNDR_NM = if vName = "" then null else vName,
-                // STD Price in USD at the P rate (same basis as the old ML30 column)
-                #"USD Price ML30" = if qty = null or std = null or unit = null or unit = 0 then null else std / unit * qty * PRate,
-                // Planned Pr = planned price 2, or planned price 1 when price 2 is empty
-                FUT_PLN_PRC2 = ToNum(r{iPpx}),
-                #"SQL_PPX.COST_LOT_SZ" = unit,                          // Price Unit
-                PR_Item = ord & "_" & itm,
-                #"P Rate" = PRate,
-                #"Export File" = Latest[Name]
-            ]),
-    Result = Table.FromRecords(Records, type table [
-        PLANT = text, MTRL_NBR = text, MRP_ELEM_CD = text, ISU_STRG_LOCN = nullable text,
-        MRP_ELEM_NBR = text, MRP_ELEM_ITM_NBR = text,
-        DLVRY_DT = nullable datetime, REQ_DT = nullable datetime, RLS_DT = nullable datetime,
-        SCHED_NBR = nullable text, REQ_QTY = nullable number, SCRAP_QTY = nullable number,
-        VNDR_NBR = nullable text, VNDR_NM = nullable text,
-        #"USD Price ML30" = nullable number, FUT_PLN_PRC2 = nullable number, #"SQL_PPX.COST_LOT_SZ" = nullable number,
-        PR_Item = text, #"P Rate" = number, #"Export File" = text]),
-    Deduped = Table.Distinct(Result, {"PR_Item"})
-in
-    Deduped
-```
-
-这个查询和文件里现有的 `SQL_Open PR` 是同一种写法（既直接读数据源又引用别的查询），正常不会报 Formula.Firewall。
-
-## 第 2 步：汇率（改一行 DAX）
-
-在 `#PPX per PO` 计算列里，把 `VAR FXRate = 1.2941` 改成：
-
-```dax
-VAR FXRate = DIVIDE ( 1, 'SQL_Plan PR'[P Rate] )
-```
-
-`P Rate` 取 `SQL_Planning Currency` 里当年那一行（2026 是 0.78451）。明年在那个查询里加一行 2027，这里会自动跟着换。
-
-## 第 3 步：页面筛选器
-
-Plan & PR 和 PR Need Source 两页都有同一个 MTRL_NBR 高级筛选，把 Or 改成 And。
-
-## 核对数字（用今天这份导出，三步都做完）
-
-| Del Date 选择 | Plan Ord Receipt | PReq Receipt |
-|---|---|---|
-| 全选 | USD 71.87M | USD 97.58M |
-| 2027 年 11 和 12 月（文件保存的状态） | USD 2.70M | USD 1.25M |
-
-- 只做完第 1 步时，全选应是 70.85M 和 96.11M，和上一条的表一致。
-- PReq 里约一半来自 101996551 那 44 条。
-- `Export File` 列会显示读的是哪个文件。
-
-## 需要知道的几点
-
-- **PRC1 回退不用再改**：ZMMRP 的 Planned Pr 本身就是"PRC2 为 0 时取 PRC1"，上一条第 2 点随换源解决。
-- **柱状图仍和卡片口径不同**：`USD Price ML30` 现在按 STD Price ÷ Price Unit × Qty × P Rate 算，和原来同一口径。想让图和卡片一致，把柱状图的 Y 换成 `#PPX per PO`。
-- **供应商还原的覆盖率**：5,523 行有供应商，5,468 行能还原成 allocation 表里的代码。剩下 55 行（12 个供应商，多数是不在表里的 P 开头内部供应商）保留导出的原值，Vendor 列显示空白。用 PO 能核实的 236 个供应商测试，234 个正确，0 个错配。
-- **留空的列**：导出里没有 REQ_DT、库位、SCHED_NBR，这三列留空，没有视觉对象用到它们。
-- **PR Need Source 页会一起变**：它读的是同一张表。
-- **Aging PR 页也会变**：`SQL_Open PR` 按 PR 号从这张表取供应商。以前只能匹配到 76 张旧 ECC PR，换源后按昨天的数据有 1,188 张 S/4 PR 能取到供应商。
-
-另外发现一个 Aging PR 页的问题：S/4 的 PR 没有供应商时 `DESIRED_VENDOR` 是空字符串而不是一个空格，现有的替换步骤没接住，所以昨天文件里 14,840 张 S/4 PR 全部显示 Has Source。要我把 `SQL_Open PR` 里这一步也改掉吗？
+FAS Delivery Date 是按今天发出算的，改天发就顺延相应天数。
