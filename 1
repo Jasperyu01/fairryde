@@ -1,7 +1,166 @@
-SELECT CAST(RUN_DT AS date) AS run_date,
-       COUNT(*) AS all_rows,
-       SUM(CASE WHEN MRP_ELEM_NBR LIKE '%454_______' THEN 1 ELSE 0 END) AS s4_po_rows
-FROM [DUN02_HESDATAMART01].[dbo].[PLNT_MTRL_DLY_REQ] WITH (NOLOCK)
-WHERE MRP_ELEM_CD IN ('BE', 'LA')
-GROUP BY CAST(RUN_DT AS date)
-ORDER BY run_date DESC;
+完整步骤如下，从头到尾照做即可，已经做过的直接跳过。全程不用刷新数据。
+
+你的两个要求分别这样实现：
+- **去重**：第 3 步的标记列加第 4 步的筛选，把有新号的旧号行去掉。
+- **S4 有完成日期就去掉**：页面上原有的筛选（Task Status 不等于 Completed）已经在做这件事，旧号行去掉后，剩下的 S4 行一旦有完成日期就自动不显示。
+
+## 第 1 步：建对应表
+Modeling > New table，粘贴：
+
+```dax
+Custom_QN ECC to S4 Mapping = 
+DATATABLE (
+    "Old QN No", STRING,
+    "New QN No", STRING,
+    {
+        { "201454719", "204000600" },
+        { "201454681", "204000077" },
+        { "201454367", "204000080" },
+        { "201454264", "204000522" },
+        { "201454265", "204000521" },
+        { "201453918", "204000337" },
+        { "201453483", "204000296" },
+        { "201452951", "204000227" },
+        { "201453540", "204000259" },
+        { "201453333", "204000421" },
+        { "201453334", "204000422" },
+        { "201452680", "204000282" },
+        { "201452680", "204000283" },
+        { "201452199", "204000411" },
+        { "201452433", "204000338" },
+        { "201452434", "204000076" },
+        { "201452263", "204000228" },
+        { "201451806", "204000280" },
+        { "201451660", "204000339" },
+        { "201450705", "204000340" },
+        { "201451303", "204000412" },
+        { "201445321", "204000277" },
+        { "201454583", "204000664" },
+        { "201454909", "204000298" },
+        { "201454186", "204000278" },
+        { "201450882", "204000297" },
+        { "201454556", "204000285" },
+        { "201451769", "204000389" },
+        { "201451333", "204000531" },
+        { "201451334", "204000532" },
+        { "201451335", "204000533" },
+        { "201451657", "204000534" },
+        { "201451658", "204000535" },
+        { "201451329", "204000536" },
+        { "201450730", "204000382" },
+        { "201450761", "204000383" },
+        { "201446058", "204000384" },
+        { "201446253", "204000537" },
+        { "201439467", "204000385" },
+        { "201334196", "204000991" },
+        { "201330303", "204000992" }
+    }
+)
+```
+
+## 第 2 步：加 Old 和 New 两列
+在 Data 面板选中 `SQL_Qnotes Tasks`，Table tools > New column，分两次粘贴：
+
+```dax
+#Old Notif No = 
+VAR _nbr = 'SQL_Qnotes Tasks'[NTFCTN_NBR]
+VAR _match =
+    FILTER (
+        'Custom_QN ECC to S4 Mapping',
+        'Custom_QN ECC to S4 Mapping'[New QN No] = _nbr
+    )
+RETURN
+    IF (
+        LEFT ( _nbr, 3 ) = "204",
+        IF (
+            NOT ISEMPTY ( _match ),
+            CONCATENATEX (
+                _match,
+                'Custom_QN ECC to S4 Mapping'[Old QN No],
+                ", ",
+                'Custom_QN ECC to S4 Mapping'[Old QN No], ASC
+            )
+        ),
+        _nbr
+    )
+```
+
+```dax
+#New Notif No = 
+VAR _nbr = 'SQL_Qnotes Tasks'[NTFCTN_NBR]
+VAR _match =
+    FILTER (
+        'Custom_QN ECC to S4 Mapping',
+        'Custom_QN ECC to S4 Mapping'[Old QN No] = _nbr
+    )
+RETURN
+    IF (
+        LEFT ( _nbr, 3 ) = "204",
+        _nbr,
+        IF (
+            NOT ISEMPTY ( _match ),
+            CONCATENATEX (
+                _match,
+                'Custom_QN ECC to S4 Mapping'[New QN No],
+                ", ",
+                'Custom_QN ECC to S4 Mapping'[New QN No], ASC
+            )
+        )
+    )
+```
+
+## 第 3 步：加去重用的标记列
+同样选中 `SQL_Qnotes Tasks`，New column：
+
+```dax
+#ECC Superseded by S4 = 
+IF (
+    'SQL_Qnotes Tasks'[NTFCTN_NBR] IN VALUES ( 'Custom_QN ECC to S4 Mapping'[Old QN No] ),
+    "Y",
+    "N"
+)
+```
+
+## 第 4 步：改 Details table
+打开 Qnotes (MDI Format) 页，点中 Qnotes Details 表：
+
+1. 把 `#Old Notif No` 拖到 Columns 最上面，`#New Notif No` 拖到第二位。
+2. 点 X 删掉原来的 Notif No。
+3. 双击这两个字段，改显示名为 `Old Notif No` 和 `New Notif No`。
+4. 把 `#ECC Superseded by S4` 拖到 Filters 面板的 Filters on this visual，只勾 `N`。
+5. 多了一列后总宽度可能超出一点，把 Person Responsible 或 HAL Core Sourcing 拉窄一些。
+
+## 第 5 步：验证
+在 DAX query view 里跑：
+
+```dax
+EVALUATE
+VAR _shown =
+    FILTER (
+        'SQL_Qnotes Tasks',
+        'SQL_Qnotes Tasks'[#Task Status] <> "Completed"
+            && 'SQL_Qnotes Tasks'[#ECC Superseded by S4] = "N"
+    )
+RETURN
+    ROW (
+        "Rows shown", COUNTROWS ( _shown ),
+        "Old and New", COUNTROWS ( FILTER ( _shown, 'SQL_Qnotes Tasks'[#Old Notif No] <> "" && 'SQL_Qnotes Tasks'[#New Notif No] <> "" ) ),
+        "Old blank", COUNTROWS ( FILTER ( _shown, 'SQL_Qnotes Tasks'[#Old Notif No] = "" ) ),
+        "New blank", COUNTROWS ( FILTER ( _shown, 'SQL_Qnotes Tasks'[#New Notif No] = "" ) )
+    )
+```
+
+按你发我的这份数据（最后刷新 11/11，没再刷新的话），结果应该是 58 / 45 / 11 / 2。这些数字是我用数据模拟出来的，DAX 我没法在 Power BI 里实跑，所以请再抽查几行：
+
+| 查什么 | 应该看到 |
+|---|---|
+| 201454719 和 204000600 | 只剩 2 行（原来 4 行） |
+| 201453918、201453540、201450882 | 表里找不到 |
+| 204001619（S4 新建的） | Old 空，New 204001619 |
+| 201453661（没有对应） | Old 201453661，New 空，2 行 |
+
+## 两点提醒
+- **201454909 也会消失。** 它的新号 204000298 不在数据里，我判断不了 S4 是否已关，你在 S4 里看一眼。
+- **以后有新的对应**，在第 1 步的表里加一行就行，其他不用动。
+
+Qnotes Summary 和 Qnotes Details 两页的 Open Task 统计里也包含这 32 行旧记录，要不要也加上同样的筛选？
