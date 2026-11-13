@@ -1,166 +1,163 @@
-完整步骤如下，从头到尾照做即可，已经做过的直接跳过。全程不用刷新数据。
+我先研究这份 ZMMRP 导出的结构，再和 PBIX 里的 Open PO 逐行对 key，确认能对上多少再定方案。
 
-你的两个要求分别这样实现：
-- **去重**：第 3 步的标记列加第 4 步的筛选，把有新号的旧号行去掉。
-- **S4 有完成日期就去掉**：页面上原有的筛选（Task Status 不等于 Completed）已经在做这件事，旧号行去掉后，剩下的 S4 行一旦有完成日期就自动不显示。
+这份导出可以把两列补上：ZMMRP 里的 PO、Item、SLn 拼成的 key 和 Open PO 的 key 格式一致，10,460 行 Open PO 里有 10,011 行（95.7%）能对上。M 和 DAX 我没法在 Power BI 里实跑，逻辑是用 Python 在你这份导出上照着跑过的，第 5 步的验证请务必做。
 
-## 第 1 步：建对应表
-Modeling > New table，粘贴：
+做法是新建一张表读 ZMMRP 导出，再在 `SQL_Open PO` 上加两个计算列去查它。不动 `SQL_Purc ShNt`，因为另外 4 页还在用它。
+
+这份导出的表头在第 5 行，所有单元格都是带前导空格的文本，列名被截成 10 个字符，日期是 MM/DD/YYYY 文本。所以查询是按列名找列、自己解析日期的，不受电脑区域设置影响。
+
+## 第 1 步：放文件
+建一个专门的文件夹，把 ZMMRP 导出放进去。以后每次新导出直接丢进同一个文件夹，查询会自动取最新修改的那个 xlsx。
+
+## 第 2 步：建查询
+Transform data > New Source > Blank Query > Advanced Editor，粘贴下面的代码，把查询改名为 `Excel_ZMMRP S4`，然后 Close & Apply。
+
+第一行的路径是我按你 `DMT_Snapshot` 的写法假设的，请改成你实际建的文件夹。
+
+```m
+let
+    // ===== 1. Folder that holds the ZMMRP exports: change this one line =====
+    FolderPath = "\\ap1nas101it0593.file.core.windows.net\sinfile\Data\Procurement\Buyer's Folder\Jiaqi\ZMMRP S4",
+
+    // ===== 2. Take the newest .xlsx in that folder =====
+    Files = Folder.Files(FolderPath),
+    XlsxFiles = Table.SelectRows(Files, each Text.Lower([Extension]) = ".xlsx" and not Text.StartsWith([Name], "~$")),
+    Latest = if Table.IsEmpty(XlsxFiles)
+        then error "ZMMRP: no .xlsx file found in " & FolderPath
+        else Table.First(Table.Sort(XlsxFiles, {{"Date modified", Order.Descending}})),
+    Book = Excel.Workbook(Latest[Content], null, true),
+    Raw = Table.SelectRows(Book, each [Kind] = "Sheet"){0}[Data],
+
+    // ===== 3. Find the header row and the columns by name =====
+    // The export pads every cell with spaces, puts the header on row 5 and cuts names to 10 characters.
+    Clean = (v as any) as text => if v = null then "" else Text.Trim(Text.From(v)),
+    AllRows = List.Buffer(Table.ToRows(Raw)),
+    HeaderFlags = List.Transform(AllRows, (r) => let c = List.Transform(r, Clean) in List.Contains(c, "Order") and List.Contains(c, "MRP El")),
+    HeaderIndex = if List.PositionOf(HeaderFlags, true) < 0
+        then error "ZMMRP: header row with Order and MRP El not found"
+        else List.PositionOf(HeaderFlags, true),
+    Header = List.Transform(AllRows{HeaderIndex}, Clean),
+    Col = (name as text) as number =>
+        let i = List.PositionOf(List.Transform(Header, each Text.StartsWith(_, name)), true)
+        in if i < 0 then error "ZMMRP: column not found: " & name else i,
+    iOrder = Col("Order"),
+    iItem = Col("Item"),
+    iSLn = Col("SLn"),
+    iEl = Col("MRP El"),
+    iExc = Col("Excep Mssg"),
+    iRsch = Col("Rsch dt wo"),
+    iTxt = Col("MRP Excep Txt"),
+
+    // ===== 4. Converters (independent of the PC's regional settings) =====
+    ToDate = (v as any) as nullable date =>
+        if v = null then null
+        else if v is date then v
+        else if v is datetime then Date.From(v)
+        else
+            let
+                t = Text.Trim(Text.From(v)),
+                sep = if Text.Contains(t, "/") then "/" else if Text.Contains(t, ".") then "." else "-",
+                p = Text.Split(t, sep)
+            in
+                if List.Count(p) <> 3 then null
+                else try (
+                    if Text.Length(p{0}) = 4 then #date(Number.FromText(p{0}), Number.FromText(p{1}), Number.FromText(p{2}))
+                    else if sep = "." then #date(Number.FromText(p{2}), Number.FromText(p{1}), Number.FromText(p{0}))
+                    else #date(Number.FromText(p{2}), Number.FromText(p{0}), Number.FromText(p{1}))
+                ) otherwise null,
+    ToKey = (v as any) as nullable text => let t = Clean(v) in if t = "" then null else Text.PadStart(t, 2, "0"),
+    ToText = (v as any) as nullable text => let t = Clean(v) in if t = "" then null else t,
+
+    // ===== 5. Keep PO lines (ShNt / Purc) and build the same key as SQL_Open PO =====
+    DataRows = List.Skip(AllRows, HeaderIndex + 1),
+    Picked = Table.FromRows(
+        List.Transform(DataRows, (r) => {Clean(r{iOrder}), Clean(r{iItem}), Clean(r{iSLn}), Clean(r{iEl}), ToKey(r{iExc}), ToDate(r{iRsch}), ToText(r{iTxt})}),
+        type table [Order = text, Item = text, SLn = text, MRP El = text, Excep Mssg Key = nullable text, Rsch dt wo GR = nullable date, MRP Excep Txt = nullable text]),
+    PORows = Table.SelectRows(Picked, each (Text.Lower([MRP El]) = "shnt" or Text.Lower([MRP El]) = "purc") and [Order] <> "" and [Item] <> "" and [SLn] <> ""),
+    WithKey = Table.AddColumn(PORows, "PO_Item_Schd", each Text.TrimStart([Order], "0") & "_" & Text.TrimStart([Item], "0") & "_" & Text.TrimStart([SLn], "0"), type text),
+
+    // ===== 6. One row per PO_Item_Schd: earliest reschedule date first, rows with a message before rows without =====
+    Grouped = Table.Group(WithKey, {"PO_Item_Schd"}, {{"Pick", (t) =>
+        Table.First(Table.Sort(t, {
+            {each if [Rsch dt wo GR] = null then #date(9999, 12, 31) else [Rsch dt wo GR], Order.Ascending},
+            {each if [Excep Mssg Key] = null then "99" else [Excep Mssg Key], Order.Ascending}
+        })), type record}}),
+    Expanded = Table.ExpandRecordColumn(Grouped, "Pick", {"Rsch dt wo GR", "Excep Mssg Key", "MRP Excep Txt", "MRP El"}),
+    Typed = Table.TransformColumnTypes(Expanded, {{"PO_Item_Schd", type text}, {"Rsch dt wo GR", type date}, {"Excep Mssg Key", type text}, {"MRP Excep Txt", type text}, {"MRP El", type text}}),
+    Result = Table.AddColumn(Typed, "Export File", each Latest[Name], type text)
+in
+    Result
+```
+
+`Export File` 这一列显示当前读的是哪个文件，方便你确认取到了最新的导出。
+
+## 第 3 步：加两个计算列
+选中 `SQL_Open PO`，Table tools > New column，分两次粘贴：
 
 ```dax
-Custom_QN ECC to S4 Mapping = 
-DATATABLE (
-    "Old QN No", STRING,
-    "New QN No", STRING,
-    {
-        { "201454719", "204000600" },
-        { "201454681", "204000077" },
-        { "201454367", "204000080" },
-        { "201454264", "204000522" },
-        { "201454265", "204000521" },
-        { "201453918", "204000337" },
-        { "201453483", "204000296" },
-        { "201452951", "204000227" },
-        { "201453540", "204000259" },
-        { "201453333", "204000421" },
-        { "201453334", "204000422" },
-        { "201452680", "204000282" },
-        { "201452680", "204000283" },
-        { "201452199", "204000411" },
-        { "201452433", "204000338" },
-        { "201452434", "204000076" },
-        { "201452263", "204000228" },
-        { "201451806", "204000280" },
-        { "201451660", "204000339" },
-        { "201450705", "204000340" },
-        { "201451303", "204000412" },
-        { "201445321", "204000277" },
-        { "201454583", "204000664" },
-        { "201454909", "204000298" },
-        { "201454186", "204000278" },
-        { "201450882", "204000297" },
-        { "201454556", "204000285" },
-        { "201451769", "204000389" },
-        { "201451333", "204000531" },
-        { "201451334", "204000532" },
-        { "201451335", "204000533" },
-        { "201451657", "204000534" },
-        { "201451658", "204000535" },
-        { "201451329", "204000536" },
-        { "201450730", "204000382" },
-        { "201450761", "204000383" },
-        { "201446058", "204000384" },
-        { "201446253", "204000537" },
-        { "201439467", "204000385" },
-        { "201334196", "204000991" },
-        { "201330303", "204000992" }
-    }
+#Rsch dt wo GR = 
+LOOKUPVALUE (
+    'Excel_ZMMRP S4'[Rsch dt wo GR],
+    'Excel_ZMMRP S4'[PO_Item_Schd], 'SQL_Open PO'[PO_Item_Schd.]
 )
 ```
 
-## 第 2 步：加 Old 和 New 两列
-在 Data 面板选中 `SQL_Qnotes Tasks`，Table tools > New column，分两次粘贴：
-
 ```dax
-#Old Notif No = 
-VAR _nbr = 'SQL_Qnotes Tasks'[NTFCTN_NBR]
-VAR _match =
-    FILTER (
-        'Custom_QN ECC to S4 Mapping',
-        'Custom_QN ECC to S4 Mapping'[New QN No] = _nbr
-    )
-RETURN
-    IF (
-        LEFT ( _nbr, 3 ) = "204",
-        IF (
-            NOT ISEMPTY ( _match ),
-            CONCATENATEX (
-                _match,
-                'Custom_QN ECC to S4 Mapping'[Old QN No],
-                ", ",
-                'Custom_QN ECC to S4 Mapping'[Old QN No], ASC
-            )
-        ),
-        _nbr
-    )
-```
-
-```dax
-#New Notif No = 
-VAR _nbr = 'SQL_Qnotes Tasks'[NTFCTN_NBR]
-VAR _match =
-    FILTER (
-        'Custom_QN ECC to S4 Mapping',
-        'Custom_QN ECC to S4 Mapping'[Old QN No] = _nbr
-    )
-RETURN
-    IF (
-        LEFT ( _nbr, 3 ) = "204",
-        _nbr,
-        IF (
-            NOT ISEMPTY ( _match ),
-            CONCATENATEX (
-                _match,
-                'Custom_QN ECC to S4 Mapping'[New QN No],
-                ", ",
-                'Custom_QN ECC to S4 Mapping'[New QN No], ASC
-            )
-        )
-    )
-```
-
-## 第 3 步：加去重用的标记列
-同样选中 `SQL_Qnotes Tasks`，New column：
-
-```dax
-#ECC Superseded by S4 = 
-IF (
-    'SQL_Qnotes Tasks'[NTFCTN_NBR] IN VALUES ( 'Custom_QN ECC to S4 Mapping'[Old QN No] ),
-    "Y",
-    "N"
+#Excep Mssg Key = 
+LOOKUPVALUE (
+    'Excel_ZMMRP S4'[Excep Mssg Key],
+    'Excel_ZMMRP S4'[PO_Item_Schd], 'SQL_Open PO'[PO_Item_Schd.]
 )
 ```
 
-## 第 4 步：改 Details table
-打开 Qnotes (MDI Format) 页，点中 Qnotes Details 表：
+如果 `#Rsch dt wo GR` 显示成带时间的，在 Column tools 里把 Format 改成 Short Date。
 
-1. 把 `#Old Notif No` 拖到 Columns 最上面，`#New Notif No` 拖到第二位。
-2. 点 X 删掉原来的 Notif No。
-3. 双击这两个字段，改显示名为 `Old Notif No` 和 `New Notif No`。
-4. 把 `#ECC Superseded by S4` 拖到 Filters 面板的 Filters on this visual，只勾 `N`。
-5. 多了一列后总宽度可能超出一点，把 Person Responsible 或 HAL Core Sourcing 拉窄一些。
+## 第 4 步：换掉页面上的字段
+在 Incoming Details 页：
+
+**下面的 Details 表**
+1. 把 `#Rsch dt wo GR` 拖到 Columns 里 Del Date 的下面。如果它变成了 Date Hierarchy（多出 Year、Quarter 几列），点字段的下拉箭头，选 `#Rsch dt wo GR`。
+2. 把 `#Excep Mssg Key` 拖到 PO Create Date 的下面。
+3. 删掉原来的 Rsch dt wo GR 和 Excp（来自 `SQL_Purc ShNt` 的那两个）。
+4. 双击新字段，显示名改回 `Rsch dt wo GR` 和 `Excp`。
+
+**上面的两个 slicer**（它们也连着旧表，不换的话一选就会把表筛空）
+1. Rsch Date：把 `#Rsch dt wo GR` 拖进 Field，用 Date Hierarchy，保留 Year、Quarter、Month，删掉 Day，再删掉旧字段。
+2. Excp：把 `#Excep Mssg Key` 拖进 Field，删掉旧字段。
 
 ## 第 5 步：验证
 在 DAX query view 里跑：
 
 ```dax
 EVALUATE
-VAR _shown =
-    FILTER (
-        'SQL_Qnotes Tasks',
-        'SQL_Qnotes Tasks'[#Task Status] <> "Completed"
-            && 'SQL_Qnotes Tasks'[#ECC Superseded by S4] = "N"
-    )
-RETURN
-    ROW (
-        "Rows shown", COUNTROWS ( _shown ),
-        "Old and New", COUNTROWS ( FILTER ( _shown, 'SQL_Qnotes Tasks'[#Old Notif No] <> "" && 'SQL_Qnotes Tasks'[#New Notif No] <> "" ) ),
-        "Old blank", COUNTROWS ( FILTER ( _shown, 'SQL_Qnotes Tasks'[#Old Notif No] = "" ) ),
-        "New blank", COUNTROWS ( FILTER ( _shown, 'SQL_Qnotes Tasks'[#New Notif No] = "" ) )
-    )
+ROW (
+    "ZMMRP rows", COUNTROWS ( 'Excel_ZMMRP S4' ),
+    "Open PO rows", COUNTROWS ( 'SQL_Open PO' ),
+    "Rsch filled", COUNTROWS ( FILTER ( 'SQL_Open PO', NOT ISBLANK ( 'SQL_Open PO'[#Rsch dt wo GR] ) ) ),
+    "Excp filled", COUNTROWS ( FILTER ( 'SQL_Open PO', 'SQL_Open PO'[#Excep Mssg Key] <> "" ) )
+)
 ```
 
-按你发我的这份数据（最后刷新 11/11，没再刷新的话），结果应该是 58 / 45 / 11 / 2。这些数字是我用数据模拟出来的，DAX 我没法在 Power BI 里实跑，所以请再抽查几行：
+用你发我的这份导出，且 Open PO 没有重新刷新的话，结果应该是 10,509 / 10,460 / 8,412 / 8,864。如果你刷新过 Open PO，数字会变，但两列的填充率应该都在 80% 以上。
 
-| 查什么 | 应该看到 |
-|---|---|
-| 201454719 和 204000600 | 只剩 2 行（原来 4 行） |
-| 201453918、201453540、201450882 | 表里找不到 |
-| 204001619（S4 新建的） | Old 空，New 204001619 |
-| 201453661（没有对应） | Old 201453661，New 空，2 行 |
+再抽查几行：
 
-## 两点提醒
-- **201454909 也会消失。** 它的新号 204000298 不在数据里，我判断不了 S4 是否已关，你在 S4 里看一眼。
-- **以后有新的对应**，在第 1 步的表里加一行就行，其他不用动。
+| PO / Item / Schd | Rsch dt wo GR | Excp |
+|---|---|---|
+| 4540101352 / 7 / 1 | 11/3/2026 | 10 |
+| 4540095009 / 11 / 1 | 12/9/2026 | 10 |
+| 4540029587 / 2 / 1 | 1/21/2027 | 15 |
+| 4540043893 / 1 / 2 | 1/11/2027 | 10 |
+| 4540043893 / 1 / 1 | 空 | 空 |
 
-Qnotes Summary 和 Qnotes Details 两页的 Open Task 统计里也包含这 32 行旧记录，要不要也加上同样的筛选？
+## 你需要知道的几点
+- **有 449 行（4.3%）对不上，两列会是空的。**
+  - 220 行是因为 ZMMRP 把同一个 PO item 的多条 schedule line 合成了一行。例如 4540040336 item 2，Open PO 有 3 条（41、60、60），ZMMRP 只有 schd 3 一行，数量 161。
+  - 138 行是整个 PO item 不在 ZMMRP 里，可能是时间差：PBIX 的数据是 11/11 的，导出是 11/12 的。
+  - 剩下 91 行原因不明。
+- **有 104 个 key（约 1%）在 ZMMRP 里出现多行，其中 61 个的日期或 Excp 互相不同。** 我的规则是取 Rsch 日期最早的那行，也就是最急的那条。旧查询也是只取一行，按 OID 最大取的。你想换规则的话告诉我。
+- **Excp 现在是文本**，显示成 07、10、15、20，和 ZMMRP 里一样，原来是数字 7、10。
+- **导出的 layout 要保持不变**，至少要有 Order、Item、SLn、MRP El、Excep Mssg、Rsch dt wo、MRP Excep Txt 这几列，缺了查询会报错并指出缺哪一列。
+- **Service 上自动刷新**需要 gateway 能读到这个新文件夹，和 `DMT_Snapshot` 那个文件夹一样的处理。
+
+那 220 行被合并的 schedule line，要不要我加一条规则，让它们沿用同一个 PO item 那一行的日期和 Excp？
