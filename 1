@@ -1,21 +1,61 @@
--- ① 列名和类型
-SELECT ORDINAL_POSITION AS POS, COLUMN_NAME, DATA_TYPE
-FROM DUN02_HESDATAMART01.INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'PLNT_MTRL_SRC'
-ORDER BY ORDINAL_POSITION;
-
--- ② 2750 的 20 行样本
-SELECT TOP 20 * FROM DUN02_HESDATAMART01.dbo.PLNT_MTRL_SRC WITH (NOLOCK)
-WHERE PLNT_CD = '2750';
-
--- ③ 2750 有多少行，最新创建到哪天
-SELECT COUNT(*) AS rows_2750, MAX(CREAT_DT) AS last_created
-FROM DUN02_HESDATAMART01.dbo.PLNT_MTRL_SRC WITH (NOLOCK)
-WHERE PLNT_CD = '2750';
-
--- ④ Excel supplier tab 里那 11 个 PN
-SELECT * FROM DUN02_HESDATAMART01.dbo.PLNT_MTRL_SRC WITH (NOLOCK)
-WHERE PLNT_CD = '2750'
-  AND SUBSTRING(MTRL_NBR, PATINDEX('%[^0]%', MTRL_NBR + '.'), 40) IN
-      ('102813162','101404960','101006006','102469034','100141408','101653023',
-       '101719203','101608658','101893759','101533843','120167218');
+let
+    Source = Sql.Database("scgreporting", "dun02_hesdatamart01", [Query = "
+WITH IR AS (
+    SELECT h.MTRL_OID, h.VNDR_OID, p.PRCH_ORG_CD,
+           h.INFO_NBR, h.BASE_UOM_CD, h.PO_PRC_UOM_CD,
+           p.NET_PRC, p.CRNCY_CD, p.PRC_UNIT,
+           p.MIN_PRCH_ORDR_QTY, p.STD_PRCH_ORDR_QTY, p.PLN_DLVRY_DAYS, p.SHIP_INST_CD,
+           ROW_NUMBER() OVER (PARTITION BY h.MTRL_OID, h.VNDR_OID, p.PRCH_ORG_CD
+                              ORDER BY CASE WHEN p.INFO_CATG_CD = '0' THEN 0 ELSE 1 END,
+                                       p.CREAT_DT DESC) AS rn
+    FROM [DUN02_HESDATAMART01].[dbo].[PRCH_INFO] p WITH (NOLOCK)
+    JOIN [DUN02_HESDATAMART01].[dbo].[PRCH_ORG_INFO] h WITH (NOLOCK)
+      ON h.OID = p.PRCH_ORG_INFO_OID
+    WHERE p.PLNT_CD = '2750' AND p.PRCH_ORG_DEL_FLG = 0 AND ISNULL(h.DEL_FLG, 0) = 0
+)
+SELECT
+    s.MTRL_NBR                   AS [Material],
+    s.PLNT_CD                    AS [Plnt],
+    v.VNDR_NBR                   AS [Vendor],
+    v.SRCH_STRNG_1               AS [VendName],
+    s.VLD_FRM_DT                 AS [ValidFrm],
+    s.VLD_TO_DT                  AS [ValidTo],
+    s.PRCH_ORG_CD                AS [POrg],
+    s.FXD_VNDR_IND               AS [FVd],
+    s.NOTKZ_BLCKD_SRC_SUPPLY     AS [Blk],
+    s.MTRL_PLN_USE_CD            AS [MRP],
+    ir.INFO_NBR                  AS [PInfoRec],
+    ir.BASE_UOM_CD               AS [BUn],
+    ir.NET_PRC                   AS [NetPrice],
+    ir.CRNCY_CD                  AS [Crcy],
+    ir.PRC_UNIT                  AS [Per],
+    ir.PO_PRC_UOM_CD             AS [OUn],
+    s.PRCH_AGRMNT_NBR            AS [Agreement],
+    CAST(ISNULL(s.PRCH_AGRMNT_ITM_NBR, 0) AS varchar(10)) AS [Item],
+    ir.MIN_PRCH_ORDR_QTY         AS [MinQty],
+    ir.STD_PRCH_ORDR_QTY         AS [StdQty],
+    ir.PLN_DLVRY_DAYS            AS [PDT],
+    CASE WHEN LEN(ir.SHIP_INST_CD) = 1 THEN '0' + ir.SHIP_INST_CD
+         ELSE ir.SHIP_INST_CD END AS [SI],
+    v.CNTRY_CD                   AS [Cty]
+FROM [DUN02_HESDATAMART01].[dbo].[PLNT_MTRL_SRC] s WITH (NOLOCK)
+LEFT JOIN [DUN02_HESDATAMART01].[dbo].[PLNT_MTRL] pm WITH (NOLOCK)
+       ON pm.OID = s.PLNT_MTRL_OID
+LEFT JOIN [DUN02_HESDATAMART01].[dbo].[VNDR] v WITH (NOLOCK)
+       ON v.OID = s.VNDR_OID
+LEFT JOIN IR ir
+       ON ir.MTRL_OID = pm.MTRL_OID
+      AND ir.VNDR_OID = s.VNDR_OID
+      AND ir.PRCH_ORG_CD = s.PRCH_ORG_CD
+      AND ir.rn = 1
+WHERE s.PLNT_CD = '2750'"]),
+    Cleaned = Table.TransformColumns(Source, {
+        {"Material", each if _ = null then null else Text.TrimStart(Text.Trim(_), "0"), type text},
+        {"Vendor",   each if _ = null then null else Text.TrimStart(Text.Trim(_), "0"), type text},
+        {"VendName", each if _ = null then null else Text.Trim(_), type text}}),
+    Typed = Table.TransformColumnTypes(Cleaned, {
+        {"ValidFrm", type date}, {"ValidTo", type date},
+        {"NetPrice", type number}, {"Per", type number}, {"MinQty", type number},
+        {"StdQty", type number}, {"PDT", type number}})
+in
+    Typed
