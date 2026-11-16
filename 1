@@ -1,61 +1,125 @@
+你说得对，是我上一条理解错了。我以为“全换成 ZMMRP”是要把整张停更的 `SQL_Purc ShNt` 换掉。那张表还连着 Month Analysis、Pull-in / Push-out、PIPO、Stock in Transit 四页，所以才那么复杂。
+
+我没有动你的文件，只是给了代码。你还没粘贴的话就忽略那条；如果已经粘贴了，告诉我，我帮你看怎么撤回。那四页现在还是 9/30 的旧数据，以后要修再用那条。
+
+你的做法可以，只有一点要注意：ZMMRP 里没有叫 Del Date 的列。它有两个日期：
+
+- **PO Sch Del**：就是表里现在的 PO 交期。code 10 的 7,434 行里有 7,405 行和现在的 Del Date 完全一样，换成它等于没换。
+- **MAD wo GR**：code 10 / 15 实际是拿这个日期比的，要换的是这一列。
+
+## 第 1 步：让 `Excel_ZMMRP S4` 多带出 MAD wo GR
+打开 `Excel_ZMMRP S4` 的 Advanced Editor，先复制你自己的 `FolderPath` 那一行，再全部替换成下面的代码，然后把 `FolderPath` 那一行换回你的。
+
+和之前那版相比只多了 MAD wo GR 这一列，原有列的结果不变。
+
+```m
 let
-    Source = Sql.Database("scgreporting", "dun02_hesdatamart01", [Query = "
-WITH IR AS (
-    SELECT h.MTRL_OID, h.VNDR_OID, p.PRCH_ORG_CD,
-           h.INFO_NBR, h.BASE_UOM_CD, h.PO_PRC_UOM_CD,
-           p.NET_PRC, p.CRNCY_CD, p.PRC_UNIT,
-           p.MIN_PRCH_ORDR_QTY, p.STD_PRCH_ORDR_QTY, p.PLN_DLVRY_DAYS, p.SHIP_INST_CD,
-           ROW_NUMBER() OVER (PARTITION BY h.MTRL_OID, h.VNDR_OID, p.PRCH_ORG_CD
-                              ORDER BY CASE WHEN p.INFO_CATG_CD = '0' THEN 0 ELSE 1 END,
-                                       p.CREAT_DT DESC) AS rn
-    FROM [DUN02_HESDATAMART01].[dbo].[PRCH_INFO] p WITH (NOLOCK)
-    JOIN [DUN02_HESDATAMART01].[dbo].[PRCH_ORG_INFO] h WITH (NOLOCK)
-      ON h.OID = p.PRCH_ORG_INFO_OID
-    WHERE p.PLNT_CD = '2750' AND p.PRCH_ORG_DEL_FLG = 0 AND ISNULL(h.DEL_FLG, 0) = 0
-)
-SELECT
-    s.MTRL_NBR                   AS [Material],
-    s.PLNT_CD                    AS [Plnt],
-    v.VNDR_NBR                   AS [Vendor],
-    v.SRCH_STRNG_1               AS [VendName],
-    s.VLD_FRM_DT                 AS [ValidFrm],
-    s.VLD_TO_DT                  AS [ValidTo],
-    s.PRCH_ORG_CD                AS [POrg],
-    s.FXD_VNDR_IND               AS [FVd],
-    s.NOTKZ_BLCKD_SRC_SUPPLY     AS [Blk],
-    s.MTRL_PLN_USE_CD            AS [MRP],
-    ir.INFO_NBR                  AS [PInfoRec],
-    ir.BASE_UOM_CD               AS [BUn],
-    ir.NET_PRC                   AS [NetPrice],
-    ir.CRNCY_CD                  AS [Crcy],
-    ir.PRC_UNIT                  AS [Per],
-    ir.PO_PRC_UOM_CD             AS [OUn],
-    s.PRCH_AGRMNT_NBR            AS [Agreement],
-    CAST(ISNULL(s.PRCH_AGRMNT_ITM_NBR, 0) AS varchar(10)) AS [Item],
-    ir.MIN_PRCH_ORDR_QTY         AS [MinQty],
-    ir.STD_PRCH_ORDR_QTY         AS [StdQty],
-    ir.PLN_DLVRY_DAYS            AS [PDT],
-    CASE WHEN LEN(ir.SHIP_INST_CD) = 1 THEN '0' + ir.SHIP_INST_CD
-         ELSE ir.SHIP_INST_CD END AS [SI],
-    v.CNTRY_CD                   AS [Cty]
-FROM [DUN02_HESDATAMART01].[dbo].[PLNT_MTRL_SRC] s WITH (NOLOCK)
-LEFT JOIN [DUN02_HESDATAMART01].[dbo].[PLNT_MTRL] pm WITH (NOLOCK)
-       ON pm.OID = s.PLNT_MTRL_OID
-LEFT JOIN [DUN02_HESDATAMART01].[dbo].[VNDR] v WITH (NOLOCK)
-       ON v.OID = s.VNDR_OID
-LEFT JOIN IR ir
-       ON ir.MTRL_OID = pm.MTRL_OID
-      AND ir.VNDR_OID = s.VNDR_OID
-      AND ir.PRCH_ORG_CD = s.PRCH_ORG_CD
-      AND ir.rn = 1
-WHERE s.PLNT_CD = '2750'"]),
-    Cleaned = Table.TransformColumns(Source, {
-        {"Material", each if _ = null then null else Text.TrimStart(Text.Trim(_), "0"), type text},
-        {"Vendor",   each if _ = null then null else Text.TrimStart(Text.Trim(_), "0"), type text},
-        {"VendName", each if _ = null then null else Text.Trim(_), type text}}),
-    Typed = Table.TransformColumnTypes(Cleaned, {
-        {"ValidFrm", type date}, {"ValidTo", type date},
-        {"NetPrice", type number}, {"Per", type number}, {"MinQty", type number},
-        {"StdQty", type number}, {"PDT", type number}})
+    // ===== 1. Folder that holds the ZMMRP exports: keep your own path here =====
+    FolderPath = "\\ap1nas101it0593.file.core.windows.net\sinfile\Data\Procurement\Buyer's Folder\Jiaqi\ZMMRP S4",
+
+    // ===== 2. Take the newest .xlsx in that folder =====
+    Files = Folder.Files(FolderPath),
+    XlsxFiles = Table.SelectRows(Files, each Text.Lower([Extension]) = ".xlsx" and not Text.StartsWith([Name], "~$")),
+    Latest = if Table.IsEmpty(XlsxFiles)
+        then error "ZMMRP: no .xlsx file found in " & FolderPath
+        else Table.First(Table.Sort(XlsxFiles, {{"Date modified", Order.Descending}})),
+    Book = Excel.Workbook(Latest[Content], null, true),
+    Raw = Table.SelectRows(Book, each [Kind] = "Sheet"){0}[Data],
+
+    // ===== 3. Find the header row and the columns by name =====
+    Clean = (v as any) as text => if v = null then "" else Text.Trim(Text.From(v)),
+    AllRows = List.Buffer(Table.ToRows(Raw)),
+    HeaderFlags = List.Transform(AllRows, (r) => let c = List.Transform(r, Clean) in List.Contains(c, "Order") and List.Contains(c, "MRP El")),
+    HeaderIndex = if List.PositionOf(HeaderFlags, true) < 0
+        then error "ZMMRP: header row with Order and MRP El not found"
+        else List.PositionOf(HeaderFlags, true),
+    Header = List.Transform(AllRows{HeaderIndex}, Clean),
+    Col = (name as text) as number =>
+        let i = List.PositionOf(List.Transform(Header, each Text.StartsWith(_, name)), true)
+        in if i < 0 then error "ZMMRP: column not found: " & name else i,
+    iOrder = Col("Order"),
+    iItem = Col("Item"),
+    iSLn = Col("SLn"),
+    iEl = Col("MRP El"),
+    iExc = Col("Excep Mssg"),
+    iRsch = Col("Rsch dt wo"),
+    iTxt = Col("MRP Excep Txt"),
+    iMad = Col("MAD wo GR"),
+
+    // ===== 4. Converters (independent of the PC's regional settings) =====
+    ToDate = (v as any) as nullable date =>
+        if v = null then null
+        else if v is date then v
+        else if v is datetime then Date.From(v)
+        else
+            let
+                t = Text.Trim(Text.From(v)),
+                sep = if Text.Contains(t, "/") then "/" else if Text.Contains(t, ".") then "." else "-",
+                p = Text.Split(t, sep)
+            in
+                if List.Count(p) <> 3 then null
+                else try (
+                    if Text.Length(p{0}) = 4 then #date(Number.FromText(p{0}), Number.FromText(p{1}), Number.FromText(p{2}))
+                    else if sep = "." then #date(Number.FromText(p{2}), Number.FromText(p{1}), Number.FromText(p{0}))
+                    else #date(Number.FromText(p{2}), Number.FromText(p{0}), Number.FromText(p{1}))
+                ) otherwise null,
+    ToKey = (v as any) as nullable text => let t = Clean(v) in if t = "" then null else Text.PadStart(t, 2, "0"),
+    ToText = (v as any) as nullable text => let t = Clean(v) in if t = "" then null else t,
+
+    // ===== 5. Keep PO lines (ShNt / Purc) and build the same key as SQL_Open PO =====
+    DataRows = List.Skip(AllRows, HeaderIndex + 1),
+    Picked = Table.FromRows(
+        List.Transform(DataRows, (r) => {Clean(r{iOrder}), Clean(r{iItem}), Clean(r{iSLn}), Clean(r{iEl}), ToKey(r{iExc}), ToDate(r{iRsch}), ToText(r{iTxt}), ToDate(r{iMad})}),
+        type table [Order = text, Item = text, SLn = text, MRP El = text, Excep Mssg Key = nullable text, Rsch dt wo GR = nullable date, MRP Excep Txt = nullable text, MAD wo GR = nullable date]),
+    PORows = Table.SelectRows(Picked, each (Text.Lower([MRP El]) = "shnt" or Text.Lower([MRP El]) = "purc") and [Order] <> "" and [Item] <> "" and [SLn] <> ""),
+    WithKey = Table.AddColumn(PORows, "PO_Item_Schd", each Text.TrimStart([Order], "0") & "_" & Text.TrimStart([Item], "0") & "_" & Text.TrimStart([SLn], "0"), type text),
+
+    // ===== 6. One row per PO_Item_Schd: earliest reschedule date first, rows with a message before rows without, then earliest MRP date =====
+    Grouped = Table.Group(WithKey, {"PO_Item_Schd"}, {{"Pick", (t) =>
+        Table.First(Table.Sort(t, {
+            {each if [Rsch dt wo GR] = null then #date(9999, 12, 31) else [Rsch dt wo GR], Order.Ascending},
+            {each if [Excep Mssg Key] = null then "99" else [Excep Mssg Key], Order.Ascending},
+            {each if [MAD wo GR] = null then #date(9999, 12, 31) else [MAD wo GR], Order.Ascending}
+        })), type record}}),
+    Expanded = Table.ExpandRecordColumn(Grouped, "Pick", {"Rsch dt wo GR", "Excep Mssg Key", "MRP Excep Txt", "MRP El", "MAD wo GR"}),
+    Typed = Table.TransformColumnTypes(Expanded, {{"PO_Item_Schd", type text}, {"Rsch dt wo GR", type date}, {"Excep Mssg Key", type text}, {"MRP Excep Txt", type text}, {"MRP El", type text}, {"MAD wo GR", type date}}),
+    Result = Table.AddColumn(Typed, "Export File", each Latest[Name], type text)
 in
-    Typed
+    Result
+```
+
+Close & Apply。
+
+## 第 2 步：在 `SQL_Open PO` 上加一列
+Table tools > New column：
+
+```dax
+#MRP Del Date = 
+COALESCE (
+    LOOKUPVALUE (
+        'Excel_ZMMRP S4'[MAD wo GR],
+        'Excel_ZMMRP S4'[PO_Item_Schd], 'SQL_Open PO'[PO_Item_Schd.]
+    ),
+    'SQL_Open PO'[ITM_DLVRY_DT]
+)
+```
+
+ZMMRP 里找不到的那 449 行会退回显示 PO 交期，这些行本来就没有 Rsch 和 Excp，所以不会出现矛盾。在 Column tools 里把 Format 设成 Short Date。
+
+## 第 3 步：换表里的列
+1. 把 `#MRP Del Date` 拖进 Details 表，放在第一列。如果它变成了 Date Hierarchy，点下拉箭头选 `#MRP Del Date`。
+2. 删掉原来的 Del Date。
+3. 双击新列，显示名改成 `Del Date`。
+4. 点一下列头，重新按它排序（原来的排序跟着旧列一起删掉了）。
+
+## 改完后
+按你那份导出模拟的结果：
+
+- **哪些行变了**：1,760 行的日期会变（933 行变晚，827 行变早），其余行和原来一样。
+- **code 10**：有 Rsch 的 7,423 行，Rsch 全部早于新的 Del Date，一行例外都没有。
+- **code 15**：989 行，Rsch 全部晚于新的 Del Date。
+
+可以用你截图里的第一行核对：PO 4540048145 / item 8 / schd 1，Del Date 从 12/8/2026 变成 3/17/2027，Rsch 是 2/18/2027，code 10。
+
+## 一个要注意的地方
+页面上方的 **Del Date slicer** 还是按 PO 交期筛选的（它连的是 `ITM_DLVRY_DT`），所以那 1,760 行可能出现选了 12 月、表里却显示 3 月的情况。如果介意，可以把表里这一列改名叫 `MRP Date`，避免和 slicer 混淆。
