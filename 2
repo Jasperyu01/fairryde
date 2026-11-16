@@ -1,15 +1,200 @@
-EVALUATE
-SUMMARIZECOLUMNS (
-    PPV_Details[Source File],
-    PPV_Details[File Modified],
-    PPV_Details[Year],
-    PPV_Details[Month],
-    "Rows", COUNTROWS ( PPV_Details ),
-    "Max GR Date", MAX ( PPV_Details[GR Date] )
-)
+// PPV_Details: loads the finance "PPV Details" exports (sheet "Export") from one folder.
+// For each Year-Month only the newest file is kept, so new daily MTD files can simply be added.
+// The Year-Month of a file is taken from the GR dates inside it, not from the Year and Month columns of the export.
+let
+    // ===== 1. Folder that holds the exports: change this one line =====
+    FolderPath = "C:\Users\H329097\OneDrive - Halliburton\Desktop\PPV Details",
 
-EVALUATE
-SUMMARIZECOLUMNS (
-    'SQL_Receipts Profit Centre'[DATA_SOURCE],
-    "Max Posting Date", MAX ( 'SQL_Receipts Profit Centre'[POSTING_DATE] )
-)
+    Source = Folder.Files(FolderPath),
+    XlsxFiles = Table.SelectRows(Source, each Text.Lower([Extension]) = ".xlsx" and not Text.StartsWith([Name], "~$")),
+    FileList = Table.SelectColumns(XlsxFiles, {"Content", "Name", "Folder Path", "Date modified"}),
+
+    // ===== 2. Read the "Export" sheet of every file =====
+    RequiredColumns = {
+        "Final PSL Name", "Plant", "Material", "Material Desc", "Profit Center", "Last_Ref Doc #",
+        "Procure Type", "Buyer Code", "Buyer Desc", "Supplier", "Supplier Name", "PO", "PO Itm",
+        "Inventory Amt", "ML31", "Matapp%", "Actual Matapp", "Calc Matapp", "Mat App adj",
+        "Posted PPV Fav/(Unfav)", "Calc PPV Fav/(Unfav)", "GR Date", "Last_GR Price", "Qty",
+        "PPX Price", "Last_Mvt", "Month", "Year"
+    },
+    // Files without an "Export" sheet are skipped; a missing column raises an error that names it
+    ReadExport = (FileContent as binary) as nullable table =>
+        let
+            Workbook = Excel.Workbook(FileContent, null, true),
+            ExportSheet = Table.SelectRows(Workbook, each [Kind] = "Sheet" and [Name] = "Export")
+        in
+            if Table.IsEmpty(ExportSheet) then null
+            else Table.SelectColumns(
+                Table.PromoteHeaders(ExportSheet{0}[Data], [PromoteAllScalars = true]),
+                RequiredColumns,
+                MissingField.Error),
+    WithData = Table.AddColumn(FileList, "Data", each ReadExport([Content])),
+    ExportFiles = Table.SelectRows(WithData, each [Data] <> null),
+    Expanded = Table.ExpandTableColumn(Table.RemoveColumns(ExportFiles, {"Content"}), "Data", RequiredColumns),
+
+    // ===== 3. Drop the "Applied filters" footer row and blank rows =====
+    DataRows = Table.SelectRows(Expanded, each [Plant] <> null and Text.Trim(Text.From([Plant], "en-US")) <> ""),
+
+    // ===== 4. Model-friendly column names =====
+    Renamed = Table.RenameColumns(DataRows, {
+        {"Final PSL Name", "PSL"}, {"Material Desc", "Item Text"}, {"Last_Ref Doc #", "Last Ref Doc"},
+        {"PO Itm", "PO Item"}, {"Matapp%", "Mat App %"}, {"Mat App adj", "Mat App Adj"},
+        {"Posted PPV Fav/(Unfav)", "Posted PPV"}, {"Calc PPV Fav/(Unfav)", "Calc PPV"},
+        {"Last_GR Price", "Last GR Price"}, {"Last_Mvt", "Last Mvt Type"},
+        {"Name", "Source File"}, {"Date modified", "File Modified"}
+    }),
+
+    // ===== 5. Clean text (line breaks -> space, single spaces, "" -> null); trim leading zeros on key columns =====
+    TextColumns = {
+        "PSL", "Plant", "Material", "Item Text", "Profit Center", "Last Ref Doc", "Procure Type",
+        "Buyer Code", "Buyer Desc", "Supplier", "Supplier Name", "PO", "PO Item", "Last Mvt Type"
+    },
+    CleanText = (v as any) as nullable text =>
+        let
+            Raw = if v = null then null
+                else Text.Replace(Text.Replace(Text.From(v, "en-US"), "#(cr)", ""), "#(lf)", " "),
+            Words = if Raw = null then {} else List.Select(Text.Split(Raw, " "), each _ <> ""),
+            Joined = Text.Combine(Words, " ")
+        in
+            if Joined = "" then null else Joined,
+    TextCleaned = Table.TransformColumns(Renamed, List.Transform(TextColumns, (c) => {c, CleanText, type nullable text})),
+    KeyColumns = {"Material", "Supplier", "PO", "PO Item"},
+    TrimZeros = (v as nullable text) as nullable text =>
+        let
+            t = if v = null then null else Text.TrimStart(v, "0")
+        in
+            if t = null or t = "" then null else t,
+    KeysCleaned = Table.TransformColumns(TextCleaned, List.Transform(KeyColumns, (c) => {c, TrimZeros, type nullable text})),
+
+    // ===== 6. Data types (the export stores numbers as text; "(123.45)" style negatives are also accepted) =====
+    NumberColumns = {
+        "Inventory Amt", "Actual Matapp", "Calc Matapp", "Mat App Adj", "Posted PPV", "Calc PPV",
+        "ML31", "Mat App %", "Last GR Price", "Qty", "PPX Price"
+    },
+    FixNegative = (v as any) as any =>
+        let
+            t = if v is text then Text.Trim(v) else null
+        in
+            if t <> null and Text.StartsWith(t, "(") and Text.EndsWith(t, ")")
+            then "-" & Text.Middle(t, 1, Text.Length(t) - 2)
+            else v,
+    NegativesFixed = Table.TransformColumns(KeysCleaned, List.Transform(NumberColumns, (c) => {c, FixNegative})),
+    // Buffered once, so the files are read a single time even though later steps use this table twice
+    Typed = Table.Buffer(Table.TransformColumnTypes(NegativesFixed, {
+        {"Inventory Amt", Currency.Type}, {"Actual Matapp", Currency.Type}, {"Calc Matapp", Currency.Type},
+        {"Mat App Adj", Currency.Type}, {"Posted PPV", Currency.Type}, {"Calc PPV", Currency.Type},
+        {"ML31", type number}, {"Mat App %", type number}, {"Last GR Price", type number},
+        {"Qty", type number}, {"PPX Price", type number},
+        {"GR Date", type date}, {"Month", Int64.Type}, {"Year", Int64.Type}, {"File Modified", type datetime}
+    }, "en-US")),
+
+    // ===== 7. Fill gaps so every PO line has one supplier name, one buyer and one description =====
+    // 7a. Supplier Name: same supplier on other rows; interco P-codes labeled
+    NameMap = Table.Buffer(
+        Table.Distinct(
+            Table.SelectRows(Table.SelectColumns(Typed, {"Supplier", "Supplier Name"}), each [Supplier] <> null and [Supplier Name] <> null),
+            {"Supplier"})),
+    WithName = Table.ExpandTableColumn(
+        Table.NestedJoin(Typed, {"Supplier"}, NameMap, {"Supplier"}, "NameMap", JoinKind.LeftOuter),
+        "NameMap", {"Supplier Name"}, {"Mapped Supplier Name"}),
+    NameFilled = Table.AddColumn(WithName, "Supplier Name Filled", each
+        if [Supplier Name] <> null then [Supplier Name]
+        else if [Mapped Supplier Name] <> null then [Mapped Supplier Name]
+        else if [Supplier] = null then "(No supplier - adjustment)"
+        else if Text.StartsWith([Supplier], "P") then "Interco " & [Supplier]
+        else [Supplier], type text),
+    NameDone = Table.RenameColumns(
+        Table.RemoveColumns(NameFilled, {"Supplier Name", "Mapped Supplier Name"}),
+        {{"Supplier Name Filled", "Supplier Name"}}),
+
+    // 7b. PO Line Key, and buyer for invoice-side rows taken from another row of the same PO line
+    AddPOLineKey = Table.AddColumn(NameDone, "PO Line Key", each
+        if [PO] = null then null
+        else [PO] & "-" & (if [PO Item] = null then "" else [PO Item]), type nullable text),
+    BuyerMap = Table.Buffer(
+        Table.Distinct(
+            Table.SelectRows(Table.SelectColumns(AddPOLineKey, {"PO Line Key", "Buyer Code", "Buyer Desc"}), each [PO Line Key] <> null and [Buyer Desc] <> null),
+            {"PO Line Key"})),
+    WithBuyer = Table.ExpandTableColumn(
+        Table.NestedJoin(AddPOLineKey, {"PO Line Key"}, BuyerMap, {"PO Line Key"}, "BuyerMap", JoinKind.LeftOuter),
+        "BuyerMap", {"Buyer Code", "Buyer Desc"}, {"Mapped Buyer Code", "Mapped Buyer Desc"}),
+    BuyerFilled = Table.AddColumn(
+        Table.AddColumn(WithBuyer, "Buyer Code Filled", each
+            if [Buyer Code] <> null then [Buyer Code] else [Mapped Buyer Code], type nullable text),
+        "Buyer Desc Filled", each
+            if [Buyer Desc] <> null then [Buyer Desc] else [Mapped Buyer Desc], type nullable text),
+    BuyerDone = Table.RenameColumns(
+        Table.RemoveColumns(BuyerFilled, {"Buyer Code", "Buyer Desc", "Mapped Buyer Code", "Mapped Buyer Desc"}),
+        {{"Buyer Code Filled", "Buyer Code"}, {"Buyer Desc Filled", "Buyer Desc"}}),
+
+    // 7c. One Material Description per material (Item Text can be a Q-note text on returns)
+    DescMap = Table.Group(
+        Table.SelectRows(BuyerDone, each [Material] <> null and [Item Text] <> null),
+        {"Material"},
+        {{"Material Description", each
+            let
+                FromGR = Table.SelectRows(_, each [Last Mvt Type] = "101")[Item Text]
+            in
+                if List.IsEmpty(FromGR) then List.First([Item Text]) else List.First(FromGR), type text}}),
+    WithDesc = Table.ExpandTableColumn(
+        Table.NestedJoin(BuyerDone, {"Material"}, DescMap, {"Material"}, "DescMap", JoinKind.LeftOuter),
+        "DescMap", {"Material Description"}, {"Mapped Material Description"}),
+    DescDone = Table.RemoveColumns(
+        Table.AddColumn(WithDesc, "Material Description", each
+            if [Mapped Material Description] <> null then [Mapped Material Description] else [Item Text], type nullable text),
+        {"Mapped Material Description"}),
+
+    // 7d. Finance month of each file. Every export holds one month, so the month is taken from the GR dates
+    //     in the file (the most common month). A wrong Year or Month value in the export can then no longer
+    //     move a file to another month. A file without any GR date keeps the Year and Month of the export.
+    DescBuffered = Table.Buffer(DescDone),
+    PeriodOfDates = (dates as list) as nullable number =>
+        let
+            Periods = List.Transform(List.RemoveNulls(dates), each Date.Year(_) * 100 + Date.Month(_))
+        in
+            if List.IsEmpty(Periods) then null else List.Mode(Periods),
+    FilePeriods = Table.Group(DescBuffered, {"Folder Path", "Source File"}, {
+        {"File Period", each try PeriodOfDates([GR Date]) otherwise null, type nullable number}}),
+    WithFilePeriod = Table.ExpandTableColumn(
+        Table.NestedJoin(DescBuffered, {"Folder Path", "Source File"}, FilePeriods, {"Folder Path", "Source File"}, "FilePeriods", JoinKind.LeftOuter),
+        "FilePeriods", {"File Period"}),
+    PeriodYear = Table.AddColumn(WithFilePeriod, "Period Year", each
+        if [File Period] = null then [Year] else Number.IntegerDivide([File Period], 100), Int64.Type),
+    PeriodMonth = Table.AddColumn(PeriodYear, "Period Month", each
+        if [File Period] = null then [Month] else Number.Mod([File Period], 100), Int64.Type),
+    PeriodDone = Table.RenameColumns(
+        Table.RemoveColumns(PeriodMonth, {"Year", "Month", "File Period"}),
+        {{"Period Year", "Year"}, {"Period Month", "Month"}}),
+
+    // ===== 8. Derived columns =====
+    // PPV Date: GR Date; rows without a GR date (invoice lines, MA/Reclass adjustments) go to the 1st of their month
+    AddPPVDate = Table.AddColumn(PeriodDone, "PPV Date", each
+        if [GR Date] <> null then [GR Date]
+        else if [Year] <> null and [Month] <> null then #date([Year], [Month], 1)
+        else null, type nullable date),
+    AddLineType = Table.AddColumn(AddPPVDate, "Line Type", each
+        if [PO] = null then "Non-PO adjustment"
+        else if [GR Date] = null then "Invoice (no GR date)"
+        else "GR / Return", type text),
+
+    // ===== 9. Keep only the newest file for each Year-Month (prevents double counting) =====
+    // The key includes the folder path, so a copy of the same file in a subfolder can never be counted twice
+    PeriodKey = (y as nullable number, m as nullable number) as text =>
+        (if y = null then "" else Text.From(y)) & "-" & (if m = null then "" else Text.From(m)),
+    AddFileKey = Table.Buffer(Table.AddColumn(AddLineType, "File Key", each
+        DateTime.ToText([File Modified], "yyyyMMddHHmmss") & "|" & [Folder Path] & [Source File], type nullable text)),
+    LatestFile = Table.Group(AddFileKey, {"Year", "Month"}, {{"Latest File Key", each List.Max([File Key]), type nullable text}}),
+    LatestKeys = List.Buffer(
+        Table.AddColumn(LatestFile, "Key", each PeriodKey([Year], [Month]) & "|" & [Latest File Key], type text)[Key]),
+    NewestOnly = Table.SelectRows(AddFileKey, each List.Contains(LatestKeys, PeriodKey([Year], [Month]) & "|" & [File Key])),
+
+    // ===== 10. Final columns =====
+    Result = Table.SelectColumns(NewestOnly, {
+        "PPV Date", "GR Date", "Year", "Month", "Line Type", "PO", "PO Item", "PO Line Key", "Last Ref Doc",
+        "Last Mvt Type", "Material", "Material Description", "Item Text", "Supplier", "Supplier Name",
+        "Buyer Code", "Buyer Desc", "Profit Center", "Procure Type", "Plant", "PSL", "Qty", "Last GR Price",
+        "ML31", "PPX Price", "Inventory Amt", "Mat App %", "Actual Matapp", "Calc Matapp", "Mat App Adj",
+        "Posted PPV", "Calc PPV", "Source File", "File Modified"
+    })
+in
+    Result
