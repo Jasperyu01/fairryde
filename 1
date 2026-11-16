@@ -1,81 +1,21 @@
-三张都不能直接用，但第三张给了一个关键线索：datamart 里应该还有一张由 S/4 喂数的 source list 表，只是我上次按表名没搜到。
+-- ① 列名和类型
+SELECT ORDINAL_POSITION AS POS, COLUMN_NAME, DATA_TYPE
+FROM DUN02_HESDATAMART01.INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'PLNT_MTRL_SRC'
+ORDER BY ORDINAL_POSITION;
 
-### 三张表的结论
+-- ② 2750 的 20 行样本
+SELECT TOP 20 * FROM DUN02_HESDATAMART01.dbo.PLNT_MTRL_SRC WITH (NOLOCK)
+WHERE PLNT_CD = '2750';
 
-**1. CTE19_Fixed_Vendor_Source_List（APP_SUPPORT 下 H195567 的个人表）：本身不能用，但线索最重要**
-* 只有 6 行，全是 plant 900，是别人做分析时建的中间表。
-* 它的列名是 datamart 的命名风格：PLNT_CD、VNDR_NBR、VLD_FRM_DT、VLD_TO_DT、FXD_VNDR_IND、SRC_LST_CATG_CD、MTRL_PLN_USE_CD。说明那个人是从一张 datamart 风格的 source list 表取的数。
-* 里面有 5 行是 2026-09-11 由 DATA_CNV 批量创建的。这个时间正好在 S/4 主数据迁移期间，所以那张底表很可能就是 S/4 来的数据。
-* 它的 Vendor Name 也是截到 25 个字符（比如 CENTURION FR LLC SUITE 10），说明那个人同样 join 的是 VNDR.SRCH_STRNG_1。
+-- ③ 2750 有多少行，最新创建到哪天
+SELECT COUNT(*) AS rows_2750, MAX(CREAT_DT) AS last_created
+FROM DUN02_HESDATAMART01.dbo.PLNT_MTRL_SRC WITH (NOLOCK)
+WHERE PLNT_CD = '2750';
 
-**2. VNDR_SRC_LST 和 VENDOR_SOURCE_LIST（CAR01_CPS_DATA）：结构对，但可能是旧数据**
-* 两张表的结构一样，就是 source list：物料、工厂、序号、供应商、有效期、固定供应商、MRP、协议号/行、冻结标记。
-* 是全球多工厂的（样本里有 2001、2020、2054、2070、2088、2300、2700），不只是 Carrollton，所以可能有 2750。
-* **疑点一：可能停在 ECC 冻结前。** 样本里最新的创建日期是 2026-08-28，正好是 8/30 主数据冻结前两天。如果之后不再更新，这就是 ECC 的最后快照，S/4 上线后新增或修改的 source list 都不在里面。
-* **疑点二：新记录不完整。** 2026 年的新记录 Purch_Org 是 0，info record 和价格都是空的。
-* 另外，Sheet2 里 MRP_Ind 显示成 1900-01-01、Agreement 显示 #VALUE!，是 Excel 单元格格式把数字当成日期了，数据本身没问题。
-
-### 下一步：跑这两段
-
-**A. 按列名在整台服务器上找那张底表**
-
-这段整段一起执行。CTE19 自己会出现在结果里，这是正常的，要看的是除它以外的表。
-
-```sql
-IF OBJECT_ID('tempdb..#cols') IS NOT NULL DROP TABLE #cols;
-CREATE TABLE #cols (DB sysname, TABLE_SCHEMA sysname, TABLE_NAME sysname, COLUMN_NAME sysname);
-DECLARE @db sysname, @q nvarchar(max);
-DECLARE c CURSOR LOCAL FAST_FORWARD FOR
-    SELECT name FROM sys.databases WHERE state_desc = 'ONLINE' AND HAS_DBACCESS(name) = 1;
-OPEN c;
-FETCH NEXT FROM c INTO @db;
-WHILE @@FETCH_STATUS = 0
-BEGIN
-    SET @q = N'SELECT ' + QUOTENAME(@db, '''') + N', TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME FROM '
-           + QUOTENAME(@db) + N'.INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME IN '
-           + N'(''FXD_VNDR_IND'', ''SRC_LST_CATG_CD'', ''MTRL_PLN_USE_CD'', ''FXD_PRCH_AGRMNT_IND'', ''FXD_ISU_PLNT_IND'')';
-    BEGIN TRY
-        INSERT INTO #cols EXEC sp_executesql @q;
-    END TRY
-    BEGIN CATCH
-        PRINT 'skipped ' + @db;
-    END CATCH;
-    FETCH NEXT FROM c INTO @db;
-END;
-CLOSE c;
-DEALLOCATE c;
-SELECT DB, TABLE_SCHEMA, TABLE_NAME, COUNT(*) AS hits
-FROM #cols
-GROUP BY DB, TABLE_SCHEMA, TABLE_NAME
-ORDER BY hits DESC, DB, TABLE_NAME;
-```
-
-**B. 看 CAR01 那两张表有没有 2750、S/4 之后还更不更新（备选）**
-
-```sql
-SELECT 'VNDR_SRC_LST' AS tbl,
-       SUM(CASE WHEN CAST(Plant AS varchar(10)) = '2750' THEN 1 ELSE 0 END) AS rows_2750,
-       MAX(CASE WHEN CAST(Plant AS varchar(10)) = '2750' THEN Create_Date END) AS last_created_2750,
-       MAX(Create_Date) AS last_created_all
-FROM CAR01_CPS_DATA.dbo.VNDR_SRC_LST WITH (NOLOCK)
-UNION ALL
-SELECT 'VENDOR_SOURCE_LIST',
-       SUM(CASE WHEN CAST(Plant AS varchar(10)) = '2750' THEN 1 ELSE 0 END),
-       MAX(CASE WHEN CAST(Plant AS varchar(10)) = '2750' THEN Create_Date END),
-       MAX(Create_Date)
-FROM CAR01_CPS_DATA.dbo.VENDOR_SOURCE_LIST WITH (NOLOCK);
-```
-
-### 怎么判断结果
-
-* **A 搜到了 CTE19 以外的表**：最理想。再对那张表跑一句 `SELECT TOP 20 * FROM [库].[schema].[表] WHERE PLNT_CD = '2750'` 发我，我写第 2 页的最终 SQL。
-* **A 只搜到 CTE19**：多半是那张表存在，但你没有读权限，所以在 INFORMATION_SCHEMA 里看不到。这时看 B：
-  * **B 里 rows_2750 在 12 万左右，而且 last_created_all 晚于 10/15**：可以先用它。
-  * **B 停在 8 月底**：那是 ECC 冻结前的快照，不建议用。就把下面这条发给 Leo，向他要表名和读权限。
-* 关于第 2 点：你还没去 SAP MM03 查 103028399 的话，先查一下。如果 SAP 里它的标准价也是 0，就把第 2 点删掉再发。
-
-> Hi Leo, two questions on SQL after S/4:
-> 1. Which table holds the source list now? APP_SUPPORT.[HALAMERICA\H195567].CTE19_Fixed_Vendor_Source_List seems to be built from one (columns FXD_VNDR_IND, SRC_LST_CATG_CD), but I can't find it. I need plant 2750 and read access.
-> 2. In PLNT_MTRL for plant 2750, ML10_UNIT_PRC is 0 for about 7,400 materials that have a standard price in SAP, e.g. 103028399. Where can I get their standard price?
->
-> Thanks!
+-- ④ Excel supplier tab 里那 11 个 PN
+SELECT * FROM DUN02_HESDATAMART01.dbo.PLNT_MTRL_SRC WITH (NOLOCK)
+WHERE PLNT_CD = '2750'
+  AND SUBSTRING(MTRL_NBR, PATINDEX('%[^0]%', MTRL_NBR + '.'), 40) IN
+      ('102813162','101404960','101006006','102469034','100141408','101653023',
+       '101719203','101608658','101893759','101533843','120167218');
