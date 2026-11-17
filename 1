@@ -1,181 +1,91 @@
-If(
-    IsBlank(DataCardValue24.Text) || IsNumeric(DataCardValue24.Text),
-    // Valid scenario: either blank or a number
-    
-    // 1) Pull down all rows for this PN (delegable)
-    Set(
-        MatchingRows,
-        Filter(
-            'Trial',
-            PN = Trim(DataCardValue30.Text)
+// Write & collect Excel results
+ClearCollect(
+  SubmittedTrial,
+  ForAll(
+    colData,
+    With(
+      {
+        // 1) Delegable: pull all rows for this PN
+        existingXLPN: Filter(
+          'Trial',
+          PN = PNVar
         )
-    );
-    
-    // 2) Apply the non-delegable status check locally
-    Set(
-        MatchingActiveRows,
-        Filter(
-            MatchingRows,
-            'Status of Completion' in [
-                "In Progress",
-                "New"
-            ]
-        )
-    );
-    
-    // 3) Branch on whether we found any active rows
-    If(
-        !IsEmpty(MatchingActiveRows),
-        // --- UPDATE an existing row ---
-        Set(
-            ActiveRow,
-            First(MatchingActiveRows)
-        );
-        Set(
-            ActiveRecord,
-            Patch(
-                'Trial',
-                ActiveRow,
-                {
-                    'Status of Completion': Dropdown6.Selected.Value,
-                    'Estimated Quantity':
-                        Value(ActiveRow.'Estimated Quantity')
-                        + Value(DataCardValue24.Text),
-                    Projects: Concat(
-                        SortByColumns(
-                            ComboBox2.SelectedItems,
-                            "Value",
-                            SortOrder.Ascending
-                        ),
-                        Value,
-                        ", "
-                    ),
-                    Reason:
-                        ActiveRow.Reason
-                        & ", "
-                        & DataCardValue29.Text,
-                    'Need Date': Text(
-                        Min(
-                            DatePicker1.SelectedDate,
-                            If(
-                                IsBlank(ActiveRow.'Need Date'),
-                                DatePicker1.SelectedDate,
-                                DateValue(
-                                    ActiveRow.'Need Date',
-                                    "en-GB"
-                                )
-                            )
-                        ),
-                        "[$-en-GB]dd/mmm/yyyy"
-                    ),
-                    'Requestor Name':
-                        ActiveRow.'Requestor Name'
-                        & ", "
-                        & DataCardValue25.Text,
-                    'Requestor Remarks':
-                        ActiveRow.'Requestor Remarks'
-                        & ", "
-                        & DataCardValue32.Text,
-                    // Action Owner: keep the current value unless the user changed it
-                    'Action Owner': If(
-                        DataCardValue27.Text = MatchingActiveRow.'Action Owner' & "",
-                        ActiveRow.'Action Owner',
-                        DataCardValue27.Text
-                    ),
-                    'Latest Request Date': Text(
-                        Today(),
-                        "dd/mmm/yyyy"
-                    )
-                }
-            )
-        );
-        Set(
-            SubmittedRecord,
-            ActiveRecord
-        );
-        Notify(
-            "Submitted Successfully!",
-            NotificationType.Success
-        );
-        Navigate(
-            'Submitted Record Screen',
-            ScreenTransition.Fade
-        ),
-        
-        // --- CREATE a new row ---
-        Set(
-            NewRecord,
-            Patch(
-                'Trial',
-                Defaults('Trial'),
-                {
-                    SN: Blank(),
-                    PN: DataCardValue30.Text,
-                    Description: DataCardValue23.Text,
-                    'Status of Completion': "New",
-                    'Estimated Quantity': If(
-                        IsBlank(DataCardValue24.Text),
-                        0,
-                        Value(DataCardValue24.Text)
-                    ),
-                    Projects: Concat(
-                        SortByColumns(
-                            ComboBox2.SelectedItems,
-                            "Value",
-                            SortOrder.Ascending
-                        ),
-                        Value,
-                        ", "
-                    ),
-                    Reason: DataCardValue29.Text,
-                    'Creation Date': Text(
-                        Today(),
-                        "dd/mmm/yyyy"
-                    ),
-                    'Need Date': Text(
-                        DatePicker1.SelectedDate,
-                        "dd/mmm/yyyy"
-                    ),
-                    'Requestor Name': DataCardValue25.Text,
-                    'Requestor Remarks': DataCardValue32.Text,
-                    'Action Owner': DataCardValue27.Text,
-                    'Latest Request Date': Text(
-                        Today(),
-                        "dd/mmm/yyyy"
-                    )
-                }
-            )
-        );
-        Set(
-            ActiveRecord,
-            NewRecord
-        );
+      },
+      With(
+        {
+          // 2) Local: pick the first row whose status is New or In Progress
+          existingXL: LookUp(
+            existingXLPN,
+            'Status of Completion' = "New"
+              || 'Status of Completion' = "In Progress"
+          )
+        },
         If(
-            DataCardValue23.DisplayMode = DisplayMode.Edit,
-            Patch(
-                'Material Master List',
-                Defaults('Material Master List'),
-                {
-                    Title: DataCardValue30.Text,
-                    Plant_CD: 2750,
-                    Description: DataCardValue23.Text
-                }
-            )
-        );
-        Notify(
-            "Submitted Successfully!",
-            NotificationType.Success
-        );
-        Navigate(
-            'Submitted Record Screen',
-            ScreenTransition.Fade
+          !IsBlank(existingXL),
+          // UPDATE existing Excel row
+          Patch(
+            'Trial',
+            existingXL,
+            {
+              'Estimated Quantity':
+                existingXL.'Estimated Quantity'
+                + Value(QuantityVar),
+              'Requestor Name'     :
+                existingXL.'Requestor Name'
+                & ", "
+                & RequestorVar,
+              Projects             :
+                existingXL.Projects
+                & ", "
+                & ProjectVar,
+              'Requestor Remarks'  :
+                existingXL.'Requestor Remarks'
+                & ", "
+                & RemarksVar,
+              'Action Owner'       : If(IsBlank(ActionVar), existingXL.'Action Owner', ActionVar),
+              'Latest Request Date': DateVar
+            }
+          ),
+          // CREATE new Excel row
+          Patch(
+            'Trial',
+            Defaults('Trial'),
+            {
+              PN                    : PNVar,
+              'Creation Date'       : DateVar,
+              Description           : DescriptionVar,
+              'Estimated Quantity'  : Value(QuantityVar),
+              'Requestor Name'      : RequestorVar,
+              Projects              : ProjectVar,
+              Reason                : ReasonVar,
+              'Status of Completion': "New",
+              'Requestor Remarks'   : RemarksVar,
+              'Need Date'           : DeadlineVar,
+              'Action Owner'        : ActionVar,
+              'Latest Request Date' : DateVar
+            }
+          )
         )
-    ),
-    
-    // Else: if DataCardValue24.Text is not blank and not numeric, show error
-    Notify(
-        "Please input valid number",
-        NotificationType.Error
+      )
     )
+  )
 );
-Set(SubmittedRecord, Blank());
+
+// Collect submitted PNs
+ClearCollect(
+  colSubmittedPNs,
+  ForAll(
+    colData,
+    { PN: PNVar }
+  )
+);
+
+// Final toast & navigate
+Notify(
+  "Submission Successful",
+  NotificationType.Success
+);
+Navigate(
+  'Part Request Mass Upload Successful Submission',
+  ScreenTransition.Fade
+);
