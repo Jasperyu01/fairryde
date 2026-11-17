@@ -78,7 +78,7 @@ If(
                         & DataCardValue32.Text,
                     // Action Owner: keep the current value unless the user changed it
                     'Action Owner': If(
-                        DataCardValue27.Text = DataCardValue27.Default,
+                        DataCardValue27.Text = MatchingActiveRow.'Action Owner' & "",
                         ActiveRow.'Action Owner',
                         DataCardValue27.Text
                     ),
