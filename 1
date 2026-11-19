@@ -1,1 +1,227 @@
-C:\Users\H329097\Downloads\s4-migration 2\.venv\Scripts\python.exe
+If(
+    !(GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER")
+    && IsBlank(Email_link.Text),
+    Notify("Please insert attachment link or justification before proceeding (CM approval required)", NotificationType.Error),
+
+    // ======== 2026-11: auto-approval below USD 2,000 ========
+    // A NEW request (no open request for this PN + Vendor) with status "Pending Approval / Feedback",
+    // no Tariff reason, old and new price above 0 and Estimated Delta Annual Impact (USD) below 2,000
+    // is saved directly as "Auto Approved": no approval flow, no email. Price decreases (negative impact) are included.
+    // Edits of an open request always go through the approval flow, because its earlier approval may still be pending.
+    Set(
+        varAutoApprove,
+        !IsEditMode &&
+        StatusValue = "Pending Approval / Feedback" &&
+        !TariffSelected &&
+        IfError(Value(OldPriceValue), 0) > 0 &&
+        IfError(Value(NewPriceValue), 0) > 0 &&
+        // AnnualPriceDeltaImpactValue was made by Text() in the user's language, so Value() reads it back in the same language
+        With(
+            { _impactUSD: IfError(Value(AnnualPriceDeltaImpactValue), Blank()) },
+            !IsBlank(_impactUSD) && _impactUSD < 2000
+        )
+    );
+
+    // ======== Patch function (edit vs new) ========
+    Set(
+        SubmittedRecord,
+        If(
+            IsEditMode,
+
+            // ---- Edit mode ----
+            Patch(
+                'Price Change',
+                ActiveRowP,
+                {
+                    PN: PNValue,
+                    Date: Today(),
+                    'PO Number': PONumberValue,
+                    'Requestor Name': RequestorNameAppended,
+                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
+                    Remarks: RemarksValue,
+                    Currency: CurrencyValue,
+                    'Request Status': StatusValue,
+                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
+
+                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
+
+                    'Old Price in Stated Currency': OldPriceValue,
+                    'New Price in Stated Currency': NewPriceValue,
+                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
+                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
+                    'Scale Quantity': ScaleQuantityValue,
+                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
+                    'Tariff Percentage': TariffPercentageValue,
+                    'Tariff Value (USD)': TariffActualValue,
+                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
+                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
+                    // 2026-10: annual quantity, shown in the approval details by ApprovalEmailNoTariffNoCM
+                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
+
+                    'Email Link': Email_link.Text
+                }
+            ),
+
+            varAutoApprove,
+
+            // ---- 2026-11: New record, auto-approved (same fields as a new record + approval fields, ONE write) ----
+            Patch(
+                'Price Change',
+                Defaults('Price Change'),
+                {
+                    Title: FormattedAutoNumber,
+                    Date: Today(),
+                    PN: PNValue,
+                    Description: DescriptionValue,
+                    'Vendor Code': VendorCodeValue,
+                    'Vendor Name': VendorNameValue,
+                    'PO Number': PONumberValue,
+                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
+                    Remarks: RemarksValue,
+                    'Requestor Name': RequestorNameAppended,
+                    Currency: CurrencyValue,
+                    'Request Status': "Auto Approved",
+                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
+
+                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
+
+                    'Old Price in Stated Currency': OldPriceValue,
+                    'New Price in Stated Currency': NewPriceValue,
+                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
+                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
+                    'Scale Quantity': ScaleQuantityValue,
+                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
+                    'Tariff Percentage': TariffPercentageValue,
+                    'Tariff Value (USD)': TariffActualValue,
+                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
+                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
+                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
+
+                    'Email Link': Email_link.Text,
+
+                    'Approver Name (Latest)': "System",
+                    'Approver Response': "Auto Approved",
+                    'Approver Action Date': Text(Now(), DateTimeFormat.UTC),
+                    'Approver Comments': "Auto-approved by the PCR app: Estimated Delta Annual Impact (USD) " & AnnualPriceDeltaImpactValue & " is below the USD 2,000 threshold."
+                }
+            ),
+
+            // ---- New record ----
+            Patch(
+                'Price Change',
+                Defaults('Price Change'),
+                {
+                    Title: FormattedAutoNumber,
+                    Date: Today(),
+                    PN: PNValue,
+                    Description: DescriptionValue,
+                    'Vendor Code': VendorCodeValue,
+                    'Vendor Name': VendorNameValue,
+                    'PO Number': PONumberValue,
+                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
+                    Remarks: RemarksValue,
+                    'Requestor Name': RequestorNameAppended,
+                    Currency: CurrencyValue,
+                    'Request Status': StatusValue,
+                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
+
+                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
+
+                    'Old Price in Stated Currency': OldPriceValue,
+                    'New Price in Stated Currency': NewPriceValue,
+                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
+                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
+                    'Scale Quantity': ScaleQuantityValue,
+                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
+                    'Tariff Percentage': TariffPercentageValue,
+                    'Tariff Value (USD)': TariffActualValue,
+                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
+                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
+                    // 2026-10: annual quantity, shown in the approval details by ApprovalEmailNoTariffNoCM
+                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
+
+                    'Email Link': Email_link.Text
+                }
+            )
+        )
+    );
+
+    Set(SharepointID, SubmittedRecord.ID);
+    Set(NewSubmittedRecord, SubmittedRecord);
+
+    If(
+        varAutoApprove,
+
+        // ======== 2026-11: auto-approved, no approval flow ========
+        If(
+            IsBlankOrError(SharepointID),
+            // SharePoint refused the write: nothing was saved, stay on this screen so Submit can be pressed again
+            Notify(
+                "The request was not saved" & IfError(Text(SharepointID), " (" & FirstError.Message & ")", "") &
+                ". Please press Submit again.",
+                NotificationType.Error
+            ),
+
+            Clear(PriceRows);
+            Notify(
+                "Auto-approved " & SubmittedRecord.Title & ": the estimated annual impact (USD " & AnnualPriceDeltaImpactValue &
+                ") is below USD 2,000, so no approval is needed. You can update the PO now.",
+                NotificationType.Success
+            );
+            Navigate('PriceChangeRequest', ScreenTransition.Fade);
+            Refresh('Price Change')
+        ),
+
+        // ======== Send approval email (MRO auto-approve removed) ========
+        If(
+            Dropdown1.Selected.Value <> "Negotiation Successful",
+            If(
+                TariffSelected,
+                If(
+                    GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER",
+                    ApprovalEmailTariffNoCM.Run(
+                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, TariffPercentageValue, EstimatedAnnualImpactValue, ScaleQuantityValue, TariffActualValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
+                    ),
+                    ApprovalEmail.Run(
+                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, TariffPercentageValue, EstimatedAnnualImpactValue, ScaleQuantityValue, TariffActualValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
+                    )
+                ),
+                If(
+                    GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER",
+                    ApprovalEmailNoTariffNoCM.Run(
+                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, ScaleQuantityValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
+                    ),
+                    ApprovalEmailNoTariff.Run(
+                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, ScaleQuantityValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
+                    )
+                )
+            )
+        );
+
+        Clear(PriceRows);
+        Notify("Submitted Successfully", NotificationType.Success);
+        Navigate('PriceChangeRequest', ScreenTransition.Fade);
+        Refresh('Price Change')
+    )
+)
