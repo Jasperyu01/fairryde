@@ -1,227 +1,158 @@
-If(
-    !(GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER")
-    && IsBlank(Email_link.Text),
-    Notify("Please insert attachment link or justification before proceeding (CM approval required)", NotificationType.Error),
+我先把这页现在的完整代码、页面上每个 visual 的设置、快照是怎么导出来的都重新核对一遍，再用模型里的数据把每一处改动先模拟跑一次，确认结果对了再给你步骤。
 
-    // ======== 2026-11: auto-approval below USD 2,000 ========
-    // A NEW request (no open request for this PN + Vendor) with status "Pending Approval / Feedback",
-    // no Tariff reason, old and new price above 0 and Estimated Delta Annual Impact (USD) below 2,000
-    // is saved directly as "Auto Approved": no approval flow, no email. Price decreases (negative impact) are included.
-    // Edits of an open request always go through the approval flow, because its earlier approval may still be pending.
-    Set(
-        varAutoApprove,
-        !IsEditMode &&
-        StatusValue = "Pending Approval / Feedback" &&
-        !TariffSelected &&
-        IfError(Value(OldPriceValue), 0) > 0 &&
-        IfError(Value(NewPriceValue), 0) > 0 &&
-        // AnnualPriceDeltaImpactValue was made by Text() in the user's language, so Value() reads it back in the same language
-        With(
-            { _impactUSD: IfError(Value(AnnualPriceDeltaImpactValue), Blank()) },
-            !IsBlank(_impactUSD) && _impactUSD < 2000
-        )
-    );
+这次只改 4 处，Status 的判断逻辑完全不动。每一处改动我都用你 pbix 里的数据先模拟跑过一遍，改完以后的结果应该和第 5 步的核对表完全一致。
 
-    // ======== Patch function (edit vs new) ========
-    Set(
-        SubmittedRecord,
-        If(
-            IsEditMode,
+### 第 0 步：先备份
+先在文件管理器里把 pbix 复制一份，文件名后面加上 `_backup_20261119`，然后再打开原文件开始改。
 
-            // ---- Edit mode ----
-            Patch(
-                'Price Change',
-                ActiveRowP,
-                {
-                    PN: PNValue,
-                    Date: Today(),
-                    'PO Number': PONumberValue,
-                    'Requestor Name': RequestorNameAppended,
-                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
-                    Remarks: RemarksValue,
-                    Currency: CurrencyValue,
-                    'Request Status': StatusValue,
-                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
+### 第 1 步：替换 DMT_Snapshot 查询
+这一步改了三处：
+- **"NULL" 变成真正的空值**：快照里有 2,649 行的供应商名写的是文字 "NULL"，Supplier 列就直接把它显示出来了。
+- **Snapshot Date 改用文件名上的日期**：文件里写的是 3 Nov，但数据其实是 2 Nov 的。证据是：2 Nov 新建的 PO 行，快照里只有 2 行，另外 45 行不在里面；3 Nov 新建的一行都没有。
+- **同一天有两个快照文件时直接报错**：现在的写法遇到这种情况会随便挑一个文件，你也不会知道。
 
-                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
+操作：Home → Transform data → 左边选 DMT_Snapshot → Advanced Editor → 把里面的内容全部删掉，换成下面这段。第 2 行的路径是照你现在的抄的，如果你本地改过，就以你的为准。点 Done 以后，在预览里确认 Snapshot Date 是 2026-11-02，再点 Close & Apply。Close & Apply 只会重新读这一张表，不会刷新 SQL。
 
-                    'Old Price in Stated Currency': OldPriceValue,
-                    'New Price in Stated Currency': NewPriceValue,
-                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
-                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
-                    'Scale Quantity': ScaleQuantityValue,
-                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
-                    'Tariff Percentage': TariffPercentageValue,
-                    'Tariff Value (USD)': TariffActualValue,
-                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
-                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
-                    // 2026-10: annual quantity, shown in the approval details by ApprovalEmailNoTariffNoCM
-                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
+```m
+let
+    FolderPath = "\\ap1nas101it0593.file.core.windows.net\sinfile\Data\Procurement\Buyer's Folder\Jiaqi\DMT Snapshots",
+    BaselineOverride = null,
 
-                    'Email Link': Email_link.Text
-                }
-            ),
+    Files = Folder.Files(FolderPath),
+    SnapshotFiles = Table.SelectRows(Files, each
+        Text.StartsWith([Name], "OpenPO_Snapshot_", Comparer.OrdinalIgnoreCase)
+        and Text.Lower([Extension]) = ".xlsx"),
+    WithDate = Table.AddColumn(SnapshotFiles, "FileDate", each
+        try #date(
+            Number.From(Text.Middle([Name], 16, 4)),
+            Number.From(Text.Middle([Name], 21, 2)),
+            Number.From(Text.Middle([Name], 24, 2)))
+        otherwise null, type nullable date),
+    ValidFiles = Table.SelectRows(WithDate, each [FileDate] <> null),
+    TargetDate = if BaselineOverride = null then List.Max(ValidFiles[FileDate]) else BaselineOverride,
+    Matches = Table.SelectRows(ValidFiles, each [FileDate] = TargetDate),
+    // NEW: error out if two files share the same date
+    TargetFile =
+        if TargetDate = null then error ("No OpenPO_Snapshot_YYYY-MM-DD.xlsx file in " & FolderPath)
+        else if Table.RowCount(Matches) = 0 then error ("No snapshot file dated " & Date.ToText(TargetDate, "yyyy-MM-dd"))
+        else if Table.RowCount(Matches) > 1 then error ("More than one snapshot file dated " & Date.ToText(TargetDate, "yyyy-MM-dd") & ", keep only one")
+        else Matches{0}[Content],
 
-            varAutoApprove,
+    Workbook = Excel.Workbook(TargetFile, null, true),
+    ExcelTables = Table.SelectRows(Workbook, each
+        [Kind] = "Table" and List.Contains(Table.ColumnNames([Data]), "PO_NBR")),
+    SheetData = List.Transform(
+        Table.SelectRows(Workbook, each [Kind] = "Sheet")[Data],
+        each Table.PromoteHeaders(_, [PromoteAllScalars = true])),
+    SheetMatches = List.Select(SheetData, each List.Contains(Table.ColumnNames(_), "PO_NBR")),
+    RawData =
+        if Table.RowCount(ExcelTables) > 0 then ExcelTables{0}[Data]
+        else if List.Count(SheetMatches) > 0 then SheetMatches{0}
+        else error "No table with a PO_NBR column in the snapshot file",
 
-            // ---- 2026-11: New record, auto-approved (same fields as a new record + approval fields, ONE write) ----
-            Patch(
-                'Price Change',
-                Defaults('Price Change'),
-                {
-                    Title: FormattedAutoNumber,
-                    Date: Today(),
-                    PN: PNValue,
-                    Description: DescriptionValue,
-                    'Vendor Code': VendorCodeValue,
-                    'Vendor Name': VendorNameValue,
-                    'PO Number': PONumberValue,
-                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
-                    Remarks: RemarksValue,
-                    'Requestor Name': RequestorNameAppended,
-                    Currency: CurrencyValue,
-                    'Request Status': "Auto Approved",
-                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
+    Selected = Table.SelectColumns(RawData, {
+        "SNAPSHOT_DT", "PO_NBR", "PO_ITM_NBR", "DLVRY_SCHED_LN_NBR", "MTRL_NBR", "MTRL_DSC",
+        "VNDR_NBR", "VNDR_NM", "PRCH_GRP_CD", "STRG_LOCN_CD", "ITM_DLVRY_DT", "STAT_DLVRY_DT",
+        "SCHED_QTY", "RCVD_QTY", "OPEN_QTY", "PO_CURRENCY"}),
+    // NEW: cells holding the text "NULL" become real blanks
+    NullText = Table.ReplaceValue(Selected, "NULL", null, Replacer.ReplaceValue, Table.ColumnNames(Selected)),
+    CleanText = Table.TransformColumns(NullText, {
+        {"PO_NBR", each if _ = null then null else Text.Trim(Text.From(_)), type text},
+        {"PO_ITM_NBR", each if _ = null then null else Text.TrimStart(Text.Trim(Text.From(_)), "0"), type text},
+        {"DLVRY_SCHED_LN_NBR", each if _ = null then null else Text.TrimStart(Text.Trim(Text.From(_)), "0"), type text},
+        {"MTRL_NBR", each if _ = null then null else Text.TrimStart(Text.Trim(Text.From(_)), "0"), type text},
+        {"VNDR_NBR", each if _ = null then null else Text.TrimStart(Text.Trim(Text.From(_)), "0"), type text}}),
+    Typed = Table.TransformColumnTypes(CleanText, {
+        {"SNAPSHOT_DT", type date}, {"ITM_DLVRY_DT", type date}, {"STAT_DLVRY_DT", type date},
+        {"SCHED_QTY", type number}, {"RCVD_QTY", type number}, {"OPEN_QTY", type number},
+        {"MTRL_DSC", type text}, {"VNDR_NM", type text}, {"PRCH_GRP_CD", type text},
+        {"STRG_LOCN_CD", type text}, {"PO_CURRENCY", type text}}),
+    Renamed = Table.RenameColumns(Typed, {
+        {"SNAPSHOT_DT", "Snapshot Date"}, {"PO_NBR", "PO No"}, {"PO_ITM_NBR", "PO Item"},
+        {"DLVRY_SCHED_LN_NBR", "Sched Line"}, {"MTRL_NBR", "Material No"}, {"MTRL_DSC", "Material Desc"},
+        {"VNDR_NBR", "Vendor No"}, {"VNDR_NM", "Supplier Name"}, {"PRCH_GRP_CD", "Purch Group"},
+        {"STRG_LOCN_CD", "Storage Loc"}, {"ITM_DLVRY_DT", "Baseline Del Date"},
+        {"STAT_DLVRY_DT", "Baseline Stat Date"}, {"SCHED_QTY", "Baseline Sched Qty"},
+        {"RCVD_QTY", "Baseline Rcvd Qty"}, {"OPEN_QTY", "Baseline Open Qty"}, {"PO_CURRENCY", "PO Currency"}}),
+    // NEW: Snapshot Date = the date in the file name (the same date used to pick the file)
+    FileDated = Table.TransformColumns(Renamed, {{"Snapshot Date", each TargetDate, type date}}),
+    AddKey = Table.AddColumn(FileDated, "DMT Key", each [PO No] & "_" & [PO Item] & "_" & [Sched Line], type text),
+    KeyOnly = Table.SelectRows(AddKey, each [DMT Key] <> null),
+    Result = Table.Distinct(KeyOnly, {"DMT Key"})
+in
+    Result
+```
 
-                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
+我把这段和你现在的代码逐行比对过，只有上面三处不一样，括号也都配对。
 
-                    'Old Price in Stated Currency': OldPriceValue,
-                    'New Price in Stated Currency': NewPriceValue,
-                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
-                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
-                    'Scale Quantity': ScaleQuantityValue,
-                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
-                    'Tariff Percentage': TariffPercentageValue,
-                    'Tariff Value (USD)': TariffActualValue,
-                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
-                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
-                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
+### 第 2 步：替换 Supplier 列的公式
+操作：Table view → 选 DMT_Snapshot → 点 Supplier 这一列 → 把公式栏里的内容整段换成下面这段。
 
-                    'Email Link': Email_link.Text,
+取名字的顺序是：快照里有名字就用快照的 → 没有就用现在 Open PO 里同一个供应商代码对应的名字 → 还没有就用 allocation list 里的 → 都没有才显示"Vendor 代码"。模拟下来：2,646 行从 Open PO 补上了名字，3 行从 allocation list 补上，原来就有名字的 8,541 行一行都不变。
 
-                    'Approver Name (Latest)': "System",
-                    'Approver Response': "Auto Approved",
-                    'Approver Action Date': Text(Now(), DateTimeFormat.UTC),
-                    'Approver Comments': "Auto-approved by the PCR app: Estimated Delta Annual Impact (USD) " & AnnualPriceDeltaImpactValue & " is below the USD 2,000 threshold."
-                }
-            ),
-
-            // ---- New record ----
-            Patch(
-                'Price Change',
-                Defaults('Price Change'),
-                {
-                    Title: FormattedAutoNumber,
-                    Date: Today(),
-                    PN: PNValue,
-                    Description: DescriptionValue,
-                    'Vendor Code': VendorCodeValue,
-                    'Vendor Name': VendorNameValue,
-                    'PO Number': PONumberValue,
-                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
-                    Remarks: RemarksValue,
-                    'Requestor Name': RequestorNameAppended,
-                    Currency: CurrencyValue,
-                    'Request Status': StatusValue,
-                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
-
-                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
-
-                    'Old Price in Stated Currency': OldPriceValue,
-                    'New Price in Stated Currency': NewPriceValue,
-                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
-                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
-                    'Scale Quantity': ScaleQuantityValue,
-                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
-                    'Tariff Percentage': TariffPercentageValue,
-                    'Tariff Value (USD)': TariffActualValue,
-                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
-                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
-                    // 2026-10: annual quantity, shown in the approval details by ApprovalEmailNoTariffNoCM
-                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
-
-                    'Email Link': Email_link.Text
-                }
-            )
-        )
-    );
-
-    Set(SharepointID, SubmittedRecord.ID);
-    Set(NewSubmittedRecord, SubmittedRecord);
-
-    If(
-        varAutoApprove,
-
-        // ======== 2026-11: auto-approved, no approval flow ========
-        If(
-            IsBlankOrError(SharepointID),
-            // SharePoint refused the write: nothing was saved, stay on this screen so Submit can be pressed again
-            Notify(
-                "The request was not saved" & IfError(Text(SharepointID), " (" & FirstError.Message & ")", "") &
-                ". Please press Submit again.",
-                NotificationType.Error
-            ),
-
-            Clear(PriceRows);
-            Notify(
-                "Auto-approved " & SubmittedRecord.Title & ": the estimated annual impact (USD " & AnnualPriceDeltaImpactValue &
-                ") is below USD 2,000, so no approval is needed. You can update the PO now.",
-                NotificationType.Success
-            );
-            Navigate('PriceChangeRequest', ScreenTransition.Fade);
-            Refresh('Price Change')
-        ),
-
-        // ======== Send approval email (MRO auto-approve removed) ========
-        If(
-            Dropdown1.Selected.Value <> "Negotiation Successful",
-            If(
-                TariffSelected,
-                If(
-                    GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER",
-                    ApprovalEmailTariffNoCM.Run(
-                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, TariffPercentageValue, EstimatedAnnualImpactValue, ScaleQuantityValue, TariffActualValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
-                    ),
-                    ApprovalEmail.Run(
-                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, TariffPercentageValue, EstimatedAnnualImpactValue, ScaleQuantityValue, TariffActualValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
-                    )
-                ),
-                If(
-                    GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER",
-                    ApprovalEmailNoTariffNoCM.Run(
-                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, ScaleQuantityValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
-                    ),
-                    ApprovalEmailNoTariff.Run(
-                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, ScaleQuantityValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
-                    )
-                )
-            )
-        );
-
-        Clear(PriceRows);
-        Notify("Submitted Successfully", NotificationType.Success);
-        Navigate('PriceChangeRequest', ScreenTransition.Fade);
-        Refresh('Price Change')
+```DAX
+Supplier =
+VAR n = TRIM ( DMT_Snapshot[Supplier Name] )
+VAR v = DMT_Snapshot[Vendor No]
+VAR sqlName =
+    LOOKUPVALUE ( 'SQL_Open PO'[OPNORDR Vendor Name], 'SQL_Open PO'[OPNORDR Vendor Number], v, "" )
+VAR allocName =
+    LOOKUPVALUE ( 'Excel_Buyer-Vendor Allocation'[Vendor Name], 'Excel_Buyer-Vendor Allocation'[Vendor Code], v, "" )
+RETURN
+    SWITCH (
+        TRUE (),
+        n <> "" && n <> "NULL", n,
+        sqlName <> "" && sqlName <> "NULL", sqlName,
+        allocName <> "", allocName,
+        "Vendor " & v
     )
-)
+```
+
+两个 LOOKUPVALUE 最后都加了 `""`。这样即使以后同一个供应商代码查到两个不同的名字，也只会返回空，不会让整列报错。
+
+### 第 3 步：新建一个显示 baseline 日期的 measure
+操作：右键 DMT_Snapshot → New measure：
+```DAX
+DMT Baseline Label = "Baseline: " & FORMAT ( [DMT Baseline Date], "dd mmm yyyy" )
+```
+
+### 第 4 步：改页面
+1. 右键页签 Dates Movement Tracker → Unhide Page
+2. 加一张 Card，放 DMT Baseline Label，位置放在右上角 Last Refreshed 卡片的左边。先选中 Last Refreshed 卡片，点 Format painter，再点新卡片，样式就一样了。如果新卡片挡住了标题，把标题文本框拉窄一点
+3. （可选）By Status、By Tactical Team、From Month → To Month 这三个 visual 的 Filters 里，PO、DLVRY_DT、Tactical Team 是从旧页面复制过来的，没有设条件，不影响任何数字。要删的话，只删能点 X（Remove filter）的那几个。By Tactical Team 里有两个 Tactical Team，能删的那个才是旧的。删错了按 Ctrl+Z 撤回
+
+temp、PIPO 那几页本来就是隐藏的，保持原样，先别删。
+
+### 第 5 步：先核对，再刷新
+下面这些数字的前提是：你发给我这个文件之后还没刷新过。核对完之前，**不要点 Refresh**。
+
+| 检查项 | 应该看到 |
+|---|---|
+| 新卡片 | Baseline: 02 Nov 2026 |
+| DMT Lines 合计 | 11,190 |
+| Status | Same Month 9,076，Push-out 506，Pull-in 78，Closed 1,530 |
+| PPX | Push-out 约 17.53M，Pull-in 约 5.00M |
+| Details 里搜 4540028760 | Supplier 显示 DALE CO INC，30 Nov → 28 Dec，Days Moved 28，Push-out |
+| Supplier 列 | 没有 "NULL"，也没有 "Vendor" 开头的 |
+
+如果卡片上显示的不是 02 Nov，说明快照的文件名不是 2026-11-02。可以在 Power Query 里点 Matches 这一步，看 Name 列就知道是哪个文件。
+
+全部对上以后先 Ctrl+S 保存，然后再 Refresh。刷新后 Status 和金额会变成最新的，DMT Lines 还是 11,190。
+
+### 每个月底怎么做
+1. 最后一个工作日，先把这页导出或截图。这就是这个月从 baseline 到月底的完整变化
+2. 跑月底快照的 SQL。之前给你的那段，WHERE 最后要加一行 `AND A.PO_NBR LIKE '454%'`，这样才和 SQL_Open PO 的范围一致。不加的话，旧的非 S/4 PO 会全部显示成 Closed
+3. 另存为 `OpenPO_Snapshot_YYYY-MM-DD.xlsx`（日期写跑的那天），放进 DMT Snapshots 文件夹，然后关掉 Excel
+4. 刷新 Power BI，baseline 会自动换成新的那份，卡片上的日期也会跟着变
+
+文件夹里同一个日期只能有一份文件，子文件夹也算在内。想回看以前的 baseline，就把 BaselineOverride 改成 `#date(2026, 11, 2)`，然后 Close & Apply。看完一定要改回 `null`，不然页面会一直停在旧的 baseline 上。
+
+### 万一报错
+- **"More than one snapshot file dated..."**：同一天有两份文件（子文件夹里的也算），删到只剩一份
+- **"The column 'XXX' of the table wasn't found"**：快照文件里少了某一列，检查表头
+- **读不到文件夹**：先确认连上了 VPN，再检查有没有共享盘权限
+
+### 这页目前的限制（Zoe 问起来可以这样解释）
+- 如果 buyer 不是改原来那条 schedule line 的日期，而是新建一条 schedule line，旧的那条会显示成 Closed，新的那条不会出现在这页。现在这种新建的 schedule line 有 72 条，大约占 1%。例子：4540054950 item 8，line 1（26 Oct）显示 Closed，实际交期挪到了 line 2（28 Nov）
+- Closed 的行没有 PPX/PPV，因为金额是从现在的 open PO 里取的，关掉的行已经取不到了
+- baseline 之后才建的 PO 行不会出现在这页，现在有 464 行。这是按设计来的，因为这页只追踪 baseline 里已有的行
