@@ -1,39 +1,6 @@
-我先把 Annual Incoming Summary 这一页逐个拆开：每个视觉对象用了哪些日期字段和度量值、有哪些筛选条件、切片器有没有和其他页同步，再看你说的 Del Year / Del Month 具体是怎么接到 `ITM_DLVRY_DT` 上的。用的还是你昨天传的那个 pbix。
-
-这一页只要改两处：**Daily Report 表**和 **Del Date 切片器**。关系和其他页面都不用碰。下面是具体做法和原因。
-
-**1. 在 `SQL_Open PO` 上新建两个计算列**
-```dax
-MRP Del Year = YEAR ( 'SQL_Open PO'[#MRP Del Date] )
-```
-```dax
-MRP Del Month = MONTH ( 'SQL_Open PO'[#MRP Del Date] )
-```
-两列的 Summarization 都设成 Don't summarize。
-
-不直接改原来的 Del Year / Del Month，有两个原因：
-- 这两列是在 Power Query 里从 `ITM_DLVRY_DT` 拆出来的，Daily Incoming Summary 也在用，一改那页也会跟着变。
-- `#MRP Del Date` 是 DAX 用 LOOKUPVALUE 从 ZMMRP 取出来的，Power Query 里拿不到，只能建 DAX 列。
-
-**2. Daily Report 表：** 把 Del Year、Del Month 换成 MRP Del Year、MRP Del Month。表头可以改回 Del Year / Del Month，也可以写成 MRP Year / MRP Month，让看的人知道口径。换完以后排序会重置，要按年、月重新排一下（按住 Shift 点第二列可以多列排序）。
-
-**3. Del Date 切片器：**
-- 把 `Custom_Date for Receipts` 的 Year、Month 拿掉，把 `SQL_Open PO[#MRP Del Date]` 拖进去，日期层级只保留 Year 和 Month。
-- 这样月份仍然显示月名，和 Incoming Details 的切片器一致。
-- 原来那个"Year 不为空"的筛选会跟着旧字段一起删掉。`#MRP Del Date` 没有空值，不需要再加。
-- 最后重新选上 2026。
-
-**4. Monthly Report 不用动：** 这张表用的是前任实习生文件夹里的月底快照（S2FA_Monthend Equivalent.xlsx）。里面的 PO 号全是 ECC 时期的 4514 到 4518 开头，Del YY 大部分是 2025，和现在的 `SQL_Open PO` 一条都对不上，也没有 MRP date。它通过 1:1 关系被切片器筛，只要选了年份就是空的，改之前也一样。要不要保留这张表可以另外决定。
-
-**改完以后要注意：** 这一页的月份会依赖 ZMMRP 导出。`Excel_ZMMRP S4` 读的是你桌面 ZMMRP 文件夹里最新的那个文件，所以刷新前要先把当天的导出放进去。ZMMRP 里找不到的 351 行（比如导出之后新下的 PO）会自动退回用 PO 交期。
-
-**改完怎么核对：** Del Date 选 2026，Daily Report 应该显示：
-
-| 月份 | PPX 现在（PO 交期） | PPX 改完（MRP date） | PPX (75% OTD) 改完 |
-|---|---|---|---|
-| 10 | 3,977,134 | 1,988,765 | 1,491,573 |
-| 11 | 25,368,442 | 26,423,426 | 19,817,569 |
-| 12 | 31,781,908 | 31,069,587 | 23,302,190 |
-| **2026 合计** | **61,595,472** | **59,521,555** | **44,641,166** |
-
-改完后 1 到 9 月加起来约 USD 40K，现在是 USD 468K。原来在这几个月的行，大多是 PO 交期已经过了、但 MRP date 排在 10 到 12 月的。
+PS C:\Users\H329097\AppData\Local\Programs\Microsoft VS Code> & 'c:\Users\H329097\AppData\Local\Microsoft\WindowsApps\python3.13.exe' '"c:/Users/H329097/Downloads/s4-migration 2/explore_zmmrp.py"'
+Traceback (most recent call last):
+  File "c:\Users\H329097\Downloads\s4-migration 2\explore_zmmrp.py", line 55, in <module>
+    from playwright.sync_api import sync_playwright
+ModuleNotFoundError: No module named 'playwright'
+PS C:\Users\H329097\AppData\Local\Programs\Microsoft VS Code> 
