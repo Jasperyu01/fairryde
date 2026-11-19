@@ -1,200 +1,504 @@
-// PPV_Details: loads the finance "PPV Details" exports (sheet "Export") from one folder.
-// For each Year-Month only the newest file is kept, so new daily MTD files can simply be added.
-// The Year-Month of a file is taken from the GR dates inside it, not from the Year and Month columns of the export.
-let
-    // ===== 1. Folder that holds the exports: change this one line =====
-    FolderPath = "C:\Users\H329097\OneDrive - Halliburton\Desktop\PPV Details",
+// ============================================================
+// PCR Mass Upload - Submit button (Button8_1) OnSelect
+// (2026-11) Auto-approval below USD 2,000 (same rule as Single Entry):
+//   A row that creates a NEW request (no open request for this PN + Vendor), with status
+//   "Pending Approval / Feedback" (or blank), no Tariff reason, old and new price above 0, Annual Quantity above 0
+//   and Estimated Delta Annual Impact (USD) below 2,000 is saved as "Auto Approved" in the same write as its
+//   prices. No approval flow runs and no email is sent. Price decreases (negative impact) are included.
+//   Rows that update an open request always go through the approval flow.
+// (2026-11) Write -> run approval flow -> keep or roll back, row by row:
+//   - Each row is written to 'Price Change' and its approval flow is run right after it.
+//   - If the write or the flow call fails, that row is rolled back: a new record is removed,
+//     an existing record gets its previous values back. A record only stays in SharePoint
+//     (and therefore in Power BI) when its approval flow accepted the request.
+//   - Once the four flows send "Respond to a PowerApp or flow" right after "Create an approval",
+//     "accepted" means the approval really exists in the approver's Approvals / Teams.
+//   - The notification lists the PNs that were not submitted. Submitted rows are taken out of
+//     colTempData, so pressing Submit again only retries the failed rows (no duplicate approvals).
+// Earlier changes:
+//   1. StrategicVar / CMGroupKeyVar are cleaned (Trim + Char(160) -> space)
+//      before being used in the GroupKeyLookup Filter, and the cleaned value
+//      is what gets written to SharePoint.
+//   2. Concat separator changed from ", " to "; " (assignedTo needs semicolons).
+//   3. STEP 0: resolve emails first and block submission with a clear
+//      message if any row cannot be matched, instead of silently sending "".
+//   4. rCMGroupKey / rIsTigerOrBlank now use the cleaned CM key.
+//   5. (2026-10) STEP 0 blocks rows whose PN + Vendor Code is already Pending Manager Approval.
+//   6. (2026-10) Annual quantity is written to the AnnualQuantity column; ApprovalEmailNoTariffNoCM reads it from there.
+//   7. (2026-10) All four approval flows get the USD prices in the FirstOld/FirstNew slots (13-14) and the stated
+//      prices in the Old/New slots (19-20, or 16-17 without tariff), the same order as Single Entry.
+//   8. (2026-10) STEP 0 blocks rows whose Annual Quantity is blank or 0.
+// ============================================================
 
-    Source = Folder.Files(FolderPath),
-    XlsxFiles = Table.SelectRows(Source, each Text.Lower([Extension]) = ".xlsx" and not Text.StartsWith([Name], "~$")),
-    FileList = Table.SelectColumns(XlsxFiles, {"Content", "Name", "Folder Path", "Date modified"}),
+If(
+    varDisableWrite,
+    Notify(
+        "Cannot submit: fix the rows reported by Parse Data, then press Parse Data again.",
+        NotificationType.Error
+    ),
+    If(
+        CountRows(colTempData) = 0,
+        Notify(
+            "No parsed rows found. Paste + Parse first.",
+            NotificationType.Error
+        );
+        false,
+        If(
+            CountRows(colTempData) > 100,
+            Notify(
+                "Please upload max 100 rows per cycle.",
+                NotificationType.Error
+            );
+            false,
 
-    // ===== 2. Read the "Export" sheet of every file =====
-    RequiredColumns = {
-        "Final PSL Name", "Plant", "Material", "Material Desc", "Profit Center", "Last_Ref Doc #",
-        "Procure Type", "Buyer Code", "Buyer Desc", "Supplier", "Supplier Name", "PO", "PO Itm",
-        "Inventory Amt", "ML31", "Matapp%", "Actual Matapp", "Calc Matapp", "Mat App adj",
-        "Posted PPV Fav/(Unfav)", "Calc PPV Fav/(Unfav)", "GR Date", "Last_GR Price", "Qty",
-        "PPX Price", "Last_Mvt", "Month", "Year"
-    },
-    // Files without an "Export" sheet are skipped; a missing column raises an error that names it
-    ReadExport = (FileContent as binary) as nullable table =>
-        let
-            Workbook = Excel.Workbook(FileContent, null, true),
-            ExportSheet = Table.SelectRows(Workbook, each [Kind] = "Sheet" and [Name] = "Export")
-        in
-            if Table.IsEmpty(ExportSheet) then null
-            else Table.SelectColumns(
-                Table.PromoteHeaders(ExportSheet{0}[Data], [PromoteAllScalars = true]),
-                RequiredColumns,
-                MissingField.Error),
-    WithData = Table.AddColumn(FileList, "Data", each ReadExport([Content])),
-    ExportFiles = Table.SelectRows(WithData, each [Data] <> null),
-    Expanded = Table.ExpandTableColumn(Table.RemoveColumns(ExportFiles, {"Content"}), "Data", RequiredColumns),
+            // ===== STEP 0: CLEAN + RESOLVE EMAILS, THEN VALIDATE (unchanged) =====
+            ClearCollect(
+                colLookupCheck,
+                ForAll(
+                    colTempData As r,
+                    With(
+                        {
+                            sName: Trim(Substitute(r.StrategicVar, Char(160), " ")),
+                            cName: Trim(Substitute(r.CMGroupKeyVar, Char(160), " "))
+                        },
+                        {
+                            RowPN: r.PNVar,
+                            StratName: sName,
+                            CMName: cName,
+                            StratEmails: Concat(
+                                Filter(GroupKeyLookup, Title = sName),
+                                Email, "; "
+                            ),
+                            CMEmails: Concat(
+                                Filter(GroupKeyLookup, Title = cName),
+                                Email, "; "
+                            ),
+                            IsTigerOrBlank: (cName = "" || IsBlank(cName) || Upper(cName) = "TIGER"),
+                            PendingMgr: !IsBlank(
+                                LookUp(
+                                    'Price Change',
+                                    PN = r.PNVar && 'Vendor Code' = r.VendorCodeVar &&
+                                    'Request Status' = "Pending Manager Approval"
+                                )
+                            ),
+                            NoQty: Coalesce(r.AnnualQuantityVar, 0) <= 0
+                        }
+                    )
+                )
+            );
 
-    // ===== 3. Drop the "Applied filters" footer row and blank rows =====
-    DataRows = Table.SelectRows(Expanded, each [Plant] <> null and Text.Trim(Text.From([Plant], "en-US")) <> ""),
+            If(
+                CountRows(
+                    Filter(
+                        colLookupCheck,
+                        PendingMgr || NoQty || IsBlank(StratEmails) || (!IsTigerOrBlank && IsBlank(CMEmails))
+                    )
+                ) > 0,
+                Notify(
+                    "Cannot submit -> " &
+                    Concat(
+                        FirstN(
+                            Filter(
+                                colLookupCheck,
+                                PendingMgr || NoQty || IsBlank(StratEmails) || (!IsTigerOrBlank && IsBlank(CMEmails))
+                            ),
+                            5
+                        ),
+                        RowPN & " [" & If(PendingMgr, "Pending Manager Approval", NoQty, "Annual Quantity is blank or 0", IsBlank(StratEmails), "no GroupKeyLookup email: " & StratName, "no GroupKeyLookup email: " & CMName) & "]",
+                        "  |  "
+                    ),
+                    NotificationType.Error
+                );
+                false,
 
-    // ===== 4. Model-friendly column names =====
-    Renamed = Table.RenameColumns(DataRows, {
-        {"Final PSL Name", "PSL"}, {"Material Desc", "Item Text"}, {"Last_Ref Doc #", "Last Ref Doc"},
-        {"PO Itm", "PO Item"}, {"Matapp%", "Mat App %"}, {"Mat App adj", "Mat App Adj"},
-        {"Posted PPV Fav/(Unfav)", "Posted PPV"}, {"Calc PPV Fav/(Unfav)", "Calc PPV"},
-        {"Last_GR Price", "Last GR Price"}, {"Last_Mvt", "Last Mvt Type"},
-        {"Name", "Source File"}, {"Date modified", "File Modified"}
-    }),
+                // ===== STEP 1: PER ROW: WRITE -> RUN APPROVAL FLOW -> KEEP OR ROLL BACK =====
+                ClearCollect(
+                    colSubmitResults,
+                    ForAll(
+                        colTempData,
+                        With(
+                            {
+                                existingPNVendor: Filter(
+                                    'Price Change',
+                                    PN = PNVar && 'Vendor Code' = VendorCodeVar && ('Request Status' in ["Pending Approval / Feedback"] || IsBlank('Request Status'))
+                                ),
+                                StrategicClean: Trim(Substitute(StrategicVar, Char(160), " ")),
+                                CMKeyClean: Trim(Substitute(CMGroupKeyVar, Char(160), " "))
+                            },
+                            With(
+                                {
+                                    // snapshot of the existing record BEFORE it is overwritten (used for the rollback)
+                                    existingSP: LookUp(existingPNVendor, true),
+                                    CMEmail: Concat(
+                                        Filter(GroupKeyLookup, Title = CMKeyClean),
+                                        Email, "; "
+                                    ),
+                                    StratTeamEmail: Concat(
+                                        Filter(GroupKeyLookup, Title = StrategicClean),
+                                        Email, "; "
+                                    ),
+                                    TariffSelectedRow: ("Y" in Upper(Trim(ReasonTariff))),
+                                    IsTigerRow: (CMKeyClean = "" || IsBlank(CMKeyClean) || Upper(CMKeyClean) = "TIGER"),
+                                    ReasonValueRow: Concat(
+                                        Filter(
+                                            Table(
+                                                { k: "Tariff", v: ReasonTariff },
+                                                { k: "Labour Cost Inflation", v: ReasonLabour },
+                                                { k: "Raw Material Inflation", v: ReasonRawMaterial },
+                                                { k: "ECTS", v: ReasonECTS },
+                                                { k: "Price Decrease", v: ReasonPriceDecrease },
+                                                { k: "Add More Scale Qty", v: ReasonAddQty },
+                                                { k: "Others", v: ReasonOthers }
+                                            ),
+                                            ("Y" in Upper(Trim(v)))
+                                        ),
+                                        k, ", "
+                                    )
+                                },
+                                With(
+                                    {
+                                        // write 1: request fields (Blank when SharePoint refused the write)
+                                        patched: IfError(
+                                            If(
+                                                !IsBlank(existingSP),
+                                                Patch(
+                                                    'Price Change',
+                                                    existingSP,
+                                                    {
+                                                        Date: Today(),
+                                                        PN: PNVar,
+                                                        Description: DescriptionVar,
+                                                        'Vendor Code': VendorCodeVar,
+                                                        'Vendor Name': VendorNameVar,
+                                                        'PO Number': PONumberVar,
+                                                        'Requestor Name': RequestorVar,
+                                                        Remarks: RemarksVar,
+                                                        Currency: CurrencyVar,
+                                                        'Request Status': StatusVar,
+                                                        'Strategic Sourcing Personnel': StrategicClean,
+                                                        Approver: CMKeyClean,
+                                                        'Price Change Reason - Tariff': ReasonTariff,
+                                                        'Price Change Reason - Labour Cost Inflation': ReasonLabour,
+                                                        'Price Change Reason - Raw Material Inflation': ReasonRawMaterial,
+                                                        'Price Change Reason - ECTS': ReasonECTS,
+                                                        'Price Change Reason - Price Decrease': ReasonPriceDecrease,
+                                                        'Price Change Reason - Add More Scale Qty': ReasonAddQty,
+                                                        'Price Change Reason - Others': ReasonOthers
+                                                    }
+                                                ),
+                                                Patch(
+                                                    'Price Change',
+                                                    Defaults('Price Change'),
+                                                    {
+                                                        Title: "PC-" & Text(
+                                                            Coalesce(
+                                                                Max(
+                                                                    'Price Change',
+                                                                    Value(Mid(Title, 4, Len(Title) - 3))
+                                                                ),
+                                                                0
+                                                            ) + 1,
+                                                            "0000000"
+                                                        ),
+                                                        Date: Today(),
+                                                        PN: PNVar,
+                                                        Description: DescriptionVar,
+                                                        'Vendor Code': VendorCodeVar,
+                                                        'Vendor Name': VendorNameVar,
+                                                        'PO Number': PONumberVar,
+                                                        'Requestor Name': RequestorVar,
+                                                        Remarks: RemarksVar,
+                                                        Currency: CurrencyVar,
+                                                        'Request Status': StatusVar,
+                                                        'Strategic Sourcing Personnel': StrategicClean,
+                                                        Approver: CMKeyClean,
+                                                        'Price Change Reason - Tariff': ReasonTariff,
+                                                        'Price Change Reason - Labour Cost Inflation': ReasonLabour,
+                                                        'Price Change Reason - Raw Material Inflation': ReasonRawMaterial,
+                                                        'Price Change Reason - ECTS': ReasonECTS,
+                                                        'Price Change Reason - Price Decrease': ReasonPriceDecrease,
+                                                        'Price Change Reason - Add More Scale Qty': ReasonAddQty,
+                                                        'Price Change Reason - Others': ReasonOthers
+                                                    }
+                                                )
+                                            ),
+                                            Blank()
+                                        ),
+                                        // 2026-11: true = this row is auto-approved (rule in the header). A legacy open request
+                                        // ("CM / Sourcing Team Requesting More Info") for the same PN + Vendor also sends the row to the flow.
+                                        autoRow: IsBlank(existingSP) &&
+                                            (StatusVar = "Pending Approval / Feedback" || IsBlank(StatusVar)) &&
+                                            !TariffSelectedRow &&
+                                            OldPriceVar > 0 && NewPriceVar > 0 && AnnualQuantityVar > 0 &&
+                                            // AnnualPriceDeltaImpactVar was made by Text() in the user's language, so Value() reads it back in the same language
+                                            With(
+                                                { _impactUSD: IfError(Value(AnnualPriceDeltaImpactVar), Blank()) },
+                                                !IsBlank(_impactUSD) && _impactUSD < 2000
+                                            ) &&
+                                            IsBlank(
+                                                LookUp(
+                                                    'Price Change',
+                                                    PN = PNVar && 'Vendor Code' = VendorCodeVar &&
+                                                    ('Request Status' = "CM Requesting More Info" || 'Request Status' = "Sourcing Team Requesting More Info")
+                                                )
+                                            )
+                                    },
+                                    With(
+                                        {
+                                            // write 2: prices (Blank when write 1 or this write failed)
+                                            // 2026-11: an auto-approved row gets its "Auto Approved" status in this same write,
+                                            // so the status is never saved without the prices.
+                                            patched2: If(
+                                                IsBlank(patched),
+                                                Blank(),
+                                                IfError(
+                                                    If(
+                                                        autoRow,
+                                                        Patch(
+                                                            'Price Change',
+                                                            patched,
+                                                            {
+                                                                'Old Price in Stated Currency': OldPriceVar,
+                                                                'Old Price in USD': OldPriceUSDVar,
+                                                                'New Price in Stated Currency': NewPriceVar,
+                                                                'New Price in USD': NewPriceUSDVar,
+                                                                'Price Delta': PriceDeltaVar,
+                                                                'Scale Quantity': ScaleQuantityVar,
+                                                                'Tariff Percentage': TariffPercentageVar,
+                                                                'Tariff Value (USD)': TariffValueUSDVar,
+                                                                'Estimated Tariff Annual Impact (USD)': EstimatedAnnualTariffImpactVar,
+                                                                'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactVar,
+                                                                AnnualQuantity: Coalesce(If(AnnualQuantityVar = Int(AnnualQuantityVar), Text(AnnualQuantityVar, "[$-en-US]#,##0"), Text(AnnualQuantityVar, "[$-en-US]#,##0.##")), "N/A"),
+                                                                'Email Link': EmailLinkVar,
+                                                                'Request Status': "Auto Approved",
+                                                                'Approver Name (Latest)': "System",
+                                                                'Approver Response': "Auto Approved",
+                                                                'Approver Action Date': Text(Now(), DateTimeFormat.UTC),
+                                                                'Approver Comments': "Auto-approved by the PCR app: Estimated Delta Annual Impact (USD) " & AnnualPriceDeltaImpactVar & " is below the USD 2,000 threshold."
+                                                            }
+                                                        ),
+                                                        Patch(
+                                                            'Price Change',
+                                                            patched,
+                                                            {
+                                                                'Old Price in Stated Currency': OldPriceVar,
+                                                                'Old Price in USD': OldPriceUSDVar,
+                                                                'New Price in Stated Currency': NewPriceVar,
+                                                                'New Price in USD': NewPriceUSDVar,
+                                                                'Price Delta': PriceDeltaVar,
+                                                                'Scale Quantity': ScaleQuantityVar,
+                                                                'Tariff Percentage': TariffPercentageVar,
+                                                                'Tariff Value (USD)': TariffValueUSDVar,
+                                                                'Estimated Tariff Annual Impact (USD)': EstimatedAnnualTariffImpactVar,
+                                                                'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactVar,
+                                                                AnnualQuantity: Coalesce(If(AnnualQuantityVar = Int(AnnualQuantityVar), Text(AnnualQuantityVar, "[$-en-US]#,##0"), Text(AnnualQuantityVar, "[$-en-US]#,##0.##")), "N/A"),
+                                                                'Email Link': EmailLinkVar
+                                                            }
+                                                        )
+                                                    ),
+                                                    Blank()
+                                                )
+                                            )
+                                        },
+                                        With(
+                                            {
+                                                // run the approval flow right after the write; true = the flow accepted the request
+                                                // (IfError with a DefaultResult always returns true / false, whatever the flow returns)
+                                                flowOK: If(
+                                                    IsBlank(patched2),
+                                                    false,
+                                                    autoRow,
+                                                    true,   // 2026-11: auto-approved, saved by write 2, no approval flow
+                                                    StatusVar = "Negotiation Successful",
+                                                    true,   // no approval flow for these rows, same as before
+                                                    TariffSelectedRow && IsTigerRow,
+                                                    IfError(
+                                                        ApprovalEmailTariffNoCM.Run(
+                                                            patched2.Title, PNVar, VendorCodeVar, VendorNameVar,
+                                                            PONumberVar, RequestorVar, RemarksVar,
+                                                            patched2.ID, CMKeyClean, DescriptionVar,
+                                                            RequestorEmailVar, CurrencyVar,
+                                                            OldPriceUSDVar, NewPriceUSDVar,      // 13-14: USD
+                                                            TariffPercentageVar, EstimatedAnnualTariffImpactVar,
+                                                            ScaleQuantityVar, TariffValueUSDVar,
+                                                            OldPriceVar, NewPriceVar,            // 19-20: stated currency
+                                                            StratTeamEmail, EmailLinkVar, CMEmail,
+                                                            ReasonValueRow, AnnualPriceDeltaImpactVar
+                                                        ),
+                                                        false,
+                                                        true
+                                                    ),
+                                                    TariffSelectedRow,
+                                                    IfError(
+                                                        ApprovalEmail.Run(
+                                                            patched2.Title, PNVar, VendorCodeVar, VendorNameVar,
+                                                            PONumberVar, RequestorVar, RemarksVar,
+                                                            patched2.ID, CMKeyClean, DescriptionVar,
+                                                            RequestorEmailVar, CurrencyVar,
+                                                            OldPriceUSDVar, NewPriceUSDVar,      // 13-14: USD
+                                                            TariffPercentageVar, EstimatedAnnualTariffImpactVar,
+                                                            ScaleQuantityVar, TariffValueUSDVar,
+                                                            OldPriceVar, NewPriceVar,            // 19-20: stated currency
+                                                            StratTeamEmail, EmailLinkVar, CMEmail,
+                                                            ReasonValueRow, AnnualPriceDeltaImpactVar
+                                                        ),
+                                                        false,
+                                                        true
+                                                    ),
+                                                    IsTigerRow,
+                                                    IfError(
+                                                        ApprovalEmailNoTariffNoCM.Run(
+                                                            patched2.Title, PNVar, VendorCodeVar, VendorNameVar,
+                                                            PONumberVar, RequestorVar, RemarksVar,
+                                                            patched2.ID, CMKeyClean, DescriptionVar,
+                                                            RequestorEmailVar, CurrencyVar,
+                                                            OldPriceUSDVar, NewPriceUSDVar,      // 13-14: USD
+                                                            ScaleQuantityVar,
+                                                            OldPriceVar, NewPriceVar,            // 16-17: stated currency
+                                                            StratTeamEmail, EmailLinkVar, CMEmail,
+                                                            ReasonValueRow, AnnualPriceDeltaImpactVar
+                                                        ),
+                                                        false,
+                                                        true
+                                                    ),
+                                                    IfError(
+                                                        ApprovalEmailNoTariff.Run(
+                                                            patched2.Title, PNVar, VendorCodeVar, VendorNameVar,
+                                                            PONumberVar, RequestorVar, RemarksVar,
+                                                            patched2.ID, CMKeyClean, DescriptionVar,
+                                                            RequestorEmailVar, CurrencyVar,
+                                                            OldPriceUSDVar, NewPriceUSDVar,      // 13-14: USD
+                                                            ScaleQuantityVar,
+                                                            OldPriceVar, NewPriceVar,            // 16-17: stated currency
+                                                            StratTeamEmail, EmailLinkVar, CMEmail,
+                                                            ReasonValueRow, AnnualPriceDeltaImpactVar
+                                                        ),
+                                                        false,
+                                                        true
+                                                    )
+                                                )
+                                            },
+                                            With(
+                                                {
+                                                    // roll back when the write or the flow failed:
+                                                    //   new record      -> Remove it
+                                                    //   existing record -> put its previous values back
+                                                    cleanedUp: If(
+                                                        flowOK || IsBlank(patched),
+                                                        true,
+                                                        IsBlank(existingSP),
+                                                        IfError(
+                                                            Remove('Price Change', If(IsBlank(patched2), patched, patched2)),
+                                                            false,
+                                                            true
+                                                        ),
+                                                        IfError(
+                                                            Patch(
+                                                                'Price Change',
+                                                                If(IsBlank(patched2), patched, patched2),
+                                                                {
+                                                                    Date: existingSP.Date,
+                                                                    PN: existingSP.PN,
+                                                                    Description: existingSP.Description,
+                                                                    'Vendor Code': existingSP.'Vendor Code',
+                                                                    'Vendor Name': existingSP.'Vendor Name',
+                                                                    'PO Number': existingSP.'PO Number',
+                                                                    'Requestor Name': existingSP.'Requestor Name',
+                                                                    Remarks: existingSP.Remarks,
+                                                                    Currency: existingSP.Currency,
+                                                                    'Request Status': existingSP.'Request Status',
+                                                                    'Strategic Sourcing Personnel': existingSP.'Strategic Sourcing Personnel',
+                                                                    Approver: existingSP.Approver,
+                                                                    'Price Change Reason - Tariff': existingSP.'Price Change Reason - Tariff',
+                                                                    'Price Change Reason - Labour Cost Inflation': existingSP.'Price Change Reason - Labour Cost Inflation',
+                                                                    'Price Change Reason - Raw Material Inflation': existingSP.'Price Change Reason - Raw Material Inflation',
+                                                                    'Price Change Reason - ECTS': existingSP.'Price Change Reason - ECTS',
+                                                                    'Price Change Reason - Price Decrease': existingSP.'Price Change Reason - Price Decrease',
+                                                                    'Price Change Reason - Add More Scale Qty': existingSP.'Price Change Reason - Add More Scale Qty',
+                                                                    'Price Change Reason - Others': existingSP.'Price Change Reason - Others',
+                                                                    'Old Price in Stated Currency': existingSP.'Old Price in Stated Currency',
+                                                                    'Old Price in USD': existingSP.'Old Price in USD',
+                                                                    'New Price in Stated Currency': existingSP.'New Price in Stated Currency',
+                                                                    'New Price in USD': existingSP.'New Price in USD',
+                                                                    'Price Delta': existingSP.'Price Delta',
+                                                                    'Scale Quantity': existingSP.'Scale Quantity',
+                                                                    'Tariff Percentage': existingSP.'Tariff Percentage',
+                                                                    'Tariff Value (USD)': existingSP.'Tariff Value (USD)',
+                                                                    'Estimated Tariff Annual Impact (USD)': existingSP.'Estimated Tariff Annual Impact (USD)',
+                                                                    'Estimated Delta Annual Impact (USD)': existingSP.'Estimated Delta Annual Impact (USD)',
+                                                                    AnnualQuantity: existingSP.AnnualQuantity,
+                                                                    'Email Link': existingSP.'Email Link'
+                                                                }
+                                                            ),
+                                                            false,
+                                                            true
+                                                        )
+                                                    )
+                                                },
+                                                {
+                                                    rPN: PNVar,
+                                                    rVendorCode: VendorCodeVar,
+                                                    rStatus: StatusVar,
+                                                    rTPCID: If(flowOK, patched2.Title, ""),
+                                                    rOK: flowOK,
+                                                    rAuto: autoRow && flowOK,
+                                                    rFailedAt: If(flowOK, "", IsBlank(patched2), "SharePoint write", "approval flow"),
+                                                    rCleanedUp: cleanedUp
+                                                }
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                );
 
-    // ===== 5. Clean text (line breaks -> space, single spaces, "" -> null); trim leading zeros on key columns =====
-    TextColumns = {
-        "PSL", "Plant", "Material", "Item Text", "Profit Center", "Last Ref Doc", "Procure Type",
-        "Buyer Code", "Buyer Desc", "Supplier", "Supplier Name", "PO", "PO Item", "Last Mvt Type"
-    },
-    CleanText = (v as any) as nullable text =>
-        let
-            Raw = if v = null then null
-                else Text.Replace(Text.Replace(Text.From(v, "en-US"), "#(cr)", ""), "#(lf)", " "),
-            Words = if Raw = null then {} else List.Select(Text.Split(Raw, " "), each _ <> ""),
-            Joined = Text.Combine(Words, " ")
-        in
-            if Joined = "" then null else Joined,
-    TextCleaned = Table.TransformColumns(Renamed, List.Transform(TextColumns, (c) => {c, CleanText, type nullable text})),
-    KeyColumns = {"Material", "Supplier", "PO", "PO Item"},
-    TrimZeros = (v as nullable text) as nullable text =>
-        let
-            t = if v = null then null else Text.TrimStart(v, "0")
-        in
-            if t = null or t = "" then null else t,
-    KeysCleaned = Table.TransformColumns(TextCleaned, List.Transform(KeyColumns, (c) => {c, TrimZeros, type nullable text})),
+                // ===== STEP 2: REPORT, KEEP ONLY THE FAILED ROWS FOR A RETRY =====
+                With(
+                    {
+                        okRows: Filter(colSubmitResults, rOK),
+                        badRows: Filter(colSubmitResults, !rOK),
+                        autoRows: Filter(colSubmitResults, rOK && rAuto)
+                    },
+                    With(
+                        {
+                            // 2026-11: auto-approved rows are listed with their TPCIDs
+                            autoText: If(
+                                CountRows(autoRows) = 0,
+                                "",
+                                " " & Text(CountRows(autoRows)) & " of them auto-approved (estimated annual impact below USD 2,000, no approval needed): " &
+                                Concat(FirstN(autoRows, 10), rTPCID, ", ") & If(CountRows(autoRows) > 10, ", ...", "") & "."
+                            )
+                        },
+                        If(
+                            CountRows(badRows) = 0,
+                            Notify(
+                                "Submitted " & Text(CountRows(okRows)) & " row(s)." & autoText,
+                                NotificationType.Success
+                            ),
+                            Notify(
+                                "Submitted " & Text(CountRows(okRows)) & " of " & Text(CountRows(colSubmitResults)) &
+                                " row(s)." & autoText & " Not submitted, press Submit again to retry: " &
+                                Concat(
+                                    FirstN(badRows, 10),
+                                    rPN & " [" & rFailedAt & " failed" & If(rCleanedUp, "", "; record still in SharePoint, tell the PCR admin") & "]",
+                                    "  |  "
+                                ),
+                                NotificationType.Error
+                            )
+                        )
+                    )
+                );
 
-    // ===== 6. Data types (the export stores numbers as text; "(123.45)" style negatives are also accepted) =====
-    NumberColumns = {
-        "Inventory Amt", "Actual Matapp", "Calc Matapp", "Mat App Adj", "Posted PPV", "Calc PPV",
-        "ML31", "Mat App %", "Last GR Price", "Qty", "PPX Price"
-    },
-    FixNegative = (v as any) as any =>
-        let
-            t = if v is text then Text.Trim(v) else null
-        in
-            if t <> null and Text.StartsWith(t, "(") and Text.EndsWith(t, ")")
-            then "-" & Text.Middle(t, 1, Text.Length(t) - 2)
-            else v,
-    NegativesFixed = Table.TransformColumns(KeysCleaned, List.Transform(NumberColumns, (c) => {c, FixNegative})),
-    // Buffered once, so the files are read a single time even though later steps use this table twice
-    Typed = Table.Buffer(Table.TransformColumnTypes(NegativesFixed, {
-        {"Inventory Amt", Currency.Type}, {"Actual Matapp", Currency.Type}, {"Calc Matapp", Currency.Type},
-        {"Mat App Adj", Currency.Type}, {"Posted PPV", Currency.Type}, {"Calc PPV", Currency.Type},
-        {"ML31", type number}, {"Mat App %", type number}, {"Last GR Price", type number},
-        {"Qty", type number}, {"PPX Price", type number},
-        {"GR Date", type date}, {"Month", Int64.Type}, {"Year", Int64.Type}, {"File Modified", type datetime}
-    }, "en-US")),
+                // submitted rows leave the list, so a second Submit cannot send them twice
+                RemoveIf(
+                    colTempData,
+                    !IsBlank(LookUp(colSubmitResults, rOK && rPN = PNVar && rVendorCode = VendorCodeVar))
+                );
 
-    // ===== 7. Fill gaps so every PO line has one supplier name, one buyer and one description =====
-    // 7a. Supplier Name: same supplier on other rows; interco P-codes labeled
-    NameMap = Table.Buffer(
-        Table.Distinct(
-            Table.SelectRows(Table.SelectColumns(Typed, {"Supplier", "Supplier Name"}), each [Supplier] <> null and [Supplier Name] <> null),
-            {"Supplier"})),
-    WithName = Table.ExpandTableColumn(
-        Table.NestedJoin(Typed, {"Supplier"}, NameMap, {"Supplier"}, "NameMap", JoinKind.LeftOuter),
-        "NameMap", {"Supplier Name"}, {"Mapped Supplier Name"}),
-    NameFilled = Table.AddColumn(WithName, "Supplier Name Filled", each
-        if [Supplier Name] <> null then [Supplier Name]
-        else if [Mapped Supplier Name] <> null then [Mapped Supplier Name]
-        else if [Supplier] = null then "(No supplier - adjustment)"
-        else if Text.StartsWith([Supplier], "P") then "Interco " & [Supplier]
-        else [Supplier], type text),
-    NameDone = Table.RenameColumns(
-        Table.RemoveColumns(NameFilled, {"Supplier Name", "Mapped Supplier Name"}),
-        {{"Supplier Name Filled", "Supplier Name"}}),
-
-    // 7b. PO Line Key, and buyer for invoice-side rows taken from another row of the same PO line
-    AddPOLineKey = Table.AddColumn(NameDone, "PO Line Key", each
-        if [PO] = null then null
-        else [PO] & "-" & (if [PO Item] = null then "" else [PO Item]), type nullable text),
-    BuyerMap = Table.Buffer(
-        Table.Distinct(
-            Table.SelectRows(Table.SelectColumns(AddPOLineKey, {"PO Line Key", "Buyer Code", "Buyer Desc"}), each [PO Line Key] <> null and [Buyer Desc] <> null),
-            {"PO Line Key"})),
-    WithBuyer = Table.ExpandTableColumn(
-        Table.NestedJoin(AddPOLineKey, {"PO Line Key"}, BuyerMap, {"PO Line Key"}, "BuyerMap", JoinKind.LeftOuter),
-        "BuyerMap", {"Buyer Code", "Buyer Desc"}, {"Mapped Buyer Code", "Mapped Buyer Desc"}),
-    BuyerFilled = Table.AddColumn(
-        Table.AddColumn(WithBuyer, "Buyer Code Filled", each
-            if [Buyer Code] <> null then [Buyer Code] else [Mapped Buyer Code], type nullable text),
-        "Buyer Desc Filled", each
-            if [Buyer Desc] <> null then [Buyer Desc] else [Mapped Buyer Desc], type nullable text),
-    BuyerDone = Table.RenameColumns(
-        Table.RemoveColumns(BuyerFilled, {"Buyer Code", "Buyer Desc", "Mapped Buyer Code", "Mapped Buyer Desc"}),
-        {{"Buyer Code Filled", "Buyer Code"}, {"Buyer Desc Filled", "Buyer Desc"}}),
-
-    // 7c. One Material Description per material (Item Text can be a Q-note text on returns)
-    DescMap = Table.Group(
-        Table.SelectRows(BuyerDone, each [Material] <> null and [Item Text] <> null),
-        {"Material"},
-        {{"Material Description", each
-            let
-                FromGR = Table.SelectRows(_, each [Last Mvt Type] = "101")[Item Text]
-            in
-                if List.IsEmpty(FromGR) then List.First([Item Text]) else List.First(FromGR), type text}}),
-    WithDesc = Table.ExpandTableColumn(
-        Table.NestedJoin(BuyerDone, {"Material"}, DescMap, {"Material"}, "DescMap", JoinKind.LeftOuter),
-        "DescMap", {"Material Description"}, {"Mapped Material Description"}),
-    DescDone = Table.RemoveColumns(
-        Table.AddColumn(WithDesc, "Material Description", each
-            if [Mapped Material Description] <> null then [Mapped Material Description] else [Item Text], type nullable text),
-        {"Mapped Material Description"}),
-
-    // 7d. Finance month of each file. Every export holds one month, so the month is taken from the GR dates
-    //     in the file (the most common month). A wrong Year or Month value in the export can then no longer
-    //     move a file to another month. A file without any GR date keeps the Year and Month of the export.
-    DescBuffered = Table.Buffer(DescDone),
-    PeriodOfDates = (dates as list) as nullable number =>
-        let
-            Periods = List.Transform(List.RemoveNulls(dates), each Date.Year(_) * 100 + Date.Month(_))
-        in
-            if List.IsEmpty(Periods) then null else List.Mode(Periods),
-    FilePeriods = Table.Group(DescBuffered, {"Folder Path", "Source File"}, {
-        {"File Period", each try PeriodOfDates([GR Date]) otherwise null, type nullable number}}),
-    WithFilePeriod = Table.ExpandTableColumn(
-        Table.NestedJoin(DescBuffered, {"Folder Path", "Source File"}, FilePeriods, {"Folder Path", "Source File"}, "FilePeriods", JoinKind.LeftOuter),
-        "FilePeriods", {"File Period"}),
-    PeriodYear = Table.AddColumn(WithFilePeriod, "Period Year", each
-        if [File Period] = null then [Year] else Number.IntegerDivide([File Period], 100), Int64.Type),
-    PeriodMonth = Table.AddColumn(PeriodYear, "Period Month", each
-        if [File Period] = null then [Month] else Number.Mod([File Period], 100), Int64.Type),
-    PeriodDone = Table.RenameColumns(
-        Table.RemoveColumns(PeriodMonth, {"Year", "Month", "File Period"}),
-        {{"Period Year", "Year"}, {"Period Month", "Month"}}),
-
-    // ===== 8. Derived columns =====
-    // PPV Date: GR Date; rows without a GR date (invoice lines, MA/Reclass adjustments) go to the 1st of their month
-    AddPPVDate = Table.AddColumn(PeriodDone, "PPV Date", each
-        if [GR Date] <> null then [GR Date]
-        else if [Year] <> null and [Month] <> null then #date([Year], [Month], 1)
-        else null, type nullable date),
-    AddLineType = Table.AddColumn(AddPPVDate, "Line Type", each
-        if [PO] = null then "Non-PO adjustment"
-        else if [GR Date] = null then "Invoice (no GR date)"
-        else "GR / Return", type text),
-
-    // ===== 9. Keep only the newest file for each Year-Month (prevents double counting) =====
-    // The key includes the folder path, so a copy of the same file in a subfolder can never be counted twice
-    PeriodKey = (y as nullable number, m as nullable number) as text =>
-        (if y = null then "" else Text.From(y)) & "-" & (if m = null then "" else Text.From(m)),
-    AddFileKey = Table.Buffer(Table.AddColumn(AddLineType, "File Key", each
-        DateTime.ToText([File Modified], "yyyyMMddHHmmss") & "|" & [Folder Path] & [Source File], type nullable text)),
-    LatestFile = Table.Group(AddFileKey, {"Year", "Month"}, {{"Latest File Key", each List.Max([File Key]), type nullable text}}),
-    LatestKeys = List.Buffer(
-        Table.AddColumn(LatestFile, "Key", each PeriodKey([Year], [Month]) & "|" & [Latest File Key], type text)[Key]),
-    NewestOnly = Table.SelectRows(AddFileKey, each List.Contains(LatestKeys, PeriodKey([Year], [Month]) & "|" & [File Key])),
-
-    // ===== 10. Final columns =====
-    Result = Table.SelectColumns(NewestOnly, {
-        "PPV Date", "GR Date", "Year", "Month", "Line Type", "PO", "PO Item", "PO Line Key", "Last Ref Doc",
-        "Last Mvt Type", "Material", "Material Description", "Item Text", "Supplier", "Supplier Name",
-        "Buyer Code", "Buyer Desc", "Profit Center", "Procure Type", "Plant", "PSL", "Qty", "Last GR Price",
-        "ML31", "PPX Price", "Inventory Amt", "Mat App %", "Actual Matapp", "Calc Matapp", "Mat App Adj",
-        "Posted PPV", "Calc PPV", "Source File", "File Modified"
-    })
-in
-    Result
+                Refresh('Price Change')
+            )
+        )
+    )
+)
