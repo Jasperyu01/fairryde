@@ -1,3 +1,10 @@
+思路是：**Details 不用动**，它用的是表里的列，本来就是全部时间。**Vendors 表里的数字**（Lots、Lots A、Lots R、Lots Open）是 measure，我们在 SQL 里多算 4 列"3 年内"的检验批数，再把这 4 个 measure 改成只加这几列。3 年内一批都没有的 vendor，measure 返回空，Power BI 会自动把那一行从 Vendors 表里藏掉。
+
+**第一步：换 query**
+
+在你现在的版本上加了 5 行，标了 `-- NEW`：
+
+```
 let
     Source = Sql.Database("SCGREPORTING", "DUN02_HESDATAMART01", [Query="
 WITH lt AS (
@@ -17,8 +24,7 @@ WITH lt AS (
       AND LTRIM(RTRIM(PLNT_NO)) IN ('2750', '2020', '2022')
 ),
 ud AS (
-    SELECT INSPC_LOT_NO, USAGE_DECISION_CD, CD_VAL_FG,
-           CRT_DT,  -- NEW
+    SELECT INSPC_LOT_NO, USAGE_DECISION_CD, CD_VAL_FG, CRT_DT,
            ROW_NUMBER() OVER (PARTITION BY INSPC_LOT_NO ORDER BY CRT_DT DESC, CRT_TM DESC) AS rn
     FROM DUN02_HESDATAMART01.dbo.QM_LOT_USAGE_DECISION
     WHERE INSPC_LOT_NO IN (SELECT INSPC_LOT_NO FROM lt)
@@ -30,7 +36,8 @@ lot AS (
                 WHEN ud.INSPC_LOT_NO IS NULL THEN 'Open'
                 ELSE 'Other' END AS Status,
            NULLIF(LTRIM(RTRIM(ud.USAGE_DECISION_CD)), '') AS UDCode,
-           TRY_CONVERT(date, ud.CRT_DT, 112) AS UDDate,  -- NEW
+           TRY_CONVERT(date, ud.CRT_DT, 112) AS UDDate,
+           CASE WHEN lt.LOT_CRT_DT >= CONVERT(char(8), DATEADD(year, -3, GETDATE()), 112) THEN 1 ELSE 0 END AS In3Y,  -- NEW
            ROW_NUMBER() OVER (PARTITION BY lt.PN, lt.Vendor
                               ORDER BY lt.LOT_CRT_DT DESC, TRY_CONVERT(bigint, lt.INSPC_LOT_NO) DESC) AS rn
     FROM lt
@@ -55,12 +62,16 @@ SELECT
         1, 2, '') AS [Plant],
     CASE WHEN COUNT(DISTINCT CASE WHEN l.Status = 'A' THEN l.INSPC_LOT_NO END) > 0 THEN 'A'
          ELSE MAX(CASE WHEN l.rn = 1 THEN l.Status END) END AS [Status],
-    MIN(CASE WHEN l.Status = 'A' THEN l.UDDate END) AS [First Accepted Date],  -- NEW
+    MIN(CASE WHEN l.Status = 'A' THEN l.UDDate END) AS [First Accepted Date],
     MAX(CASE WHEN l.rn = 1 THEN l.UDCode END) AS [Latest UD Code],
     MAX(CASE WHEN l.rn = 1 THEN l.Origin END) AS [Latest Origin],
     COUNT(DISTINCT l.INSPC_LOT_NO) AS [Total Lots],
     COUNT(DISTINCT CASE WHEN l.Status = 'A' THEN l.INSPC_LOT_NO END) AS [A Lots],
     COUNT(DISTINCT CASE WHEN l.Status = 'R' THEN l.INSPC_LOT_NO END) AS [R Lots],
+    COUNT(DISTINCT CASE WHEN l.In3Y = 1 THEN l.INSPC_LOT_NO END) AS [Lots 3Y],  -- NEW
+    COUNT(DISTINCT CASE WHEN l.In3Y = 1 AND l.Status = 'A' THEN l.INSPC_LOT_NO END) AS [A Lots 3Y],  -- NEW
+    COUNT(DISTINCT CASE WHEN l.In3Y = 1 AND l.Status = 'R' THEN l.INSPC_LOT_NO END) AS [R Lots 3Y],  -- NEW
+    COUNT(DISTINCT CASE WHEN l.In3Y = 1 AND l.Status = 'Open' THEN l.INSPC_LOT_NO END) AS [Open Lots 3Y],  -- NEW
     SUM(l.Qty) AS [Total Qty],
     MAX(CASE WHEN l.rn = 1 THEN l.UoM END) AS [UoM]
 FROM lot AS l
@@ -69,3 +80,38 @@ GROUP BY l.PN, l.Vendor;
 "])
 in
     Source
+```
+
+**第二步：改 4 个 measure 的公式**
+
+名字不变，直接改公式，Vendors 表不用重新拖字段：
+
+```
+Lots =
+VAR x = SUM ( QA33_Lots[Lots 3Y] )
+RETURN IF ( x > 0, x )
+```
+```
+Lots A =
+VAR x = SUM ( QA33_Lots[A Lots 3Y] )
+RETURN IF ( x > 0, x )
+```
+```
+Lots R =
+VAR x = SUM ( QA33_Lots[R Lots 3Y] )
+RETURN IF ( x > 0, x )
+```
+```
+Lots Open =
+VAR x = SUM ( QA33_Lots[Open Lots 3Y] )
+RETURN IF ( x > 0, x )
+```
+
+`IF ( x > 0, x )` 是让 0 显示成空白，这样 3 年内没有批次的 vendor 四个数全空，整行会自动隐藏。
+
+**几点说明**
+
+1. **3 年按检验批创建日期（Created On）算，是滚动的**：每次刷新都从当天往回推 3 年。如果要固定起点，把 `CONVERT(char(8), DATEADD(year, -3, GETDATE()), 112)` 换成 `'20231120'` 这样的固定日期。
+2. **改完 Vendors 的数字会变大，这是对的。** 现在那几个数是按行数出来的，一行是一个 PN + Vendor，所以 GEOPHYSICAL 的 293 其实是料号个数；改完才是 3 年内真正的检验批数。
+3. **Details 的"所有时间"是 2015 年以后**，因为 WHERE 里有 `'20150101'`。要更早的数据就把这个日期往前改。
+4. 一个 PN + Vendor 如果在几个工厂都有批次，Lots 数是几个工厂加在一起的，按工厂拆不开。要按工厂精确算，得改成按 PN + Vendor + Plant 汇总。
