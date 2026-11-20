@@ -18,6 +18,7 @@ WITH lt AS (
 ),
 ud AS (
     SELECT INSPC_LOT_NO, USAGE_DECISION_CD, CD_VAL_FG,
+           CRT_DT,  -- NEW
            ROW_NUMBER() OVER (PARTITION BY INSPC_LOT_NO ORDER BY CRT_DT DESC, CRT_TM DESC) AS rn
     FROM DUN02_HESDATAMART01.dbo.QM_LOT_USAGE_DECISION
     WHERE INSPC_LOT_NO IN (SELECT INSPC_LOT_NO FROM lt)
@@ -29,6 +30,7 @@ lot AS (
                 WHEN ud.INSPC_LOT_NO IS NULL THEN 'Open'
                 ELSE 'Other' END AS Status,
            NULLIF(LTRIM(RTRIM(ud.USAGE_DECISION_CD)), '') AS UDCode,
+           TRY_CONVERT(date, ud.CRT_DT, 112) AS UDDate,  -- NEW
            ROW_NUMBER() OVER (PARTITION BY lt.PN, lt.Vendor
                               ORDER BY lt.LOT_CRT_DT DESC, TRY_CONVERT(bigint, lt.INSPC_LOT_NO) DESC) AS rn
     FROM lt
@@ -53,6 +55,7 @@ SELECT
         1, 2, '') AS [Plant],
     CASE WHEN COUNT(DISTINCT CASE WHEN l.Status = 'A' THEN l.INSPC_LOT_NO END) > 0 THEN 'A'
          ELSE MAX(CASE WHEN l.rn = 1 THEN l.Status END) END AS [Status],
+    MIN(CASE WHEN l.Status = 'A' THEN l.UDDate END) AS [First Accepted Date],  -- NEW
     MAX(CASE WHEN l.rn = 1 THEN l.UDCode END) AS [Latest UD Code],
     MAX(CASE WHEN l.rn = 1 THEN l.Origin END) AS [Latest Origin],
     COUNT(DISTINCT l.INSPC_LOT_NO) AS [Total Lots],
