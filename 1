@@ -1,4 +1,55 @@
-SELECT ML10_CRNCY_CD, COUNT(*) AS n
-FROM DUN02_HESDATAMART01.dbo.PLNT_MTRL WITH (NOLOCK)
-WHERE PLNT_CD = '2750'
-GROUP BY ML10_CRNCY_CD;
+let
+    // SGD to USD P rates are in the VALUES list at the top of the SQL (same values as SQL_PPX).
+    // When a new year's P rate is released, add one row, e.g. (2027, 0.xxxxx).
+    Source = Sql.Database("scgreporting", "dun02_hesdatamart01", [Query = "
+WITH R AS (
+    SELECT Yr, Rate FROM (VALUES
+        (2005, 0.60946), (2006, 0.59952), (2007, 0.64826), (2008, 0.69290),
+        (2009, 0.67222), (2010, 0.72000), (2011, 0.76800), (2012, 0.79517),
+        (2013, 0.81699), (2014, 0.80775), (2015, 0.78636), (2016, 0.70202),
+        (2017, 0.72155), (2018, 0.74457), (2019, 0.73764), (2020, 0.72657),
+        (2021, 0.73956), (2022, 0.74382), (2023, 0.71248), (2024, 0.74724),
+        (2025, 0.77274), (2026, 0.78451)
+    ) v (Yr, Rate)
+),
+L AS (SELECT MIN(Yr) AS MinYr, MAX(Yr) AS MaxYr FROM R)
+SELECT
+    pm.MTRL_NBR              AS [Material],
+    m.MTRL_DSC               AS [MatlDesc],
+    pm.PRFT_CNTR_CD          AS [ProfCtr],
+    pm.COST_LOT_SZ           AS [CostLot],
+    ROUND(pm.ML10_UNIT_PRC * ISNULL(NULLIF(pm.PRC_UNIT_FCTR, 0), 1) * rs.Rate, 2) AS [StdPrice],
+    ROUND(u.PP1, 2)          AS [PP1],
+    pm.FUT_PLN_PRC1_EFCTV_DT AS [PP1DATE],
+    ROUND(u.PP2, 2)          AS [PP2],
+    pm.FUT_PLN_PRC2_EFCTV_DT AS [PP2DATE],
+    ROUND(CASE WHEN ISNULL(pm.FUT_PLN_PRC2, 0) <> 0 THEN u.PP2 ELSE u.PP1 END, 2) AS [PPxPrice]
+FROM [DUN02_HESDATAMART01].[dbo].[PLNT_MTRL] pm WITH (NOLOCK)
+LEFT JOIN [DUN02_HESDATAMART01].[dbo].[MTRL] m WITH (NOLOCK)
+       ON m.OID = pm.MTRL_OID
+CROSS JOIN L
+LEFT JOIN R rs
+       ON rs.Yr = CASE WHEN YEAR(GETDATE()) > L.MaxYr THEN L.MaxYr ELSE YEAR(GETDATE()) END
+LEFT JOIN R r1
+       ON r1.Yr = CASE WHEN YEAR(pm.FUT_PLN_PRC1_EFCTV_DT) < L.MinYr THEN L.MinYr
+                       WHEN YEAR(pm.FUT_PLN_PRC1_EFCTV_DT) > L.MaxYr THEN L.MaxYr
+                       ELSE YEAR(pm.FUT_PLN_PRC1_EFCTV_DT) END
+LEFT JOIN R r2
+       ON r2.Yr = CASE WHEN YEAR(pm.FUT_PLN_PRC2_EFCTV_DT) < L.MinYr THEN L.MinYr
+                       WHEN YEAR(pm.FUT_PLN_PRC2_EFCTV_DT) > L.MaxYr THEN L.MaxYr
+                       ELSE YEAR(pm.FUT_PLN_PRC2_EFCTV_DT) END
+CROSS APPLY (SELECT
+    ISNULL(pm.FUT_PLN_PRC1, 0) * COALESCE(r1.Rate, rs.Rate) AS PP1,
+    ISNULL(pm.FUT_PLN_PRC2, 0) * COALESCE(r2.Rate, rs.Rate) AS PP2) u
+WHERE pm.PLNT_CD = '2750'"]),
+    Cleaned = Table.TransformColumns(Source, {
+        {"Material", each if _ = null then null else Text.TrimStart(Text.Trim(_), "0"), type text},
+        {"MatlDesc", each if _ = null then null else Text.Trim(_), type text}}),
+    Typed = Table.TransformColumnTypes(Cleaned, {
+        {"ProfCtr", type text},
+        {"CostLot", type number}, {"StdPrice", type number},
+        {"PP1", type number}, {"PP1DATE", type date},
+        {"PP2", type number}, {"PP2DATE", type date},
+        {"PPxPrice", type number}})
+in
+    Typed
