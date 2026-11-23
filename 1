@@ -1,1 +1,182 @@
-.venv\Scripts\python.exe explore_open.py
+// Excel_ZMMRP Monthend GR (SQL Sourced)  (GR Analysis page)
+// For every receipt: what ZMMRP said about that PO line in the last export saved BEFORE the posting date.
+// Excel_ZMMRP S4 and SQL_Plan PR read only the newest export; this query reads every export in the same folder,
+// because a PO line disappears from ZMMRP once it is fully received.
+// One row per receipt key = SQL_Receipts Profit Centre[PO_Mtrl_Date] (PO + material + posting date).
+// Relationship: SQL_Receipts Profit Centre[PO_Mtrl_Date] (many) -> this table[PO_Mtrl_Date] (one).
+let
+    // ===== Settings =====
+    FolderPath = "C:\Users\H329097\OneDrive - Halliburton\Desktop\ZMMRP",   // the same folder as Excel_ZMMRP S4
+    MaxSnapshotAgeDays = 35,         // an export older than this (counted back from the posting date) is not used
+    DelDateColumn = "PO Sch Del Dt", // shown as "PO Sch Del Date" and used by #Delivery; "MAD wo GR" = MRP date instead
+    AddSLocFromSql = true,           // ZMMRP has no storage location column, so it is taken from PRCH_ORDR_ITM
+
+    // ===== 1. Helpers =====
+    // Any cell to trimmed text; non-breaking spaces count as normal spaces
+    Clean = (v as any) as text =>
+        if v = null then "" else Text.Trim(Text.Replace(Text.From(v), Character.FromNumber(160), " ")),
+    ToText = (v as any) as nullable text => let t = Clean(v) in if t = "" then null else t,
+    // Order / Item / SLn: text without leading zeros
+    ToId = (v as any) as nullable text =>
+        let
+            c = Clean(v),
+            t = Text.TrimStart(c, "0")
+        in
+            if c = "" then null else if t = "" then "0" else t,
+    // Exception key as two characters, the same as Excel_ZMMRP S4: 7 -> "07"
+    ToKey = (v as any) as nullable text => let t = Clean(v) in if t = "" then null else Text.PadStart(t, 2, "0"),
+    // Dates: independent of the PC's regional settings
+    ToDate = (v as any) as nullable date =>
+        if v = null then null
+        else if v is date then v
+        else if v is datetime then Date.From(v)
+        else if v is number then Date.From(v)
+        else
+            let
+                t = Clean(v),
+                sep = if Text.Contains(t, "/") then "/" else if Text.Contains(t, ".") then "." else "-",
+                p = Text.Split(t, sep)
+            in
+                if List.Count(p) <> 3 then null
+                else try (
+                    if Text.Length(p{0}) = 4 then #date(Number.FromText(p{0}), Number.FromText(p{1}), Number.FromText(p{2}))
+                    else if sep = "." then #date(Number.FromText(p{2}), Number.FromText(p{1}), Number.FromText(p{0}))
+                    else #date(Number.FromText(p{2}), Number.FromText(p{0}), Number.FromText(p{1}))
+                ) otherwise null,
+    // Export day from the file name: EXPORT_20261117030713.xlsx, ZMMRP_2026-11-23.xlsx ...; otherwise Date modified
+    NameDate = (n as text) as nullable date =>
+        let
+            s = Text.Remove(n, {"-", "."}),
+            Windows = List.Transform(List.Numbers(0, List.Max({Text.Length(s) - 7, 0})), each Text.Middle(s, _, 8)),
+            Dates = List.Transform(Windows, (w) =>
+                if Text.StartsWith(w, "20") and Text.Length(Text.Select(w, {"0".."9"})) = 8
+                then try #date(Number.FromText(Text.Start(w, 4)), Number.FromText(Text.Middle(w, 4, 2)), Number.FromText(Text.End(w, 2))) otherwise null
+                else null),
+            Valid = List.RemoveNulls(Dates)
+        in
+            if List.IsEmpty(Valid) then null else List.First(Valid),
+
+    // ===== 2. Read one export, keep the PO lines (Purc / ShNt) =====
+    // The export puts the header on row 5 and cuts some header names to 10 characters (PO Sch Del Dt -> PO Sch Del),
+    // so columns are found by the start of their name.
+    ReadExport = (content as binary, fileName as text) as table =>
+        let
+            Book = Excel.Workbook(content, null, true),
+            Sheets = Table.SelectRows(Book, each [Kind] = "Sheet"),
+            Raw = if Table.IsEmpty(Sheets) then error ("ZMMRP GR: no sheet in " & fileName) else Sheets{0}[Data],
+            AllRows = List.Buffer(Table.ToRows(Raw)),
+            HeaderIndex = List.PositionOf(
+                List.Transform(List.FirstN(AllRows, 50), (r) =>
+                    let c = List.Transform(r, Clean) in List.Contains(c, "Order") and List.Contains(c, "MRP El")),
+                true),
+            Header = if HeaderIndex < 0
+                then error ("ZMMRP GR: header row with Order and MRP El not found in " & fileName)
+                else List.Transform(AllRows{HeaderIndex}, Clean),
+            Col = (name as text) as number =>
+                let
+                    exact = List.PositionOf(Header, name),
+                    starts = List.PositionOf(List.Transform(Header, each Text.StartsWith(_, name)), true),
+                    i = if exact >= 0 then exact else starts
+                in
+                    if i < 0 then error ("ZMMRP GR: column " & name & " not found in " & fileName) else i,
+            iOrder = Col("Order"),
+            iItem = Col("Item"),
+            iSLn = Col("SLn"),
+            iEl = Col("MRP El"),
+            iMad = Col("MAD wo GR"),
+            iPoDt = Col("PO Sch Del"),
+            iRsch = Col("Rsch dt wo"),
+            iExc = Col("Excep Mssg"),
+            iTxt = Col("MRP Excep"),
+            Rows = List.Transform(List.Skip(AllRows, HeaderIndex + 1), (r) => {
+                ToId(r{iOrder}), ToId(r{iItem}), ToId(r{iSLn}), ToText(r{iEl}),
+                ToDate(r{iMad}), ToDate(r{iPoDt}), ToDate(r{iRsch}), ToKey(r{iExc}), ToText(r{iTxt})}),
+            AsTable = Table.FromRows(Rows, type table [
+                PO = nullable text, Item = nullable text, SLn = nullable text, #"MRP El" = nullable text,
+                #"MAD wo GR" = nullable date, #"PO Sch Del Dt" = nullable date, #"Rsch dt wo GR" = nullable date,
+                #"Excep Mssg Key" = nullable text, #"MRP Excep Txt" = nullable text])
+        in
+            Table.SelectRows(AsTable, each
+                [PO] <> null and [Item] <> null and [SLn] <> null and [#"MRP El"] <> null
+                and List.Contains({"purc", "shnt"}, Text.Lower([#"MRP El"]))),
+
+    // ===== 3. Every export in the folder is one day (if a day has several, the one saved last) =====
+    Files = Folder.Files(FolderPath),
+    XlsxFiles = Table.SelectRows(Files, each Text.Lower([Extension]) = ".xlsx" and not Text.StartsWith([Name], "~$")),
+    Dated = Table.AddColumn(XlsxFiles, "Snapshot Date", each
+        let d = NameDate([Name]) in if d = null then Date.From([Date modified]) else d, type date),
+    PerDay = Table.Group(Dated, {"Snapshot Date"}, {{"File", each Table.First(Table.Sort(_, {{"Date modified", Order.Descending}})), type record}}),
+    FileList = Table.ExpandRecordColumn(PerDay, "File", {"Name", "Content"}, {"Snapshot File", "Content"}),
+    WithRows = Table.AddColumn(FileList, "Rows", each ReadExport([Content], [Snapshot File])),
+    Snapshots = Table.ExpandTableColumn(Table.RemoveColumns(WithRows, {"Content"}), "Rows",
+        {"PO", "Item", "SLn", "MRP El", "MAD wo GR", "PO Sch Del Dt", "Rsch dt wo GR", "Excep Mssg Key", "MRP Excep Txt"}),
+    SnapKeyed = Table.AddColumn(Snapshots, "PO_Item", each [PO] & "_" & [Item], type text),
+
+    // ===== 4. Receipt keys (buffered, so the receipts query is read only once) =====
+    ReceiptKeys = Table.Buffer(Table.Distinct(
+        Table.SelectRows(
+            Table.SelectColumns(#"SQL_Receipts Profit Centre", {"PO_Mtrl_Date", "PO_Mtrl", "PO_Item", "POSTING_DATE", "PURCHASE_ORDER", "MATERIAL"}),
+            each [PO_Mtrl_Date] <> null and [POSTING_DATE] <> null),
+        {"PO_Mtrl_Date", "PO_Item"})),
+    ReceiptItems = Table.RenameColumns(Table.Distinct(Table.SelectColumns(ReceiptKeys, {"PO_Item"})), {{"PO_Item", "_Item"}}),
+
+    // ===== 5. For each receipt: the last export before the posting date that has this PO line =====
+    History = Table.Buffer(Table.RemoveColumns(
+        Table.Join(SnapKeyed, "PO_Item", ReceiptItems, "_Item", JoinKind.Inner), {"_Item"})),
+    Joined = Table.NestedJoin(ReceiptKeys, {"PO_Item"}, History, {"PO_Item"}, "Snap", JoinKind.Inner),
+    NoDate = #date(9999, 12, 31),
+    // Within that export: the schedule line due first, ShNt before Purc, then the lowest SLn
+    PickRow = (grDate as date, snaps as table) as nullable record =>
+        let
+            Before = Table.SelectRows(snaps, each [Snapshot Date] < grDate and Duration.Days(grDate - [Snapshot Date]) <= MaxSnapshotAgeDays),
+            LastDay = List.Max(Before[Snapshot Date]),
+            Candidates = Table.SelectRows(Before, each [Snapshot Date] = LastDay),
+            Ordered = Table.Sort(Candidates, {
+                {each if [MAD wo GR] = null then NoDate else [MAD wo GR], Order.Ascending},
+                {each if Text.Lower([MRP El]) = "shnt" then 0 else 1, Order.Ascending},
+                {each try Number.FromText([SLn]) otherwise 9999, Order.Ascending}})
+        in
+            if Table.IsEmpty(Before) then null else Table.First(Ordered),
+    WithPick = Table.AddColumn(Joined, "Pick", each PickRow(Date.From([POSTING_DATE]), [Snap])),
+    Found = Table.SelectRows(Table.RemoveColumns(WithPick, {"Snap"}), each [Pick] <> null),
+    Picked = Table.ExpandRecordColumn(Found, "Pick",
+        {"Snapshot Date", "Snapshot File", "SLn", "MRP El", "MAD wo GR", "PO Sch Del Dt", "Rsch dt wo GR", "Excep Mssg Key", "MRP Excep Txt"}),
+    // Two PO items with the same material received on the same day share one key: keep the one due first
+    PerKey = Table.Group(Picked, {"PO_Mtrl_Date"}, {{"Row", each Table.First(Table.Sort(_, {
+        {each if [MAD wo GR] = null then NoDate else [MAD wo GR], Order.Ascending}, {"PO_Item", Order.Ascending}})), type record}}),
+    Expanded = Table.ExpandRecordColumn(PerKey, "Row",
+        {"PO_Mtrl", "PO_Item", "POSTING_DATE", "PURCHASE_ORDER", "MATERIAL", "Snapshot Date", "Snapshot File", "SLn", "MRP El",
+         "MAD wo GR", "PO Sch Del Dt", "Rsch dt wo GR", "Excep Mssg Key", "MRP Excep Txt"}),
+    Renamed = Table.RenameColumns(Expanded, {
+        {"POSTING_DATE", "GR Date"}, {"PURCHASE_ORDER", "PO"}, {"MATERIAL", "Mtrl No"}, {"SLn", "Schd"},
+        {"MRP Excep Txt", "MRP Excep Mssg"}, {"Snapshot Date", "ZMMRP Snapshot"}, {"Snapshot File", "ZMMRP File"}}),
+    WithDelDate = Table.AddColumn(Renamed, "Del Date", each Record.Field(_, DelDateColumn), type nullable date),
+    WithExcKey = Table.AddColumn(WithDelDate, "MRP Excep Key", each
+        if [Excep Mssg Key] = null then null else try Number.FromText([Excep Mssg Key]) otherwise null, Int64.Type),
+
+    // ===== 6. Storage location for the SLoc slicer =====
+    SLocTable = if AddSLocFromSql then
+            let
+                Src = Sql.Database("SCGREPORTING", "DUN02_HESDATAMART01", [Query = "SELECT PO_NBR, PO_ITM_NBR, STRG_LOCN_CD#(lf)FROM [DUN02_HESDATAMART01].[dbo].[PRCH_ORDR_ITM] WITH (NOLOCK)#(lf)WHERE PLNT_CD = '2750' AND PO_NBR LIKE '454%'"]),
+                Keyed = Table.AddColumn(Src, "PO_Item", each
+                    Text.TrimStart(Text.Trim(Text.From([PO_NBR])), "0") & "_" & Text.TrimStart(Text.Trim(Text.From([PO_ITM_NBR])), "0"), type text)
+            in
+                Table.Distinct(Table.SelectColumns(Keyed, {"PO_Item", "STRG_LOCN_CD"}), {"PO_Item"})
+        else #table(type table [PO_Item = text, STRG_LOCN_CD = text], {}),
+    WithSLoc = Table.ExpandTableColumn(
+        Table.NestedJoin(WithExcKey, {"PO_Item"}, SLocTable, {"PO_Item"}, "SL", JoinKind.LeftOuter),
+        "SL", {"STRG_LOCN_CD"}, {"SLoc"}),
+
+    // ===== 7. Columns and types =====
+    Selected = Table.SelectColumns(WithSLoc, {
+        "PO_Mtrl_Date", "GR Date", "PO_Mtrl", "PO_Item", "PO", "Schd", "MRP El", "Mtrl No",
+        "Del Date", "MAD wo GR", "PO Sch Del Dt", "Rsch dt wo GR", "MRP Excep Key", "MRP Excep Mssg", "SLoc",
+        "ZMMRP Snapshot", "ZMMRP File"}),
+    Result = Table.TransformColumnTypes(Selected, {
+        {"PO_Mtrl_Date", type text}, {"GR Date", type date}, {"PO_Mtrl", type text}, {"PO_Item", type text}, {"PO", type text},
+        {"Schd", type text}, {"MRP El", type text}, {"Mtrl No", type text},
+        {"Del Date", type date}, {"MAD wo GR", type date}, {"PO Sch Del Dt", type date}, {"Rsch dt wo GR", type date},
+        {"MRP Excep Key", Int64.Type}, {"MRP Excep Mssg", type text}, {"SLoc", type text},
+        {"ZMMRP Snapshot", type date}, {"ZMMRP File", type text}})
+in
+    Result
