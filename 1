@@ -1,5 +1,36 @@
-@GR PPV =
-CALCULATE (
-    SUM ( 'SQL_Actual PPV GR'[PPV] ),
-    TREATAS ( VALUES ( 'SQL_Receipts Profit Centre'[PO_Mtrl_Date] ), 'SQL_Actual PPV GR'[PO_Mtrl_Date] )
-)
+可以，这样更简单。上一条说的状态表和 `#Delivery Status` 列都不用建了；如果已经建了，删掉就行。没有 PO 的那部分调整直接算进 (Blank)。
+
+**1. 新建度量值** `@PPV`，替换掉之前那个版本：
+
+```dax
+@PPV =
+VAR BlankIn =
+    NOT ISEMPTY ( FILTER ( VALUES ( 'ZMMRP'[#Delivery] ), ISBLANK ( 'ZMMRP'[#Delivery] ) ) )
+VAR NoDeliveryFilter = NOT ISFILTERED ( 'ZMMRP'[#Delivery] )
+VAR OtherZmmrpFilter =
+    ISFILTERED ( 'ZMMRP'[#PIPO] )
+        || ISFILTERED ( 'ZMMRP'[MRP Excep Key] )
+        || ISFILTERED ( 'ZMMRP'[SLoc] )
+RETURN
+    [@GR PPV]
+        + IF ( ( NoDeliveryFilter || BlankIn ) && NOT OtherZmmrpFilter, [@Non-PO PPV] )
+```
+
+如果还没建 `@Non-PO PPV`，先建这个：
+
+```dax
+@Non-PO PPV = CALCULATE ( [PPV_Adjusted], 'SQL_Actual PPV'[LINE_TYPE] = "Non-PO adjustment" )
+```
+
+**2. 换字段：**
+- PPV 卡里的 `@GR PPV` 换成 `@PPV`。
+- Receipt by Tactical Team 表里的 `@GR PPV` 列换成 `@PPV`，表头改成 PPV。
+
+**改完的效果：**
+- 不筛选：PPV 回到 1.29M。
+- 选 (Blank)，或者在 Delivery 图上点 (Blank) 柱子：显示没有 ZMMRP 数据的那些收货的 PPV，加上没有 PO 的调整。
+- 选 On-Time、Late、Early：只显示这些收货自己的 PPV，不含调整。
+- 用 PIPO、Excep、SLoc 筛选：也不含调整，因为调整没有这些属性。
+- Tactical、Vendor、Del Date 这些筛选照常生效：调整里带供应商的，会算到对应的 team 下；没有供应商的，算在表里 team 为空的那一行。
+
+另外，图上 (Blank) 现在有 14.1M，是因为你最早那份 ZMMRP 导出之前的收货都在这里。以后每天存导出，这一块会越来越小。
