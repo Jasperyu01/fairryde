@@ -1,67 +1,14 @@
-还剩三件事：建新关系、改两个计算列、清理 Details 表上的报错。Details 表的 5 列不用重新拖，因为字段名都没变。
-
-## 1. 建新关系
-
-到 Model view，先确认旧的那条 `SQL_Receipts Profit Centre[PO_Mtrl]` → GR 表 `[PO_Mtrl]` 已经删了。然后点 Manage relationships → New，按下面设：
-
-- 上面选 `SQL_Receipts Profit Centre`，列选 `PO_Mtrl_Date`
-- 下面选 GR 表（`Excel_ZMMRP Monthend GR (SQL Sourced)`，如果你改了名就是 `ZMMRP GR`），列也选 `PO_Mtrl_Date`
-- Cardinality 选 Many to one，Cross filter direction 选 Single，勾上 Make this relationship active
-
-如果 Power BI 只让你选 Many to many，说明 PO_Mtrl_Date 有重复值，这时告诉我，我来查。
-
-## 2. 改 #Delivery 和 #PIPO
-
-在右侧 Data 窗格里点 GR 表的 `#Delivery`，把上方公式栏的内容整个换掉，按 Enter；`#PIPO` 也一样。公式里没写表名，改没改表名都能直接用。
-
-```dax
-#Delivery =
-VAR DelDate = [Del Date]
-VAR GRDate = [GR Date]
-VAR DelMonth = YEAR ( DelDate ) * 12 + MONTH ( DelDate )
-VAR GRMonth = YEAR ( GRDate ) * 12 + MONTH ( GRDate )
-RETURN
-    SWITCH (
-        TRUE (),
-        ISBLANK ( DelDate ) || ISBLANK ( GRDate ), BLANK (),
-        DelMonth > GRMonth, "Early",
-        DelMonth < GRMonth, "Late",
-        "On-Time"
+EVALUATE
+VAR FirstExport = MIN ( 'Excel_ZMMRP Monthend GR (SQL Sourced)'[ZMMRP Snapshot] )
+VAR ReceiptKeys =
+    CALCULATETABLE (
+        DISTINCT ( 'SQL_Receipts Profit Centre'[PO_Mtrl_Date] ),
+        'SQL_Receipts Profit Centre'[POSTING_DATE] > FirstExport
     )
-```
-
-```dax
-#PIPO =
-VAR RschDate = [Rsch dt wo GR]
-VAR GRDate = [GR Date]
 RETURN
-    IF (
-        ISBLANK ( RschDate ) || ISBLANK ( GRDate ),
-        "",
-        IF (
-            YEAR ( RschDate ) * 12 + MONTH ( RschDate ) <= YEAR ( GRDate ) * 12 + MONTH ( GRDate ),
-            "Pull-in",
-            "Push-out"
-        )
+    ROW (
+        "Earliest export used", FirstExport,
+        "Latest receipt date", MAX ( 'SQL_Receipts Profit Centre'[POSTING_DATE] ),
+        "Receipts after that export", COUNTROWS ( ReceiptKeys ),
+        "Rows in GR table", COUNTROWS ( 'Excel_ZMMRP Monthend GR (SQL Sourced)' )
     )
-```
-
-## 3. Details 表
-
-1. **先处理报错。** 如果表上显示 "Something's wrong with one or more fields"，点 **Fix this**。报错的是删掉的 `Excel_ZMMRP Monthend GR` 留下的筛选卡，Fix this 会把它们去掉，不影响数据。也可以在 Filters 窗格里，把带警告标记的卡逐个点 X。顶上两个切片器（MRP Excep Key、SLoc）和 PPV Analysis 的主表如果也报错，用同样的方法处理。
-2. **检查这 5 列：** MRP Excep Mssg、PO Sch Del Date、Rsch dt wo GR、Delivery、PIPO。它们还连着 GR 表里同名的列，一般不用动。如果某一列有警告标记，就从 Columns 里删掉它，再从 GR 表把同名字段拖回原位置，双击改回原来的显示名：
-   - `Del Date` 显示为 PO Sch Del Date
-   - `#Delivery` 显示为 Delivery
-   - `#PIPO` 显示为 PIPO
-3. **日期格式：** Del Date 和 Rsch dt wo GR 现在是日期类型。如果表里带出了时间，到 Table view 选中这一列，在 Column tools → Format 里选 Short date。
-4. **可选：** 在 PIPO 后面加一列 `ZMMRP Snapshot`，显示名可以叫 MRP As Of，这样看表的人知道这行的 Excep 和日期取自哪天的导出。想同时看 MRP 日期的话，也可以再加一列 `MAD wo GR`。
-
-同页的 Del Status、PIPO、MRP Excep Key、SLoc 四个切片器和 By Month 表也连在这张表上。关系建好以后它们就会有值，不用改。
-
-## 4. 检查结果
-
-- 把 Del Date 切片器选到 2026 年 11 月，最近的收货这 5 列应该有值。你文件夹里最早那份导出之前的收货会是空的，这是正常的。
-- 跑上一条那个验证查询，看每个月有多少行对上。表改过名的话，把查询里的表名换成新名字。
-- 挑一行看它的 ZMMRP Snapshot，打开那天的导出，找到这行 PO，核对 Excep、PO Sch Del Dt 和 Rsch dt wo GR 对不对。
-
-刷新或建关系时如果报错，把错误信息截图发给我。
