@@ -1,14 +1,84 @@
-EVALUATE
-VAR FirstExport = MIN ( 'Excel_ZMMRP Monthend GR (SQL Sourced)'[ZMMRP Snapshot] )
-VAR ReceiptKeys =
-    CALCULATETABLE (
-        DISTINCT ( 'SQL_Receipts Profit Centre'[PO_Mtrl_Date] ),
-        'SQL_Receipts Profit Centre'[POSTING_DATE] > FirstExport
-    )
-RETURN
-    ROW (
-        "Earliest export used", FirstExport,
-        "Latest receipt date", MAX ( 'SQL_Receipts Profit Centre'[POSTING_DATE] ),
-        "Receipts after that export", COUNTROWS ( ReceiptKeys ),
-        "Rows in GR table", COUNTROWS ( 'Excel_ZMMRP Monthend GR (SQL Sourced)' )
-    )
+页面设计稿已经放在画布上了。粉色的 1 到 4 号标出了改动的地方，可以先拿给他们看。图里的数字是我手上旧 PBIX 里截至 11/16 的数据，只用来看排版。颜色和字体沿用现在报表的紫色主题和 Arial。
+
+## 设计思路
+
+- **第一行改成 KPI 横条：** Qty、Receipts、PPV 三张卡排成一行，另外加一张 GR Lines（收货笔数）。四张卡正好铺满一行，第二行就能多放一个图。
+- **第二行从左到右：** By Tactical Team（不变）、PPV by Tactical Team（新）、Delivery Status（新）、By Vendor（改成表格）。
+- **PPV 用横向条形图：** 正数（Favorable）绿色往右，负数（Unfavorable）洋红往左，一眼能看出哪个 team 是亏的。
+- **Delivery 用柱状图：** 按 Early、On-Time、Late 的时间顺序排。Details 表里的 Delivery 列用同一套颜色，图和表对得上。
+- **Vendor 表加占比：** 加一列占比，并用浅蓝数据条显示，保留一点原来树状图"看大小"的感觉。
+
+## 在 Power BI 里怎么做
+
+**1. 先删掉** By Month 表和 By Vendor 树状图。
+
+**2. 位置和大小**：选中视觉对象，在 Format → General → Properties 里填 Position 和 Size：
+
+| 视觉对象 | X | Y | 宽 | 高 |
+|---|---|---|---|---|
+| Qty 卡 | 142 | 64 | 275 | 64 |
+| Receipt 卡 | 425 | 64 | 275 | 64 |
+| PPV 卡 | 708 | 64 | 275 | 64 |
+| GR Lines 卡（新） | 991 | 64 | 274 | 64 |
+| By Tactical Team | 142 | 136 | 262 | 244 |
+| PPV by Tactical Team（新） | 412 | 136 | 290 | 244 |
+| Delivery Status（新） | 710 | 136 | 220 | 244 |
+| By Vendor（新表） | 938 | 136 | 327 | 244 |
+| Details | 142 | 388 | 1123 | 324 |
+
+新视觉对象的标题栏，用格式刷从 By Tactical Team 复制过去（深灰底、白色粗体、居中），省得一个个调。
+
+**3. GR Lines 卡**：复制 Qty 卡，粘贴后把字段换成现成的度量值 `Receipts Distinct Keys`（在 SQL_Receipts Profit Centre 表里），标签改成 GR Lines，背景色填 #DCD6EC。
+
+**4. PPV by Tactical Team**：插入 Clustered bar chart。
+- Y 轴：`Excel_Buyer-Vendor Allocation[Tactical Team]`
+- X 轴：`SQL_Actual PPV[PPV_Adjusted]`。和 PPV 卡用同一个度量值，所以合计会对得上。
+- 按 PPV 降序排。
+- 颜色：Bars → Color → fx，选 Rules，字段选 PPV_Adjusted：
+  - 值 >= 0 用 #6A9F4E
+  - 值 < 0 用 #BD3978
+- 数据标签打开，显示单位选 Thousands，保留 1 位小数；关掉 X 轴和网格线。
+
+**5. Delivery Status**：
+- 先在 GR 表里加一个计算列，让顺序变成 Early、On-Time、Late：
+  ```dax
+  #Delivery Order = SWITCH ( [#Delivery], "Early", 1, "On-Time", 2, "Late", 3 )
+  ```
+  选中 `#Delivery` 列，Column tools → Sort by column 选 `#Delivery Order`。
+- 插入 Clustered column chart：X 轴放 `#Delivery`，Y 轴放 `Receipts Distinct Keys`。在视觉筛选里把 `#Delivery` 设成 is not blank，再按 `#Delivery` 升序排。
+- 柱子颜色在 Columns → Colors 里逐个设：Early #6E98B5，On-Time #364B59，Late #BD3978。
+- 数据标签打开。副标题写 No. of receipts vs PO date。
+- 可选：标签下面再显示一行占比。新建下面这个度量值，放进 Data labels → Details：
+  ```dax
+  % of GR Lines =
+  DIVIDE (
+      [Receipts Distinct Keys],
+      CALCULATE ( [Receipts Distinct Keys], ALLSELECTED ( 'Excel_ZMMRP Monthend GR (SQL Sourced)'[#Delivery] ) )
+  )
+  ```
+
+**6. By Vendor 表**：插入 Table。
+- 第一列放 `Excel_Buyer-Vendor Allocation[Vendor Name]`。
+- 第二列放 `SQL_Receipts Profit Centre[#Std Cost less MA]`（求和），改名 Receipts。
+- 第三列再放一次同一个字段，在字段上右键 → Show value as → Percent of grand total，改名 % of Total。
+- 按 Receipts 降序排。
+- 在 Cell elements 里给 % of Total 打开 Data bars，正值颜色填 #C5D6E1。
+- Values 里关掉 Text wrap，供应商名太长会显示成省略号，每行就不会被撑高。
+
+**7. Details 表**：
+- 把表头改回原来的名字：#Delivery 改成 Delivery，#PIPO 改成 PIPO。
+- 日期那列建议换成 `Del Date` 字段，因为 Delivery 就是按它算的，显示名写 PO Sch Del Date。
+- 可选：Delivery 列加颜色。新建下面这个度量值，然后在 Cell elements → Font color → fx 里选 Field value，挑这个度量值：
+  ```dax
+  Delivery Color =
+  SWITCH (
+      SELECTEDVALUE ( 'Excel_ZMMRP Monthend GR (SQL Sourced)'[#Delivery] ),
+      "Early", "#3F6E8F",
+      "On-Time", "#364B59",
+      "Late", "#BD3978"
+  )
+  ```
+
+上面公式里的表名，如果你已经改了名，换成新名字就行。
+
+还有一点要知道：PPV 卡和 PPV by Tactical Team 只跟 Tactical、Buyer、Vendor、Del Date 这几个筛选联动。点 Delivery 柱子，或者选 Del Status、PIPO、Excep、SLoc 时，PPV 不会变。原来的 PPV 卡也是这样，因为 PPV 数据不经过 GR 表。
