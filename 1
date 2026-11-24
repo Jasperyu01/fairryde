@@ -1,1 +1,8 @@
-{ "201453661", "204001885" }
+EVALUATE
+VAR _open = FILTER ( 'SQL_Qnotes Tasks', 'SQL_Qnotes Tasks'[#Task Status] <> "Completed" )
+RETURN
+    ROW (
+        "Summary card", COUNTROWS ( _open ),
+        "MDI table", COUNTROWS ( FILTER ( _open, 'SQL_Qnotes Tasks'[#ECC Superseded by S4] = "N" ) ),
+        "Old ECC copies", COUNTROWS ( FILTER ( _open, 'SQL_Qnotes Tasks'[#ECC Superseded by S4] = "Y" ) )
+    )
