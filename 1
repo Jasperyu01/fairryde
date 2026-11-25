@@ -1,17 +1,4 @@
-这两个是我之前从你上传的 pbix 里读出来的原始定义，原样在这里。在 `Price Change Flag` 表上新建两个 measure，名字要和原来一字不差：
-
-```dax
-Priority Color = IF ( SELECTEDVALUE ( 'Price Change Flag'[Priority] ) = "High", "#D32F2F" )
-```
-
-```dax
-Priority Font = IF ( SELECTEDVALUE ( 'Price Change Flag'[Priority] ) = "High", "#FFFFFF" )
-```
-
-表格的条件格式是按"表名 + measure 名"引用的，所以名字和所在表都对上的话，High 行的红底白字一般会自动恢复。
-
-如果没恢复，手动重新指一下：选中表格，Format 里找 Cell elements，对 `Aging Days` 和 `PDT` 这两列分别设置：
-- Background color 点 fx，Format style 选 Field value，字段选 `Priority Color`
-- Font color 点 fx，同样选 Field value，字段选 `Priority Font`
-
-`Priority` 这一列原来也用的是这两个 measure。如果你已经建了 `Priority Tag Color` 和 `Priority Tag Font`，这一列就指向那两个，这样 Auto-Approved 才会是青色。
+Auto-Approved: no approval needed. Enter the new price in SAP, then click the link in the email to clear it.
+你改话就行，详细一点
+Auto-Approved: no approval needed. Enter the new price in SAP, then click the link in the email to clear it.
+就说会收到一封email点那个确认修改的link，就clear
