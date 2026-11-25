@@ -1,9 +1,10 @@
-This is the Price Change Request Priority List for this week. There are 32 requests on the list: 8 High priority and 24 Normal.
-
-High priority is down from 9 last week to 8, and it is still under our threshold of 10, so the card stays green.
-
-All 8 High priority requests are under Travis, and they are all Greene Tweed parts. Most of them have been aging around 20 days, with no sourcing update yet.
-
-Travis is back tomorrow, so I will follow up with him to prioritize these, and at minimum get the sourcing update and target closure date filled in.
-
-The remaining 24 are Normal, so no concerns there for now.
+let
+    Source = Excel.Workbook(File.Contents("C:\Users\H329097\OneDrive - Halliburton\Desktop\ZMMRP\ZMMRP_2750_20261125_081454.xlsx"), null, true),
+    Sheet1_Sheet = Source{[Item="Sheet1",Kind="Sheet"]}[Data],
+    #"Promoted Headers" = Table.PromoteHeaders(Sheet1_Sheet, [PromoteAllScalars=true]),
+    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Plant", Int64.Type}, {"MRP Type", type text}, {"PROCESSED", type text}, {"Comments", type text}, {"Mat Status", type text}, {"MM Pur Grp", type text}, {"PO Pur Grp", type text}, {"Vendor", type text}, {"Name", type text}, {"Vendor Mat", type text}, {"Material", Int64.Type}, {"Mat Desc", type text}, {"MM Planed Del Time", Int64.Type}, {"Plan Proc Rel Dt", type date}, {"Strt/Rel Dt", type date}, {"PO Create Date", type date}, {"MRP El", type text}, {"Order", Int64.Type}, {"Item", Int64.Type}, {"SLn", Int64.Type}, {"Supply Qty", Int64.Type}, {"PO Open Qty", Int64.Type}, {"MAD wo GR", type date}, {"Rsch dt wo GR", type date}, {"Excep Mssg Key", Int64.Type}, {"MRP Excep Txt", type text}, {"PO Sch Del Dt", type date}, {"Static Rel Dt", type date}, {"UOM", type text}, {"STD Price", type number}, {"Net Price", type number}, {"Planned Price x", type number}, {"Price Unit", Int64.Type}, {"Profit cntr", Int64.Type}, {"Min Lot Size", Int64.Type}, {"MRP Contrlr", type text}, {"Safety Stock", Int64.Type}, {"Inf Rec Planned Del", Int64.Type}, {"PO Type", type text}, {"Proc Type", type text}, {"Last Saved ID", type text}, {"Mat Type", type text}, {"Old Material No.", type text}, {"PO Itm Txt Dt", type date}, {"Fix lot Size", Int64.Type}}),
+    #"Reordered Columns" = Table.ReorderColumns(#"Changed Type",{"Order", "Plant", "MRP Type", "PROCESSED", "Comments", "Mat Status", "MM Pur Grp", "PO Pur Grp", "Vendor", "Name", "Vendor Mat", "Material", "Mat Desc", "MM Planed Del Time", "Plan Proc Rel Dt", "Strt/Rel Dt", "PO Create Date", "MRP El", "Item", "SLn", "Supply Qty", "PO Open Qty", "MAD wo GR", "Rsch dt wo GR", "Excep Mssg Key", "MRP Excep Txt", "PO Sch Del Dt", "Static Rel Dt", "UOM", "STD Price", "Net Price", "Planned Price x", "Price Unit", "Profit cntr", "Min Lot Size", "MRP Contrlr", "Safety Stock", "Inf Rec Planned Del", "PO Type", "Proc Type", "Last Saved ID", "Mat Type", "Old Material No.", "PO Itm Txt Dt", "Fix lot Size"}),
+    #"Renamed Columns" = Table.RenameColumns(#"Reordered Columns",{{"Planned Price x", "Planned Price x (SGD)"}}),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Renamed Columns",{{"Order", type text}})
+in
+    #"Changed Type1"
