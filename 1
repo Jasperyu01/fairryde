@@ -1,89 +1,17 @@
-我先拆开这个 pbix 看一下现有页面布局和数据模型，再给方案和图。
-
-你的思路是对的：放进 Request Priority 当第三类，再单独一页 Details。Request Priority 本来就是 Action Owner 的待办清单，Auto-Approved 对他们来说也是一件待办（去 SAP 改价），所以应该在同一张清单里看到。
-
-图画好了，两张 1280×720 的画板，配色沿用你 pbix 里现有的，数字都是文件里的真实数据（8 High、24 Normal、14 Auto-Approved）：
-- [1. Request Priority（改动后）](https://claude.ai/artifact/Pn6LzUhSqqHr3eax4nA9mD#artboard-Main)
-- [2. Auto-Approved Details（新页面）](https://claude.ai/artifact/Pn6LzUhSqqHr3eax4nA9mD#artboard-AutoApproved)
-
-## 一个前提
-现在数据里没有任何字段记录"SAP 已经改了"，所以 Auto-Approved 的行只进不出（6 天已经 14 条）。你之前想做的确认链接（点一次把 SharePoint 列写成 Complete）就是这里的出口。图 2 里的 SAP Update slicer、矩阵的 Done 列、表里的 SAP Update 列都依赖它，上线前那个 slicer 位置先放回 CM Vendor。
-
-## 第 1 页：Request Priority
-视觉上只动 4 处，Auto-Approved 统一用青色 `#197278`（你主题色板里已有，和红、灰不冲突）。
-
-1. **右上新卡片**：复制 High Priority Count 卡片，放在 x 1050, y 68, 229×68，背景固定青色，显示 Auto-Approved 数量。Note 下移到 y 136，高 151，字号改 8pt，加一条说明。
-2. **Donut**：宽度 374 改 310，多一块青色。
-3. **矩阵**：x 改 599，宽 449，多一列 Auto-Approved。
-4. **表格**：混入 Auto-Approved 行，只有 Priority 那格是青色标签，Aging 显示批准后的天数。
-
-DAX 改动都在 `Price Change Flag` 表：
+这两个是我之前从你上传的 pbix 里读出来的原始定义，原样在这里。在 `Price Change Flag` 表上新建两个 measure，名字要和原来一字不差：
 
 ```dax
-// 新列：承载全部逻辑，同时当排序列
-Priority Sort =
-VAR _status = TRIM ( 'Price Change Flag'[Request Status] )
-VAR _po     = TRIM ( 'Price Change Flag'[PO Number] )
-VAR _pdt    = 'Price Change Flag'[PDT]
-VAR _aging  = 'Price Change Flag'[Aging Days]
-VAR _hasPO  = NOT ISBLANK ( _po ) && CONTAINSSTRING ( _po, "45" ) && LEN ( _po ) >= 10
-RETURN
-SWITCH (
-    TRUE (),
-    _status = "Auto Approved", 2,      // 确认列上线后加：&& [SAP Update] <> "Complete"
-    _status <> "Pending Approval / Feedback", BLANK (),
-    NOT _hasPO,                 3,
-    _pdt < 60,                  1,
-    _pdt <= 90 && _aging > 14,  1,
-    _pdt > 90  && _aging > 30,  1,
-    3
-)
-
-// 原 Priority 列改成从它映射，然后 Sort by column 选 Priority Sort
-Priority = SWITCH ( 'Price Change Flag'[Priority Sort], 1, "High", 2, "Auto-Approved", 3, "Normal" )
-
-// Aging Days：Auto Approved 现在算 Closed 所以是空，改成批准后的天数
-Aging Days =
-IF (
-    'Price Change Flag'[Request Status] = "Auto Approved",
-    DATEDIFF ( 'Price Change Flag'[Approver Action Date], TODAY (), DAY ),
-    IF ( 'Price Change Flag'[Status] = "Closed", BLANK (),
-        IF ( 'Price Change Flag'[Created] < 'Price Change Flag'[Date],
-            TODAY () - 'Price Change Flag'[Created], TODAY () - 'Price Change Flag'[Date] ) )
-)
-
-// 新 measure：只给 Priority 列用，原来的 Priority Color 留给 Aging 和 PDT
-Priority Tag Color =
-SWITCH ( SELECTEDVALUE ( 'Price Change Flag'[Priority] ), "High", "#D32F2F", "Auto-Approved", "#197278" )
-Priority Tag Font = IF ( NOT ISBLANK ( [Priority Tag Color] ), "#FFFFFF" )
-
-Auto-Approved Pending =
-COALESCE ( CALCULATE ( COUNTROWS ( 'Price Change Flag' ), 'Price Change Flag'[Priority] = "Auto-Approved" ), 0 )
+Priority Color = IF ( SELECTEDVALUE ( 'Price Change Flag'[Priority] ) = "High", "#D32F2F" )
 ```
-
-排序逻辑必须写在 Priority Sort 里再映射出 Priority，反过来写会报循环依赖。顺序我定的是 High、Auto-Approved、Normal，想让 Auto-Approved 排最后就把 2 和 3 对调。
-
-然后改 filter：
-- **Donut、矩阵、CM Vendor 和 Part Number 两个 slicer**：visual 级 filter 现在是 Priority 只勾 High 和 Normal，把 Auto-Approved 也勾上。
-- **表格**：Request Status 的 filter 加勾 Auto Approved。
-- **新卡片**：Priority 只勾 Auto-Approved。
-
-## 第 2 页：Auto-Approved Details
-你现在克隆出来的 Auto Approved 页只有表格换成了 Auto Approved，上半部分的 donut、矩阵、卡片还在显示 pending 的 High 和 Normal。建议这样改：
-
-1. 加页面级 filter：Request Status = Auto Approved，并删掉各 visual 上的 Priority filter。
-2. Donut 换成三张卡片（数量、`Estimated Delta Annual Impact (USD)` 合计、`MAX(Aging Days)`）和一个按 Vendor 的影响金额条形图。
-3. 矩阵改成 Action Owner × SAP Update。
-4. 表格加 Approver Action Date、Requestor Name、AnnualQuantity、Estimated Delta Annual Impact (USD)，再加一列 Delta %，条件格式设为 ≥ 20% 标红：
 
 ```dax
-Delta % = DIVIDE ( 'Price Change Flag'[New Price in USD] - 'Price Change Flag'[Old Price in USD], 'Price Change Flag'[Old Price in USD] )
+Priority Font = IF ( SELECTEDVALUE ( 'Price Change Flag'[Priority] ) = "High", "#FFFFFF" )
 ```
 
-加 Delta % 是因为门槛只看年度影响金额：14 条里有 4 条涨幅超过 20%（最高 +45.9%），因为年用量只有 1 到 8 件所以过了 2K。Zoe 审这页时应该想一眼看到这些。
+表格的条件格式是按"表名 + measure 名"引用的，所以名字和所在表都对上的话，High 行的红底白字一般会自动恢复。
 
-## 顺带发现的两个问题
-- **Overview 的 Total Approved Request 卡片**：filter 只勾了两个 Approved 状态，14 条 Auto Approved 不计数，但旁边的 Annual Impact $ 用的是排除法，会把它们算进去，数量和金额对不上。另有 38 条状态前面带空格的 " Approved by Strategic Sourcing" 和 1 条 Approved by Manager 也没被计数。
-- **Note 和 DAX 不一致**：Note 写无 PO 且 aging > 60 天算 High，但 Priority 公式里无 PO 一律 Normal。
+如果没恢复，手动重新指一下：选中表格，Format 里找 Cell elements，对 `Aging Days` 和 `PDT` 这两列分别设置：
+- Background color 点 fx，Format style 选 Field value，字段选 `Priority Color`
+- Font color 点 fx，同样选 Field value，字段选 `Priority Font`
 
-图里两处是我自己定的：Note 写的是 "under the USD 2K threshold"（具体是 < 还是 ≤ 你核一下），矩阵标题的 "Stragetic" 拼写我顺手改成了 Strategic。你账号里那个 Apple Design Analysis design system 没有套用。
+`Priority` 这一列原来也用的是这两个 measure。如果你已经建了 `Priority Tag Color` 和 `Priority Tag Font`，这一列就指向那两个，这样 Auto-Approved 才会是青色。
