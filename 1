@@ -1,8 +1,9 @@
-EVALUATE
-VAR _open = FILTER ( 'SQL_Qnotes Tasks', 'SQL_Qnotes Tasks'[#Task Status] <> "Completed" )
-RETURN
-    ROW (
-        "Summary card", COUNTROWS ( _open ),
-        "MDI table", COUNTROWS ( FILTER ( _open, 'SQL_Qnotes Tasks'[#ECC Superseded by S4] = "N" ) ),
-        "Old ECC copies", COUNTROWS ( FILTER ( _open, 'SQL_Qnotes Tasks'[#ECC Superseded by S4] = "Y" ) )
-    )
+This is the Price Change Request Priority List for this week. There are 32 requests on the list: 8 High priority and 24 Normal.
+
+High priority is down from 9 last week to 8, and it is still under our threshold of 10, so the card stays green.
+
+All 8 High priority requests are under Travis, and they are all Greene Tweed parts. Most of them have been aging around 20 days, with no sourcing update yet.
+
+Travis is back tomorrow, so I will follow up with him to prioritize these, and at minimum get the sourcing update and target closure date filled in.
+
+The remaining 24 are Normal, so no concerns there for now.
