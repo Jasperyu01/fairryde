@@ -1,290 +1,208 @@
 // ============================================================
-// PCR Mass Upload - Parse Data (Button7_1) OnSelect
-// (2026-11) Changes vs previous version:
-//   1. Step 1 rebuilds Excel rows before splitting cells. Excel copies a cell that contains a
-//      line break (Alt+Enter, or a trailing line break pasted in from SAP / email) as "...<LF>...",
-//      so one Excel row used to arrive as two rows (e.g. PN = " and Vendor Code = requestor name).
-//      Lines are glued back by counting tabs: every row copied from PN to Email Link has 24 tabs.
-//      Char(1) marks where the line break was.
-//   2. Pre-clean: a cell that had a line break loses the "..." wrapper Excel added (inner "" back
-//      to "), and the line break becomes a space.
-//   3. _tariffPct no longer divides inside the If condition. With _fxRate = 0 that division raised
-//      "Invalid operation: division by zero".
-//   4. New checks, both also set varDisableWrite:
-//        colBadColumns  : rows that still do not have the template column count
-//        colBadCurrency : Currency not found in FX_PRate (USD prices and annual impact would be 0)
-//   5. Error messages list the affected PNs.
+// PCR Mass Approval - Approve button OnSelect
+// Every parsed row is saved in 'Price Change' as "Approved by Strategic Sourcing".
+// No approval flow runs and no email is sent. The Status column of the template is ignored.
+//
+// STEP 0 checks every row first. If any row has a problem, NOTHING is written:
+//   - Annual Quantity is blank or 0
+//   - the same PN + Vendor Code + Scale Qty appears twice in this upload
+// STEP 1 writes each row with ONE Patch (all fields + status together), so a row is either
+//   fully saved as Approved or not saved at all.
+//   Same PN + Vendor as an open request (Pending Approval / Feedback or blank status, the same
+//   rule as Mass Upload): that record is updated and approved, no new record is created.
+//   Otherwise a new record with a new TPCID is created.
+// STEP 2 reports the TPCIDs; rows that failed to save stay in the list for a retry.
 // ============================================================
 
-// Step 1: Rebuild Excel rows from the pasted text
 With(
-    { _lines: Split(Substitute(TextInput_1.Text, Char(13), ""), Char(10)) },
-    With(
-        {
-            _ln: ForAll(
-                Sequence(CountRows(_lines)) As i,
-                With(
-                    { _t: Last(FirstN(_lines, i.Value)).Value },
-                    {
-                        idx: i.Value,
-                        txt: _t,
-                        tabs: Len(_t) - Len(Substitute(_t, Char(9), ""))
-                    }
-                )
-            )
-        },
-        With(
-            // tabs per Excel row: 24 for PN .. Email Link (more if extra columns were copied)
-            { _T: Max(24, Max(_ln, tabs)) },
-            Set(varTabsPerRow, _T);
-            With(
-                {
-                    _grp: ForAll(
-                        _ln As L,
-                        With(
-                            { _before: Coalesce(Sum(Filter(_ln, idx < L.idx), tabs), 0) },
-                            {
-                                txt: L.txt,
-                                // A line without tabs that starts exactly on a row boundary is the end of the
-                                // previous row's last cell, unless it opens a quoted first cell (starts with ").
-                                rowNo: RoundDown(
-                                    (
-                                        _before - If(
-                                            L.tabs = 0 && _before > 0 && Mod(_before, _T) = 0 &&
-                                            !(Left(L.txt, 1) = """" && Right(L.txt, 1) <> """"),
-                                            1,
-                                            0
-                                        )
-                                    ) / _T,
-                                    0
-                                )
-                            }
-                        )
-                    )
-                },
-                ClearCollect(
-                    colRawRows,
-                    Filter(
-                        ForAll(
-                            Sequence(Max(_grp, rowNo) + 1, 0) As g,
-                            { Value: Concat(Filter(_grp, rowNo = g.Value), txt, Char(1)) }
-                        ),
-                        !IsBlank(Trim(Substitute(Substitute(Value, Char(1), ""), Char(9), "")))
-                    )
-                )
-            )
-        )
-    )
-);
+    {
+        _approvedStatus: "Approved by Strategic Sourcing"   // must match exactly what the approval flow writes
+    },
+    If(
+        varDisableWrite,
+        Notify(
+            "Cannot approve: fix the rows reported by Parse Data, then press Parse Data again.",
+            NotificationType.Error
+        ),
+        CountRows(colTempData) = 0,
+        Notify(
+            "No parsed rows found. Paste + Parse first.",
+            NotificationType.Error
+        ),
+        CountRows(colTempData) > 100,
+        Notify(
+            "Please upload max 100 rows per cycle.",
+            NotificationType.Error
+        ),
 
-// Step 2: Convert each row into structured records (TAB-separated)
-ClearCollect(
-    colTempData,
-    ForAll(
-        colRawRows,
-        With(
-            {
-                // ===== PRE-CLEAN: NBSP -> space, strip CR, Trim =====
-                // 空格单元格在这里变成真正的空字符串，IsBlank 才会生效
-                // A cell that had a line break contains Char(1) and is wrapped in "..." by Excel
-                // (inner quotes doubled): remove the wrapper, the line break becomes a space.
-                cells: ForAll(
-                    Split(ThisRecord.Value, Char(9)) As c,
+        // ===== STEP 0: CHECK EVERY ROW, WRITE NOTHING IF ANY ROW FAILS =====
+        ClearCollect(
+            colApprCheck,
+            ForAll(
+                colTempData As r,
+                {
+                    RowPN: r.PNVar,
+                    Problem: If(
+                        Coalesce(r.AnnualQuantityVar, 0) <= 0,
+                        "Annual Quantity is blank or 0",
+                        CountRows(
+                            Filter(
+                                colTempData,
+                                PNVar = r.PNVar && VendorCodeVar = r.VendorCodeVar && ScaleQuantityVar = r.ScaleQuantityVar
+                            )
+                        ) > 1,
+                        "same PN + Vendor + Scale Qty twice in this upload",
+                        ""
+                    )
+                }
+            )
+        );
+
+        If(
+            CountRows(Filter(colApprCheck, Problem <> "")) > 0,
+            Notify(
+                "Cannot approve, nothing saved -> " &
+                Concat(
+                    FirstN(Filter(colApprCheck, Problem <> ""), 5),
+                    RowPN & " [" & Problem & "]",
+                    "  |  "
+                ),
+                NotificationType.Error
+            ),
+
+            // ===== STEP 1: SAVE EVERY ROW AS APPROVED (one Patch per row) =====
+            ClearCollect(
+                colApprResults,
+                ForAll(
+                    colTempData,
                     With(
-                        { _v: Substitute(Substitute(c.Value, Char(160), " "), Char(13), "") },
+                        {
+                            // open request for the same PN + Vendor (same rule as Mass Upload, written so SharePoint can delegate it)
+                            existingSP: LookUp(
+                                'Price Change',
+                                PN = PNVar && 'Vendor Code' = VendorCodeVar &&
+                                ('Request Status' = "Pending Approval / Feedback" || 'Request Status' = Blank())
+                            )
+                        },
                         With(
-                            { _w: Trim(Substitute(_v, Char(1), " ")) },
                             {
-                                Value: If(
-                                    Char(1) in _v && Len(_w) >= 2 && Left(_w, 1) = """" && Right(_w, 1) = """",
-                                    Trim(Substitute(Mid(_w, 2, Len(_w) - 2), """""", """")),
-                                    _w
+                                // ONE Patch per row: every column + the Approved status together.
+                                // Open request found -> that record is updated (it keeps its TPCID); otherwise a new record
+                                // with a new TPCID is created.
+                                // (2026-11 fix) The record is written directly inside Patch. Built beforehand in a With
+                                // variable, Power Apps does not map display names such as Approver or 'Request Status'
+                                // to the SharePoint columns, and Patch failed ("column 'Approver' does not exist").
+                                written: IfError(
+                                    Patch(
+                                        'Price Change',
+                                        If(IsBlank(existingSP), Defaults('Price Change'), existingSP),
+                                        {
+                                            Title: If(
+                                                IsBlank(existingSP),
+                                                "PC-" & Text(
+                                                    Coalesce(
+                                                        // 2026-11: newest records first, so the app's 2,000-row window holds the highest numbers (also above 2,000 items)
+                                                        Max(
+                                                            Sort('Price Change', ID, SortOrder.Descending),
+                                                            IfError(Value(Mid(Title, 4, Len(Title) - 3)), 0)
+                                                        ),
+                                                        0
+                                                    ) + 1,
+                                                    "0000000"
+                                                ),
+                                                existingSP.Title
+                                            ),
+                                            Date: Today(),
+                                            PN: PNVar,
+                                            Description: DescriptionVar,
+                                            'Vendor Code': VendorCodeVar,
+                                            'Vendor Name': VendorNameVar,
+                                            'PO Number': PONumberVar,
+                                            'Requestor Name': RequestorVar,
+                                            Remarks: RemarksVar,
+                                            Currency: CurrencyVar,
+                                            'Request Status': _approvedStatus,
+                                            'Strategic Sourcing Personnel': Trim(Substitute(StrategicVar, Char(160), " ")),
+                                            Approver: Trim(Substitute(CMGroupKeyVar, Char(160), " ")),
+                                            'Price Change Reason - Tariff': ReasonTariff,
+                                            'Price Change Reason - Labour Cost Inflation': ReasonLabour,
+                                            'Price Change Reason - Raw Material Inflation': ReasonRawMaterial,
+                                            'Price Change Reason - ECTS': ReasonECTS,
+                                            'Price Change Reason - Price Decrease': ReasonPriceDecrease,
+                                            'Price Change Reason - Add More Scale Qty': ReasonAddQty,
+                                            'Price Change Reason - Others': ReasonOthers,
+                                            'Old Price in Stated Currency': OldPriceVar,
+                                            'Old Price in USD': OldPriceUSDVar,
+                                            'New Price in Stated Currency': NewPriceVar,
+                                            'New Price in USD': NewPriceUSDVar,
+                                            'Price Delta': PriceDeltaVar,
+                                            'Scale Quantity': ScaleQuantityVar,
+                                            'Tariff Percentage': TariffPercentageVar,
+                                            'Tariff Value (USD)': TariffValueUSDVar,
+                                            'Estimated Tariff Annual Impact (USD)': EstimatedAnnualTariffImpactVar,
+                                            'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactVar,
+                                            AnnualQuantity: Coalesce(If(AnnualQuantityVar = Int(AnnualQuantityVar), Text(AnnualQuantityVar, "[$-en-US]#,##0"), Text(AnnualQuantityVar, "[$-en-US]#,##0.##")), "N/A"),
+                                            'Email Link': EmailLinkVar
+                                            // TODO: add here the other columns the approval flow sets when Strategic Sourcing
+                                            // approves (for example approver, approval date, comments, action owner,
+                                            // latest sourcing update), so these rows look the same in Power BI.
+                                        }
+                                    ),
+                                    Blank()
                                 )
+                            },
+                            {
+                                rPN: PNVar,
+                                rVendorCode: VendorCodeVar,
+                                rScaleQty: ScaleQuantityVar,
+                                rTPCID: If(IsBlank(written), "", written.Title),
+                                rWasOpen: !IsBlank(existingSP),
+                                rOK: !IsBlank(written)
                             }
                         )
                     )
                 )
-            },
+            );
 
+            // ===== STEP 2: REPORT, KEEP ONLY THE FAILED ROWS FOR A RETRY =====
             With(
                 {
-                    _currency: If(CountRows(cells) >= 19, Last(FirstN(cells, 19)).Value, ""),
-
-                    _fxRate: Coalesce(
-                        LookUp(
-                            'FX_PRate',
-                            'Currency' = If(CountRows(cells) >= 19, Last(FirstN(cells, 19)).Value, "")
-                        ).'Current Year Currency',
-                        0
-                    ),
-
-                    _minScaleQty: If(
-                        CountRows(cells) >= 20 && !IsBlank(Last(FirstN(cells, 20)).Value),
-                        IfError(Value(Substitute(Last(FirstN(cells, 20)).Value, ",", "")), 0),
-                        0
-                    ),
-
-                    _oldStated: If(
-                        CountRows(cells) >= 21 && !IsBlank(Last(FirstN(cells, 21)).Value),
-                        IfError(Value(Substitute(Substitute(Last(FirstN(cells, 21)).Value, ",", ""), "$", "")), 0),
-                        0
-                    ),
-
-                    _newStated: If(
-                        CountRows(cells) >= 22 && !IsBlank(Last(FirstN(cells, 22)).Value),
-                        IfError(Value(Substitute(Substitute(Last(FirstN(cells, 22)).Value, ",", ""), "$", "")), 0),
-                        0
-                    ),
-
-                    _annualQty: If(
-                        CountRows(cells) >= 23 && !IsBlank(Last(FirstN(cells, 23)).Value),
-                        IfError(Value(Substitute(Last(FirstN(cells, 23)).Value, ",", "")), 0),
-                        0
-                    ),
-
-                    _tariffStated: If(
-                        CountRows(cells) >= 24 && !IsBlank(Last(FirstN(cells, 24)).Value),
-                        IfError(Value(Substitute(Substitute(Last(FirstN(cells, 24)).Value, ",", ""), "$", "")), 0),
-                        0
-                    )
+                    okRows: Filter(colApprResults, rOK),
+                    badRows: Filter(colApprResults, !rOK)
                 },
-
-                With(
-                    {
-                        _oldUSD: If(_fxRate <> 0, _oldStated / _fxRate, 0),
-                        _newUSD: If(_fxRate <> 0, _newStated / _fxRate, 0),
-                        _tariffUSD: If(_fxRate <> 0, _tariffStated / _fxRate, 0),
-
-                        _deltaStated: _newStated - _oldStated,
-                        _deltaUSD: If(_fxRate <> 0, (_newStated - _oldStated) / _fxRate, 0),
-
-                        // (tariff / fx) / ((new - old) / fx) = tariff / (new - old); no division in the condition
-                        _tariffPct: If(
-                            _fxRate <> 0 && _newStated <> _oldStated,
-                            _tariffStated / (_newStated - _oldStated) * 100,
-                            0
-                        ),
-
-                        _annualDeltaImpactUSD: If(_fxRate <> 0, (_newStated - _oldStated) * _annualQty / _fxRate, 0),
-                        _annualTariffImpactUSD: If(_fxRate <> 0, _tariffStated * _annualQty / _fxRate, 0)
-                    },
-
-                    {
-                        PNVar           : If(CountRows(cells) >= 1, Last(FirstN(cells, 1)).Value, ""),
-                        DescriptionVar  : If(CountRows(cells) >= 2, Last(FirstN(cells, 2)).Value, ""),
-                        VendorCodeVar   : If(CountRows(cells) >= 3, Last(FirstN(cells, 3)).Value, ""),
-                        VendorNameVar   : If(CountRows(cells) >= 4, Last(FirstN(cells, 4)).Value, ""),
-                        PONumberVar     : If(CountRows(cells) >= 5, Last(FirstN(cells, 5)).Value, ""),
-                        StatusVar       : If(CountRows(cells) >= 6, Last(FirstN(cells, 6)).Value, ""),
-                        RequestorVar      : If(CountRows(cells) >= 7, Last(FirstN(cells, 7)).Value, ""),
-                        RequestorEmailVar : If(CountRows(cells) >= 8, Last(FirstN(cells, 8)).Value, ""),
-                        CMGroupKeyVar   : If(CountRows(cells) >= 9,  Last(FirstN(cells, 9)).Value, ""),
-                        StrategicVar    : If(CountRows(cells) >= 10, Last(FirstN(cells,10)).Value, ""),
-
-                        ReasonTariff:
-                            If(CountRows(cells) >= 11 && ("Y" in Upper(Last(FirstN(cells, 11)).Value)), "Yes", "No"),
-                        ReasonLabour:
-                            If(CountRows(cells) >= 12 && ("Y" in Upper(Last(FirstN(cells, 12)).Value)), "Yes", "No"),
-                        ReasonRawMaterial:
-                            If(CountRows(cells) >= 13 && ("Y" in Upper(Last(FirstN(cells, 13)).Value)), "Yes", "No"),
-                        ReasonECTS:
-                            If(CountRows(cells) >= 14 && ("Y" in Upper(Last(FirstN(cells, 14)).Value)), "Yes", "No"),
-                        ReasonPriceDecrease:
-                            If(CountRows(cells) >= 15 && ("Y" in Upper(Last(FirstN(cells, 15)).Value)), "Yes", "No"),
-                        ReasonAddQty:
-                            If(CountRows(cells) >= 16 && ("Y" in Upper(Last(FirstN(cells, 16)).Value)), "Yes", "No"),
-                        ReasonOthers:
-                            If(CountRows(cells) >= 17 && ("Y" in Upper(Last(FirstN(cells, 17)).Value)), "Yes", "No"),
-
-                        RemarksVar: If(CountRows(cells) >= 18, Last(FirstN(cells, 18)).Value, ""),
-                        CurrencyVar: _currency,
-                        FxRateVar  : _fxRate,
-                        ScaleQuantityVar: _minScaleQty,
-                        OldPriceVar          : _oldStated,
-                        NewPriceVar          : _newStated,
-                        AnnualQuantityVar    : _annualQty,
-                        TariffValueStatedVar : _tariffStated,
-                        OldPriceUSDVar                 : Round(_oldUSD, 2),
-                        NewPriceUSDVar                 : Round(_newUSD, 2),
-                        TariffValueUSDVar              : Round(_tariffUSD, 2),
-                        EstimatedAnnualTariffImpactVar : Round(_annualTariffImpactUSD, 2),
-                        PriceDeltaVar              : Text(Round(_deltaStated, 2), "[$-en-US]#,##0.00"),
-                        TariffPercentageVar        : Text(Round(_tariffPct, 2), "[$-en-US]#,##0.00"),
-                        AnnualPriceDeltaImpactVar  : Text(Round(_annualDeltaImpactUSD, 2), "[$-en-US]#,##0.00"),
-                        EmailLinkVar: If(CountRows(cells) >= 25, Last(FirstN(cells, 25)).Value, ""),
-                        ColCount: CountRows(cells)
-                    }
+                If(
+                    CountRows(badRows) = 0,
+                    Notify(
+                        "Approved " & Text(CountRows(okRows)) & " row(s)" &
+                        If(
+                            CountRows(Filter(okRows, rWasOpen)) > 0,
+                            " (" & Text(CountRows(Filter(okRows, rWasOpen))) & " were open requests)",
+                            ""
+                        ) &
+                        ": " & Concat(FirstN(okRows, 10), rTPCID, ", ") & If(CountRows(okRows) > 10, ", ...", ""),
+                        NotificationType.Success
+                    ),
+                    Notify(
+                        "Approved " & Text(CountRows(okRows)) & " of " & Text(CountRows(colApprResults)) &
+                        " row(s). Not saved, press Approve again to retry: " &
+                        Concat(FirstN(badRows, 10), rPN, ", "),
+                        NotificationType.Error
+                    )
                 )
-            )
+            );
+
+            // saved rows leave the list, so a second Approve cannot save them twice
+            RemoveIf(
+                colTempData,
+                !IsBlank(
+                    LookUp(
+                        colApprResults,
+                        rOK && rPN = PNVar && rVendorCode = VendorCodeVar && rScaleQty = ScaleQuantityVar
+                    )
+                )
+            );
+
+            Refresh('Price Change')
         )
     )
-);
-
-// Step 3: Validate
-// Rows that still do not line up with the template columns
-ClearCollect(
-    colBadColumns,
-    Filter(colTempData, ColCount <> varTabsPerRow + 1)
-);
-
-// Currency not found in FX_PRate: USD prices and annual impact would come out as 0
-ClearCollect(
-    colBadCurrency,
-    Filter(colTempData, ColCount = varTabsPerRow + 1 && FxRateVar = 0)
-);
-
-// Rows with a CM Group Key but no Email Link
-ClearCollect(
-    colInvalidEmailLinks,
-    Filter(
-        colTempData,
-        ColCount = varTabsPerRow + 1 && !IsBlank(CMGroupKeyVar) && IsBlank(EmailLinkVar)
-    )
-);
-
-Set(
-    varDisableWrite,
-    CountRows(colBadColumns) + CountRows(colBadCurrency) + CountRows(colInvalidEmailLinks) > 0
-);
-
-If(
-    CountRows(colBadColumns) > 0,
-    Notify(
-        "Error: " & Text(CountRows(colBadColumns)) & " row(s) do not match the template columns (" &
-        Concat(FirstN(colBadColumns, 5), PNVar, ", ") &
-        "). Copy exactly from PN to Email Link, check those rows for a tab or line break inside a cell, then paste again.",
-        NotificationType.Error
-    ),
-    CountRows(colBadCurrency) > 0,
-    Notify(
-        "Error: currency not found in FX_PRate -> " &
-        Concat(FirstN(colBadCurrency, 5), PNVar & " [" & CurrencyVar & "]", ", ") &
-        ". Please correct the Currency column.",
-        NotificationType.Error
-    ),
-    CountRows(colInvalidEmailLinks) > 0,
-    Notify(
-        "Error: " & Text(CountRows(colInvalidEmailLinks)) &
-        " row(s) have a CM Group Key but missing Email Link / justification (" &
-        Concat(FirstN(colInvalidEmailLinks, 5), PNVar, ", ") &
-        "). Please fill it in before submitting.",
-        NotificationType.Error
-    ),
-    Notify(
-        "Parsed " & Text(CountRows(colTempData)) & " row(s).",
-        NotificationType.Success
-    )
-);
-
-
-// ============================================================
-// Submit (Button8_1) OnSelect: change only the first message, because varDisableWrite
-// now also covers column and currency errors.
-// ============================================================
-//  If(
-//      varDisableWrite,
-//      Notify(
-//          "Cannot submit: fix the rows reported by Parse Data, then press Parse Data again.",
-//          NotificationType.Error
-//      ),
-//      ... (rest unchanged)
+)
