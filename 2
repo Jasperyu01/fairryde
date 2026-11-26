@@ -1,3 +1,51 @@
-// 2026-11: web link of this app. It is used to build the two links in the auto-approval emails.
-// Replace the text between the quotes with the app's Web link: make.powerapps.com > Apps > this app > Details > Web link.
-PCRAppLink = "PASTE_THE_WEB_LINK_OF_THIS_APP_HERE";
+If(
+    IsBlank(First(PriceRows).ScaleQuantity) ||
+    IsBlank(First(PriceRows).OldPrice) ||
+    IsBlank(First(PriceRows).NewPrice),
+ 
+    Notify("You must fill in all sections of the first row for Old Price and Tariff Impact!", NotificationType.Error),
+
+    // 2026-10: Annual Quantity is required and must be greater than 0. The annual impact (price delta x annual quantity)
+    // decides whether the request also needs manager approval, so a blank or 0 quantity would skip that check.
+    With({ q: IfError(Value(TextInput1.Text), Blank()) }, IsBlank(q) || q <= 0),
+
+    Notify("Please fill in Annual Quantity (greater than 0) before proceeding.", NotificationType.Error),
+ 
+    // ---- Claculate Price metrics ----
+    Set(OldPriceValue, First(PriceRows).OldPrice);
+    Set(NewPriceValue, First(PriceRows).NewPrice);
+    Set(ScaleQuantityValue, Min(PriceRows, ScaleQuantity));
+    Set(FirstOldPriceValue, Round(Value(Min(PriceRows, Value(OldPrice) / ExchangeRate)), 2));
+    Set(FirstNewPriceValue, Round(Value(Min(PriceRows, Value(NewPrice) / ExchangeRate)), 2));
+    Set(PriceDeltaValue, Round(Value(TextInput_PriceDelta.Text) / ExchangeRate, 2));
+    Set(TariffPercentageValue, First(PriceRows).TariffChargesPercent);
+    Set(TariffActualValue, Text(Round(Value(TextInput_TariffChargesValue.Text) / ExchangeRate, 2), "[$-en-US]#,##0.00"));
+    Set(SeeVar, false);
+    Set(EstimatedAnnualImpactValue,
+        Text(Round(Value(Max(PriceRows, Value(TariffChargesValue)) * Value(TextInput1.Text) / ExchangeRate), 2), "[$-en-US]#,##0.00")
+    );
+    Set(AnnualPriceDeltaImpactValue,
+        Text(Round(Value(TextInput_PriceDelta.Text) * Value(TextInput1.Text) / ExchangeRate, 2), "[$-en-US]#,##0.00")
+    );
+
+    Set(EstimatedTariffAnnualImpactNum, 
+        Round(Value(Max(PriceRows, Value(TariffChargesValue)) * Value(TextInput1.Text) / ExchangeRate), 2)
+    );
+ 
+   
+    // 2026-10: annual quantity for the approval details (ApprovalEmailNoTariffNoCM)
+    Set(
+        AnnualQuantityValue,
+        If(
+            IsBlank(Trim(TextInput1.Text)),
+            "N/A",
+            With(
+                { q: Value(TextInput1.Text) },
+                If(q = Int(q), Text(q, "[$-en-US]#,##0"), Text(q, "[$-en-US]#,##0.##"))
+            )
+        )
+    );
+
+    // 2026-11: the Scale Prices page comes next; it leads on to the Email Submission page
+    Navigate(PriceChangeRequest_ScalePrices, ScreenTransition.Fade)
+)
