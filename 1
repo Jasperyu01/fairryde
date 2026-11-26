@@ -1,147 +1,74 @@
-Set(ApproverNameValue, If(GroupKeyOwner.Selected.Value = "", "Nil", GroupKeyOwner.Selected.Value));
+先把现状核对清楚（App 现在的价格页、状态值、启动逻辑），再动手设计。
 
-With(
-    { reasonValues: ComboBoxPriceReason.SelectedItems.Value },
-    Set(TariffSelected, "Tariff" in reasonValues);
-    Set(oneoffSelected, "One Time Approval" in reasonValues);
+三块都做好了：阶梯价格页、两条链接和状态跟踪、SharePoint 的一列阶梯价格。四条 flow 没动。
 
-    If(
-        Dropdown1.Selected.Value = "",
-        Notify("Please select a value for Request Status", NotificationType.Error),
+先说验证到什么程度：所有公式在我这边的模拟环境里跑了 135 项检查，全部通过，我还故意改坏了 17 处，每处都被测试抓到。但我没法在真实的 Power Apps Studio 里运行，两个新页面是用"粘贴 YAML"的方式加进去的，这一步我没实测过，所以发布后请按第 5 节走一遍。
 
-        If(
-            !IsEmpty(
-                Filter(
-                    Filter('Price Change', PN = DataCardValue2.Text && 'Vendor Code' = DataCardValue4.Text),
-                    ('Request Status' in [
-                        "Pending Approval / Feedback",
-                        "Pending Manager Approval",
-                        "CM Requesting More Info",
-                        "Sourcing Team Requesting More Info",
-                        ""
-                    ] || IsBlank('Request Status'))
-                )
-            ),
+## 1. 做成了什么样
 
-            Set(
-                ActiveRowP,
-                First(
-                    Filter(
-                        Filter('Price Change', PN = DataCardValue2.Text && 'Vendor Code' = DataCardValue4.Text),
-                        ('Request Status' in [
-                            "Pending Approval / Feedback",
-                            "Pending Manager Approval",
-                            "CM Requesting More Info",
-                            "Sourcing Team Requesting More Info",
-                            ""
-                        ] || IsBlank('Request Status'))
-                    )
-                )
-            );
+- **阶梯价格页**：现在的价格页只能填一行（最小 scale），所以我在它和提交页之间加了一页。
+  - 每个额外的 scale 加一行：Scale Quantity、Old Price（可不填）、New Price。
+  - 没有阶梯价格就直接点 Proceed。
+- **SharePoint 一格**：格式是 `1: USD 13.10, 100: USD 12.55, 500: USD 12.10`，按数量从小到大，存的是新价格。数量不带千分位，方便 Power BI 再拆开。
+- **邮件**：价格表列出所有阶梯（见 email_preview.html）。末尾两条链接，每条上面是红色感叹号加一句加粗的 "Please make sure ... before you click the link."。
+- **点链接的效果**：点一下就直接更新，然后显示结果页。
+  - Sourcing 链接：Request Status 从 Auto Approved 变成 SAP Updated。
+  - Buyer 链接：BuyerStatus 从 Buyer Pending PO Price Amendment 变成 PO Price Updated。
+  - 同时记下谁点的、什么时候点的。
+  - 第二次点不会改任何东西，页面会提示"已经记录过"，第一次的人和时间保留。
+- **Mass Upload**：自动批的行同样写 BuyerStatus。邮件里每行有两条链接；50 行以内另有一条"全部确认"的链接。阶梯价格等你明天的模板再加。
 
-            If(
-                // 2026-10: while manager approval is pending, no resubmission (Cancelled / Negotiation Successful still allowed)
-                (
-                    ActiveRowP.'Request Status' = "Pending Manager Approval" &&
-                    !(Dropdown1.Selected.Value in ["Cancelled", "Negotiation Successful"])
-                ) ||
-                (
-                    !(IsBlank(ActiveRowP.Approver) && IsBlank(GroupKeyOwner.Selected.Value)) &&
-                    ActiveRowP.Approver <> GroupKeyOwner.Selected.Value &&
-                    ActiveRowP.'Request Status' = "Pending Approval / Feedback"
-                ),
+## 2. 两件需要你知道的事
 
-                Notify(
-                    If(
-                        ActiveRowP.'Request Status' = "Pending Manager Approval",
-                        "This request is waiting for manager approval. You can only set it to Cancelled or Negotiation Successful.",
-                        "You must wait for current Approver to return a response before submitting this edit!"
-                    ),
-                    NotificationType.Error
-                ),
+1. **只有自动批的单子有 BuyerStatus 和链接。** 走 flow 审批的单子和 Mass Approval 页的单子，这一列是空的，因为 flow 没动。以后要覆盖的话，flow 里加一步写 BuyerStatus，邮件里放同样格式的链接就行，结果页不用再改。
+2. **我把 Buyer 当成申请人（邮件抄送的那位）。** 如果改 PO 的是另一个人，告诉我，收件人要调整。
 
-                Set(IsEditMode, true);
-                Set(StatusValue, Dropdown1.Selected.Value);
-                Set(SharepointID, ActiveRowP.ID);
-                Set(TPCIDValue, ActiveRowP.Title);
-                Set(PNValue, DataCardValue2.Text);
-                Set(DescriptionValue, DataCardValue3.Text);
-                Set(VendorCodeValue, DataCardValue4.Text);
-                Set(VendorNameValue, DataCardValue5.Text);
-                Set(PONumberValue, DataCardValue6.Text);
-                Set(RequestorNameValue, User().FullName);
-                Set(RequestorEmailValue, User().Email);
-                Set(RemarksValue, ActiveRowP.Remarks & ", " & DataCardValue9.Text);
-                Set(RequestorNameAppended, ActiveRowP.'Requestor Name' & ", " & User().FullName);
-                Set(ApproverNameValue, If(GroupKeyOwner.Selected.Value = "", "Nil", GroupKeyOwner.Selected.Value));
-                Set(CurrencyValue, Dropdown2.Selected.Value);
-                Set(ReasonValue, Concat(ComboBoxPriceReason.SelectedItems, Value, ", "));
-                Set(ReasonValues, reasonValues);
-                Set(StratSourcingPersonnel, TextInput4.Text);
-                Set(
-                    ExchangeRate,
-                    LookUp('Exchange Rate', Title = Dropdown2.Selected.Value).'USD 2025 (Currency/Rate)'
-                );
-                Set(StratTeamEmail,
-                    Concat(Filter(GroupKeyLookup, Title = TextInput4.Text), Email, "; ")
-                );
-                Set(ApproverEmailValue,
-                    Concat(Filter(GroupKeyLookup, Title = GroupKeyOwner.Selected.Value), Email, "; ")
-                );
+## 3. SharePoint 先加 6 列
 
-                If(
-                    StatusValue = "Cancelled",
-                    Patch('Price Change', ActiveRowP, { 'Request Status': "Cancelled" });
-                    ResetForm(Form1);
-                    Navigate(PriceChangeRequest_PNData, ScreenTransition.Fade),
+在 Price Change 列表里新建，名字必须一字不差（不带空格，和之前的 AnnualQuantity 一样）：
 
-                    ResetForm(Form1);
-                    Navigate('PriceChangeRequest_Old_New_Tariff_Price', ScreenTransition.Fade)
-                )
-            ),
+| 列名 | 类型 |
+|---|---|
+| ScalePrices | Multiple lines of text（Plain text） |
+| BuyerStatus | Single line of text |
+| SAPUpdatedDate | Date and Time（含时间） |
+| SAPUpdatedBy | Single line of text |
+| POUpdatedDate | Date and Time（含时间） |
+| POUpdatedBy | Single line of text |
 
-            // ---- New record ----
-            Set(IsEditMode, false);
+## 4. Studio 里按这个顺序做
 
-            Set(
-                NextAutoNumber,
-                Coalesce(
-                    // 2026-11: newest records first, so the app's 2,000-row window holds the highest numbers (also above 2,000 items)
-                    Max(Sort('Price Change', ID, SortOrder.Descending), IfError(Value(Mid(Title, 4, Len(Title) - 3)), 0)),
-                    0
-                ) + 1
-            );
-            Set(FormattedAutoNumber, "PC-" & Text(NextAutoNumber, "0000000"));
+顺序不能乱，后面的公式会引用前面建的东西。
 
-            Set(TPCIDValue, FormattedAutoNumber);
-            Set(StatusValue, Dropdown1.Selected.Value);
-            Set(PNValue, DataCardValue2.Text);
-            Set(DescriptionValue, DataCardValue3.Text);
-            Set(VendorCodeValue, DataCardValue4.Text);
-            Set(VendorNameValue, DataCardValue5.Text);
-            Set(PONumberValue, DataCardValue6.Text);
-            Set(RequestorNameValue, User().FullName);
-            Set(RequestorEmailValue, User().Email);
-            Set(RemarksValue, DataCardValue9.Text);
-            Set(RequestorNameAppended, User().FullName);
-            Set(ApproverNameValue, If(GroupKeyOwner.Selected.Value = "", "Nil", GroupKeyOwner.Selected.Value));
-            Set(CurrencyValue, Dropdown2.Selected.Value);
-            Set(ReasonValue, Concat(ComboBoxPriceReason.SelectedItems, Value, ", "));
-            Set(ReasonValues, reasonValues);
-            Set(StratSourcingPersonnel, TextInput4.Text);
-            Set(
-                ExchangeRate,
-                LookUp('Exchange Rate', Title = Dropdown2.Selected.Value).'USD 2025 (Currency/Rate)'
-            );
-            Set(StratTeamEmail,
-                Concat(Filter(GroupKeyLookup, Title = TextInput4.Text), Email, "; ")
-            );
-            Set(ApproverEmailValue,
-                Concat(Filter(GroupKeyLookup, Title = GroupKeyOwner.Selected.Value), Email, "; ")
-            );
+1. Data 里刷新 Price Change。如果 19 号的版本还没加 Office 365 Outlook 连接，现在加上。
+2. 选中 App，属性选 Formulas，贴入 3_App_Formulas.txt，把引号里的占位文字换成这个 App 的 Web link（make.powerapps.com → Apps → Details → Web link）。
+3. 贴两个新页面：
+   - 打开 4a 文件，全选复制。在 Tree view 里点任意一个 screen 的 "..."，选 Paste。
+   - 4b 同样操作。
+   - 贴完应该多出 PCR_StatusUpdate 和 PriceChangeRequest_ScalePrices 两个 screen。如果报错，把错误信息发我。
+4. App 的 StartScreen 属性贴入 5_App_StartScreen.txt。
+5. 替换四个按钮的 OnSelect：
+   - 6a：价格页的 Button3（只有最后一行 Navigate 变了）
+   - 6b：提交页的 Back 按钮 Button3_5
+   - 6c：提交页的 Button8
+   - 6d：Mass Upload 的 Button8_1
+6. 看 App Checker 有没有新增错误，然后保存、发布。
 
-            ResetForm(Form1);
-            Navigate('PriceChangeRequest_Old_New_Tariff_Price', ScreenTransition.Fade)
-        )
-    )
-);
+6c 和 6d 是在我 19 号给你的版本上改的。如果你之后自己动过这两个公式，先告诉我。
+
+## 5. 发布后请实测
+
+1. Single Entry 提一张小金额的单，加两行阶梯价格。检查：ScalePrices 那一格、BuyerStatus、邮件的表格和两条链接。
+2. 点 Sourcing 链接，SharePoint 应变成 SAP Updated 并带时间和人名。再点一次，应提示已记录。
+3. 点 Buyer 链接，同样检查。
+4. 提一张 2K 以上的单，确认审批卡片照常收到，ScalePrices 也写进去了。
+5. 找一位 sourcing 同事点一次链接。他们需要有这个 App 的访问权限和列表的编辑权限，否则结果页会显示权限错误。
+
+## 6. 给 Power BI 的说明
+
+- **Request Status**：多了一个值 SAP Updated（自动批且 pinfo 已改）。Auto Approved 表示 pinfo 还没改。要认出"自动批"的单子，用 Approver Response = Auto Approved，这一列不会变。
+- **BuyerStatus**：两个值；空白表示不在跟踪范围（flow 审批的、旧记录）。
+- **四个 Updated 列**：可以算从创建到 pinfo 更新、到 PO 更新各用了多久，以及是谁做的。
+- **ScalePrices**：用 `, ` 分隔每一档，每一档是 `数量: 币种 价格`。第一档就是原来 Scale Quantity 和 New Price 那一行。旧记录和 Mass Upload 的行暂时是空的。
+
+新页面顶部我用了一条红色横条加文字，没有用带 logo 的 Component1，因为不确定组件能不能通过粘贴带进去。想统一的话，从价格页复制 Component1_1 贴到新页面，再删掉我那两个 header 控件即可。
