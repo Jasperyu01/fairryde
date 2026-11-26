@@ -1,387 +1,368 @@
-Screens:
-  PriceChangeRequest_ScalePrices:
-    Properties:
-      Fill: =RGBA(234, 234, 234, 1)
-      LoadingSpinnerColor: =RGBA(164, 38, 44, 1)
-      OnVisible: |-
-        =// ======== 2026-11: Scale Prices page ========
-        // colScaleRows holds the scale lines typed on this page (Scale Quantity + New Price), drpScaleCurrency their currency.
-        // The rows belong to one request: when another request is opened (other PN / vendor / TPCID / new vs edit), the rows are
-        // cleared and the currency is set again, so nothing can be carried over from an abandoned request.
+If(
+    !(GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER")
+    && IsBlank(Email_link.Text),
+    Notify("Please insert attachment link or justification before proceeding (CM approval required)", NotificationType.Error),
+
+    // ======== 2026-11: auto-approval below USD 2,000 ========
+    // A NEW request (no open request for this PN + Vendor) with status "Pending Approval / Feedback",
+    // no Tariff reason, old and new price above 0 and Estimated Delta Annual Impact (USD) below 2,000
+    // is saved directly as "Auto Approved": no approval flow. Price decreases (negative impact) are included.
+    // Strategic Sourcing is then emailed (cc the requestor) to update the pinfo in SAP (needs the Office 365 Outlook connection).
+    // Edits of an open request always go through the approval flow, because its earlier approval may still be pending.
+    //
+    // ======== 2026-11 (2): scale prices + status tracking ========
+    // - ScalePrices: every scale line in ONE SharePoint text, "1: USD 12.50, 100: USD 12.55, 500: USD 12.10"
+    //   (scale quantity: currency new price; sorted by quantity; no thousands separators, so it can be split again).
+    //   The lines and their currency come from the Scale Prices page (mandatory page).
+    // - An auto-approved request also gets BuyerStatus "Buyer Pending PO Price Amendment". Its email carries two links
+    //   that open the PCR_StatusUpdate page of this app (link address: PCRAppLink in App.Formulas):
+    //     Strategic Sourcing: Request Status "Auto Approved" -> "SAP Updated"
+    //     Buyer:              BuyerStatus "Buyer Pending PO Price Amendment" -> "PO Price Updated"
+
+    // colScaleFinal and ScaleCurrencyValue come from the Scale Prices page. They are only used when they were built for
+    // exactly this request and this first price line; otherwise only the first price line is saved (in the currency of
+    // the request), so prices of another request can never be mixed in.
+    With(
+        {
+            _key: If(IsEditMode, "E", "N") & "|" & TPCIDValue & "|" & PNValue & "|" & VendorCodeValue & "|" &
+                ScaleQuantityValue & "|" & OldPriceValue & "|" & NewPriceValue
+        },
+        If(
+            IsEmpty(colScaleFinal) || IsBlank(ScaleCurrencyValue) || IsBlank(varScaleFinalKey) || varScaleFinalKey <> _key,
+            ClearCollect(
+                colScaleFinal,
+                {
+                    Qty: Value(ScaleQuantityValue),
+                    NewText: NewPriceValue,
+                    NewNum: IfError(Value(NewPriceValue), Blank())
+                }
+            );
+            Set(ScaleCurrencyValue, CurrencyValue)
+        )
+    );
+    Set(
+        ScalePricesValue,
+        Concat(
+            colScaleFinal,
+            If(Qty = Int(Qty), Text(Qty, "[$-en-US]0", "en-US"), Text(Qty, "[$-en-US]0.###", "en-US")) & ": " & ScaleCurrencyValue & " " &
+            If(IsBlank(NewNum), NewText, Text(NewNum, "[$-en-US]0.00###", "en-US")),
+            ", "
+        )
+    );
+
+    Set(
+        varAutoApprove,
+        !IsEditMode &&
+        StatusValue = "Pending Approval / Feedback" &&
+        !TariffSelected &&
+        IfError(Value(OldPriceValue), 0) > 0 &&
+        IfError(Value(NewPriceValue), 0) > 0 &&
+        // AnnualPriceDeltaImpactValue was made by Text() in the user's language, so Value() reads it back in the same language
         With(
-            { _key: If(IsEditMode, "E", "N") & "|" & TPCIDValue & "|" & PNValue & "|" & VendorCodeValue },
-            If(
-                IsBlank(varScaleKey) || varScaleKey <> _key,
-                Set(varScaleKey, _key);
-                Clear(colScaleRows);
-                With(
-                    {
-                        // Edit of an open request: the scale lines saved earlier, "1: USD 12.50, 100: USD 12.55, ..."
-                        _parts: Filter(
-                            Split(If(IsEditMode, Coalesce(ActiveRowP.ScalePrices, ""), ""), ","),
-                            !IsBlank(Trim(Value))
-                        )
-                    },
-                    With(
-                        {
-                            // currency of the saved lines (text between ":" and the price of the first line)
-                            _savedCur: If(
-                                IsEmpty(_parts),
-                                "",
-                                IfError(
-                                    With(
-                                        { _r: Trim(Last(Split(First(_parts).Value, ":")).Value) },
-                                        Left(_r, Find(" ", _r) - 1)
-                                    ),
-                                    ""
-                                )
-                            )
-                        },
-                        // Currency shown in the dropdown: saved one (edit), else the currency of the request, else USD
-                        Set(
-                            varScaleCurrency,
-                            If(
-                                !IsBlank(_savedCur) && (_savedCur in ["USD", "SGD", "GBP", "CAD", "EUR", "MYR", "JPY"]),
-                                _savedCur,
-                                CurrencyValue in ["USD", "SGD", "GBP", "CAD", "EUR", "MYR", "JPY"],
-                                CurrencyValue,
-                                "USD"
-                            )
-                        )
-                    );
-                    Collect(
-                        colScaleRows,
-                        ForAll(
-                            _parts As _t,
-                            With(
-                                {
-                                    _qty: Trim(First(Split(_t.Value, ":")).Value),
-                                    _rest: Trim(Last(Split(_t.Value, ":")).Value)
-                                },
-                                With(
-                                    {
-                                        _q: IfError(Value(_qty, "en-US"), Blank()),
-                                        _p: IfError(Value(Trim(Mid(_rest, Find(" ", _rest) + 1)), "en-US"), Blank())
-                                    },
-                                    {
-                                        RowID: Text(GUID()),
-                                        Qty: If(IsBlank(_q), _qty, _q = Int(_q), Text(_q, "[$-en-US]0"), Text(_q, "[$-en-US]0.###")),
-                                        NewP: If(IsBlank(_p), "", Text(_p, "[$-en-US]0.00###"))
-                                    }
-                                )
-                            )
-                        )
-                    )
-                );
-                // start with one empty row, so it is clear where to type
-                If(IsEmpty(colScaleRows), Collect(colScaleRows, { RowID: Text(GUID()), Qty: "", NewP: "" }));
-                Reset(drpScaleCurrency)
+            { _impactUSD: IfError(Value(AnnualPriceDeltaImpactValue), Blank()) },
+            !IsBlank(_impactUSD) && _impactUSD < 2000
+        )
+    );
+
+    // ======== Patch function (edit vs new) ========
+    Set(
+        SubmittedRecord,
+        If(
+            IsEditMode,
+
+            // ---- Edit mode ----
+            Patch(
+                'Price Change',
+                ActiveRowP,
+                {
+                    PN: PNValue,
+                    Date: Today(),
+                    'PO Number': PONumberValue,
+                    'Requestor Name': RequestorNameAppended,
+                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
+                    Remarks: RemarksValue,
+                    Currency: CurrencyValue,
+                    'Request Status': StatusValue,
+                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
+
+                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
+
+                    'Old Price in Stated Currency': OldPriceValue,
+                    'New Price in Stated Currency': NewPriceValue,
+                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
+                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
+                    'Scale Quantity': ScaleQuantityValue,
+                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
+                    'Tariff Percentage': TariffPercentageValue,
+                    'Tariff Value (USD)': TariffActualValue,
+                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
+                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
+                    // 2026-10: annual quantity, shown in the approval details by ApprovalEmailNoTariffNoCM
+                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
+                    // 2026-11: all scale lines in one text
+                    ScalePrices: ScalePricesValue,
+
+                    'Email Link': Email_link.Text
+                }
+            ),
+
+            varAutoApprove,
+
+            // ---- 2026-11: New record, auto-approved (same fields as a new record + approval fields, ONE write) ----
+            Patch(
+                'Price Change',
+                Defaults('Price Change'),
+                {
+                    Title: FormattedAutoNumber,
+                    Date: Today(),
+                    PN: PNValue,
+                    Description: DescriptionValue,
+                    'Vendor Code': VendorCodeValue,
+                    'Vendor Name': VendorNameValue,
+                    'PO Number': PONumberValue,
+                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
+                    Remarks: RemarksValue,
+                    'Requestor Name': RequestorNameAppended,
+                    Currency: CurrencyValue,
+                    'Request Status': "Auto Approved",
+                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
+
+                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
+
+                    'Old Price in Stated Currency': OldPriceValue,
+                    'New Price in Stated Currency': NewPriceValue,
+                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
+                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
+                    'Scale Quantity': ScaleQuantityValue,
+                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
+                    'Tariff Percentage': TariffPercentageValue,
+                    'Tariff Value (USD)': TariffActualValue,
+                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
+                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
+                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
+                    // 2026-11: all scale lines in one text
+                    ScalePrices: ScalePricesValue,
+
+                    'Email Link': Email_link.Text,
+
+                    // 2026-11: the buyer still has to amend the PO price (set to "PO Price Updated" by the buyer link)
+                    BuyerStatus: "Buyer Pending PO Price Amendment",
+
+                    'Approver Name (Latest)': "System",
+                    'Approver Response': "Auto Approved",
+                    'Approver Action Date': Text(Now(), DateTimeFormat.UTC),
+                    'Approver Comments': "Auto-approved by the PCR app: Estimated Delta Annual Impact (USD) " & AnnualPriceDeltaImpactValue & " is below the USD 2,000 threshold."
+                }
+            ),
+
+            // ---- New record ----
+            Patch(
+                'Price Change',
+                Defaults('Price Change'),
+                {
+                    Title: FormattedAutoNumber,
+                    Date: Today(),
+                    PN: PNValue,
+                    Description: DescriptionValue,
+                    'Vendor Code': VendorCodeValue,
+                    'Vendor Name': VendorNameValue,
+                    'PO Number': PONumberValue,
+                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
+                    Remarks: RemarksValue,
+                    'Requestor Name': RequestorNameAppended,
+                    Currency: CurrencyValue,
+                    'Request Status': StatusValue,
+                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
+
+                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
+                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
+
+                    'Old Price in Stated Currency': OldPriceValue,
+                    'New Price in Stated Currency': NewPriceValue,
+                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
+                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
+                    'Scale Quantity': ScaleQuantityValue,
+                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
+                    'Tariff Percentage': TariffPercentageValue,
+                    'Tariff Value (USD)': TariffActualValue,
+                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
+                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
+                    // 2026-10: annual quantity, shown in the approval details by ApprovalEmailNoTariffNoCM
+                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
+                    // 2026-11: all scale lines in one text
+                    ScalePrices: ScalePricesValue,
+
+                    'Email Link': Email_link.Text
+                }
             )
         )
-    Children:
-      - recScaleHeader:
-          Control: Rectangle@2.3.0
-          Properties:
-            BorderColor: =RGBA(89, 0, 0, 1)
-            Fill: =RGBA(164, 38, 44, 1)
-            Height: =100
-            Width: =1366
-      - lblScaleHeader:
-          Control: Label@2.5.1
-          Properties:
-            BorderColor: =RGBA(89, 0, 0, 1)
-            Color: =RGBA(255, 255, 255, 1)
-            Font: =Font.'Open Sans'
-            FontWeight: =FontWeight.Semibold
-            Height: =100
-            Size: =24
-            Text: ="Price Change Request"
-            Width: =900
-            X: =40
-      - lblScaleTitle:
-          Control: Label@2.5.1
-          Properties:
-            Align: =Align.Center
-            BorderColor: =RGBA(89, 0, 0, 1)
-            Color: =RGBA(151, 0, 0, 1)
-            Font: =Font.'Open Sans'
-            FontWeight: =FontWeight.Semibold
-            Height: =50
-            Size: =22
-            Text: ="Scale Prices"
-            Width: =1366
-            Y: =112
-      - lblScaleHelp:
-          Control: Label@2.5.1
-          Properties:
-            Align: =Align.Center
-            BorderColor: =RGBA(89, 0, 0, 1)
-            Font: =Font.'Open Sans'
-            Height: =56
-            Size: =12
-            Text: |-
-              ="Enter all scale prices of the quotation: one row for each Scale Quantity. The price line of the previous page can be entered again." & Char(10) & "At least one row is required. If the quotation has only one price, enter that price."
-            Width: =1166
-            X: =100
-            Y: =162
-      - lblScaleBase:
-          Control: Label@2.5.1
-          Properties:
-            Align: =Align.Center
-            BorderColor: =RGBA(89, 0, 0, 1)
-            Fill: =RGBA(255, 255, 255, 1)
-            Font: =Font.'Open Sans'
-            FontWeight: =FontWeight.Semibold
-            Height: =44
-            Size: =12
-            Text: |-
-              ="Previous page:    Scale Quantity " & Text(ScaleQuantityValue) & "    |    Old Price " & CurrencyValue & " " & OldPriceValue & "    |    New Price " & CurrencyValue & " " & NewPriceValue
-            Width: =800
-            X: =283
-            Y: =226
-      - lblScaleCurrency:
-          Control: Label@2.5.1
-          Properties:
-            BorderColor: =RGBA(89, 0, 0, 1)
-            Font: =Font.'Open Sans'
-            Height: =38
-            Text: ="Currency of the scale prices"
-            Width: =215
-            X: =417
-            Y: =286
-      - drpScaleCurrency:
-          Control: Classic/DropDown@2.3.1
-          Properties:
-            BorderColor: =RGBA(89, 0, 0, 1)
-            ChevronBackground: =RGBA(164, 38, 44, 1)
-            ChevronFill: =RGBA(255, 255, 255, 1)
-            ChevronHoverBackground: =ColorFade(RGBA(164, 38, 44, 1), -20%)
-            ChevronHoverFill: =RGBA(255, 255, 255, 1)
-            Default: =varScaleCurrency
-            Font: =Font.'Open Sans'
-            Height: =38
-            HoverFill: =RGBA(222, 179, 184, 1)
-            Items: =["USD", "SGD", "GBP", "CAD", "EUR", "MYR", "JPY"]
-            Items.Value: =Value
-            PressedColor: =RGBA(255, 255, 255, 1)
-            PressedFill: =RGBA(89, 0, 0, 1)
-            SelectionColor: =RGBA(255, 255, 255, 1)
-            SelectionFill: =RGBA(164, 38, 44, 1)
-            Width: =200
-            X: =637
-            Y: =286
-      - lblScaleColQty:
-          Control: Label@2.5.1
-          Properties:
-            BorderColor: =RGBA(89, 0, 0, 1)
-            Font: =Font.'Open Sans'
-            Height: =36
-            Text: ="Scale Quantity"
-            Width: =200
-            X: =417
-            Y: =336
-      - lblScaleColNew:
-          Control: Label@2.5.1
-          Properties:
-            BorderColor: =RGBA(89, 0, 0, 1)
-            Font: =Font.'Open Sans'
-            Height: =36
-            Text: |-
-              ="New Price (" & drpScaleCurrency.Selected.Value & ")"
-            Width: =230
-            X: =637
-            Y: =336
-      - galScaleRows:
-          Control: Gallery@2.15.0
-          Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
-          Properties:
-            BorderColor: =RGBA(89, 0, 0, 1)
-            Height: =286
-            Items: =colScaleRows
-            TemplateSize: =56
-            Width: =566
-            X: =400
-            Y: =372
-          Children:
-            - txtScaleQty:
-                Control: Classic/TextInput@2.3.2
-                Properties:
-                  BorderColor: =RGBA(89, 0, 0, 1)
-                  Default: =ThisItem.Qty
-                  Font: =Font.'Open Sans'
-                  Height: =40
-                  HoverBorderColor: =RGBA(89, 0, 0, 1)
-                  HoverFill: =RGBA(222, 179, 184, 1)
-                  OnChange: |-
-                    =Patch(colScaleRows, ThisItem, { Qty: Trim(txtScaleQty.Text) })
-                  Width: =200
-                  X: =17
-                  Y: =8
-            - txtScaleNew:
-                Control: Classic/TextInput@2.3.2
-                Properties:
-                  BorderColor: =RGBA(89, 0, 0, 1)
-                  Default: =ThisItem.NewP
-                  Font: =Font.'Open Sans'
-                  Height: =40
-                  HoverBorderColor: =RGBA(89, 0, 0, 1)
-                  HoverFill: =RGBA(222, 179, 184, 1)
-                  OnChange: |-
-                    =Patch(colScaleRows, ThisItem, { NewP: Trim(txtScaleNew.Text) })
-                  Width: =200
-                  X: =237
-                  Y: =8
-            - btnScaleDelete:
-                Control: Classic/Button@2.2.0
-                Properties:
-                  BorderColor: =ColorFade(Self.Fill, -15%)
-                  Color: =RGBA(255, 255, 255, 1)
-                  DisabledBorderColor: =RGBA(166, 166, 166, 1)
-                  Fill: =RGBA(64, 106, 151, 1)
-                  Font: =Font.'Open Sans'
-                  Height: =40
-                  HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
-                  HoverColor: =RGBA(255, 255, 255, 1)
-                  HoverFill: =ColorFade(RGBA(164, 38, 44, 1), -20%)
-                  OnSelect: =Remove(colScaleRows, ThisItem)
-                  PressedBorderColor: =Self.Fill
-                  PressedColor: =Self.Fill
-                  PressedFill: =Self.Color
-                  Text: ="Delete"
-                  Width: =80
-                  X: =457
-                  Y: =8
-      - btnScaleAdd:
-          Control: Classic/Button@2.2.0
-          Properties:
-            BorderColor: =ColorFade(Self.Fill, -15%)
-            Color: =RGBA(255, 255, 255, 1)
-            DisabledBorderColor: =RGBA(166, 166, 166, 1)
-            Fill: =RGBA(0, 128, 0, 1)
-            Font: =Font.'Open Sans'
-            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
-            HoverColor: =RGBA(255, 255, 255, 1)
-            HoverFill: =ColorFade(RGBA(164, 38, 44, 1), -20%)
-            OnSelect: |-
-              =Collect(colScaleRows, { RowID: Text(GUID()), Qty: "", NewP: "" })
-            PressedBorderColor: =Self.Fill
-            PressedColor: =Self.Fill
-            PressedFill: =Self.Color
-            Text: ="Add scale row"
-            Width: =200
-            X: =417
-            Y: =668
-      - btnScaleBack:
-          Control: Classic/Button@2.2.0
-          Properties:
-            BorderColor: =ColorFade(Self.Fill, -15%)
-            Color: =RGBA(255, 255, 255, 1)
-            DisabledBorderColor: =RGBA(166, 166, 166, 1)
-            Fill: =RGBA(164, 38, 44, 1)
-            Font: =Font.'Open Sans'
-            FontWeight: =FontWeight.Bold
-            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
-            HoverColor: =RGBA(255, 255, 255, 1)
-            HoverFill: =ColorFade(RGBA(164, 38, 44, 1), -20%)
-            OnSelect: =Navigate(PriceChangeRequest_Old_New_Tariff_Price, ScreenTransition.Fade)
-            PressedBorderColor: =Self.Fill
-            PressedColor: =Self.Fill
-            PressedFill: =Self.Color
-            Text: ="Back"
-            Y: =728
-      - btnScaleProceed:
-          Control: Classic/Button@2.2.0
-          Properties:
-            BorderColor: =ColorFade(Self.Fill, -15%)
-            Color: =RGBA(255, 255, 255, 1)
-            DisabledBorderColor: =RGBA(166, 166, 166, 1)
-            Fill: =RGBA(164, 38, 44, 1)
-            Font: =Font.'Open Sans'
-            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
-            HoverColor: =RGBA(255, 255, 255, 1)
-            HoverFill: =ColorFade(RGBA(164, 38, 44, 1), -20%)
-            OnSelect: |-
-              =// ======== 2026-11: Scale Prices page, Proceed ========
-              // The page is mandatory: at least one scale line is needed. The lines may start again from the smallest scale quantity
-              // of the previous page. Checks the lines, then builds colScaleFinal (sorted by quantity) for the Submit button, which
-              // turns it into the single SharePoint text (ScalePrices) and into the email table.
-              With(
-                  {
-                      // rows the user filled in; completely empty rows are ignored
-                      _rows: Filter(colScaleRows, !(IsBlank(Trim(Qty)) && IsBlank(Trim(NewP)))),
-                      _baseQty: Value(ScaleQuantityValue),
-                      _baseNew: IfError(Value(NewPriceValue), Blank()),
-                      _cur: drpScaleCurrency.Selected.Value
-                  },
-                  If(
-                      IsEmpty(_rows),
-                      Notify(
-                          "Scale prices are required: please enter at least one row with a Scale Quantity and a New Price. If the quotation has only one price, enter that price.",
-                          NotificationType.Error
-                      ),
+    );
 
-                      !IsEmpty(
-                          Filter(
-                              _rows,
-                              !IsNumeric(Trim(Qty)) || Value(Trim(Qty)) <= 0 ||
-                              !IsNumeric(Trim(NewP)) || Value(Trim(NewP)) <= 0
-                          )
-                      ),
-                      Notify(
-                          "Every scale row needs a Scale Quantity and a New Price, both numbers greater than 0. Please correct or delete the incomplete row(s).",
-                          NotificationType.Error
-                      ),
+    Set(SharepointID, SubmittedRecord.ID);
+    Set(NewSubmittedRecord, SubmittedRecord);
 
-                      CountRows(Distinct(_rows, Value(Trim(Qty)))) < CountRows(_rows),
-                      Notify("The same Scale Quantity is entered more than once. Please keep one row per Scale Quantity.", NotificationType.Error),
+    If(
+        varAutoApprove,
 
-                      !IsEmpty(Filter(_rows, Value(Trim(Qty)) < _baseQty)),
-                      Notify(
-                          "A Scale Quantity on this page is smaller than " & Text(_baseQty) & ", the smallest scale quantity entered on the previous page. Please correct this page, or go Back and correct the previous page.",
-                          NotificationType.Error
-                      ),
+        // ======== 2026-11: auto-approved, no approval flow ========
+        If(
+            IsBlankOrError(SharepointID),
+            // SharePoint refused the write: nothing was saved, stay on this screen so Submit can be pressed again
+            Notify(
+                "The request was not saved" & IfError(Text(SharepointID), " (" & FirstError.Message & ")", "") &
+                ". Please press Submit again.",
+                NotificationType.Error
+            ),
 
-                      // Same currency as the request: the line for the smallest scale must agree with the previous page
-                      // (0.0051 allows for the rounding to 2 decimals on the previous page).
-                      _cur = CurrencyValue && !IsBlank(_baseNew) &&
-                      !IsEmpty(Filter(_rows, Value(Trim(Qty)) = _baseQty && Abs(Value(Trim(NewP)) - _baseNew) > 0.0051)),
-                      Notify(
-                          "Scale Quantity " & Text(_baseQty) & " has New Price " & CurrencyValue & " " & NewPriceValue & " on the previous page, but a different New Price on this page. Please make the two prices the same.",
-                          NotificationType.Error
-                      ),
+            // ---- 2026-11: email Strategic Sourcing (cc requestor = buyer) ----
+            // Sent from the user's own mailbox through the Office 365 Outlook connection of the app.
+            // It lists every scale line and carries the two status links (sourcing: SAP updated, buyer: PO price updated).
+            // If no email address is known for the sourcing person, the email goes to the requestor, who forwards it.
+            // A failed email does NOT undo the auto-approval; the user is told to inform sourcing instead.
+            Set(varPinfoMailToSourcing, !IsBlank(StratTeamEmail));
+            Set(
+                varPinfoMailOK,
+                With(
+                    {
+                        _td: "<td style='border:1px solid #bfbfbf;padding:4px 8px'>",
+                        _th: "<td style='border:1px solid #bfbfbf;padding:4px 8px;background:#f2f2f2;font-weight:bold'>",
+                        _warn: "<span style='color:#C00000;font-size:12pt'>&#10071;</span> ",
+                        _link: Trim(Email_link.Text),
+                        // "&" is written as "&amp;" inside the HTML link address
+                        _app: Substitute(PCRAppLink & If("?" in PCRAppLink, "&", "?"), "&", "&amp;")
+                    },
+                    IfError(
+                        Office365Outlook.SendEmailV2(
+                            If(IsBlank(StratTeamEmail), RequestorEmailValue, StratTeamEmail),
+                            "[PCR] Auto-approved " & SubmittedRecord.Title & " | PN " & PNValue & " | " & VendorNameValue & ": please update pinfo and PO price",
+                            "<div style='font-family:Segoe UI,Arial,sans-serif;font-size:10pt'>" &
+                            "<p>Hi " & StratSourcingPersonnel & ",</p>" &
+                            "<p>The price change request below was <b>auto-approved</b> by the PCR app (estimated annual impact below USD 2,000), so no approval is needed.<br>" &
+                            "Two updates are still needed in SAP: the <b>pinfo</b> (Strategic Sourcing) and the <b>PO price</b> (buyer). Please confirm each one with its link at the end of this email.</p>" &
+                            "<table style='border-collapse:collapse;font-size:10pt'>" &
+                            "<tr>" & _th & "TPCID</td>" & _td & "<a href='https://halliburton.sharepoint.com/sites/SourcingRequestFile-HASTE/Lists/Price%20Change/DispForm.aspx?ID=" & SharepointID & "'>" & SubmittedRecord.Title & "</a></td></tr>" &
+                            "<tr>" & _th & "PN</td>" & _td & PNValue & "</td></tr>" &
+                            "<tr>" & _th & "Description</td>" & _td & Substitute(Substitute(Substitute(DescriptionValue, "&", "&amp;"), "<", "&lt;"), ">", "&gt;") & "</td></tr>" &
+                            "<tr>" & _th & "Vendor</td>" & _td & VendorCodeValue & " " & Substitute(Substitute(Substitute(VendorNameValue, "&", "&amp;"), "<", "&lt;"), ">", "&gt;") & "</td></tr>" &
+                            "<tr>" & _th & "PO Number</td>" & _td & PONumberValue & "</td></tr>" &
+                            "<tr>" & _th & "Currency</td>" & _td & CurrencyValue & "</td></tr>" &
+                            "<tr>" & _th & "Old Price (Scale Qty " & ScaleQuantityValue & ")</td>" & _td & CurrencyValue & " " & OldPriceValue & "</td></tr>" &
+                            "<tr>" & _th & "New Price (Scale Qty " & ScaleQuantityValue & ")</td>" & _td & CurrencyValue & " " & NewPriceValue & "</td></tr>" &
+                            "<tr>" & _th & "Annual Quantity</td>" & _td & AnnualQuantityValue & "</td></tr>" &
+                            "<tr>" & _th & "Estimated Annual Impact (USD)</td>" & _td & AnnualPriceDeltaImpactValue & "</td></tr>" &
+                            "<tr>" & _th & "Reason</td>" & _td & ReasonValue & "</td></tr>" &
+                            "<tr>" & _th & "Remarks</td>" & _td & Substitute(Substitute(Substitute(RemarksValue, "&", "&amp;"), "<", "&lt;"), ">", "&gt;") & "</td></tr>" &
+                            "<tr>" & _th & "Quotation / Link</td>" & _td &
+                                If(
+                                    StartsWith(_link, "http") && !(" " in _link) && !("'" in _link),
+                                    "<a href='" & _link & "'>" & Substitute(_link, "&", "&amp;") & "</a>",
+                                    Substitute(Substitute(Substitute(_link, "&", "&amp;"), "<", "&lt;"), ">", "&gt;")
+                                ) & "</td></tr>" &
+                            "</table>" &
+                            "<p><b>Scale prices (" & ScaleCurrencyValue & ")</b></p>" &
+                            "<table style='border-collapse:collapse;font-size:10pt'>" &
+                            "<tr>" & _th & "Scale Qty</td>" & _th & "New Price (" & ScaleCurrencyValue & ")</td></tr>" &
+                            Concat(
+                                colScaleFinal,
+                                "<tr>" & _td &
+                                If(Qty = Int(Qty), Text(Qty, "[$-en-US]#,##0"), Text(Qty, "[$-en-US]#,##0.###")) &
+                                "</td>" & _td & NewText & "</td></tr>"
+                            ) &
+                            "</table>" &
+                            "<p style='margin-top:18px'><b>1. Strategic Sourcing (" & StratSourcingPersonnel & "): update the pinfo in SAP with the new price(s).</b><br>" &
+                            _warn & "<b>Please make sure the pinfo has been updated in SAP before you click the link.</b><br>" &
+                            "<a href='" & _app & "pcrtask=sap&amp;pcrid=" & SharepointID & "'>Click here after the pinfo is updated (" & SubmittedRecord.Title & ")</a></p>" &
+                            "<p><b>2. Buyer (" & RequestorNameValue & "): amend the PO price.</b><br>" &
+                            _warn & "<b>Please make sure the PO price has been amended before you click the link.</b><br>" &
+                            "<a href='" & _app & "pcrtask=po&amp;pcrid=" & SharepointID & "'>Click here after the PO price is amended (" & SubmittedRecord.Title & ")</a></p>" &
+                            "<p style='color:#808080;font-size:9pt'>Each link only needs to be clicked once. Sent by the PCR app on behalf of " & RequestorNameValue & ".</p>" &
+                            "</div>",
+                            { Cc: RequestorEmailValue }
+                        ),
+                        false,
+                        true
+                    )
+                )
+            );
 
-                      // ---- all rows are valid ----
-                      Clear(colScaleFinal);
-                      // Same currency and the smallest scale was not typed again: its line from the previous page is added,
-                      // so the saved text always starts with the smallest scale.
-                      If(
-                          _cur = CurrencyValue && IsEmpty(Filter(_rows, Value(Trim(Qty)) = _baseQty)),
-                          Collect(colScaleFinal, { Qty: _baseQty, NewText: NewPriceValue, NewNum: _baseNew })
-                      );
-                      Collect(
-                          colScaleFinal,
-                          ForAll(
-                              Sort(_rows, Value(Trim(Qty))),
-                              {
-                                  Qty: Value(Trim(Qty)),
-                                  NewText: Text(Value(Trim(NewP)), "[$-en-US]#,##0.00###"),
-                                  NewNum: Value(Trim(NewP))
-                              }
-                          )
-                      );
-                      Set(ScaleCurrencyValue, _cur);
-                      // The Submit button only uses colScaleFinal when this key still matches the request and its first price line
-                      Set(
-                          varScaleFinalKey,
-                          If(IsEditMode, "E", "N") & "|" & TPCIDValue & "|" & PNValue & "|" & VendorCodeValue & "|" &
-                          ScaleQuantityValue & "|" & OldPriceValue & "|" & NewPriceValue
-                      );
-                      Navigate('PriceChangeRequest_Email Submission', ScreenTransition.Fade)
-                  )
-              )
-            PressedBorderColor: =Self.Fill
-            PressedColor: =Self.Fill
-            PressedFill: =Self.Color
-            Text: ="Proceed"
-            X: =1206
-            Y: =728
+            Clear(PriceRows);
+            // 2026-11: the scale lines belong to the request that was just saved
+            Clear(colScaleRows);
+            Clear(colScaleFinal);
+            Set(varScaleKey, Blank());
+            Set(varScaleFinalKey, Blank());
+            Set(ScaleCurrencyValue, Blank());
+            Notify(
+                "Auto-approved " & SubmittedRecord.Title & ": the estimated annual impact (USD " & AnnualPriceDeltaImpactValue &
+                ") is below USD 2,000, so no approval is needed. You can amend the PO price now." &
+                If(
+                    varPinfoMailOK && varPinfoMailToSourcing,
+                    " " & StratSourcingPersonnel & " has been emailed to update the pinfo (you are in cc). After you amend the PO price, click the buyer link in that email.",
+                    varPinfoMailOK,
+                    " No email address was found for " & StratSourcingPersonnel & ", so the email was sent to you only: please forward it to " & StratSourcingPersonnel & ", and click the buyer link in it after you amend the PO price.",
+                    " The email to Strategic Sourcing could not be sent: please ask " & StratSourcingPersonnel & " to update the pinfo."
+                ),
+                If(varPinfoMailOK && varPinfoMailToSourcing, NotificationType.Success, NotificationType.Warning)
+            );
+            Navigate('PriceChangeRequest', ScreenTransition.Fade);
+            Refresh('Price Change')
+        ),
+
+        // ======== Send approval email (MRO auto-approve removed) ========
+        If(
+            Dropdown1.Selected.Value <> "Negotiation Successful",
+            If(
+                TariffSelected,
+                If(
+                    GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER",
+                    ApprovalEmailTariffNoCM.Run(
+                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, TariffPercentageValue, EstimatedAnnualImpactValue, ScaleQuantityValue, TariffActualValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
+                    ),
+                    ApprovalEmail.Run(
+                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, TariffPercentageValue, EstimatedAnnualImpactValue, ScaleQuantityValue, TariffActualValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
+                    )
+                ),
+                If(
+                    GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER",
+                    ApprovalEmailNoTariffNoCM.Run(
+                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, ScaleQuantityValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
+                    ),
+                    ApprovalEmailNoTariff.Run(
+                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, ScaleQuantityValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
+                    )
+                )
+            )
+        );
+
+        Clear(PriceRows);
+        // 2026-11: the scale lines belong to the request that was just saved
+        Clear(colScaleRows);
+        Clear(colScaleFinal);
+        Set(varScaleKey, Blank());
+        Set(varScaleFinalKey, Blank());
+        Set(ScaleCurrencyValue, Blank());
+        Notify("Submitted Successfully", NotificationType.Success);
+        Navigate('PriceChangeRequest', ScreenTransition.Fade);
+        Refresh('Price Change')
+    )
+)
