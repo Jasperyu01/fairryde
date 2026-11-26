@@ -1,368 +1,418 @@
-If(
-    !(GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER")
-    && IsBlank(Email_link.Text),
-    Notify("Please insert attachment link or justification before proceeding (CM approval required)", NotificationType.Error),
+// ============================================================
+// PCR Mass Upload - Parse Data (Button7_1) OnSelect
+// (2026-11) Changes vs previous version:
+//   1. Step 1 rebuilds Excel rows before splitting cells. Excel copies a cell that contains a
+//      line break (Alt+Enter, or a trailing line break pasted in from SAP / email) as "...<LF>...",
+//      so one Excel row used to arrive as two rows (e.g. PN = " and Vendor Code = requestor name).
+//      Lines are glued back by counting tabs: every row copied from PN to Email Link has 24 tabs.
+//      Char(1) marks where the line break was.
+//   2. Pre-clean: a cell that had a line break loses the "..." wrapper Excel added (inner "" back
+//      to "), and the line break becomes a space.
+//   3. _tariffPct no longer divides inside the If condition. With _fxRate = 0 that division raised
+//      "Invalid operation: division by zero".
+//   4. New checks, both also set varDisableWrite:
+//        colBadColumns  : rows that still do not have the template column count
+//        colBadCurrency : Currency not found in FX_PRate (USD prices and annual impact would be 0)
+//   5. Error messages list the affected PNs.
+// (2026-11) Scale prices: the template has 16 more columns after Email Link (template columns Z..AO), in pairs:
+//        26, 27  Scale Qty 1, Scale New Price 1
+//        28, 29  Scale Qty 2, Scale New Price 2
+//        ...
+//        40, 41  Scale Qty 8, Scale New Price 8
+//   The scale prices are in the Currency of the row (column 19).
+//   Every row gets two new fields:
+//        ScalePricesVar  : all scale lines in one text, "1: USD 12.50, 100: USD 12.55" (written to ScalePrices)
+//        ScaleProblemVar : what is wrong with the scale columns of the row ("" = nothing)
+//   Rules (the same as on the Scale Prices page of Single Entry):
+//        - at least one pair per row (mandatory);
+//        - a pair needs both a quantity and a price, numbers greater than 0; no quantity twice;
+//        - no quantity below the Minimum Scale Quantity;
+//        - the price for the Minimum Scale Quantity must equal New Price in Stated Currency (0.0051 allows for a
+//          2-decimal display), and if that line is not repeated in the scale columns it is added in front.
+//   Rows with a problem are collected in colBadScale and block Submit (varDisableWrite).
+//   A row copied from PN to the last template column has 40 tabs; older copies (PN to Email Link) have 24.
+//   Mass Approval keeps its own Parse Data formula and does not read the scale columns.
+// ============================================================
 
-    // ======== 2026-11: auto-approval below USD 2,000 ========
-    // A NEW request (no open request for this PN + Vendor) with status "Pending Approval / Feedback",
-    // no Tariff reason, old and new price above 0 and Estimated Delta Annual Impact (USD) below 2,000
-    // is saved directly as "Auto Approved": no approval flow. Price decreases (negative impact) are included.
-    // Strategic Sourcing is then emailed (cc the requestor) to update the pinfo in SAP (needs the Office 365 Outlook connection).
-    // Edits of an open request always go through the approval flow, because its earlier approval may still be pending.
-    //
-    // ======== 2026-11 (2): scale prices + status tracking ========
-    // - ScalePrices: every scale line in ONE SharePoint text, "1: USD 12.50, 100: USD 12.55, 500: USD 12.10"
-    //   (scale quantity: currency new price; sorted by quantity; no thousands separators, so it can be split again).
-    //   The lines and their currency come from the Scale Prices page (mandatory page).
-    // - An auto-approved request also gets BuyerStatus "Buyer Pending PO Price Amendment". Its email carries two links
-    //   that open the PCR_StatusUpdate page of this app (link address: PCRAppLink in App.Formulas):
-    //     Strategic Sourcing: Request Status "Auto Approved" -> "SAP Updated"
-    //     Buyer:              BuyerStatus "Buyer Pending PO Price Amendment" -> "PO Price Updated"
-
-    // colScaleFinal and ScaleCurrencyValue come from the Scale Prices page. They are only used when they were built for
-    // exactly this request and this first price line; otherwise only the first price line is saved (in the currency of
-    // the request), so prices of another request can never be mixed in.
+// Step 1: Rebuild Excel rows from the pasted text
+With(
+    { _lines: Split(Substitute(TextInput.Text, Char(13), ""), Char(10)) },
     With(
         {
-            _key: If(IsEditMode, "E", "N") & "|" & TPCIDValue & "|" & PNValue & "|" & VendorCodeValue & "|" &
-                ScaleQuantityValue & "|" & OldPriceValue & "|" & NewPriceValue
+            _ln: ForAll(
+                Sequence(CountRows(_lines)) As i,
+                With(
+                    { _t: Last(FirstN(_lines, i.Value)).Value },
+                    {
+                        idx: i.Value,
+                        txt: _t,
+                        tabs: Len(_t) - Len(Substitute(_t, Char(9), ""))
+                    }
+                )
+            )
         },
-        If(
-            IsEmpty(colScaleFinal) || IsBlank(ScaleCurrencyValue) || IsBlank(varScaleFinalKey) || varScaleFinalKey <> _key,
-            ClearCollect(
-                colScaleFinal,
-                {
-                    Qty: Value(ScaleQuantityValue),
-                    NewText: NewPriceValue,
-                    NewNum: IfError(Value(NewPriceValue), Blank())
-                }
-            );
-            Set(ScaleCurrencyValue, CurrencyValue)
-        )
-    );
-    Set(
-        ScalePricesValue,
-        Concat(
-            colScaleFinal,
-            If(Qty = Int(Qty), Text(Qty, "[$-en-US]0", "en-US"), Text(Qty, "[$-en-US]0.###", "en-US")) & ": " & ScaleCurrencyValue & " " &
-            If(IsBlank(NewNum), NewText, Text(NewNum, "[$-en-US]0.00###", "en-US")),
-            ", "
-        )
-    );
-
-    Set(
-        varAutoApprove,
-        !IsEditMode &&
-        StatusValue = "Pending Approval / Feedback" &&
-        !TariffSelected &&
-        IfError(Value(OldPriceValue), 0) > 0 &&
-        IfError(Value(NewPriceValue), 0) > 0 &&
-        // AnnualPriceDeltaImpactValue was made by Text() in the user's language, so Value() reads it back in the same language
         With(
-            { _impactUSD: IfError(Value(AnnualPriceDeltaImpactValue), Blank()) },
-            !IsBlank(_impactUSD) && _impactUSD < 2000
-        )
-    );
-
-    // ======== Patch function (edit vs new) ========
-    Set(
-        SubmittedRecord,
-        If(
-            IsEditMode,
-
-            // ---- Edit mode ----
-            Patch(
-                'Price Change',
-                ActiveRowP,
+            // tabs per Excel row: 24 for PN .. Email Link (more if extra columns were copied)
+            { _T: Max(24, Max(_ln, tabs)) },
+            Set(varTabsPerRow, _T);
+            With(
                 {
-                    PN: PNValue,
-                    Date: Today(),
-                    'PO Number': PONumberValue,
-                    'Requestor Name': RequestorNameAppended,
-                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
-                    Remarks: RemarksValue,
-                    Currency: CurrencyValue,
-                    'Request Status': StatusValue,
-                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
-
-                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
-
-                    'Old Price in Stated Currency': OldPriceValue,
-                    'New Price in Stated Currency': NewPriceValue,
-                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
-                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
-                    'Scale Quantity': ScaleQuantityValue,
-                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
-                    'Tariff Percentage': TariffPercentageValue,
-                    'Tariff Value (USD)': TariffActualValue,
-                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
-                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
-                    // 2026-10: annual quantity, shown in the approval details by ApprovalEmailNoTariffNoCM
-                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
-                    // 2026-11: all scale lines in one text
-                    ScalePrices: ScalePricesValue,
-
-                    'Email Link': Email_link.Text
-                }
-            ),
-
-            varAutoApprove,
-
-            // ---- 2026-11: New record, auto-approved (same fields as a new record + approval fields, ONE write) ----
-            Patch(
-                'Price Change',
-                Defaults('Price Change'),
-                {
-                    Title: FormattedAutoNumber,
-                    Date: Today(),
-                    PN: PNValue,
-                    Description: DescriptionValue,
-                    'Vendor Code': VendorCodeValue,
-                    'Vendor Name': VendorNameValue,
-                    'PO Number': PONumberValue,
-                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
-                    Remarks: RemarksValue,
-                    'Requestor Name': RequestorNameAppended,
-                    Currency: CurrencyValue,
-                    'Request Status': "Auto Approved",
-                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
-
-                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
-
-                    'Old Price in Stated Currency': OldPriceValue,
-                    'New Price in Stated Currency': NewPriceValue,
-                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
-                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
-                    'Scale Quantity': ScaleQuantityValue,
-                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
-                    'Tariff Percentage': TariffPercentageValue,
-                    'Tariff Value (USD)': TariffActualValue,
-                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
-                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
-                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
-                    // 2026-11: all scale lines in one text
-                    ScalePrices: ScalePricesValue,
-
-                    'Email Link': Email_link.Text,
-
-                    // 2026-11: the buyer still has to amend the PO price (set to "PO Price Updated" by the buyer link)
-                    BuyerStatus: "Buyer Pending PO Price Amendment",
-
-                    'Approver Name (Latest)': "System",
-                    'Approver Response': "Auto Approved",
-                    'Approver Action Date': Text(Now(), DateTimeFormat.UTC),
-                    'Approver Comments': "Auto-approved by the PCR app: Estimated Delta Annual Impact (USD) " & AnnualPriceDeltaImpactValue & " is below the USD 2,000 threshold."
-                }
-            ),
-
-            // ---- New record ----
-            Patch(
-                'Price Change',
-                Defaults('Price Change'),
-                {
-                    Title: FormattedAutoNumber,
-                    Date: Today(),
-                    PN: PNValue,
-                    Description: DescriptionValue,
-                    'Vendor Code': VendorCodeValue,
-                    'Vendor Name': VendorNameValue,
-                    'PO Number': PONumberValue,
-                    Approver: If(ApproverNameValue = "Nil", "", ApproverNameValue),
-                    Remarks: RemarksValue,
-                    'Requestor Name': RequestorNameAppended,
-                    Currency: CurrencyValue,
-                    'Request Status': StatusValue,
-                    'Strategic Sourcing Personnel': StratSourcingPersonnel,
-
-                    'Price Change Reason - Labour Cost Inflation':    If("Labour Cost Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Raw Material Inflation':   If("Raw Material Inflation" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - ECTS':                     If("ECTS" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - One Time Approval':        If("One Time Approval" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Tariff':                   If("Tariff" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Price Decrease':           If("Price Decrease" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Add More Scale Qty':       If("Add More Scale Qty" in ReasonValues, "Yes", "No"),
-                    'Price Change Reason - Others':                   If("Others" in ReasonValues, "Yes", "No"),
-
-                    'Old Price in Stated Currency': OldPriceValue,
-                    'New Price in Stated Currency': NewPriceValue,
-                    'Old Price in USD': Text(FirstOldPriceValue, "[$-en-US]#,##0.00"),
-                    'New Price in USD': Text(FirstNewPriceValue, "[$-en-US]#,##0.00"),
-                    'Scale Quantity': ScaleQuantityValue,
-                    'Price Delta': Text(PriceDeltaValue, "[$-en-US]#,##0.00"),
-                    'Tariff Percentage': TariffPercentageValue,
-                    'Tariff Value (USD)': TariffActualValue,
-                    'Estimated Tariff Annual Impact (USD)': EstimatedTariffAnnualImpactNum,
-                    'Estimated Delta Annual Impact (USD)': AnnualPriceDeltaImpactValue,
-                    // 2026-10: annual quantity, shown in the approval details by ApprovalEmailNoTariffNoCM
-                    AnnualQuantity: Coalesce(AnnualQuantityValue, "N/A"),
-                    // 2026-11: all scale lines in one text
-                    ScalePrices: ScalePricesValue,
-
-                    'Email Link': Email_link.Text
-                }
+                    _grp: ForAll(
+                        _ln As L,
+                        With(
+                            { _before: Coalesce(Sum(Filter(_ln, idx < L.idx), tabs), 0) },
+                            {
+                                txt: L.txt,
+                                // A line without tabs that starts exactly on a row boundary is the end of the
+                                // previous row's last cell, unless it opens a quoted first cell (starts with ").
+                                rowNo: RoundDown(
+                                    (
+                                        _before - If(
+                                            L.tabs = 0 && _before > 0 && Mod(_before, _T) = 0 &&
+                                            !(Left(L.txt, 1) = """" && Right(L.txt, 1) <> """"),
+                                            1,
+                                            0
+                                        )
+                                    ) / _T,
+                                    0
+                                )
+                            }
+                        )
+                    )
+                },
+                ClearCollect(
+                    colRawRows,
+                    Filter(
+                        ForAll(
+                            Sequence(Max(_grp, rowNo) + 1, 0) As g,
+                            { Value: Concat(Filter(_grp, rowNo = g.Value), txt, Char(1)) }
+                        ),
+                        !IsBlank(Trim(Substitute(Substitute(Value, Char(1), ""), Char(9), "")))
+                    )
+                )
             )
         )
-    );
+    )
+);
 
-    Set(SharepointID, SubmittedRecord.ID);
-    Set(NewSubmittedRecord, SubmittedRecord);
+// Step 2: Convert each row into structured records (TAB-separated)
+ClearCollect(
+    colTempData,
+    ForAll(
+        colRawRows,
+        With(
+            {
+                // ===== PRE-CLEAN: NBSP -> space, strip CR, Trim =====
+                // 空格单元格在这里变成真正的空字符串，IsBlank 才会生效
+                // A cell that had a line break contains Char(1) and is wrapped in "..." by Excel
+                // (inner quotes doubled): remove the wrapper, the line break becomes a space.
+                cells: ForAll(
+                    Split(ThisRecord.Value, Char(9)) As c,
+                    With(
+                        { _v: Substitute(Substitute(c.Value, Char(160), " "), Char(13), "") },
+                        With(
+                            { _w: Trim(Substitute(_v, Char(1), " ")) },
+                            {
+                                Value: If(
+                                    Char(1) in _v && Len(_w) >= 2 && Left(_w, 1) = """" && Right(_w, 1) = """",
+                                    Trim(Substitute(Mid(_w, 2, Len(_w) - 2), """""", """")),
+                                    _w
+                                )
+                            }
+                        )
+                    )
+                )
+            },
 
-    If(
-        varAutoApprove,
+            With(
+                {
+                    _currency: If(CountRows(cells) >= 19, Last(FirstN(cells, 19)).Value, ""),
 
-        // ======== 2026-11: auto-approved, no approval flow ========
-        If(
-            IsBlankOrError(SharepointID),
-            // SharePoint refused the write: nothing was saved, stay on this screen so Submit can be pressed again
-            Notify(
-                "The request was not saved" & IfError(Text(SharepointID), " (" & FirstError.Message & ")", "") &
-                ". Please press Submit again.",
-                NotificationType.Error
-            ),
+                    _fxRate: Coalesce(
+                        LookUp(
+                            'FX_PRate',
+                            'Currency' = If(CountRows(cells) >= 19, Last(FirstN(cells, 19)).Value, "")
+                        ).'Current Year Currency',
+                        0
+                    ),
 
-            // ---- 2026-11: email Strategic Sourcing (cc requestor = buyer) ----
-            // Sent from the user's own mailbox through the Office 365 Outlook connection of the app.
-            // It lists every scale line and carries the two status links (sourcing: SAP updated, buyer: PO price updated).
-            // If no email address is known for the sourcing person, the email goes to the requestor, who forwards it.
-            // A failed email does NOT undo the auto-approval; the user is told to inform sourcing instead.
-            Set(varPinfoMailToSourcing, !IsBlank(StratTeamEmail));
-            Set(
-                varPinfoMailOK,
+                    _minScaleQty: If(
+                        CountRows(cells) >= 20 && !IsBlank(Last(FirstN(cells, 20)).Value),
+                        IfError(Value(Substitute(Last(FirstN(cells, 20)).Value, ",", "")), 0),
+                        0
+                    ),
+
+                    _oldStated: If(
+                        CountRows(cells) >= 21 && !IsBlank(Last(FirstN(cells, 21)).Value),
+                        IfError(Value(Substitute(Substitute(Last(FirstN(cells, 21)).Value, ",", ""), "$", "")), 0),
+                        0
+                    ),
+
+                    _newStated: If(
+                        CountRows(cells) >= 22 && !IsBlank(Last(FirstN(cells, 22)).Value),
+                        IfError(Value(Substitute(Substitute(Last(FirstN(cells, 22)).Value, ",", ""), "$", "")), 0),
+                        0
+                    ),
+
+                    _annualQty: If(
+                        CountRows(cells) >= 23 && !IsBlank(Last(FirstN(cells, 23)).Value),
+                        IfError(Value(Substitute(Last(FirstN(cells, 23)).Value, ",", "")), 0),
+                        0
+                    ),
+
+                    _tariffStated: If(
+                        CountRows(cells) >= 24 && !IsBlank(Last(FirstN(cells, 24)).Value),
+                        IfError(Value(Substitute(Substitute(Last(FirstN(cells, 24)).Value, ",", ""), "$", "")), 0),
+                        0
+                    )
+                },
+
                 With(
                     {
-                        _td: "<td style='border:1px solid #bfbfbf;padding:4px 8px'>",
-                        _th: "<td style='border:1px solid #bfbfbf;padding:4px 8px;background:#f2f2f2;font-weight:bold'>",
-                        _warn: "<span style='color:#C00000;font-size:12pt'>&#10071;</span> ",
-                        _link: Trim(Email_link.Text),
-                        // "&" is written as "&amp;" inside the HTML link address
-                        _app: Substitute(PCRAppLink & If("?" in PCRAppLink, "&", "?"), "&", "&amp;")
+                        // ===== 2026-11: scale prices =====
+                        _pairs: ForAll(
+                            Sequence(8) As k,
+                            With(
+                                {
+                                    // pair k: Scale Qty k = column 24 + 2k, Scale New Price k = column 25 + 2k
+                                    _qTxt: If(CountRows(cells) >= 24 + 2 * k.Value, Last(FirstN(cells, 24 + 2 * k.Value)).Value, ""),
+                                    _pTxt: If(CountRows(cells) >= 25 + 2 * k.Value, Last(FirstN(cells, 25 + 2 * k.Value)).Value, "")
+                                },
+                                {
+                                    PairNo: k.Value,
+                                    PairUsed: !IsBlank(_qTxt) || !IsBlank(_pTxt),
+                                    // Blank = empty cell or not a number
+                                    PairQty: If(IsBlank(_qTxt), Blank(), IfError(Value(Substitute(_qTxt, ",", "")), Blank())),
+                                    PairPrice: If(
+                                        IsBlank(_pTxt),
+                                        Blank(),
+                                        IfError(Value(Substitute(Substitute(_pTxt, ",", ""), "$", "")), Blank())
+                                    )
+                                }
+                            )
+                        )
                     },
-                    IfError(
-                        Office365Outlook.SendEmailV2(
-                            If(IsBlank(StratTeamEmail), RequestorEmailValue, StratTeamEmail),
-                            "[PCR] Auto-approved " & SubmittedRecord.Title & " | PN " & PNValue & " | " & VendorNameValue & ": please update pinfo and PO price",
-                            "<div style='font-family:Segoe UI,Arial,sans-serif;font-size:10pt'>" &
-                            "<p>Hi " & StratSourcingPersonnel & ",</p>" &
-                            "<p>The price change request below was <b>auto-approved</b> by the PCR app (estimated annual impact below USD 2,000), so no approval is needed.<br>" &
-                            "Two updates are still needed in SAP: the <b>pinfo</b> (Strategic Sourcing) and the <b>PO price</b> (buyer). Please confirm each one with its link at the end of this email.</p>" &
-                            "<table style='border-collapse:collapse;font-size:10pt'>" &
-                            "<tr>" & _th & "TPCID</td>" & _td & "<a href='https://halliburton.sharepoint.com/sites/SourcingRequestFile-HASTE/Lists/Price%20Change/DispForm.aspx?ID=" & SharepointID & "'>" & SubmittedRecord.Title & "</a></td></tr>" &
-                            "<tr>" & _th & "PN</td>" & _td & PNValue & "</td></tr>" &
-                            "<tr>" & _th & "Description</td>" & _td & Substitute(Substitute(Substitute(DescriptionValue, "&", "&amp;"), "<", "&lt;"), ">", "&gt;") & "</td></tr>" &
-                            "<tr>" & _th & "Vendor</td>" & _td & VendorCodeValue & " " & Substitute(Substitute(Substitute(VendorNameValue, "&", "&amp;"), "<", "&lt;"), ">", "&gt;") & "</td></tr>" &
-                            "<tr>" & _th & "PO Number</td>" & _td & PONumberValue & "</td></tr>" &
-                            "<tr>" & _th & "Currency</td>" & _td & CurrencyValue & "</td></tr>" &
-                            "<tr>" & _th & "Old Price (Scale Qty " & ScaleQuantityValue & ")</td>" & _td & CurrencyValue & " " & OldPriceValue & "</td></tr>" &
-                            "<tr>" & _th & "New Price (Scale Qty " & ScaleQuantityValue & ")</td>" & _td & CurrencyValue & " " & NewPriceValue & "</td></tr>" &
-                            "<tr>" & _th & "Annual Quantity</td>" & _td & AnnualQuantityValue & "</td></tr>" &
-                            "<tr>" & _th & "Estimated Annual Impact (USD)</td>" & _td & AnnualPriceDeltaImpactValue & "</td></tr>" &
-                            "<tr>" & _th & "Reason</td>" & _td & ReasonValue & "</td></tr>" &
-                            "<tr>" & _th & "Remarks</td>" & _td & Substitute(Substitute(Substitute(RemarksValue, "&", "&amp;"), "<", "&lt;"), ">", "&gt;") & "</td></tr>" &
-                            "<tr>" & _th & "Quotation / Link</td>" & _td &
-                                If(
-                                    StartsWith(_link, "http") && !(" " in _link) && !("'" in _link),
-                                    "<a href='" & _link & "'>" & Substitute(_link, "&", "&amp;") & "</a>",
-                                    Substitute(Substitute(Substitute(_link, "&", "&amp;"), "<", "&lt;"), ">", "&gt;")
-                                ) & "</td></tr>" &
-                            "</table>" &
-                            "<p><b>Scale prices (" & ScaleCurrencyValue & ")</b></p>" &
-                            "<table style='border-collapse:collapse;font-size:10pt'>" &
-                            "<tr>" & _th & "Scale Qty</td>" & _th & "New Price (" & ScaleCurrencyValue & ")</td></tr>" &
-                            Concat(
-                                colScaleFinal,
-                                "<tr>" & _td &
-                                If(Qty = Int(Qty), Text(Qty, "[$-en-US]#,##0"), Text(Qty, "[$-en-US]#,##0.###")) &
-                                "</td>" & _td & NewText & "</td></tr>"
-                            ) &
-                            "</table>" &
-                            "<p style='margin-top:18px'><b>1. Strategic Sourcing (" & StratSourcingPersonnel & "): update the pinfo in SAP with the new price(s).</b><br>" &
-                            _warn & "<b>Please make sure the pinfo has been updated in SAP before you click the link.</b><br>" &
-                            "<a href='" & _app & "pcrtask=sap&amp;pcrid=" & SharepointID & "'>Click here after the pinfo is updated (" & SubmittedRecord.Title & ")</a></p>" &
-                            "<p><b>2. Buyer (" & RequestorNameValue & "): amend the PO price.</b><br>" &
-                            _warn & "<b>Please make sure the PO price has been amended before you click the link.</b><br>" &
-                            "<a href='" & _app & "pcrtask=po&amp;pcrid=" & SharepointID & "'>Click here after the PO price is amended (" & SubmittedRecord.Title & ")</a></p>" &
-                            "<p style='color:#808080;font-size:9pt'>Each link only needs to be clicked once. Sent by the PCR app on behalf of " & RequestorNameValue & ".</p>" &
-                            "</div>",
-                            { Cc: RequestorEmailValue }
+                With(
+                    {
+                        _used: Filter(_pairs, PairUsed),
+                        // the scale prices are in the Currency of the row
+                        _scaleCur: Upper(_currency)
+                    },
+                With(
+                    {
+                        _scaleProblem: If(
+                            !IsEmpty(Filter(_used, IsBlank(PairQty) || PairQty <= 0 || IsBlank(PairPrice) || PairPrice <= 0)),
+                            With(
+                                { _n: First(Filter(_used, IsBlank(PairQty) || PairQty <= 0 || IsBlank(PairPrice) || PairPrice <= 0)).PairNo },
+                                "Scale Qty " & Text(_n) & " and Scale New Price " & Text(_n) & " must both be numbers greater than 0"
+                            ),
+
+                            CountRows(Distinct(_used, PairQty)) < CountRows(_used),
+                            "the same Scale Qty is entered more than once",
+
+                            _minScaleQty > 0 && !IsEmpty(Filter(_used, PairQty < _minScaleQty)),
+                            "a Scale Qty is smaller than the Minimum Scale Quantity",
+
+                            _minScaleQty > 0 && _newStated > 0 &&
+                            !IsEmpty(Filter(_used, PairQty = _minScaleQty && Abs(PairPrice - _newStated) > 0.0051)),
+                            "the Scale New Price for the Minimum Scale Quantity is not the same as New Price in Stated Currency",
+
+                            IsEmpty(_used),
+                            "scale prices are missing (Scale Qty 1 and Scale New Price 1 are mandatory)",
+
+                            ""
+                        )
+                    },
+                With(
+                    {
+                        // all scale lines in one text; "" when the row has a scale problem
+                        _scalePrices: If(
+                            !IsBlank(_scaleProblem),
+                            "",
+                            With(
+                                {
+                                    // the Minimum Scale Quantity line is not repeated in the scale columns:
+                                    // it is added in front, so the text always starts with the smallest scale
+                                    _base: If(
+                                        _minScaleQty > 0 && _newStated > 0 && IsEmpty(Filter(_used, PairQty = _minScaleQty)),
+                                        If(
+                                            _minScaleQty = Int(_minScaleQty),
+                                            Text(_minScaleQty, "[$-en-US]0", "en-US"),
+                                            Text(_minScaleQty, "[$-en-US]0.###", "en-US")
+                                        ) & ": " & _scaleCur & " " & Text(_newStated, "[$-en-US]0.00###", "en-US"),
+                                        ""
+                                    ),
+                                    _rest: Concat(
+                                        Sort(_used, PairQty),
+                                        If(
+                                            PairQty = Int(PairQty),
+                                            Text(PairQty, "[$-en-US]0", "en-US"),
+                                            Text(PairQty, "[$-en-US]0.###", "en-US")
+                                        ) & ": " & _scaleCur & " " & Text(PairPrice, "[$-en-US]0.00###", "en-US"),
+                                        ", "
+                                    )
+                                },
+                                _base & If(!IsBlank(_base) && !IsBlank(_rest), ", ", "") & _rest
+                            )
+                        )
+                    },
+                With(
+                    {
+                        _oldUSD: If(_fxRate <> 0, _oldStated / _fxRate, 0),
+                        _newUSD: If(_fxRate <> 0, _newStated / _fxRate, 0),
+                        _tariffUSD: If(_fxRate <> 0, _tariffStated / _fxRate, 0),
+
+                        _deltaStated: _newStated - _oldStated,
+                        _deltaUSD: If(_fxRate <> 0, (_newStated - _oldStated) / _fxRate, 0),
+
+                        // (tariff / fx) / ((new - old) / fx) = tariff / (new - old); no division in the condition
+                        _tariffPct: If(
+                            _fxRate <> 0 && _newStated <> _oldStated,
+                            _tariffStated / (_newStated - _oldStated) * 100,
+                            0
                         ),
-                        false,
-                        true
-                    )
+
+                        _annualDeltaImpactUSD: If(_fxRate <> 0, (_newStated - _oldStated) * _annualQty / _fxRate, 0),
+                        _annualTariffImpactUSD: If(_fxRate <> 0, _tariffStated * _annualQty / _fxRate, 0)
+                    },
+
+                    {
+                        PNVar           : If(CountRows(cells) >= 1, Last(FirstN(cells, 1)).Value, ""),
+                        DescriptionVar  : If(CountRows(cells) >= 2, Last(FirstN(cells, 2)).Value, ""),
+                        VendorCodeVar   : If(CountRows(cells) >= 3, Last(FirstN(cells, 3)).Value, ""),
+                        VendorNameVar   : If(CountRows(cells) >= 4, Last(FirstN(cells, 4)).Value, ""),
+                        PONumberVar     : If(CountRows(cells) >= 5, Last(FirstN(cells, 5)).Value, ""),
+                        StatusVar       : If(CountRows(cells) >= 6, Last(FirstN(cells, 6)).Value, ""),
+                        RequestorVar      : If(CountRows(cells) >= 7, Last(FirstN(cells, 7)).Value, ""),
+                        RequestorEmailVar : If(CountRows(cells) >= 8, Last(FirstN(cells, 8)).Value, ""),
+                        CMGroupKeyVar   : If(CountRows(cells) >= 9,  Last(FirstN(cells, 9)).Value, ""),
+                        StrategicVar    : If(CountRows(cells) >= 10, Last(FirstN(cells,10)).Value, ""),
+
+                        ReasonTariff:
+                            If(CountRows(cells) >= 11 && ("Y" in Upper(Last(FirstN(cells, 11)).Value)), "Yes", "No"),
+                        ReasonLabour:
+                            If(CountRows(cells) >= 12 && ("Y" in Upper(Last(FirstN(cells, 12)).Value)), "Yes", "No"),
+                        ReasonRawMaterial:
+                            If(CountRows(cells) >= 13 && ("Y" in Upper(Last(FirstN(cells, 13)).Value)), "Yes", "No"),
+                        ReasonECTS:
+                            If(CountRows(cells) >= 14 && ("Y" in Upper(Last(FirstN(cells, 14)).Value)), "Yes", "No"),
+                        ReasonPriceDecrease:
+                            If(CountRows(cells) >= 15 && ("Y" in Upper(Last(FirstN(cells, 15)).Value)), "Yes", "No"),
+                        ReasonAddQty:
+                            If(CountRows(cells) >= 16 && ("Y" in Upper(Last(FirstN(cells, 16)).Value)), "Yes", "No"),
+                        ReasonOthers:
+                            If(CountRows(cells) >= 17 && ("Y" in Upper(Last(FirstN(cells, 17)).Value)), "Yes", "No"),
+
+                        RemarksVar: If(CountRows(cells) >= 18, Last(FirstN(cells, 18)).Value, ""),
+                        CurrencyVar: _currency,
+                        FxRateVar  : _fxRate,
+                        ScaleQuantityVar: _minScaleQty,
+                        OldPriceVar          : _oldStated,
+                        NewPriceVar          : _newStated,
+                        AnnualQuantityVar    : _annualQty,
+                        TariffValueStatedVar : _tariffStated,
+                        OldPriceUSDVar                 : Round(_oldUSD, 2),
+                        NewPriceUSDVar                 : Round(_newUSD, 2),
+                        TariffValueUSDVar              : Round(_tariffUSD, 2),
+                        EstimatedAnnualTariffImpactVar : Round(_annualTariffImpactUSD, 2),
+                        PriceDeltaVar              : Text(Round(_deltaStated, 2), "[$-en-US]#,##0.00"),
+                        TariffPercentageVar        : Text(Round(_tariffPct, 2), "[$-en-US]#,##0.00"),
+                        AnnualPriceDeltaImpactVar  : Text(Round(_annualDeltaImpactUSD, 2), "[$-en-US]#,##0.00"),
+                        EmailLinkVar: If(CountRows(cells) >= 25, Last(FirstN(cells, 25)).Value, ""),
+                        // 2026-11: scale prices
+                        ScalePricesVar: _scalePrices,
+                        ScaleProblemVar: _scaleProblem,
+                        ColCount: CountRows(cells)
+                    }
                 )
-            );
-
-            Clear(PriceRows);
-            // 2026-11: the scale lines belong to the request that was just saved
-            Clear(colScaleRows);
-            Clear(colScaleFinal);
-            Set(varScaleKey, Blank());
-            Set(varScaleFinalKey, Blank());
-            Set(ScaleCurrencyValue, Blank());
-            Notify(
-                "Auto-approved " & SubmittedRecord.Title & ": the estimated annual impact (USD " & AnnualPriceDeltaImpactValue &
-                ") is below USD 2,000, so no approval is needed. You can amend the PO price now." &
-                If(
-                    varPinfoMailOK && varPinfoMailToSourcing,
-                    " " & StratSourcingPersonnel & " has been emailed to update the pinfo (you are in cc). After you amend the PO price, click the buyer link in that email.",
-                    varPinfoMailOK,
-                    " No email address was found for " & StratSourcingPersonnel & ", so the email was sent to you only: please forward it to " & StratSourcingPersonnel & ", and click the buyer link in it after you amend the PO price.",
-                    " The email to Strategic Sourcing could not be sent: please ask " & StratSourcingPersonnel & " to update the pinfo."
-                ),
-                If(varPinfoMailOK && varPinfoMailToSourcing, NotificationType.Success, NotificationType.Warning)
-            );
-            Navigate('PriceChangeRequest', ScreenTransition.Fade);
-            Refresh('Price Change')
-        ),
-
-        // ======== Send approval email (MRO auto-approve removed) ========
-        If(
-            Dropdown1.Selected.Value <> "Negotiation Successful",
-            If(
-                TariffSelected,
-                If(
-                    GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER",
-                    ApprovalEmailTariffNoCM.Run(
-                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, TariffPercentageValue, EstimatedAnnualImpactValue, ScaleQuantityValue, TariffActualValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
-                    ),
-                    ApprovalEmail.Run(
-                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, TariffPercentageValue, EstimatedAnnualImpactValue, ScaleQuantityValue, TariffActualValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
-                    )
-                ),
-                If(
-                    GroupKeyOwner.Selected.Value = "" || IsBlank(GroupKeyOwner.Selected.Value) || Upper(GroupKeyOwner.Selected.Value) = "TIGER",
-                    ApprovalEmailNoTariffNoCM.Run(
-                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, ScaleQuantityValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
-                    ),
-                    ApprovalEmailNoTariff.Run(
-                        TPCIDValue, PNValue, VendorCodeValue, VendorNameValue, PONumberValue, RequestorNameValue, RemarksValue, SharepointID, ApproverNameValue, DescriptionValue, RequestorEmailValue, CurrencyValue, FirstOldPriceValue, FirstNewPriceValue, ScaleQuantityValue, OldPriceValue, NewPriceValue, StratTeamEmail, Email_link.Text, ApproverEmailValue, ReasonValue, AnnualPriceDeltaImpactValue
-                    )
+                )
+                )
+                )
                 )
             )
-        );
-
-        Clear(PriceRows);
-        // 2026-11: the scale lines belong to the request that was just saved
-        Clear(colScaleRows);
-        Clear(colScaleFinal);
-        Set(varScaleKey, Blank());
-        Set(varScaleFinalKey, Blank());
-        Set(ScaleCurrencyValue, Blank());
-        Notify("Submitted Successfully", NotificationType.Success);
-        Navigate('PriceChangeRequest', ScreenTransition.Fade);
-        Refresh('Price Change')
+        )
     )
-)
+);
+
+// Step 3: Validate
+// Rows that still do not line up with the template columns
+ClearCollect(
+    colBadColumns,
+    Filter(colTempData, ColCount <> varTabsPerRow + 1)
+);
+
+// Currency not found in FX_PRate: USD prices and annual impact would come out as 0
+ClearCollect(
+    colBadCurrency,
+    Filter(colTempData, ColCount = varTabsPerRow + 1 && FxRateVar = 0)
+);
+
+// Rows with a CM Group Key but no Email Link
+ClearCollect(
+    colInvalidEmailLinks,
+    Filter(
+        colTempData,
+        ColCount = varTabsPerRow + 1 && !IsBlank(CMGroupKeyVar) && IsBlank(EmailLinkVar)
+    )
+);
+
+// 2026-11: rows with a problem in the scale-price columns
+ClearCollect(
+    colBadScale,
+    Filter(colTempData, ColCount = varTabsPerRow + 1 && !IsBlank(ScaleProblemVar))
+);
+
+Set(
+    varDisableWrite,
+    CountRows(colBadColumns) + CountRows(colBadCurrency) + CountRows(colInvalidEmailLinks) + CountRows(colBadScale) > 0
+);
+
+If(
+    CountRows(colBadColumns) > 0,
+    Notify(
+        "Error: " & Text(CountRows(colBadColumns)) & " row(s) do not match the template columns (" &
+        Concat(FirstN(colBadColumns, 5), PNVar, ", ") &
+        "). Copy every row from PN to the last column of the template, check those rows for a tab or line break inside a cell, then paste again.",
+        NotificationType.Error
+    ),
+    CountRows(colBadCurrency) > 0,
+    Notify(
+        "Error: currency not found in FX_PRate -> " &
+        Concat(FirstN(colBadCurrency, 5), PNVar & " [" & CurrencyVar & "]", ", ") &
+        ". Please correct the Currency column.",
+        NotificationType.Error
+    ),
+    CountRows(colInvalidEmailLinks) > 0,
+    Notify(
+        "Error: " & Text(CountRows(colInvalidEmailLinks)) &
+        " row(s) have a CM Group Key but missing Email Link / justification (" &
+        Concat(FirstN(colInvalidEmailLinks, 5), PNVar, ", ") &
+        "). Please fill it in before submitting.",
+        NotificationType.Error
+    ),
+    CountRows(colBadScale) > 0,
+    Notify(
+        "Error: scale prices -> " &
+        Concat(FirstN(colBadScale, 5), PNVar & " [" & ScaleProblemVar & "]", "  |  ") &
+        If(CountRows(colBadScale) > 5, "  |  and " & Text(CountRows(colBadScale) - 5) & " more row(s)", "") &
+        ". Fill in the scale columns of the latest template (Scale Qty 1-8, Scale New Price 1-8), copy every row from PN to the last column, then paste again.",
+        NotificationType.Error
+    ),
+    Notify(
+        "Parsed " & Text(CountRows(colTempData)) & " row(s).",
+        NotificationType.Success
+    )
+);
+
+
+// ============================================================
+// Submit (Button8_1) OnSelect: change only the first message, because varDisableWrite
+// now also covers column and currency errors.
+// ============================================================
+//  If(
+//      varDisableWrite,
+//      Notify(
+//          "Cannot submit: fix the rows reported by Parse Data, then press Parse Data again.",
+//          NotificationType.Error
+//      ),
+//      ... (rest unchanged)
